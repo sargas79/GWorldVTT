@@ -728,6 +728,29 @@ and the roll continues.
     `gworld.injury` and `gworld.afterDamage` see them too. `roll.damage` takes
     `attackOptions` (and already took `calledShot`) for a module's own roll.
 
+    Since 1.140.0 the context carries `preview`, false for a blow. The
+    character's DR by location (`system.derived.drByLocation`,
+    `system.derived.dr` for the torso, and the hit-location table on the
+    sheet) is read through the same listeners, so the sheet shows what the
+    damage pipeline will subtract: a piece a listener takes off one side, a
+    material it doubles against one kind of damage, a layer it adds, or
+    natural DR it divides. The lines are the pipeline's own, so the sheet now
+    counts Hooves on the foot, a Nictitating Membrane on the eye and a Force
+    Field at every location, as a blow does. For that the hook fires with `preview` true, once
+    per location and damage type each time the actor's data is prepared, with
+    no blow behind it: `item` and `mode` null, `basicDamage` 0, `ignoresDr`
+    false, `arc` null (so front-only armour counts), `fromBelow` false,
+    `calledShot` null, `chink` false, `addonLocation` null and `options` `{}`.
+    Change the lines as for a blow. A listener that spends a pool, writes to
+    a document or posts anything must do nothing when `preview` is true,
+    since the data is prepared far more often than anyone is hit. Each of
+    `system.derived.hitLocations` now carries the lines behind its headline
+    figure as the listeners left them, `lines` (`{ label, dr, applies,
+    reason? }`, a refused line included), and `locationDr`, the location's
+    own DR (the skull's 2), which is never a line. The sheet names them in
+    the figure's tooltip, each with its `reason`. Its `exceptions` are
+    grouped from what the listeners left too, so a listener that doubles a
+    piece against one kind of damage gives the location a band of its own.
     Since 1.139.0 the context also carries `source`, where the blow came from
     as its damage roll said (`roll.damage`'s `source`, kept on the card), or
     null: `"slam"` for a slammer's blow, `"slammed"` for what the slammer

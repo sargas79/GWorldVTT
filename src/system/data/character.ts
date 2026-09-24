@@ -26,7 +26,6 @@ import { lockedTerms, type CampaignTermKey } from "../party/roster.js";
 import {
   addTraitEffects,
   afterSuperJump,
-  damageResistanceAtEyes,
   impairedAttacks,
   lameCombatPenalty,
   lameMove,
@@ -89,7 +88,8 @@ import { isRuleOn } from "../optional-rules.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
 import { canPull, towedWeight, wheelchairMove, type Conveyance } from "../../rules/towing.js";
 import { SYSTEM_ID } from "../constants.js";
-import { splitSummary, type ArmorPiece } from "../../rules/armor.js";
+import { type ArmorPiece } from "../../rules/armor.js";
+import { previewBands, previewDrAt } from "../damage.js";
 import { HIT_LOCATIONS, HIT_LOCATION_ORDER, type HitLocation } from "../../rules/hit-locations.js";
 import { evaluateBonus, takesEvaluateBonus } from "../../rules/maneuvers.js";
 import {
@@ -179,8 +179,9 @@ import {
   waterMove,
   type JumpInput,
 } from "../../rules/physical.js";
-import type {
-  DamageType, Difficulty, EncumbranceLevel, Posture, SkillAttribute,
+import {
+  DAMAGE_TYPES,
+  type DamageType, type Difficulty, type EncumbranceLevel, type Posture, type SkillAttribute,
 } from "../../rules/types.js";
 
 const fields = foundry.data.fields;
@@ -2140,6 +2141,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
     const armorItems = this.itemsOfType("armor").filter((i) => i.system?.equipped);
     const worn: ArmorPiece[] = armorItems.map((item) => ({
+      // Which piece it is, so a `gworld.armorDr` listener can read its data.
+      id: String(item.id ?? ""),
+      name: String(item.name ?? ""),
       // Fortify "Increases the DR of clothing or a suit of armor" (p. 480).
       dr: Number(item.system?.dr ?? 0) + magicOf(item).fortify,
       drSplit: item.system?.drSplit ?? null,
@@ -2156,25 +2160,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       drLost: Number(item.system?.drLost ?? 0) || 0,
       forceField: item.system?.forceField === true,
       flexible: item.system?.flexible === true,
+      frontOnly: item.system?.frontOnly === true,
       hardened: Number(item.system?.hardened ?? 0) || 0,
     }));
-
-    // The Damage Resistance advantage is armour the character is: it covers
-    // everything, which is what an empty location list means here, and it goes
-    // in with the rest so the sheet shows the DR the damage pipeline will
-    // actually subtract. It leaves the eyes bare unless it was bought to cover
-    // them (Characters p. 46), so only the part taken as a Force Field or
-    // Partial for the eyes is counted there.
-    if (traits.damageResistance > 0) {
-      worn.push({
-        dr: traits.damageResistance,
-        drSplit: null,
-        drSplitAppliesTo: [],
-        locations: HIT_LOCATION_ORDER.filter((loc) => loc !== "eye"),
-      });
-      const atEyes = Math.min(traits.damageResistance, damageResistanceAtEyes(heldTraits));
-      if (atEyes > 0) worn.push({ dr: atEyes, drSplit: null, drSplitAppliesTo: [], locations: ["eye"] });
-    }
 
     // Armour written "4/2" stops one kind of attack better than another, and two
     // passes are not enough to describe that: mail takes its lower DR against
@@ -2187,9 +2175,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // cutting is always the base, and the sheet lets a GM tick "cut" among the
     // types a split applies to -- armour at 4/2 against crushing and cutting
     // would then have headlined as 2 while its profile led with 4.
+    // Each figure is read the way the damage pipeline reads a blow's (since
+    // API 1.140.0): the worn pieces and the character's own DR (Damage
+    // Resistance, which leaves the eyes bare unless bought to cover them,
+    // Characters p. 46; Hooves; a Nictitating Membrane) as `gworld.armorDr`
+    // lines, through the modules' listeners with `preview` true, and then the
+    // location's own. A piece a module takes off one side, or natural DR it
+    // divides, is then shown as the pipeline will subtract it. There is no
+    // blow to read an arc from, so front-only armour counts.
     const profiles = Object.fromEntries(
-      HIT_LOCATION_ORDER.map((loc) => [loc, splitSummary(worn, loc)]),
-    ) as Record<HitLocation, ReturnType<typeof splitSummary>>;
+      HIT_LOCATION_ORDER.map((loc) => [loc, previewBands(previewDrAt(this.parent, loc, traits, worn, DAMAGE_TYPES))]),
+    ) as Record<HitLocation, ReturnType<typeof previewBands>>;
     for (const loc of HIT_LOCATION_ORDER) drByLocation[loc] = profiles[loc].bands[0]?.dr ?? 0;
 
     // The headline DR figure stays the torso, which is what an unaimed blow hits.
@@ -3421,7 +3417,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // Where a location is protected unevenly it carries every distinct DR
         // with the damage each applies to, rather than a number that is only
         // right against some of what lands there.
-        const { splits, bands } = profiles[key];
+        const { splits, bands, lines, locationDr } = profiles[key];
         const [ordinary, ...exceptions] = bands;
         return {
           key,
@@ -3432,6 +3428,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           // The keys travel as keys. Joining them here would put raw codes
           // like "pi+" on the sheet in every locale.
           exceptions: exceptions.map((band) => ({ dr: band.dr, types: band.types })),
+          // What makes up the headline figure (since API 1.140.0): each line
+          // as the `gworld.armorDr` listeners left it, a refused one and a
+          // listener's reason included, and the location's own DR.
+          lines,
+          locationDr,
         };
       }),
       shieldDb,

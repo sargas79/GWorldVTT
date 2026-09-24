@@ -481,29 +481,14 @@ function armourAt(
   // What each piece is worth against this blow, offered to the modules before
   // any of it is added up (since 1.48.0): a listener may double a piece
   // against one kind of attack, refuse it against another, or harden it.
-  const here = new Set(piecesAt(worn, location));
-  const worns: ArmorDrLine[] = worn
-    // A Force Field "protects your entire body - including your eyes - as well
-    // as anything you are carrying" (Characters p. 47), wherever the blow fell.
-    .filter((piece) => (piece.forceField === true || here.has(piece)) && protectsAgainst(piece, arc))
-    .map((piece) => ({
-      label: piece.name ?? "",
-      // A Force Field covers everything, so it is read at the spot the blow
-      // fell whatever its own list says (Characters p. 47).
-      dr: damage.fromBelow === true ? drFromBelow(piece, damage.type, location) : drAgainst(piece, damage.type, location),
-      applies: true,
-      forceField: piece.forceField === true,
-      flexible: piece.flexible === true,
-      hardened: Math.max(0, Math.floor(piece.hardened ?? 0)),
-      // Which item the line is, so a listener can read the piece's own data (since 1.56.0).
-      ...(piece.id ? { itemId: piece.id } : {}),
-      source: "armor" as const,
-    }));
   // The target's own DR goes in beside the armour (since 1.98.0), so a rule
   // that divides or refuses "DR" for one blow -- burning liquid, which most DR
   // stops at a fifth (Campaigns p. 411) -- reaches all of it, not just what
   // is worn.
-  const lines: ArmorDrLine[] = [...worns, ...naturalDrLines(actor, traits, location)];
+  const lines: ArmorDrLine[] = [
+    ...wornLinesAt(worn, location, damage.type, arc, damage.fromBelow === true),
+    ...naturalDrLines(actor, traits, location),
+  ];
   callCombatHook(COMBAT_HOOKS.armorDr, {
     actor,
     item: damage.itemUuid ? (fromUuidSync(damage.itemUuid) ?? null) : null,
@@ -529,9 +514,40 @@ function armourAt(
     // Where the blow came from, as its roll said (since 1.139.0): gear that
     // guards against a slam, and nothing else, reads "slam" or "slammed".
     source: damage.source ?? null,
+    // A real blow, not the sheet asking what a location is worth (since 1.140.0).
+    preview: false,
     lines,
   });
+  return { lines, ...addUpLines(lines) };
+}
 
+/**
+ * The worn pieces at a spot as `gworld.armorDr` lines, before any listener:
+ * what each is worth against one kind of damage from one arc.
+ */
+function wornLinesAt(worn: ArmorPiece[], location: HitLocation, type: DamageType, arc: Arc | null, fromBelow: boolean): ArmorDrLine[] {
+  const here = new Set(piecesAt(worn, location));
+  return worn
+    // A Force Field "protects your entire body - including your eyes - as well
+    // as anything you are carrying" (Characters p. 47), wherever the blow fell.
+    .filter((piece) => (piece.forceField === true || here.has(piece)) && protectsAgainst(piece, arc))
+    .map((piece) => ({
+      label: piece.name ?? "",
+      // A Force Field covers everything, so it is read at the spot the blow
+      // fell whatever its own list says (Characters p. 47).
+      dr: fromBelow ? drFromBelow(piece, type, location) : drAgainst(piece, type, location),
+      applies: true,
+      forceField: piece.forceField === true,
+      flexible: piece.flexible === true,
+      hardened: Math.max(0, Math.floor(piece.hardened ?? 0)),
+      // Which item the line is, so a listener can read the piece's own data (since 1.56.0).
+      ...(piece.id ? { itemId: piece.id } : {}),
+      source: "armor" as const,
+    }));
+}
+
+/** What a location's lines add up to once the listeners have had them, layer by layer. */
+function addUpLines(lines: readonly ArmorDrLine[]): { naturalDr: number; layers: ArmourLayers } {
   const layers: ArmourLayers = { rigidDr: 0, flexibleDr: 0, totalDr: 0, fieldDr: 0, hardened: 0, fieldAgainstIgnoring: 0, armourAgainstIgnoring: 0 };
   let naturalDr = 0;
   for (const line of lines) {
@@ -553,7 +569,119 @@ function armourAt(
     }
   }
   layers.totalDr = layers.rigidDr + layers.flexibleDr;
-  return { naturalDr, lines, layers };
+  return { naturalDr, layers };
+}
+
+/** One kind of damage's DR at a location, as the sheet shows it (since API 1.140.0). */
+export interface PreviewDr {
+  type: DamageType;
+  /** Everything that counts: the lines the listeners left, and the location's own DR. */
+  dr: number;
+  /** The location's own DR against this kind of damage, the skull's bone, which no line carries. */
+  locationDr: number;
+  /** The lines as the listeners left them, refused ones included. */
+  lines: ArmorDrLine[];
+}
+
+/**
+ * The DR a character has at one location against each kind of damage, as the
+ * sheet shows it (since API 1.140.0): the lines a blow would meet, through the
+ * modules' `gworld.armorDr` listeners with `preview` true, and the location's
+ * own DR.
+ *
+ * There is no blow: no attacker, no item, no arc, no basic damage. What the
+ * sheet shows is still what the listeners leave, so a piece one takes off a
+ * side, a material it doubles against one kind of damage, or natural DR it
+ * divides shows as the pipeline will subtract it, and the sheet guesses at
+ * none of it. It is worked out while the actor's data is prepared, so the
+ * traits and the worn pieces come from the caller rather than the actor's
+ * derived data, which is not ready yet.
+ */
+export function previewDrAt(
+  actor: any,
+  location: HitLocation,
+  traits: TraitEffects,
+  worn: ArmorPiece[],
+  types: readonly DamageType[],
+): PreviewDr[] {
+  // The target's own DR is the same against every kind of damage until a
+  // listener says otherwise, so it is read once and copied for each.
+  const natural = naturalDrLines(actor, traits, location);
+  return types.map((type) => {
+    const lines: ArmorDrLine[] = [...wornLinesAt(worn, location, type, null, false), ...natural.map((line) => ({ ...line }))];
+    callCombatHook(COMBAT_HOOKS.armorDr, {
+      actor,
+      item: null,
+      mode: null,
+      hitLocation: location,
+      damageType: type,
+      basicDamage: 0,
+      ignoresDr: false,
+      arc: null,
+      fromBelow: false,
+      calledShot: null,
+      chink: false,
+      addonLocation: null,
+      options: {},
+      source: null,
+      // The sheet asking, not a blow: a listener that spends a pool, or
+      // writes anything, should do nothing when this is true.
+      preview: true,
+      lines,
+    });
+    const { naturalDr, layers } = addUpLines(lines);
+    const locationDr = locationDrAgainst(location, type);
+    return { type, dr: layers.totalDr + layers.fieldDr + naturalDr + locationDr, locationDr, lines };
+  });
+}
+
+/** One line of a location's DR as the sheet's tooltip names it (since API 1.140.0). */
+export interface PreviewDrLine {
+  label: string;
+  dr: number;
+  applies: boolean;
+  reason?: string;
+}
+
+/**
+ * A location's DR against every kind of damage, grouped the way the sheet
+ * shows it (since API 1.140.0): each distinct figure with the damage it
+ * applies to, highest first, and the lines behind the highest.
+ *
+ * The highest figure leads because a split is never above a piece's own DR,
+ * so it is the one the location's armour is worth the most against. The
+ * grouping follows what the listeners left rather than what the pieces say,
+ * so a listener that doubles a piece against one kind of damage makes a band
+ * of its own.
+ */
+export function previewBands(previews: readonly PreviewDr[]): {
+  splits: boolean;
+  bands: Array<{ dr: number; types: DamageType[] }>;
+  lines: PreviewDrLine[];
+  locationDr: number;
+} {
+  const byDr = new Map<number, DamageType[]>();
+  for (const { type, dr } of previews) {
+    const bucket = byDr.get(dr);
+    if (bucket) bucket.push(type);
+    else byDr.set(dr, [type]);
+  }
+  const bands = [...byDr.entries()].map(([dr, types]) => ({ dr, types })).sort((a, b) => b.dr - a.dr);
+  const lead = bands[0] ? previews.find((preview) => preview.type === bands[0]!.types[0]) : undefined;
+  return {
+    splits: bands.length > 1,
+    bands,
+    // Plain copies: the actor's derived data keeps them, and a listener's
+    // own fields on a line are no business of the sheet's.
+    lines: (lead?.lines ?? []).map((line) => ({
+      label: String(line.label ?? ""),
+      dr: Math.max(0, Math.floor(Number(line.dr) || 0)),
+      applies: line.applies !== false,
+      ...(line.reason ? { reason: String(line.reason) } : {}),
+    })),
+    // The skull's bone, which is the location's and so never a line.
+    locationDr: lead?.locationDr ?? 0,
+  };
 }
 
 /** The traits that give natural DR, the spot each covers, and its name for a line. */
