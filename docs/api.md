@@ -2920,7 +2920,9 @@ Two fields a module may read (since 1.62.0):
     resuscitation, each side of a Quick or Regular Contest (`contest`, an
     influence roll's among them; a Regular Contest's once for the whole
     contest), and the first of a span's drowning rolls. A refused roll uses
-    nothing up. Its line, keyed `pendingModifier`, is among the caller's
+    nothing up. A procedure's roll takes an actor's held bonuses only for a
+    user who owns that actor, who alone can use them up: the foe's side of
+    a contest a player rolls against an NPC they don't own takes none. Its line, keyed `pendingModifier`, is among the caller's
     `modifiers` when `gworld.successRollModifiers` is called, so a listener
     may change it or take it off; one taken off isn't used up. A roll
     refused for an effective skill below 3 uses nothing up. Every bonus that

@@ -159,6 +159,16 @@ describe("a bonus held for a procedure's roll", () => {
   });
 });
 
+describe("a bonus held on an actor the roller doesn't own", () => {
+  it("doesn't go on that side's roll, since it could never be used up", async () => {
+    const { contexts } = foundryWith([4, 4, 4, 6, 6, 6]);
+    const foe = { ...character("Foe", [bonus({ tags: ["contest"] })]), isOwner: false };
+    await rollQuickContest({ label: "Grab the gun", first: { actor: character("A"), base: 12 }, second: { actor: foe, base: 12 } });
+    expect(contexts[1].modifiers).toEqual([]);
+    expect(foe.flags["gworld.pendingModifiers"]).toHaveLength(1);
+  });
+});
+
 describe("a contest a listener refuses", () => {
   it("resolves to the refusal and rolls nothing, where the caller asked for one", async () => {
     const { cards, contexts, rolled } = foundryWith([4, 4, 4], (context) => {

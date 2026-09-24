@@ -588,7 +588,9 @@ export interface ProcedureRoll {
  * then does the context carry `refusal`.
  */
 export function procedureRoll(context: SuccessRollContext, options: { refusable?: boolean } = {}): ProcedureRoll {
-  const held = pendingModifierLines(context.actor, {
+  // Only a roller who can use a bonus up gets it: a foe's side rolled by a
+  // user who doesn't own the foe would otherwise take it on every roll.
+  const held = !context.actor?.isOwner ? [] : pendingModifierLines(context.actor, {
     skill: context.skill,
     tags: successRollTags({ kind: context.kind, skill: context.skill, tags: context.tags }),
   });
