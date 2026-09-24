@@ -104,7 +104,7 @@ Contents:
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. `normalizeDamage(formula)` (since 1.125.0) gives a damage formula as the table rolls it; see [Modifying dice + adds](#modifying-dice--adds). |
 | `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0), and `bind(actor, options)`, `unbind(actor)`, `binding(actor)` and `breakFree(actor)` (since 1.107.0; see *Binding*), and `spendFatigue(actor, fp, options)` (since 1.109.0; see *Medical hooks*), and `changeTrait(actor, options)` (since 1.112.0; `operate` also resolves to its outcome since then; it adds and removes traits since 1.124.0), and `tow(actor, options)` and `stopTowing(actor)` (since 1.113.0; see *Towing and the wheelchair*), and `cripple(actor, location, options)`, `crippled(actor)` and `healCrippled(actor, which)` (since 1.114.0; see *Crippled parts*). |
-| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. `stuck(item)`, `setStuck(item, stuck)`, `freeStuck(actor, item)` and `letGoOfStuck(actor, item)` (since 1.105.0) read, set and end a weapon's being stuck in a foe (see *A weapon stuck in a foe*). `equipmentFailure({ actor?, item, modifier?, label?, apply? })` (since 1.118.0) rolls an equipment failure roll for a thing (see *Equipment failure rolls*). `changeQuantity(item, delta, { reason? })` (since 1.123.0) adds `delta` to a stack of an item, or takes it off with a negative one, for a module that makes, finds or uses up consumables: rounds put in a box, supplies spent. A fraction is dropped toward none. The quantity never goes below 0, and an emptied stack stays on the actor. Weight and cost are kept per unit, so the carried weight and the stack's worth follow with nothing else to change. It resolves to `{ from, to, reason }` -- the quantity before and after, `reason` as given, for the module's own card -- or null for an item that keeps no quantity, a user who doesn't own it, or a delta that isn't a number. |
+| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. `stuck(item)`, `setStuck(item, stuck)`, `freeStuck(actor, item)` and `letGoOfStuck(actor, item)` (since 1.105.0) read, set and end a weapon's being stuck in a foe (see *A weapon stuck in a foe*). `equipmentFailure({ actor?, item, modifier?, label?, apply? })` (since 1.118.0) rolls an equipment failure roll for a thing (see *Equipment failure rolls*). `applyDamage({ item, damage, type, armorDivisor?, label? })` (since 1.126.0) puts a blow on a thing that keeps hit points (see *Damage to things*). `changeQuantity(item, delta, { reason? })` (since 1.123.0) adds `delta` to a stack of an item, or takes it off with a negative one, for a module that makes, finds or uses up consumables: rounds put in a box, supplies spent. A fraction is dropped toward none. The quantity never goes below 0, and an emptied stack stays on the actor. Weight and cost are kept per unit, so the carried weight and the stack's worth follow with nothing else to change. It resolves to `{ from, to, reason }` -- the quantity before and after, `reason` as given, for the module's own card -- or null for an item that keeps no quantity, a user who doesn't own it, or a delta that isn't a number. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0). |
@@ -922,6 +922,40 @@ and the roll continues.
     resolves to null where the user doesn't own the item. `actor` defaults
     to the item's owner, and speaks the card. The roll does not look at
     the Repairs switch; the module calling it decides when it applies.
+  - **Damage to things** (since 1.126.0; Campaigns pp. 483-484).
+    `items.applyDamage({ item, damage, type, armorDivisor?, label? })` puts
+    a blow on an item that keeps hit points (equipment and shields), for
+    gear that is dropped, crushed, struck or burned outside the system's
+    own procedures. `damage` is the basic damage and `type` one of the
+    Basic Set's damage types (`cr`, `cut`, `imp`, `pi-` to `pi++`, `burn`,
+    `cor`, `tox`). The item's DR, HP, HT and `kind` are as
+    `items.objectStats` gives them. The armor divisor (1 by default)
+    divides its DR; what gets through is multiplied by the wounding
+    modifier the item's `kind` allows (an `unliving` or `homogenous` thing
+    takes less from piercing and impaling, a `diffuse` one no more than 1
+    HP from those and 2 from anything else), with at least 1 HP from any
+    blow that penetrates. `hpLost` goes up by the injury. At -1xHP and at
+    each further multiple of -HP it reaches the item rolls 3d against its
+    HT, and on a failure it is destroyed; a blow that reaches -5xHP
+    destroys it without a roll. A destroyed item's `hpLost` is put at
+    -5xHP, so its condition, the repair rules and the sheet all read it as
+    destroyed. The card is titled with `label` ("<name> is damaged" where
+    none is given) and spoken by the item's owner. It resolves to
+    `{ itemId, name, label, kind, dr, hp, ht, damage, type, armorDivisor,
+    effectiveDr, penetrating, woundingModifier, injury, from, to, state,
+    rolls, destroyed }`: `from` and `to` are `hpLost` before and after,
+    `state` is `sound`, `damaged` (below a third of its HP), `failing` (at
+    0 HP or below, rolling HT each second it is used), `breaking` (at
+    -1xHP or below and still in one piece) or `destroyed`, and `rolls` has
+    `{ multiple, target, roll, success }` for each HT roll made.
+    `destroyed` says whether this blow destroyed the item; one already
+    destroyed takes the injury and rolls nothing. It
+    resolves to null where the user doesn't own the item, the item keeps
+    no hit points or has none (weighing nothing), `damage` isn't a number
+    of 0 or more, or `type` isn't one of the damage types above (a thing
+    has no fatigue to lose). The HT roll each second a failing thing is
+    used is the module's, as is what a damaged thing's reduced
+    effectiveness comes to. The call doesn't look at any rule switch.
 
 ## Data extension points
 
@@ -1114,7 +1148,14 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
   - `gworld.objectStats` (since 1.90.0), with `{ item, actor, kind, dr, hp,
     ht, notes }`, wherever a weapon's or shield's DR, HP and HT as an object
     are worked out (Campaigns pp. 483-484). `kind` is `"unliving"` (a gun,
-    HT 10) or `"homogenous"` (a sword or shield, HT 12); `dr` and `hp` are
+    HT 10) or `"homogenous"` (a sword or shield, HT 12). Since 1.126.0 a
+    listener may set `kind` to `"unliving"`, `"homogenous"` or
+    `"diffuse"` (a net, a mattress), which decides the wounding modifiers
+    when the item is struck at or damaged through `items.applyDamage`; any
+    other value is ignored. Changing `kind` doesn't change `hp` or `ht`, so
+    set those too where the book's figures for the new kind should apply
+    (a machine has 4 x the cube root of its weight in HP and HT 10, a solid
+    thing 8 x and HT 12). `dr` and `hp` are
     the book's figures from the item's material and weight, or a shield's own
     DR and HP fields; `actor` is the owner, or null. Change `dr`, `hp` and
     `ht` to make a piece of gear tougher or frailer -- a rugged gun, a cheap

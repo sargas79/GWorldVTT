@@ -97,6 +97,7 @@ import { manaLevel } from "./casting.js";
 import { PARTY_CHANGED_HOOK, addMembers, membersOf, partyOf, removeMember } from "./party.js";
 import { CAMPAIGN_CHANGED_HOOK, actorCampaignTerms, worldCampaignTerms } from "./campaign.js";
 import { objectStats, type ItemObjectStats } from "./object-stats.js";
+import { applyItemDamage, type ItemDamaged } from "./item-damage.js";
 import { normalizeDamage } from "./modifying-dice.js";
 import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
 
@@ -104,7 +105,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.125.0";
+export const API_VERSION = "1.126.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -573,12 +574,27 @@ const items = {
 
   /**
    * A weapon's or shield's DR, HP and HT as an object (since 1.90.0):
-   * `{ kind, dr, hp, ht, notes }`, `kind` being `unliving` or `homogenous`,
-   * once `gworld.objectStats` listeners have had their say. The figures
-   * breakage, striking at the item, shield damage and repairs use.
+   * `{ kind, dr, hp, ht, notes }`, `kind` being `unliving` or `homogenous`
+   * (or `diffuse`, which a listener may set since 1.126.0), once
+   * `gworld.objectStats` listeners have had their say. The figures breakage,
+   * striking at the item, shield damage, repairs and `applyDamage` use.
    */
   objectStats(item: any): ItemObjectStats {
     return objectStats(item);
+  },
+
+  /**
+   * Puts a blow on an item that keeps hit points (since 1.126.0; Campaigns
+   * pp. 483-484) with `{ item, damage, type, armorDivisor?, label? }`: its DR
+   * off, the rest turned into injury by its `kind`, `hpLost` raised, the HT
+   * rolls at -1xHP and each multiple after it, and the card. Resolves to an
+   * `ItemDamaged` (the injury, `hpLost` `from`/`to`, `state`, `rolls`,
+   * `destroyed`), or null where the user doesn't own the item, it keeps or
+   * has no hit points, the damage isn't 0 or more, or the type isn't one of
+   * the Basic Set's other than `fat`.
+   */
+  applyDamage(options: { item: any; damage: number; type: string; armorDivisor?: number; label?: string }): Promise<ItemDamaged | null> {
+    return applyItemDamage(options);
   },
 
   /**

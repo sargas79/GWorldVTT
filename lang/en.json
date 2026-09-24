@@ -3856,6 +3856,24 @@
       "Weapon": "Weapon",
       "NoWeaponToStrike": "The foe has no weapon in hand to strike at."
     },
+    "ItemDamage": {
+      "Label": "{name} is damaged",
+      "HtRoll": "HT roll at -{multiple}xHP: {roll} against {target}",
+      "Holds": "it holds together.",
+      "Destroyed": "it is destroyed.",
+      "Kind": {
+        "unliving": "Unliving",
+        "homogenous": "Homogenous",
+        "diffuse": "Diffuse"
+      },
+      "State": {
+        "sound": "Sound",
+        "damaged": "Damaged: below a third of its HP, it may work less well",
+        "failing": "At 0 HP or below: a HT roll each second it is used, or it stops working",
+        "breaking": "At -1xHP or below, and still in one piece",
+        "destroyed": "Destroyed"
+      }
+    },
     "Ammunition": {
       "none": "Ordinary",
       "hp": "Hollow-point",
