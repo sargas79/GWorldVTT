@@ -283,4 +283,40 @@ describe("GM tools", () => {
     api.addGmTools(playerControls, { id: "p1", isGM: false });
     expect(playerControls.tokens.tools["gworld-test-addon.tracker"].visible).toBe(false);
   });
+
+  // Foundry builds the scene controls with the canvas, before `ready`, so a
+  // tool registered from `gworld.ready` showed only once something rebuilt
+  // them (sargas79/GWorldVTT#755).
+  it("rebuilds the scene controls once ready work is done, so tools registered then show on first load", async () => {
+    const api = await load();
+    const render = vi.fn(async () => undefined);
+    globals.ui = { controls: { render } };
+    try {
+      api.registerGmTool({ module: "test-addon", key: "tracker", label: "Tracker", open: vi.fn() });
+      expect(render).not.toHaveBeenCalled();
+      api.settleGmTools();
+      expect(render).toHaveBeenCalledTimes(1);
+      expect(render).toHaveBeenCalledWith({ reset: true });
+      api.settleGmTools();
+      expect(render).toHaveBeenCalledTimes(1);
+
+      // A tool registered after that rebuilds the controls itself.
+      api.registerGmTool({ module: "test-addon", key: "later", label: "Later", open: vi.fn() });
+      expect(render).toHaveBeenCalledTimes(2);
+    } finally {
+      delete globals.ui;
+    }
+  });
+
+  it("leaves the scene controls alone when no module registered a tool", async () => {
+    const api = await load();
+    const render = vi.fn(async () => undefined);
+    globals.ui = { controls: { render } };
+    try {
+      api.settleGmTools();
+      expect(render).not.toHaveBeenCalled();
+    } finally {
+      delete globals.ui;
+    }
+  });
 });

@@ -45,7 +45,7 @@ import { takeInjury, wearDr, type DrWorn, type InjuryTaken } from "./damage.js";
 import { equipmentFailure, type EquipmentFailureResult } from "./repairs.js";
 import { stopBleeding } from "./bleeding.js";
 import { activePoisons, advancePoison, clearPoison, dosePoison, treatIllness, treatPoison, type ActivePoison } from "./poison.js";
-import { applyFirstAid, attendPatient, operate, resuscitate } from "./recovery.js";
+import { attendPatient, giveFirstAid, operate, resuscitate } from "./recovery.js";
 import { rollMortalWound } from "./dying.js";
 import type { Poison, Treatment } from "../rules/poison.js";
 import type { ResuscitationCause } from "../rules/medicine.js";
@@ -98,6 +98,8 @@ import { PARTY_CHANGED_HOOK, addMembers, membersOf, partyOf, removeMember } from
 import { CAMPAIGN_CHANGED_HOOK, actorCampaignTerms, worldCampaignTerms } from "./campaign.js";
 import { objectStats, type ItemObjectStats } from "./object-stats.js";
 import { applyItemDamage, type ItemDamaged } from "./item-damage.js";
+import { normalizeDamage } from "./modifying-dice.js";
+import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
 
 /**
  * The API's version. Raise the minor part when something is added, the major
@@ -245,10 +247,12 @@ const actors = {
   /**
    * Changes one of a character's traits, GM only (since 1.112.0): `level`
    * sets its levels within its cap, `replaceWith` swaps it for another trait
-   * (a compendium name, or item data). Found by `id` or `name`. Resolves to
-   * `{ itemId, from, to, replaced }`, or null.
+   * (a compendium name, or item data). Found by `id` or `name`. Since
+   * 1.124.0, `add` gives the character a trait they haven't got (found as
+   * `replaceWith` is) and `remove: true` takes one away. Resolves to
+   * `{ itemId, from, to, replaced, added, removed }`, or null.
    */
-  changeTrait(actor: any, options: { id?: string; name?: string; level?: number; replaceWith?: string | Record<string, any> }): Promise<TraitChanged | null> {
+  changeTrait(actor: any, options: { id?: string; name?: string; level?: number; replaceWith?: string | Record<string, any>; add?: string | Record<string, any>; remove?: boolean }): Promise<TraitChanged | null> {
     return changeTrait(actor, options);
   },
 
@@ -353,10 +357,12 @@ const actors = {
   /**
    * First Aid on a patient (Campaigns p. 424, since 1.60.0), as the sheet's button does.
    * `skill` and `techLevel` stand in for the healer's, for a device that treats on its own;
-   * `label` names who treats on the card. Returns the HP it moved.
+   * `label` names who treats on the card. Returns the HP it moved. Since 1.122.0 it runs
+   * the button's whole attempt, so `gworld.firstAid` hears it: a listener may refuse it
+   * (0) or change its tech level, and a success stops the bleeding unless one says not.
    */
   firstAid(options: { healer: any; patient: any; skill?: number; techLevel?: number; label?: string; modifier?: number }): Promise<number> {
-    return applyFirstAid({ ...options, modifier: options.modifier ?? 0 });
+    return giveFirstAid({ ...options, modifier: options.modifier ?? 0 });
   },
 
   /** A physician's rounds on a patient (p. 424, since 1.60.0); the roll is tagged `physician`. */
@@ -629,6 +635,17 @@ const items = {
   },
 
   /**
+   * Adds `delta` to a stack of an item, or takes it off with a negative one
+   * (since 1.123.0), for a module that makes, finds or uses up consumables.
+   * Never below 0; weight and cost are per unit, so the totals follow.
+   * Resolves to `{ from, to, reason }`, or null for an item with no
+   * quantity, a user who doesn't own it, or a delta that isn't a number.
+   */
+  changeQuantity(item: any, delta: number, options: { reason?: string } = {}): Promise<QuantityChanged | null> {
+    return changeQuantity(item, delta, options);
+  },
+
+  /**
    * Rolls an equipment failure roll for a thing (since 1.118.0; Campaigns p.
    * 485) with `{ actor?, item, modifier?, label?, apply? }`: 3d against the
    * item's HT (after missed maintenance) plus `modifier` and the
@@ -675,6 +692,12 @@ export interface GWorldApi {
      * TL against the skill's and the familiarity penalty (Characters pp. 168-169).
      */
     readonly equipmentUse: typeof equipmentUseLines;
+    /**
+     * A damage formula as the table rolls it (since 1.125.0): converted by
+     * Modifying Dice + Adds (Characters p. 269) where that rule is on, with
+     * the raw formula and whether anything changed.
+     */
+    readonly normalizeDamage: typeof normalizeDamage;
   };
   readonly actors: typeof actors;
   readonly items: typeof items;
@@ -834,7 +857,7 @@ export function createApi(): GWorldApi {
     version: API_VERSION,
     rules,
     registry: Object.freeze({ registerRuleGroup, registerRule, namespacedRuleKey, isAddonRuleKey, isRuleOn, activeRules }),
-    roll: Object.freeze({ hitLocation: rollHitLocation, frightCheck: (actor: any, modifier = 0) => rollFrightCheck({ actor, modifier: Number(modifier) || 0 }), success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest, registerContestResolver, equipmentUse: equipmentUseLines }),
+    roll: Object.freeze({ hitLocation: rollHitLocation, frightCheck: (actor: any, modifier = 0) => rollFrightCheck({ actor, modifier: Number(modifier) || 0 }), success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest, registerContestResolver, equipmentUse: equipmentUseLines, normalizeDamage }),
     actors: Object.freeze(actors),
     items: Object.freeze(items),
     combat,
