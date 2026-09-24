@@ -73,7 +73,7 @@ export const COMBAT_HOOKS = Object.freeze({
   weaponAttacks: "gworld.weaponAttacks",
   /** A character's punch and kick once worked out (since 1.102.0): `{ actor, item: null, rows, damageAt, rangeAt, addToDamage }`, the rows mutable. */
   unarmedAttacks: "gworld.unarmedAttacks",
-  /** Before an equipment failure roll: `{ actor, item, target, modifiers }`; push lines to `modifiers`. */
+  /** Before an equipment failure roll: `{ actor, item, target, modifiers, label }`; push lines to `modifiers`. `label` (since 1.118.0) names a module's roll, null for the exposure check. */
   equipmentFailure: "gworld.equipmentFailure",
   /** A character's maneuver allowances as their data is prepared: `{ actor, maneuver, option, movement, defense }`, the allowances mutable. */
   maneuverAllowances: "gworld.maneuverAllowances",
@@ -406,8 +406,8 @@ export function feintModifiers(context: Omit<FeintContext, "modifiers" | "refusa
 }
 
 /** Runs the equipment failure hook: the target, and the lines modules added to it. */
-export function equipmentFailureModifiers(actor: any, item: any, target: number): { target: number; modifiers: ModifierLine[] } {
-  const context = callCombatHook(COMBAT_HOOKS.equipmentFailure, { actor, item, target, modifiers: [] as ModifierLine[] });
+export function equipmentFailureModifiers(actor: any, item: any, target: number, label: string | null = null): { target: number; modifiers: ModifierLine[] } {
+  const context = callCombatHook(COMBAT_HOOKS.equipmentFailure, { actor, item, target, modifiers: [] as ModifierLine[], label });
   const modifiers = (context.modifiers ?? []).filter((m) => typeof m?.label === "string" && typeof m.value === "number" && Number.isFinite(m.value));
   return { target: target + modifiers.reduce((sum, m) => sum + m.value, 0), modifiers };
 }

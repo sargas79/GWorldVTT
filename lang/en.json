@@ -3953,6 +3953,9 @@
         "needsMinorRepair": "It breaks down, jams or otherwise fails: nothing until it is mended.",
         "needsMajorRepair": "It fails badly: major repairs, spare parts and all."
       },
+      "FailureTitle": "{name}: {label}",
+      "FailureLabel": "Equipment failure",
+      "FailureModifier": "Modifier",
       "CareLabel": "How it has been treated: +1 cleaned daily, 0 ordinary, -1 or -2 abused",
       "HireOffer": "Nobody here has a repair skill. Hire a technician at ${rate} an hour?",
       "Hired": "A hired technician",
