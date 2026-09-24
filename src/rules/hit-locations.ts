@@ -293,6 +293,41 @@ export function applyCrippling(
   return { injury: capped, excessLost: injury - capped, crippled: true };
 }
 
+/** What the crippled parts a character has come to, in trait terms. */
+export interface CrippledEffects {
+  oneEye?: boolean;
+  blindness?: boolean;
+  oneArm?: boolean;
+}
+
+/**
+ * What crippled parts do to a character (Effects of Crippling Injury,
+ * Campaigns p. 421), read as the disadvantages the book points to.
+ *
+ * An eye blinded is read with One Eye (Characters p. 147), and the last eye
+ * with Blindness (p. 124): `ownEyes` is how many the character sees with
+ * before any is crippled, so somebody with One Eye who loses the other is
+ * blind. Blindness that came on this way is not one the character is used
+ * to, so the effects say nothing about being accustomed to it.
+ *
+ * A crippled arm or hand can't hold anything, so nothing needing both hands
+ * can be used: One Arm's effect (p. 147). The rest of what a crippled limb
+ * or extremity costs -- a leg that won't hold the character up, a foot that
+ * lames them -- the table rules on, as it does for a limb crippled in a fight.
+ * Locations a module registers are the module's to read.
+ */
+export function crippledEffects(locations: readonly string[], ownEyes = 2): CrippledEffects {
+  const effects: CrippledEffects = {};
+  const eyes = locations.filter((location) => location === "eye").length;
+  if (eyes > 0) {
+    const left = Math.max(0, Math.floor(ownEyes)) - eyes;
+    if (left <= 0) effects.blindness = true;
+    else if (left === 1) effects.oneEye = true;
+  }
+  if (locations.some((location) => location === "arm" || location === "hand")) effects.oneArm = true;
+  return effects;
+}
+
 /** Every location, in a sensible order for a targeting menu. */
 export const HIT_LOCATION_ORDER: readonly HitLocation[] = [
   "torso", "skull", "eye", "face", "neck", "vitals", "groin", "arm", "leg", "hand", "foot",

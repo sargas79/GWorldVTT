@@ -73,7 +73,10 @@ function isLine(line: unknown): line is ModifierLine {
 
 /** The hooks this module fires, by name. */
 export const PROCEDURE_HOOKS = Object.freeze({
-  /** Before any success roll: `{ actor, label, kind, skill, base, tags, modifiers }`; push to `modifiers`. */
+  /**
+   * Before any success roll: `{ actor, label, kind, skill, base, tags, modifiers }`; push to `modifiers`.
+   * Where the context carries `refusal` (null), set it to text to stop the roll (since 1.131.0).
+   */
   successRollModifiers: "gworld.successRollModifiers",
   /** After a success roll is posted: `{ actor, label, kind, skill, tags, outcome }`. */
   afterSuccessRoll: "gworld.afterSuccessRoll",
@@ -123,12 +126,21 @@ export const PROCEDURE_HOOKS = Object.freeze({
   radiationDose: "gworld.radiationDose",
   /**
    * Before an electrical shock is worked out (since 1.119.0; Campaigns pp. 432-433):
-   * `{ actor, kind, formula, continuous, contactSeconds, modifier, injuryStep,
-   * heartAttackMargin, dr, rollOnZeroInjury, immune, lines }`. `modifier`, `injuryStep`,
-   * `heartAttackMargin`, `dr`, `rollOnZeroInjury` and `immune` are mutable; push a
-   * string to `lines` for the card.
+   * `{ actor, kind, source, tags, formula, continuous, contactSeconds, modifier, injuryStep,
+   * heartAttackMargin, heartAttackOnCritical, dr, rollOnZeroInjury, immune, lines }`.
+   * `modifier`, `injuryStep`, `heartAttackMargin`, `heartAttackOnCritical` (since 1.127.0),
+   * `dr`, `rollOnZeroInjury` and `immune` are mutable; push a string to `lines` for the
+   * card. `source` and `tags` (since 1.127.0) are what the caller gave.
    */
   shockModifiers: "gworld.shockModifiers",
+  /**
+   * Once a shock's burning damage is rolled and taken, before the HT roll
+   * (since 1.127.0): `{ actor, kind, source, tags, formula, damageRoll, dr, injury,
+   * injuryModifier, modifier, rollOnZeroInjury, lines }`. `damageRoll` is the roll
+   * before DR. `modifier` and `rollOnZeroInjury` are mutable; push a string to
+   * `lines` for the card. Not called where there is no damage roll.
+   */
+  shockDamage: "gworld.shockDamage",
   /**
    * Once a shock's roll and its effects are applied, before the card is posted
    * (since 1.119.0): the `ShockOutcome` with `actor`. `contact` and `lines` are
@@ -385,6 +397,13 @@ export interface SuccessRollContext {
   /** What sort of roll it is beyond its kind: `fastDraw`, `fright`, `knockdown`, `teaching`, `contest`, a defense's name... */
   tags: string[];
   modifiers: ModifierLine[];
+  /**
+   * Why the roll can't be made at all (since 1.131.0). It is on the context,
+   * as null, only where the roll can be refused -- one made through
+   * `roll.success`, other than an active defense -- and a listener that sets
+   * it to text stops the roll: no dice, and a card that says why.
+   */
+  refusal?: string | null;
   /** For a side of a contest, the actor on the other side (since 1.30.0). */
   opponent?: any;
   /** The actor looked for, on a roll to detect them (since 1.63.0). */
@@ -507,7 +526,24 @@ export function successRollModifiers(context: SuccessRollContext): ModifierLine[
  * left them -- changed, or taken out, as a keyed line may be -- and theirs.
  */
 export function successRollLines(context: SuccessRollContext): ModifierLine[] {
-  const ctx: SuccessRollContext = { ...context, tags: [...context.tags], modifiers: [...context.modifiers] };
+  return hookedSuccessRoll(context, false).modifiers;
+}
+
+/**
+ * The lines of a success roll that may be refused, as {@link successRollLines}
+ * gives them, and the reason a listener gave for refusing it, or null (since
+ * API 1.131.0). Only a roll whose caller will act on a refusal asks this, so
+ * a listener finds `refusal` on the context only where setting it counts.
+ */
+export function refusableSuccessRoll(context: SuccessRollContext): { modifiers: ModifierLine[]; refusal: string | null } {
+  return hookedSuccessRoll(context, true);
+}
+
+function hookedSuccessRoll(context: SuccessRollContext, refusable: boolean): { modifiers: ModifierLine[]; refusal: string | null } {
+  const ctx: SuccessRollContext = {
+    ...context, tags: [...context.tags], modifiers: [...context.modifiers],
+    ...(refusable ? { refusal: null } : {}),
+  };
   ctx.modifiers.push(...conditionModifiers(ctx.actor, ctx.kind, ctx.tags));
   if (ctx.tags.includes("detection")) ctx.modifiers.push(...detectionModifiers(ctx));
   // Smoke, fog and the like on the scene (since 1.63.0).
@@ -523,7 +559,9 @@ export function successRollLines(context: SuccessRollContext): ModifierLine[] {
     }
   }
   callCombatHook(PROCEDURE_HOOKS.successRollModifiers, ctx);
-  return ctx.modifiers.filter(isLine);
+  // Text, not merely something truthy: the card and the warning show it.
+  const refusal = refusable && typeof ctx.refusal === "string" && ctx.refusal.trim() ? ctx.refusal.trim() : null;
+  return { modifiers: ctx.modifiers.filter(isLine), refusal };
 }
 
 /** Tells the listeners how a success roll went. */
