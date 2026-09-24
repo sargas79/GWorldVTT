@@ -34,6 +34,8 @@ import {
   type TraitEffects,
 } from "../../rules/trait-effects.js";
 import { gearEffects, grantedEffectSources } from "../../rules/gear-effects.js";
+import { crippledEffects } from "../../rules/hit-locations.js";
+import { crippledPartName, crippledParts } from "../crippling.js";
 import { attackAttribute, levelledDamage } from "../../rules/trait-attacks.js";
 import { talentBonusFor, talentBonuses, traitSkillBonuses, traitSkillBonusesFor } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
@@ -1698,6 +1700,25 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     )) {
       addTraitEffects(traits, granted.effect);
       traitEffectSources.push(...grantedEffectSources(granted));
+    }
+
+    // A crippled eye, arm or hand works as the disadvantage the book points
+    // to (Campaigns p. 421; since API 1.129.0), whatever crippled it, so a
+    // module that records one needn't impose the penalty as well. Read after
+    // the character's own traits, because One Eye and a crippled other eye is
+    // blindness. The eyes and the hands are read apart, so the Traits tab
+    // names the parts behind each effect and no other.
+    const crippled = crippledParts(this.parent);
+    const ownEyes = traits.oneEye ? 1 : 2;
+    for (const group of [["eye"], ["arm", "hand"]]) {
+      const parts = crippled.filter((part) => group.includes(part.location));
+      const effect = crippledEffects(parts.map((part) => part.location), ownEyes);
+      if (Object.keys(effect).length === 0) continue;
+      addTraitEffects(traits, effect);
+      traitEffectSources.push(...grantedEffectSources({
+        source: parts.map((part) => part.label || crippledPartName(part.location)).join(", "),
+        effect,
+      }));
     }
 
     // Then the modules, which see what the character's own traits and gear
