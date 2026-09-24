@@ -102,6 +102,28 @@ export async function applyFatigue(
   };
 }
 
+/**
+ * Charges a module's fatigue the way the system charges its own (Campaigns
+ * p. 426; since API 1.109.0): `gworld.fatigueCost` first, told `reason`
+ * (`module` where none is given) and `details`, then Very Fit's halving for
+ * exertion, then the chart -- past 0 FP each point is a point of injury too,
+ * and at -1xFP the character falls unconscious. Null for a user who can't
+ * change the actor or an amount that isn't a positive number.
+ */
+export async function spendFatigueFor(
+  actor: any,
+  fp: number,
+  options: { reason?: string; details?: Record<string, unknown>; exertion?: boolean } = {},
+): Promise<FatigueApplied | null> {
+  const amount = Math.floor(Number(fp));
+  if (!actor?.isOwner || !Number.isFinite(amount) || amount <= 0) return null;
+  return applyFatigue(actor, amount, {
+    reason: String(options.reason ?? "").trim() || "module",
+    exertion: options.exertion !== false,
+    ...(options.details ? { details: options.details } : {}),
+  });
+}
+
 /** What `restoreFatigue` gave back. */
 export interface FatigueRestored {
   /** FP before and after, and the most there are. */

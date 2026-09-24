@@ -34,7 +34,7 @@ import {
   attackTargetCandidates,
   maneuverOptionAttackEffect,
   recordAttackMade,
-  successRollModifiers,
+  successRollLines,
   type ResistedAttack,
   successRollTags,
 } from "./procedure-extensions.js";
@@ -538,15 +538,14 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   // the caller worked out.
   const tags = successRollTags({ kind, skill: options.skill, tags: options.tags });
   const given = options.modifiers ?? [];
-  const modifiers = [
-    ...given,
-    ...successRollModifiers({
-      actor, label, kind, skill: String(options.skill ?? ""), base, tags, modifiers: [...given],
-      ...(options.attack ? { attack: options.attack } : {}),
-      ...(options.subject ? { subject: options.subject } : {}),
-      ...(options.item ? { item: options.item } : {}),
-    }),
-  ];
+  // The caller's lines as the listeners left them, and theirs: a keyed line a
+  // listener removes is gone from the roll (since API 1.109.0).
+  const modifiers = successRollLines({
+    actor, label, kind, skill: String(options.skill ?? ""), base, tags, modifiers: [...given],
+    ...(options.attack ? { attack: options.attack } : {}),
+    ...(options.subject ? { subject: options.subject } : {}),
+    ...(options.item ? { item: options.item } : {}),
+  });
 
   const totalModifier = modifiers.reduce((sum, m) => sum + m.value, 0);
   const effective = base + totalModifier;

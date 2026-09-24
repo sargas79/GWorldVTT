@@ -2767,6 +2767,7 @@
       "Immune": "Simply immune to it, and does not know",
       "AlreadyImmune": "Immune to this one already",
       "Infection": "Infection",
+      "WoundDirt": "Dirt in the wound",
       "InfectionAction": "Infection",
       "InfectionHint": "Whether an untreated wound goes bad: HT+3, worse for what got into it",
       "Dirt": "What got into the wound",

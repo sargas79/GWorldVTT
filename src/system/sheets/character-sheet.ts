@@ -2221,7 +2221,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (modifier === null) return;
 
-    const restored = await applyFirstAid({ healer: this.actor, patient, modifier });
+    // At the tech level a listener set, where one did (API 1.109.0; Campaigns p. 424).
+    const restored = await applyFirstAid({ healer: this.actor, patient, modifier, techLevel: rules.techLevel });
 
     // "someone who is wounded but receives a successful First Aid roll ... loses
     // no HP to bleeding. A later roll will prevent further HP loss."
