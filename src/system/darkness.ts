@@ -7,12 +7,14 @@
  * a module's light source, sense roll or sensor: the darkness where the spot
  * is (a darkness region's own level, else the scene's), whether a light or
  * the scene's global light reaches it, and whether a darkness source covers
- * it. `rules.darknessFromLighting` turns that into the book's 0-10.
+ * it. `rules.darknessFromLighting` turns that into the book's 0-10. Since API
+ * 1.116.0 a module may say what darkness each light leaves at a spot, in
+ * place of the torch's 3: the GM's partial darkness, -1 to -9.
  */
 
 import { darknessFromLighting, darknessPenaltyFor, LIT_DARKNESS, TOTAL_DARKNESS, type Lighting } from "../rules/visibility.js";
 import { SYSTEM_ID } from "./constants.js";
-import { centerOf, listAreas } from "./modifier-areas.js";
+import { centerOf, listAreas, pixelsPerYard } from "./modifier-areas.js";
 import { eyesOf } from "./roll.js";
 
 /**
@@ -108,10 +110,78 @@ function kindCountsFor(id: string | null, observer: any | null, light: any): boo
 }
 
 /**
+ * The spot a light's level is asked about (since API 1.116.0): where it is in
+ * scene pixels, and how far it lies from the light's centre in yards.
+ */
+export interface LightLevelSpot extends DarknessPoint {
+  distance: number;
+}
+
+/**
+ * What darkness a light leaves at a spot for an observer (since API
+ * 1.116.0): 0 (none) to 10, or the penalty it leaves (-1 to -10); null or
+ * undefined to leave the light its own (3, as a torch; an area's
+ * `darknessCap`). `observer` is the actor, or null for nobody's; `light` the
+ * light's document (an AmbientLight, or a Token for its own light) or the
+ * area as `areas.list` gives it.
+ */
+export type LightLevelTest = (observer: any | null, light: any, spot: LightLevelSpot) => number | null | undefined;
+
+/** A module's reading of the darkness its lights leave, as `areas.registerLightLevel` takes it. */
+export interface LightLevelRegistration {
+  module: string;
+  key: string;
+  level: LightLevelTest;
+}
+
+const lightLevelTests = new Map<string, LightLevelTest>();
+
+/**
+ * Registers a reading of the darkness a light leaves at a spot -- a lamp that
+ * dims with distance, a light too faint to lift the night to -3 (since API
+ * 1.116.0). Every registered reading is asked about each light that reaches a
+ * spot; the least darkness any of them gives is the light's. Returns the id,
+ * `<module>.<key>`, or null with a console warning where the registration is
+ * malformed or the id is taken.
+ */
+export function registerLightLevel(registration: LightLevelRegistration): string | null {
+  const r = registration ?? ({} as LightLevelRegistration);
+  const id = `${r.module}.${r.key}`;
+  const refuse = (why: string) => {
+    console.warn(`gworld | light level ${id} not registered: ${why}`);
+    return null;
+  };
+  if (typeof r.module !== "string" || !IDENTIFIER.test(r.module) || typeof r.key !== "string" || !IDENTIFIER.test(r.key)) return refuse("the module id or key is missing or malformed");
+  if (typeof r.level !== "function") return refuse("it has no level function");
+  if (lightLevelTests.has(id)) return refuse("that key is already registered");
+  lightLevelTests.set(id, r.level);
+  return id;
+}
+
+/**
+ * The darkness a light leaves at a spot: the least any registered reading
+ * gives, a penalty read as its size and held to 0-10, else `fallback`.
+ */
+function lightLevelOf(observer: any | null, light: any, spot: LightLevelSpot, fallback: number): number {
+  let least: number | null = null;
+  for (const test of lightLevelTests.values()) {
+    const given = safely(() => test(observer, light, spot), null);
+    if (given === null || given === undefined) continue;
+    const n = Number(given);
+    if (!Number.isFinite(n)) continue;
+    const level = Math.max(0, Math.min(TOTAL_DARKNESS, Math.round(Math.abs(n))));
+    least = least === null ? level : Math.min(least, level);
+  }
+  return least ?? fallback;
+}
+
+/**
  * The modules' lights kept on a scene's areas that reach a spot and count for
  * the observer (since API 1.102.0): their ids, and the least darkness any of
- * them leaves. An area past its `expires` gives no light. A light only some
- * can see is tested with the area, as `areas.list` gives it, for the light.
+ * them leaves -- its `darknessCap`, or what a registered light level gives
+ * (since API 1.116.0). An area past its `expires` gives no light. A light
+ * only some can see is tested with the area, as `areas.list` gives it, for
+ * the light.
  */
 function areaLightsAt(scene: any, point: DarknessPoint, observer: any | null): { ids: string[]; cap: number } | null {
   const now = Number((globalThis as any).game?.time?.worldTime) || 0;
@@ -121,12 +191,37 @@ function areaLightsAt(scene: any, point: DarknessPoint, observer: any | null): {
     const light = area.light;
     if (!light || !area.center || !(Number(light.radius) > 0)) continue;
     if (typeof area.expires === "number" && area.expires <= now) continue;
-    if (Math.hypot(point.x - area.center.x, point.y - area.center.y) > light.radius) continue;
+    const reach = Math.hypot(point.x - area.center.x, point.y - area.center.y);
+    if (reach > light.radius) continue;
     if (!kindCountsFor(light.litFor ?? null, observer, area)) continue;
     ids.push(area.id);
-    cap = Math.min(cap, Math.max(0, Number(light.darknessCap) || 0));
+    const own = Math.max(0, Number(light.darknessCap) || 0);
+    cap = Math.min(cap, lightLevelOf(observer, area, { ...point, distance: reach / pixelsPerYard(scene) }, own));
   }
   return ids.length ? { ids, cap } : null;
+}
+
+/**
+ * The least darkness the canvas's light sources that reach a spot leave for
+ * an observer, where a module has registered a light level (since API
+ * 1.116.0); null where none reaches. The scene's global light is not one.
+ */
+function sourceLevelAt(scene: any, effects: any, globalSource: any, point: DarknessPoint, observer: any | null): number | null {
+  let least: number | null = null;
+  const sources = effects?.lightSources;
+  const list: any[] = sources ? Array.from(typeof sources.values === "function" ? sources.values() : sources) : [];
+  for (const source of list) {
+    if (!source || source === globalSource || source.active === false) continue;
+    if (!lightCountsFor(source.object, observer)) continue;
+    if (!safely(() => Boolean(source.testPoint(point)), false)) continue;
+    const doc = lightDocumentOf(source.object);
+    const cx = Number(source.data?.x ?? source.object?.center?.x);
+    const cy = Number(source.data?.y ?? source.object?.center?.y);
+    const distance = Number.isFinite(cx) && Number.isFinite(cy) ? Math.hypot(point.x - cx, point.y - cy) / pixelsPerYard(scene) : 0;
+    const level = lightLevelOf(observer, doc, { ...point, distance }, LIT_DARKNESS);
+    least = least === null ? level : Math.min(least, level);
+  }
+  return least;
 }
 
 /** A spot on a scene in pixels, with its elevation where it has one. */
@@ -185,9 +280,12 @@ function safely<T>(run: () => T, fallback: T): T {
 /**
  * How a spot is lit: from the canvas where the scene is the one drawn, else
  * from the scene's settings. A light only some can see counts where it counts
- * for `observer` (since API 1.100.0).
+ * for `observer` (since API 1.100.0). Where a module has registered a light
+ * level (since API 1.116.0), each light source is read on its own:
+ * `sourceLevel` is the least darkness they leave, and only one leaving 3 or
+ * less puts the spot in light.
  */
-function lightingAt(scene: any, point: DarknessPoint, observer: any | null): Required<Lighting> {
+function lightingAt(scene: any, point: DarknessPoint, observer: any | null): { lighting: Required<Lighting>; sourceLevel: number | null } {
   const canvas = (globalThis as any).canvas;
   const environment = scene?.environment ?? {};
   const global = environment.globalLight ?? {};
@@ -203,17 +301,26 @@ function lightingAt(scene: any, point: DarknessPoint, observer: any | null): Req
       && level >= (Number(range.min) || 0) && level <= (range.max === undefined ? 1 : Number(range.max));
     // The scene's setting says bright or dim; the source's `bright` is a radius.
     const bright = global.bright;
-    const lit = safely(() => Boolean(effects.testInsideLight(point, {
-      condition: (source: any) => source !== globalSource && lightCountsFor(source?.object, observer),
-    })), false);
+    const sourceLevel = lightLevelTests.size > 0 ? sourceLevelAt(scene, effects, globalSource, point, observer) : null;
+    const lit = lightLevelTests.size > 0
+      ? sourceLevel !== null && sourceLevel <= LIT_DARKNESS
+      : safely(() => Boolean(effects.testInsideLight(point, {
+        condition: (source: any) => source !== globalSource && lightCountsFor(source?.object, observer),
+      })), false);
     const dark = safely(() => Boolean(effects.testInsideDarkness(point)), false);
-    return { level, daylight: globalOn && bright === true, inLight: lit || (globalOn && bright !== true), unnaturalDarkness: dark };
+    return {
+      lighting: { level, daylight: globalOn && bright === true, inLight: lit || (globalOn && bright !== true), unnaturalDarkness: dark },
+      sourceLevel,
+    };
   }
   // A scene nobody has drawn: its settings only, no lights.
   const level = Number(environment.darknessLevel) || 0;
   const range = global.darkness ?? {};
   const globalOn = global.enabled === true && level >= (Number(range.min) || 0) && level <= (range.max === undefined ? 1 : Number(range.max));
-  return { level, daylight: globalOn && global.bright === true, inLight: globalOn && global.bright !== true, unnaturalDarkness: false };
+  return {
+    lighting: { level, daylight: globalOn && global.bright === true, inLight: globalOn && global.bright !== true, unnaturalDarkness: false },
+    sourceLevel: null,
+  };
 }
 
 /**
@@ -228,12 +335,15 @@ export function darknessAt(scene: any, at: any, options: { observer?: any } = {}
   const target = scene ?? at?.document?.parent ?? (at?.documentName === "Token" ? at.parent : null) ?? (globalThis as any).canvas?.scene ?? null;
   const point = spotOf(target, at);
   if (!point) return null;
-  const lighting = lightingAt(target, point, options.observer ?? null);
+  const { lighting, sourceLevel } = lightingAt(target, point, options.observer ?? null);
   // A module's light on the scene's areas (since API 1.102.0) lightens the
   // spot as a light source does, to its own cap; no light gets into
-  // unnatural darkness.
+  // unnatural darkness. A light source a registered light level reads
+  // (since API 1.116.0) leaves the level it gives.
   const areaLight = lighting.unnaturalDarkness ? null : areaLightsAt(target, point, options.observer ?? null);
-  const darkness = areaLight ? Math.min(darknessFromLighting(lighting), areaLight.cap) : darknessFromLighting(lighting);
+  let darkness = darknessFromLighting(lighting);
+  if (areaLight) darkness = Math.min(darkness, areaLight.cap);
+  if (sourceLevel !== null && !lighting.unnaturalDarkness) darkness = Math.min(darkness, sourceLevel);
   const eyes = options.observer ? eyesOf(options.observer) : {};
   return {
     darkness,

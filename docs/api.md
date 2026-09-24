@@ -2037,6 +2037,35 @@ Two fields a module may read (since 1.62.0):
       counted (empty for none); `lighting.inLight` is set where one of them
       leaves 3 or less.
     - The canvas draws nothing for it, and Foundry's vision doesn't see it.
+  - *A light's own darkness level* (since 1.116.0, Campaigns p. 394: the GM
+    sets partial darkness anywhere from -1 to -9). A light leaves 3 at most,
+    as the book's torch, unless a module says otherwise: a lamp that dims with
+    distance, or one too faint to lift the night that far.
+    - `areas.registerLightLevel({ module, key, level })` registers a reading,
+      and returns its id `<module>.<key>` (null, with a console warning,
+      where the registration is malformed or the id is taken). Register
+      during `gworld.ready` or earlier.
+    - `level(observer, light, spot)` is asked about each light that reaches
+      a spot in `darknessAt` and counts for the observer: a light source on
+      the canvas (not the scene's global light), with `light` its document
+      (an AmbientLight, or a Token for its own light), and a module's light
+      on an area, with `light` the area as `areas.list` gives it. `observer`
+      is the reading's observer, or null; `spot` is `{ x, y, elevation,
+      distance }`, the spot in scene pixels and its distance in yards from
+      the light's centre (on the map, not counting elevation). It returns
+      the darkness the light leaves there, 0 (none) to 10 -- or the penalty,
+      -1 to -10, read as its size -- or null or undefined for a light it
+      doesn't know. A reading that throws counts as null.
+    - The least darkness any registered reading gives is the light's; where
+      none gives one, the light keeps its own (3 for a light source, the
+      area's `darknessCap`). `darknessAt` takes the least darkness of the
+      lights that reach the spot and leaves the darkness no higher: a light
+      leaving 5 in total darkness gives 5 (-5), and one leaving 5 in a scene
+      already at 4 changes nothing. No light gets into unnatural darkness.
+    - With a reading registered, a light source that reaches the spot sets
+      `lighting.inLight` only where it leaves 3 or less, as an area's light
+      does; with none registered, `darknessAt` reads the canvas as before.
+    - The canvas's own lighting and Foundry's vision don't change.
 - **Spraying and Suppression Fire** (since 1.70.0, Campaigns p. 409), under
   the `rapidFire` switch. A ranged attack from a row of RoF 5+ with two or
   more tokens targeted offers to spray the burst: the targets are put in the

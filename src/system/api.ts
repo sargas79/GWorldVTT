@@ -69,7 +69,7 @@ import {
 import { detonateCharge } from "./demolition.js";
 import { equipmentUseLines, familiarWith, setFamiliar } from "./tech-level.js";
 import { addArea, listAreas, removeArea, tokensInArea } from "./modifier-areas.js";
-import { darknessAt, litForOf, registerLitFor, setLitFor } from "./darkness.js";
+import { darknessAt, litForOf, registerLightLevel, registerLitFor, setLitFor } from "./darkness.js";
 import { rollFrightCheck } from "./fright.js";
 import { spendUnspentPoints } from "./bonus-points.js";
 import {
@@ -101,7 +101,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.115.0";
+export const API_VERSION = "1.116.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -757,11 +757,12 @@ const socialApi = Object.freeze({ registerInfluenceSkill });
  * Cones, and `standsIn` for the tokens standing in an area, since 1.89.0;
  * `darknessAt`, the darkness at a token or a point, since 1.96.0; lights only
  * some can see (`registerLitFor`, `setLitFor`, `litFor`) since 1.100.0; a
- * module's own light on an area (`add`'s `light`) since 1.102.0.
+ * module's own light on an area (`add`'s `light`) since 1.102.0; the darkness
+ * a light leaves (`registerLightLevel`) since 1.116.0.
  */
 const areasApi = Object.freeze({
   add: addArea, remove: removeArea, list: listAreas, standsIn: tokensInArea, darknessAt,
-  registerLitFor, setLitFor, litFor: litForOf,
+  registerLitFor, setLitFor, litFor: litForOf, registerLightLevel,
 });
 
 /** The points namespace: point pools, and from 1.39.0 charging a character's unspent points. */
