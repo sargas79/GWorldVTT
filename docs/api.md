@@ -1446,7 +1446,8 @@ Two fields a module may read (since 1.62.0):
   - *The tech level of First Aid* (Campaigns p. 424): `gworld.firstAid` also
     gets `techLevel`, the healer's TL to start with. A listener may set it
     (a doctor working without supplies, at a lower TL, for instance), and
-    the sheet's First Aid then uses the First Aid Table's row for that TL:
+    the sheet's First Aid (and, since 1.122.0, `actors.firstAid`) then uses
+    the First Aid Table's row for that TL:
     the HP restored, and the time it takes.
   - *Dirt in a wound* (Campaigns p. 444): the infection roll's
     `gworld.successRollModifiers` context (tags `disease`, `infection`,
@@ -2458,6 +2459,10 @@ Two fields a module may read (since 1.62.0):
   so a device that treats on its own uses its figures, and `label` names it on the card. Each roll
   passes through `gworld.successRollModifiers` tagged `firstAid`, `physician`, `surgery`, or
   `mortalWound` (with `traumaMaintenance` when it is), so a module adds its gear or care there.
+  Since 1.122.0, `actors.firstAid` makes the button's whole attempt: `gworld.firstAid` fires
+  first, with `techLevel` starting at the one given (or the healer's), so a listener may refuse
+  it (it resolves to 0 and warns, as the button does) or move it to another TL, and a success
+  stops the patient's bleeding unless a listener set `stopsBleeding: false`.
   Since 1.63.0, `gworld.mortalWoundInterval` fires before the check's card with
   `{ actor, traumaMaintenance, minutes, label }`: set `minutes` (1440 for daily checks) and a
   `label` where the module's care changes how often the check comes round; the card says so.
@@ -2540,7 +2545,8 @@ Two fields a module may read (since 1.62.0):
   `selfControl`, with the trait's name as `skill`; `gworld.afterSuccessRoll` follows.
 - **First Aid** (since 1.36.0): `gworld.firstAid` gets `{ healer, patient, refusal,
   stopsBleeding, techLevel }` before an attempt (`techLevel` since 1.109.0;
-  see *Medical hooks*). Set `refusal` (text) to stop it, or
+  see *Medical hooks*), from the sheet's button and, since 1.122.0, from
+  `actors.firstAid` too. Set `refusal` (text) to stop it, or
   `stopsBleeding: false` so success doesn't stop the patient's bleeding. The roll
   itself adds `gworld.successRollModifiers` lines, tagged `firstAid`, with the
   patient as `opponent`. `actors.stopBleeding(actor)` ends an actor's bleeding.
