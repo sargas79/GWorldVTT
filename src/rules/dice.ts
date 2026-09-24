@@ -112,3 +112,32 @@ export function maxRoll(formula: DiceAdds): number {
 export function averageRoll(formula: DiceAdds): number {
   return (formula.dice * 3.5 + formula.adds) * factor(formula);
 }
+
+/**
+ * Modifying Dice + Adds, the optional rule (GURPS Basic Set: Characters
+ * p. 269): large adds become dice, +7 as +2d and +4 as +1d, the bigger step
+ * taken first and repeated until less than +4 is left. So 1d+9 rolls as 3d+2
+ * and 3d+18 as 8d.
+ *
+ * Whatever was added per die has to be in `formula.adds` already. The dice
+ * this produces are not the ones a per-die bonus was counted from, and counting
+ * again from them would pay the bonus twice.
+ *
+ * Adds below +4 are left alone, and so are negative ones: the rule turns big
+ * bonuses into dice and never takes dice away. So is a flat figure with no
+ * dice to add to. A multiplier is kept: the conversion changes the roll
+ * inside it, not how many times that roll is taken, so 2d+5x2 is 3d+1x2.
+ */
+export function modifyDiceAdds(formula: DiceAdds): DiceAdds {
+  if (formula.dice < 1 || formula.adds < 4) return formula;
+  let dice = formula.dice;
+  let adds = formula.adds;
+  const twoDice = Math.floor(adds / 7);
+  dice += twoDice * 2;
+  adds -= twoDice * 7;
+  if (adds >= 4) {
+    dice += 1;
+    adds -= 4;
+  }
+  return formula.multiplier === undefined ? { dice, adds } : { dice, adds, multiplier: formula.multiplier };
+}

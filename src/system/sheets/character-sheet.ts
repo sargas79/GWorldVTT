@@ -35,7 +35,7 @@ import {
 import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
 import { rollFall } from "../falling.js";
-import { rollBleeding, stopBleeding } from "../bleeding.js";
+import { rollBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
 import { crippledPartName, crippledParts, healCrippled } from "../crippling.js";
 import { catchBreath, rollSuffocation } from "../suffocation.js";
@@ -135,7 +135,7 @@ import {
 } from "../grappling.js";
 import { grappleSizeBonus } from "../../rules/size.js";
 import { rollStunRecovery } from "../knockdown.js";
-import { applyFirstAid, regenerate, restForADay, restForFatigue, tryToWake } from "../recovery.js";
+import { giveFirstAid, regenerate, restForADay, restForFatigue, tryToWake } from "../recovery.js";
 import { isFrightResistance, rollFrightCheck, rollFrightCheckOutcome } from "../fright.js";
 import { drMetByAttack, traitsOf, wornArmor } from "../damage.js";
 import { afflictionDrBonus } from "../../rules/affliction-resistance.js";
@@ -196,7 +196,6 @@ import {
   removeCondition,
   runGrappleAction,
   triggerManeuverResponse,
-  firstAidRules,
   registeredInfluenceSkills,
   wornClothing,
 } from "../procedure-extensions.js";
@@ -2225,29 +2224,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const patient = targets[0]?.actor;
     if (!patient) return;
 
-    // A module's rules may refuse this, or say a bandage won't stop this bleeding (API 1.36.0).
-    const rules = firstAidRules(this.actor, patient);
-    if (rules.refusal) {
-      ui.notifications?.warn(rules.refusal);
-      return;
-    }
-
-    const modifier = await promptForNumber({
-      title: game.i18n.localize("GWORLD.Recovery.FirstAid"),
-      label: game.i18n.localize("GWORLD.Chat.Modifier"),
-      initial: 0,
+    // The same attempt actors.firstAid makes, so gworld.firstAid hears both
+    // (API 1.122.0); the modifier is asked for only once no listener refuses.
+    await giveFirstAid({
+      healer: this.actor,
+      patient,
+      modifier: () => promptForNumber({
+        title: game.i18n.localize("GWORLD.Recovery.FirstAid"),
+        label: game.i18n.localize("GWORLD.Chat.Modifier"),
+        initial: 0,
+      }),
     });
-    if (modifier === null) return;
-
-    // At the tech level a listener set, where one did (API 1.109.0; Campaigns p. 424).
-    const restored = await applyFirstAid({ healer: this.actor, patient, modifier, techLevel: rules.techLevel });
-
-    // "someone who is wounded but receives a successful First Aid roll ... loses
-    // no HP to bleeding. A later roll will prevent further HP loss."
-    if (restored > 0 && rules.stopsBleeding) await stopBleeding(patient);
-    else if (restored > 0 && patient.statuses?.has?.("bleeding")) {
-      ui.notifications?.info(game.i18n.format("GWORLD.Recovery.StillBleeding", { patient: String(patient.name ?? "") }));
-    }
   }
 
   /**

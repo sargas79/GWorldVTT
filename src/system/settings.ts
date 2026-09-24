@@ -42,6 +42,15 @@ export function registerSettings(): void {
     config: false,
     type: Object,
     default: defaultRuleState(),
+    // The rules page redraws the GM's own windows when it saves; this is for
+    // everyone else's. A sheet reads the rules as it draws -- Modifying Dice +
+    // Adds changes every damage figure on it -- so an open one is redrawn.
+    onChange: () => {
+      for (const app of ((foundry.applications as any).instances as Map<number, unknown>).values()) {
+        const name = (app as any).document?.documentName;
+        if ((name === "Actor" || name === "Item") && (app as any).rendered) (app as any).render();
+      }
+    },
   });
 
   // "Magic will work only if the mana level of the game world or specific
