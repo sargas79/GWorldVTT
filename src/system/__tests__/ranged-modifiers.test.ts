@@ -377,3 +377,27 @@ describe("keyed lines (since API 1.63.0)", () => {
     expect(close.find((m) => m.key === "bulk")).toMatchObject({ value: -6, situation: "closeCombat" });
   });
 });
+
+/** Blindness, owned or imposed (GURPS Basic Set: Characters p. 124). */
+describe("a blind shooter", () => {
+  const pistol = { accuracy: 2, scopeBonus: 0, bulk: -2 };
+  const sightLines = (mods: ReturnType<typeof rangedModifiers>) =>
+    mods.filter((m) => m.label.startsWith("GWORLD.Sight."));
+
+  it("shoots at the practised -6 when used to it, with no darkness on top", () => {
+    const mods = rangedModifiers(shot({ darkness: 5 }), { ...pistol, eyes: { blindness: true, accustomedToBlindness: true } });
+    expect(sightLines(mods)).toEqual([{ label: "GWORLD.Sight.Blindness", value: -6 }]);
+  });
+
+  it("shoots at -10 when gear or a condition has just taken the sight, whatever the eyes", () => {
+    const mods = rangedModifiers(shot({ darkness: 5 }), {
+      ...pistol, eyes: { blindness: true, accustomedToBlindness: false, darkVision: true },
+    });
+    expect(sightLines(mods)).toEqual([{ label: "GWORLD.Sight.SuddenBlindness", value: -10 }]);
+  });
+
+  it("reads eyes that do not say as used to it, as before", () => {
+    const mods = rangedModifiers(shot(), { ...pistol, eyes: { blindness: true } });
+    expect(sightLines(mods)).toEqual([{ label: "GWORLD.Sight.Blindness", value: -6 }]);
+  });
+});

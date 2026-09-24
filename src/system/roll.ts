@@ -3498,6 +3498,8 @@ const SIGHT_OPTIONS: readonly Sight[] = ["clear", "positionKnown", "foeUnseen", 
 /** The eyes an attacker has, and whether they have any (pp. 47, 60, 71, 123-124). */
 export interface Eyes extends VisionTraits {
   blindness?: boolean;
+  /** Used to being blind, so -6 rather than the -10 of fresh blindness (p. 124). */
+  accustomedToBlindness?: boolean;
   /** Nearsighted: "double the actual distance to the target when calculating the range modifier" (p. 123). */
   nearsighted?: boolean;
 }
@@ -3510,6 +3512,7 @@ export function eyesOf(actor: any): Eyes {
     darkVision: vision.darkVision === true,
     infravision: vision.infravision === true,
     blindness: vision.blindness === true,
+    accustomedToBlindness: vision.accustomedToBlindness === true,
     nearsighted: vision.nearsighted === true,
   };
 }
@@ -3540,11 +3543,15 @@ function sightField(): string {
 
 /** What the chosen sight costs, as a modifier line. */
 function sightModifier(sight: Sight, lightSource: boolean, eyes: Eyes = {}): RollModifier | null {
-  // Somebody blind attacks blind whatever the light, at the practised -6.
+  // Somebody blind attacks blind whatever the light: at the practised -6, or
+  // at -10 for somebody whose sight gear or a condition has just taken, "just
+  // as if you were in total darkness" -- with no light or dark-seeing eyes to
+  // help, since the eyes are what is missing (p. 124).
   if (eyes.blindness) {
+    const accustomed = eyes.accustomedToBlindness !== false;
     return {
-      label: game.i18n.localize("GWORLD.Sight.Blindness"),
-      value: attackWithoutSight({ sight: "blind", accustomedToBlindness: true }).modifier,
+      label: game.i18n.localize(accustomed ? "GWORLD.Sight.Blindness" : "GWORLD.Sight.SuddenBlindness"),
+      value: attackWithoutSight({ sight: "blind", accustomedToBlindness: accustomed }).modifier,
     };
   }
   const penalty = attackWithoutSight({ sight, lightSource, eyes });

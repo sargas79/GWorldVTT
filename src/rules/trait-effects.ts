@@ -140,12 +140,26 @@ export interface TraitEffects {
    * (unless you Aim first)".
    */
   oneEye: boolean;
-  /** Hard of Hearing (p. 138): -4 on Hearing rolls. */
+  /**
+   * Hard of Hearing (p. 138): -4 on Hearing rolls. Gear over the ears or a
+   * condition may impose it through `gworld.traitEffects` (since 1.120.0).
+   */
   hardOfHearing: boolean;
-  /** Deafness (p. 129): no Hearing roll at all. */
+  /** Deafness (p. 129): no Hearing roll at all. Imposed the same way. */
   deafness: boolean;
-  /** Blindness (p. 124): no Vision roll, and every attack is made blind, at the accustomed -6. */
+  /**
+   * Blindness (p. 124): no Vision roll, and every attack is made blind -- at
+   * -6 when `accustomedToBlindness`, else at -10, as for anybody who has just
+   * lost their sight. Imposed the same way.
+   */
   blindness: boolean;
+  /**
+   * Used to being blind (p. 124), so fighting at -6 rather than -10 (since
+   * 1.120.0). The Blindness disadvantage sets it; blindness gear or a
+   * condition imposes does not, until a listener says the character has
+   * got used to it.
+   */
+  accustomedToBlindness: boolean;
   /**
    * Lame (p. 141): crippled legs are "-3 to use any skill that requires the
    * use of your legs, including all Melee Weapon and unarmed combat skills
@@ -282,6 +296,7 @@ export function noTraitEffects(): TraitEffects {
     hardOfHearing: false,
     deafness: false,
     blindness: false,
+    accustomedToBlindness: false,
     lame: null,
     oneArm: false,
     temperatureTolerance: { coldF: 0, heatF: 0 },
@@ -491,7 +506,7 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   "one eye": () => ({ oneEye: true }),
   "hard of hearing": () => ({ hardOfHearing: true }),
   deafness: () => ({ deafness: true }),
-  blindness: () => ({ blindness: true }),
+  blindness: () => ({ blindness: true, accustomedToBlindness: true }),
   "one arm": () => ({ oneArm: true }),
   "no depth perception": () => ({ noDepthPerception: true }),
   colorblindness: () => ({ colorblindness: true }),
@@ -789,6 +804,7 @@ export function addTraitEffects(total: TraitEffects, applied: Partial<TraitEffec
   total.hardOfHearing ||= applied.hardOfHearing ?? false;
   total.deafness ||= applied.deafness ?? false;
   total.blindness ||= applied.blindness ?? false;
+  total.accustomedToBlindness ||= applied.accustomedToBlindness ?? false;
   total.oneArm ||= applied.oneArm ?? false;
   // Two kinds of Lame do not add either: the worse one is the one you have.
   if (applied.lame) total.lame = worseLameness(total.lame, applied.lame);

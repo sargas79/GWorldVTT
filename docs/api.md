@@ -1047,6 +1047,25 @@ the `gworld.registerRules` hook, so the fields exist before documents are read.
     Perception, Colorblindness, Nictitating Membrane, Parabolic Hearing,
     Ham-Fisted and No Sense of Smell/Taste. `derived.senses` rows may carry
     `colorblind: true` (vision) and `rangeMultiplier` (hearing).
+    Since 1.120.0 the three sense disadvantages are documented fields too, so
+    worn gear or a module's condition can impose them for as long as it lasts
+    (earmuffs, a flash, a hood), read wherever the owned traits are:
+    - `hardOfHearing` (p. 138): -4 on the Hearing row of `derived.senses`.
+    - `deafness` (p. 129): no Hearing roll (the row's `score` is null).
+    - `blindness` (p. 124): no Vision roll, and every attack is made blind,
+      whatever the light or the eyes; no darkness penalty on top.
+    - `accustomedToBlindness` (p. 124): blind fighting at -6 instead of -10.
+      The Blindness disadvantage sets it with `blindness`; blindness a
+      listener imposes leaves it false, so the attack takes -10 ("Blinded")
+      as for anybody who has just lost their sight, until the listener sets
+      it too. `derived.vision` carries both.
+    List each in `sources` by its field name (`"hardOfHearing"`, `"deafness"`,
+    `"blindness"`) so the Traits tab says what imposed it. A trait the
+    character owns can still be taken out of play with `gworld.traitsInPlay`
+    (a hearing aid for Hard of Hearing); what a listener imposes is its own
+    to lift, by not setting it. The -4 Hard of Hearing puts on a roll to
+    understand someone is left to the table, for the owned trait and the
+    imposed one alike.
   - `gworld.traitsInPlay` (since 1.61.0), with `{ actor, traits }`, when a
     character's traits are gathered, before anything is worked out from them.
     Each entry is `{ item, name, inPlay }`: set `inPlay` to false, with a
