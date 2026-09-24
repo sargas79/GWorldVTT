@@ -24,6 +24,7 @@ import {
 import { consumeTurnedBlade, recordTurnedBlade } from "./turned-blade.js";
 import { consumePulledBlow, pulledFormula, recordPulledBlow } from "./pulled-blow.js";
 import { isRuleOn } from "./optional-rules.js";
+import { normalizeDamage } from "./modifying-dice.js";
 import { rollBreakdown, signed, type RollBreakdown } from "./roll-breakdown.js";
 import { maySpray, promptForSpray, type SprayShot } from "./spraying-fire.js";
 import { fireSuppression, suppressing } from "./suppression-fire.js";
@@ -486,6 +487,15 @@ export interface SuccessRollOptions {
    * Left out, a refused roll resolves to null, as it always has.
    */
   returnRefusal?: boolean;
+  /**
+   * True for a roll to resist something -- an HT roll against a poison, a
+   * stun or a blinding light -- rather than an attempt (since API 1.121.0).
+   * It is rolled even at an effective level below 3, where an attempt would
+   * be refused, and a 3 or 4 still succeeds and a 17 or 18 still fails
+   * (Campaigns p. 348). It tags the roll `resist`, and a roll the caller
+   * tags `resist` is taken as one without it.
+   */
+  resistance?: boolean;
 }
 
 /**
@@ -575,7 +585,11 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   // A sound's distance makes it a Hearing roll, with the table's line among
   // the caller's so a listener can find and change it (since API 1.117.0).
   const heardAt = hearingDistanceLine(actor, options.distance);
-  const tags = successRollTags({ kind, skill: options.skill, tags: heardAt ? [...(options.tags ?? []), "hearing"] : options.tags });
+  const tags = successRollTags({
+    kind,
+    skill: options.skill,
+    tags: [...(options.tags ?? []), ...(heardAt ? ["hearing"] : []), ...(options.resistance === true ? ["resist"] : [])],
+  });
   const given = heardAt ? [...(options.modifiers ?? []), heardAt] : options.modifiers ?? [];
   // The caller's lines as the listeners left them, and theirs: a keyed line a
   // listener removes is gone from the roll (since API 1.109.0).
@@ -594,7 +608,11 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   // 3 or 4 would report success, since those always succeed once rolled. The
   // table is told on a card, so that everyone knows the attempt was impossible
   // rather than that nothing happened.
-  if (kind !== "defense" && !canAttempt(effective)) {
+  // A roll to resist is not an attempt, so it is rolled whatever its level,
+  // and at 1 or 2 only the 3 or 4 that always succeeds saves the victim
+  // (Campaigns p. 348; since API 1.121.0).
+  const resisting = tags.includes("resist");
+  if (kind !== "defense" && !resisting && !canAttempt(effective)) {
     const reason = game.i18n.format("GWORLD.Roll.TooLowToAttempt", { label, effective });
     ui.notifications?.warn(reason);
     await postRefusal(options, { reason, modifiers, totalModifier, effective });
@@ -1335,11 +1353,17 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
   const bonus = modifiers.reduce((sum, m) => sum + m.value, 0);
   // The multiplier travels with the roll: "6dx10" is six dice times ten, and
   // dropping it here would roll a tenth of the attack.
-  const rolled = {
+  const summed = {
     dice: parsed.dice,
     adds: parsed.adds + bonus,
     ...(parsed.multiplier ? { multiplier: parsed.multiplier } : {}),
   };
+  // Modifying Dice + Adds (Characters p. 269) works on the damage with every
+  // bonus in it, per-die ones included, so it is converted here, after the
+  // modifiers are summed, and not on the formula the caller passed in. The
+  // bonuses were counted from the dice before conversion, as they should be.
+  const modified = normalizeDamage(formatDiceAdds(summed));
+  const rolled = modified.converted ? (parseDiceAdds(modified.normalized) ?? summed) : summed;
   const roll = new Roll(toRollFormula(rolled));
   await roll.evaluate();
 
@@ -1358,7 +1382,10 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
 
   const content = await foundry.applications.handlebars.renderTemplate(DAMAGE_TEMPLATE, {
     label,
-    formula,
+    // What was rolled, where the rule changed it, and what it was before: the
+    // formula with the modifiers below already in it.
+    formula: modified.converted ? modified.normalized : formula,
+    modifiedFrom: modified.converted ? modified.raw : "",
     damageType,
     armorDivisor,
     // A divisor of 1 is the ordinary case and is not worth a line on the card.
