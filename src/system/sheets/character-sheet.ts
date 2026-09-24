@@ -37,6 +37,7 @@ import { rollExtraEffort } from "../extra-effort.js";
 import { rollFall } from "../falling.js";
 import { rollBleeding, stopBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
+import { crippledParts, healCrippled } from "../crippling.js";
 import { catchBreath, rollSuffocation } from "../suffocation.js";
 import {
   applyDeprivation,
@@ -177,7 +178,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
-import { allOutAttackOptionsFor, feintModifiers, registeredManeuvers } from "../combat-extensions.js";
+import { allOutAttackOptionsFor, feintModifiers, registeredHitLocation, registeredManeuvers } from "../combat-extensions.js";
 import { evaluateBonusFor } from "../evaluate.js";
 import { setCondition } from "../conditions.js";
 import { bindSectionListeners, decorateItemRows, renderSections, runRowAction } from "../sheet-extensions.js";
@@ -452,6 +453,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       bleed: GWorldCharacterSheet.#onBleed,
       mortalWound: GWorldCharacterSheet.#onMortalWound,
       cripplingDuration: GWorldCharacterSheet.#onCripplingDuration,
+      healCrippled: GWorldCharacterSheet.#onHealCrippled,
       suffocate: GWorldCharacterSheet.#onSuffocate,
       catchBreath: GWorldCharacterSheet.#onCatchBreath,
       exposure: GWorldCharacterSheet.#onExposure,
@@ -922,6 +924,17 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
             power: String(item.system?.power ?? ""),
           })),
       ).map((u) => ({ ...u, powerLabel: game.i18n.localize(`GWORLD.Psi.Power.${u.power}`) })),
+      // Parts crippled for a while (Campaigns p. 422; API 1.114.0), healed ones left out.
+      crippled: crippledParts(this.actor).map((part) => ({
+        id: part.id,
+        label: part.label || (registeredHitLocation(part.location)
+          ? game.i18n.localize(registeredHitLocation(part.location)!.label)
+          : game.i18n.localize(`GWORLD.HitLocation.${part.location}`)),
+        duration: game.i18n.localize(`GWORLD.Dying.${part.duration}`),
+        heals: part.healsAt !== null
+          ? game.i18n.format("GWORLD.Crippled.HealsIn", { days: Math.max(0, Math.ceil((part.healsAt - (Number(game.time?.worldTime) || 0)) / 86400)) })
+          : "",
+      })),
       // Caught in something, and how far through getting out they are.
       entangled: {
         caught: this.actor.statuses?.has?.("entangled") === true,
@@ -2976,6 +2989,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    * "For battlefield injuries, roll at the end of combat" -- so it is a button
    * pressed afterwards rather than something a blow decides on the spot.
    */
+  static async #onHealCrippled(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = target.dataset.id;
+    if (id) await healCrippled(this.actor, id);
+  }
+
   static async #onCripplingDuration(this: GWorldCharacterSheet) {
     const tl = await promptForNumber({
       title: game.i18n.localize("GWORLD.Dying.Crippling"),
