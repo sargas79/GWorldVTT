@@ -103,7 +103,7 @@ Contents:
 | `rules` | The Basic Set's pure rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer includes the rule group removed in system 1.5.0. Since 1.17.0 it includes every rules module, including attack options (slams, evading), explosions, the tactical rules and shield damage. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. |
-| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0). |
+| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0), and `bind(actor, options)`, `unbind(actor)`, `binding(actor)` and `breakFree(actor)` (since 1.107.0; see *Binding*). |
 | `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. `stuck(item)`, `setStuck(item, stuck)`, `freeStuck(actor, item)` and `letGoOfStuck(actor, item)` (since 1.105.0) read, set and end a weapon's being stuck in a foe (see *A weapon stuck in a foe*). |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
@@ -1315,6 +1315,37 @@ Two fields a module may read (since 1.62.0):
   `rules.worstVulnerability({ vulnerabilities, material?, damageType })`
   returns `{ multiplier, vulnerability }`; `rules.vulnerabilityMultiplier`
   still returns the multiplier alone.
+- **Binding** (since 1.107.0; Characters p. 40): `actors.bind(actor, { st,
+  label?, source?, onBreak? })` holds a character in a Binding of ST `st`
+  (a whole number, 1 or more) on the system's entangled state: `system.entangled`
+  gets `kind` `binding`, `st`, `label` (what holds them, for the sheet and
+  the cards) and `source` (the module's own tag), and the `entangled`
+  condition is set. Binding someone already bound replaces the ST and the
+  label, which is how a module adds a layer (+1 ST each). It resolves to
+  false for a user who can't change the actor or an ST below 1. The sheet's
+  escape button becomes **Break free of** the label, and `actors.breakFree(actor)`
+  does the same thing: one attempt, a Quick Contest (tagged `quickContest`
+  and `binding`) of the victim's ST, or Escape where that is higher, against
+  the Binding's ST. The victim is free only if they win. A failed attempt
+  costs 1 FP through the fatigue chart (the `gworld.fatigueCost` reason is
+  `binding`, with `details` `{ st, label, source }`). It resolves to `free`,
+  `held`, or null where nothing binds them. `actors.unbind(actor)` takes the
+  Binding off with no Contest, for a module whose rule freed the victim or
+  destroyed what held them, and resolves to false if there was none.
+  `actors.binding(actor)` reads `{ st, label, source }` or null. Whenever a
+  Binding ends, `gworld.bindingBroken` is called with `{ actor, st, label,
+  source, how }`, where `how` is `brokeFree` or `unbound`. `onBreak` gets the same object,
+  but only in the client that called `bind`, and only in that session,
+  because a function can't be saved on the sheet. The system doesn't apply
+  the -4 to DX, the rooting in place, or damage wearing the Binding's ST
+  down; a module adds those through conditions and `bind`.
+- **A roll refused below 3** (since 1.107.0; Campaigns p. 344): when
+  `roll.success` (or any system roll other than an active defense) is refused
+  because its effective skill is below 3, it now posts a card with the
+  target and the reason, and no dice, in the roll's own message mode (a
+  secret roll's refusal stays secret). It still resolves to null, unless the
+  caller passes `returnRefusal: true`, which makes it resolve to
+  `{ refused: true, reason, base, effective, modifiers }` instead.
 - **An affliction's effect** (since 1.49.0): `gworld.afflictionEffect` fires
   when a resistance roll fails, with
   `{ actor, attacker, item, mode, label, margin, effects }`. Push a

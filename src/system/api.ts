@@ -53,6 +53,7 @@ import { currentControlRating, legalityClassOf } from "./legality.js";
 import { surprise, undoKnockdown } from "./knockdown.js";
 import { rollFall } from "./falling.js";
 import { restoreFatigue } from "./fatigue.js";
+import { bind, bindingOf, breakFreeFromBinding, unbind, type BindingBroken } from "./entangling.js";
 import type { LandingSurface } from "../rules/falling.js";
 import { isUndoable, undoDamage, type DamageTransaction, type UndoOutcome } from "./damage-undo.js";
 import { carriedAmmunitionFor, loadAmmunition } from "./ammunition.js";
@@ -95,7 +96,7 @@ import { objectStats, type ItemObjectStats } from "./object-stats.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.106.0";
+export const API_VERSION = "1.107.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -200,6 +201,31 @@ const actors = {
    */
   surprise(actor: any, options: { total?: boolean } = {}) {
     return surprise(actor, options);
+  },
+
+  /**
+   * Holds a character in a Binding of the given ST (Characters p. 40; since
+   * 1.107.0) until they win a Quick Contest of ST or Escape against it, on
+   * the system's entangled state. `onBreak` is called in this client when it
+   * ends; `gworld.bindingBroken` is heard everywhere. False where it couldn't.
+   */
+  bind(actor: any, options: { st: number; label?: string; source?: string; onBreak?: (broken: BindingBroken) => unknown }): Promise<boolean> {
+    return bind(actor, options);
+  },
+
+  /** Takes a Binding off without a Contest (since 1.107.0). False where there was none. */
+  unbind(actor: any): Promise<boolean> {
+    return unbind(actor);
+  },
+
+  /** An actor's Binding, `{ st, label, source }`, or null (since 1.107.0). */
+  binding(actor: any): { st: number; label: string; source: string } | null {
+    return bindingOf(actor);
+  },
+
+  /** One attempt to break free of a Binding (since 1.107.0): "free", "held", or null. */
+  breakFree(actor: any): Promise<"free" | "held" | null> {
+    return breakFreeFromBinding(actor);
   },
 
   /** Ends an actor's bleeding and clears the condition (since 1.36.0), for a user who owns it. */

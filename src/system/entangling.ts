@@ -17,6 +17,11 @@ import { setCondition } from "./conditions.js";
 import { resolveSuccess } from "../rules/success.js";
 import { formatDiceAdds } from "../rules/dice.js";
 import { attributeOf } from "./attributes.js";
+import { skillLevelOf } from "./skill-level.js";
+import { applyFatigue } from "./fatigue.js";
+import { rollQuickContest } from "./contest.js";
+import { callCombatHook } from "./combat-extensions.js";
+import { PROCEDURE_HOOKS } from "./procedure-extensions.js";
 import {
   BOLAS_ESCAPE_ROLLS,
   BOLAS_FALL_DAMAGE,
@@ -314,4 +319,146 @@ export async function cutFree(actor: any): Promise<void> {
     "system.entangled.mustBeCut": false,
   });
   await setCondition(actor, "entangled", false);
+}
+
+// ── Binding (Characters p. 40) ─────────────────────────────────────────────
+
+/** How a Binding ended: the victim won the Contest, or the caller took it off. */
+export type BindingEnd = "brokeFree" | "unbound";
+
+/** What `gworld.bindingBroken` and a binding's `onBreak` are told (since API 1.107.0). */
+export interface BindingBroken {
+  actor: any;
+  st: number;
+  label: string;
+  source: string;
+  how: BindingEnd;
+}
+
+/**
+ * The callbacks given to `bind`, by actor, in the client that bound them.
+ * A function cannot be kept on a sheet, so this is only as good as the
+ * session it was made in: `gworld.bindingBroken` is what every client hears.
+ */
+const onBreakCallbacks = new Map<string, (broken: BindingBroken) => unknown>();
+
+/** An actor's Binding, or null where nothing binds them. */
+export function bindingOf(actor: any): { st: number; label: string; source: string } | null {
+  const held = actor?.system?.entangled;
+  if (held?.kind !== "binding") return null;
+  return { st: Number(held.st) || 0, label: String(held.label ?? ""), source: String(held.source ?? "") };
+}
+
+/**
+ * Holds somebody in a Binding of the given ST (Characters p. 40): they are
+ * entangled until they win a Quick Contest of ST or Escape against it. A
+ * victim already bound takes the new ST and label, which is how a module
+ * lays a second layer on (+1 ST each). Returns false for a user who may not
+ * change the actor, or an ST below 1.
+ */
+export async function bind(actor: any, options: {
+  st: number;
+  label?: string;
+  source?: string;
+  onBreak?: (broken: BindingBroken) => unknown;
+}): Promise<boolean> {
+  if (!actor?.isOwner) return false;
+  const st = Math.floor(Number(options?.st));
+  if (!Number.isFinite(st) || st < 1) return false;
+  await actor.update({
+    "system.entangled.kind": "binding",
+    "system.entangled.st": st,
+    "system.entangled.label": String(options.label ?? ""),
+    "system.entangled.source": String(options.source ?? ""),
+    "system.entangled.successes": 0,
+    "system.entangled.failures": 0,
+    "system.entangled.mustBeCut": false,
+    "system.entangled.where": "",
+    "system.entangled.running": false,
+  });
+  await setCondition(actor, "entangled", true);
+  const key = String(actor.uuid ?? "");
+  if (typeof options.onBreak === "function" && key) onBreakCallbacks.set(key, options.onBreak);
+  else if (key) onBreakCallbacks.delete(key);
+  return true;
+}
+
+/** Ends a Binding, and tells the listeners and the binder how. */
+async function endBinding(actor: any, how: BindingEnd): Promise<BindingBroken | null> {
+  const binding = bindingOf(actor);
+  if (!binding) return null;
+  await actor.update({
+    "system.entangled.kind": "",
+    "system.entangled.st": 0,
+    "system.entangled.label": "",
+    "system.entangled.source": "",
+    "system.entangled.successes": 0,
+    "system.entangled.failures": 0,
+  });
+  await setCondition(actor, "entangled", false);
+  const broken: BindingBroken = { actor, ...binding, how };
+  callCombatHook(PROCEDURE_HOOKS.bindingBroken, { ...broken });
+  const key = String(actor.uuid ?? "");
+  const callback = onBreakCallbacks.get(key);
+  onBreakCallbacks.delete(key);
+  if (callback) {
+    try {
+      await callback({ ...broken });
+    } catch (error) {
+      console.warn("gworld | a binding's onBreak failed", error);
+    }
+  }
+  return broken;
+}
+
+/**
+ * Takes a Binding off without a Contest: the module's rule freed them, or
+ * destroyed what held them. Returns false where there was none to take off,
+ * or the user may not change the actor.
+ */
+export async function unbind(actor: any): Promise<boolean> {
+  if (!actor?.isOwner) return false;
+  return (await endBinding(actor, "unbound")) !== null;
+}
+
+/**
+ * One attempt to break free of a Binding (Characters p. 40): a Quick
+ * Contest of the victim's ST or Escape, whichever is better, against the
+ * Binding's ST. Each attempt takes a second; one that fails
+ * costs 1 FP, and they may try again. Resolves to "free", "held", or null
+ * where nothing binds them or the user may not change the actor.
+ */
+export async function breakFreeFromBinding(actor: any): Promise<"free" | "held" | null> {
+  if (!actor?.isOwner) return null;
+  const binding = bindingOf(actor);
+  if (!binding) return null;
+  const st = attributeOf(actor, "ST");
+  const escape = skillLevelOf(actor, "Escape");
+  const useEscape = escape !== null && escape > st;
+  const what = binding.label || L("What.binding");
+
+  const contest = await rollQuickContest({
+    label: L("BreakFree", { what }),
+    first: { actor, base: useEscape ? (escape as number) : st, note: useEscape ? "Escape" : "ST" },
+    second: { actor: null, base: binding.st, note: `${what} (ST ${binding.st})` },
+    tags: ["binding"],
+  });
+  const free = contest.outcome === "first";
+  let fatigue = null;
+  if (free) {
+    await endBinding(actor, "brokeFree");
+  } else {
+    fatigue = await applyFatigue(actor, 1, { reason: "binding", details: { st: binding.st, label: binding.label, source: binding.source } });
+  }
+
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content: `<div class="gworld gworld-chat"><div class="gc-result ${free ? "success" : "failure"}">${foundry.utils.escapeHTML(
+      free
+        ? L("BrokeFree", { name: String(actor.name ?? ""), what })
+        : L("StillBound", { name: String(actor.name ?? ""), what, st: binding.st, fp: fatigue?.fpLost ?? 0 }),
+    )}</div></div>`,
+  });
+  return free ? "free" : "held";
 }

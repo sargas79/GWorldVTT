@@ -4126,8 +4126,13 @@
         "net": "a net",
         "smallNet": "a small net",
         "bolas": "a bolas",
-        "lariat": "a lariat"
+        "lariat": "a lariat",
+        "binding": "a binding"
       },
+      "BreakFree": "Break free of {what}",
+      "BrokeFree": "{name} breaks free of {what}.",
+      "StillBound": "{name} is still held by {what} (ST {st}), and loses {fp} FP.",
+      "BoundAt": "ST {st}",
       "Limbs": {
         "hands": "Hands",
         "paws": "Paws",
