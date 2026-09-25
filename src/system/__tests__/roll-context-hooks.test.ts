@@ -248,6 +248,8 @@ describe("remote control rolls", () => {
     expect(operatorUuid(drone().system)).toBe("Actor.Remote");
     expect(operatorUuid({ ...drone().system, controller: "" })).toBe("Actor.Passenger");
     expect(operatorUuid({ crew: [] })).toBeNull();
+    // A controller who can't be found leaves the wheel with the crew.
+    expect(operatorUuid(drone().system, (uuid) => uuid !== "Actor.Remote")).toBe("Actor.Passenger");
     expect(drivenRemotely({ crew: drone().system.crew, uuid: "Actor.Remote" })).toBe(true);
     expect(drivenRemotely({ crew: null, uuid: "Actor.Remote" })).toBe(false);
     expect(drivenRemotely({ said: false, crew: [], uuid: "Actor.Remote" })).toBe(false);

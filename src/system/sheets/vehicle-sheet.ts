@@ -130,7 +130,8 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
     const tabs = (context.tabs ?? {}) as Record<string, { label?: string }>;
     const active = this.tabGroups.primary ?? "overview";
     const occupants = await this.#occupants();
-    const operator = occupants.find((p) => p.operator);
+    // Whoever has the wheel, a remote operator included (since API 1.154.0).
+    const operator = await this.#operatorActor();
     const hpMax = Number(system.hp?.max) || 0;
     const hpValue = Number(system.hp?.value) || 0;
 
@@ -604,7 +605,7 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
 
   /** Whoever has the wheel: one named to drive it from outside (since API 1.154.0), else the crew's operator. */
   async #operatorActor(): Promise<any> {
-    const uuid = operatorUuid(this.actor.system);
+    const uuid = operatorUuid(this.actor.system, (id) => Boolean(fromUuidSync(id)));
     if (!uuid) return null;
     return fromUuid(uuid).catch(() => null);
   }

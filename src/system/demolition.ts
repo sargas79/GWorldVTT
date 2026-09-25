@@ -106,6 +106,8 @@ export async function detonateCharge(options: DetonateOptions): Promise<Detonati
     source: "demolition",
     distanceYards: null,
   });
+  // A listener refused the blast's roll (since API 1.154.0): nothing went off.
+  if (basicDamage === null) return null;
 
   const target = options.structure;
   if (!target || !(Number(target.hp) > 0)) return { charge, ref, basicDamage, structure: null };

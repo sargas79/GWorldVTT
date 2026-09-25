@@ -449,7 +449,9 @@ and the roll continues.
     The attack card says so, and until the next attack from that row the
     Combat tab's roll for that line (a damage roll, or a linked affliction's
     resistance roll) is refused with the same words. The next attack from
-    the row starts again with every line offered;
+    the row starts again with every line offered; an attack from another
+    row (the other hand of a Dual-Weapon Attack) leaves it alone. Over a
+    Spraying Fire burst, a line dropped for any target is dropped;
   - Since 1.19.0, a `gworld.attackModifiers` listener may set `refusal` (text): the
     attack isn't rolled, and the user is told why;
   - Since 1.83.0, `gworld.attackModifiers` also gets `shots`, the shells the
@@ -626,7 +628,10 @@ and the roll continues.
       null where not known. The Combat tab counts the rolls of a row's own
       damage off its last attack: the first is 0, the second 1, and so on;
       a follow-up or linked line goes with the hit rolled last (0 before
-      any). A hit from a suppression zone is one hit. Null for a roll no
+      any). Each row keeps its own count, so another row's attack doesn't
+      reset it; the targets of one Spraying Fire burst add their hits
+      together. The index isn't held to `hits`: a roll past them counts on.
+      A hit from a suppression zone is one hit. Null for a roll no
       attack from that row went before -- a slam, a fragment, a module's
       own `roll.damage` without it. `roll.damage` takes `hit` (`{ index,
       hits }`), and the card keeps it, so `IncomingDamage.hit` carries `{
@@ -637,9 +642,15 @@ and the roll continues.
       row's second lines (Characters p. 106), null for the row's own damage.
       `roll.damage` takes it, and `IncomingDamage.line` carries it.
     - `refusal`, null: set it (text) and the roll isn't made -- no card, a
-      warning with that text, and `roll.damage` resolves to 0. A listener
-      that rules one attack's follow-up away refuses the roll whose `line`
-      is `followUp`.
+      warning with that text, and `roll.damage` resolves to null (a rolled
+      0 is 0, so the two can be told apart). What the attack left for the
+      roll -- its called shot, a weapon strike, 1/2D, the range, the hit --
+      is given back and waits for the next roll from the row. A refused
+      slam or its roll back posts no slam, a refused demolition charge
+      doesn't go off (`hazards.detonate` resolves to null), and a shove's
+      knockback roll, which fires the hook with `hit` and `line` null, can
+      be refused too. A listener that rules one attack's follow-up away
+      refuses the roll whose `line` is `followUp`.
     Since 1.125.0, with Modifying Dice + Adds on, the hook's lines are added
     to the formula before its adds are turned into dice, so a per-die line is
     counted from the dice the hook was given (see
@@ -2017,7 +2028,8 @@ Two fields a module may read (since 1.62.0):
   - *Driven from outside* (since 1.154.0): a vehicle actor's
     `system.controller` names, by actor UUID, someone who drives it from
     elsewhere -- a remote operator, not in its `crew`. Blank (as it starts),
-    the crew's operator has the wheel as before. Named, the vehicle sheet's
+    or naming an actor that can't be found, the crew's operator has the
+    wheel as before. Named, the vehicle sheet's
     Control button rolls for them, and the vehicle's Dodge and its turn in
     the order are theirs, in place of the crew's operator. Set it with
     `vehicle.update({ "system.controller": actor.uuid })`.
@@ -2028,8 +2040,9 @@ Two fields a module may read (since 1.62.0):
     `remote: true` (false otherwise), and the card says it was driven from
     outside. A listener adds its own lines for range or signal, or refuses
     the roll (see *The rolls the system's procedures make with their own
-    dice*). `rules.operatorUuid(vehicleSystem)` gives whose hands the
-    controls are in, and `rules.drivenRemotely({ said, crew, uuid })`
+    dice*). `rules.operatorUuid(vehicleSystem, exists?)` gives whose hands
+    the controls are in (`exists(uuid)` says whether a controller can be
+    found), and `rules.drivenRemotely({ said, crew, uuid })`
     whether a roll is remote.
   - *After a shot at a vehicle*: `gworld.afterVehicleHit` is called once
     `hazards.shootAtVehicle` (or the sheet's Shot at) has worked out and

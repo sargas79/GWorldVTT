@@ -219,7 +219,7 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
     // operator's is all that takes. A vehicle nobody is driving sits at the
     // bottom of the order, which is where a driverless car belongs.
     // One named to drive it from outside has the wheel (since API 1.154.0).
-    const operator = operatorUuid(this);
+    const operator = operatorUuid(this, (uuid) => Boolean(fromUuidSync(uuid)));
     const driver = operator ? fromUuidSync(operator) : null;
 
     // "A vehicle's Dodge score is (operator's control skill/2) + vehicle's

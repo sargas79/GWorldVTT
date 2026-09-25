@@ -911,8 +911,9 @@ const hazardsApi = Object.freeze({
     return relayEffect("shock", actor, sourceActor, { options: rest }, null);
   },
   irradiate, detonate: detonateCharge, shootAtVehicle,
-  // A vehicle control roll, with why it is made (since 1.115.0; Campaigns p. 466).
-  controlVehicle: (options: { actor: any; vehicle: any; modifier?: number; reason?: string }) => controlVehicle({ ...options, modifier: Number(options?.modifier) || 0 }),
+  // A vehicle control roll, with why it is made (since 1.115.0; Campaigns p. 466),
+  // and whether it is made from outside the vehicle (since 1.154.0).
+  controlVehicle: (options: { actor: any; vehicle: any; modifier?: number; reason?: string; remote?: boolean }) => controlVehicle({ ...options, modifier: Number(options?.modifier) || 0 }),
   fragileKinds: fragileKindsOf, fragileCatchesFire, fragileExplodes, brittleLimb: rollBrittleLimb,
 });
 

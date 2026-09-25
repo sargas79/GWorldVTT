@@ -234,6 +234,8 @@ async function slam(actor: any, prep: SlamPreparation, label: string, hits: any[
     ],
     source: "slam",
   });
+  // A listener refused the slammer's roll (since API 1.154.0): no slam.
+  if (dealt === null) return;
   // Two foes at once split one roll between them; one foe takes it all.
   const each = foesWanted === 2 ? Math.floor(dealt / 2) : dealt;
   for (const foe of hits) {
@@ -249,6 +251,8 @@ async function slam(actor: any, prep: SlamPreparation, label: string, hits: any[
       // gear worn to slam with may guard against it and nothing else.
       source: "slammed",
     });
+    // A refused roll back (since API 1.154.0) leaves this foe's outcome unsaid.
+    if (taken === null) continue;
     const outcome = slamOutcome(each, taken);
     await post(actor, label, [
       L(`Outcome.${outcome}`, { slammer: String(actor.name ?? ""), foe: String(victim.name ?? ""), dealt: each, taken }),
@@ -272,7 +276,15 @@ async function shove(actor: any, prep: SlamPreparation, label: string, hits: any
     source: "shove",
     // A shove injures nobody, so it sets nothing alight (since API 1.152.0).
     incendiary: false,
+    // No attack's hit and no second line; a listener may refuse the roll (since API 1.154.0).
+    hit: null,
+    line: null,
+    refusal: null as string | null,
   });
+  if (typeof hooked.refusal === "string" && hooked.refusal.trim()) {
+    ui.notifications?.warn(hooked.refusal.trim());
+    return;
+  }
   const parsed = (typeof hooked.formula === "string" ? parseDiceAdds(hooked.formula) : null) ?? parseDiceAdds(given)!;
   const bonus = (Array.isArray(hooked.modifiers) ? hooked.modifiers : [])
     .reduce((sum, m) => sum + (typeof m?.value === "number" && Number.isFinite(m.value) ? m.value : 0), 0);

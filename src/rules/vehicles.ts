@@ -245,12 +245,17 @@ export function leaveSeat(crew: readonly Seat[], uuid: string): Seat[] {
 
 /**
  * Whose hands the controls are in (since API 1.154.0): the one named to drive
- * it from outside, where there is one, else the operator in the crew; null
- * for nobody. An actor UUID.
+ * it from outside, where there is one and `exists` finds them, else the
+ * operator in the crew; null for nobody. An actor UUID. A controller who
+ * can't be found -- deleted, or in a compendium no longer there -- leaves
+ * the wheel with the crew.
  */
-export function operatorUuid(vehicle: { controller?: string | null; crew?: readonly Seat[] | null }): string | null {
+export function operatorUuid(
+  vehicle: { controller?: string | null; crew?: readonly Seat[] | null },
+  exists: (uuid: string) => boolean = () => true,
+): string | null {
   const remote = String(vehicle.controller ?? "").trim();
-  if (remote) return remote;
+  if (remote && exists(remote)) return remote;
   return (vehicle.crew ?? []).find((seat) => seat.operator)?.uuid ?? null;
 }
 
