@@ -201,9 +201,12 @@ export const PROCEDURE_HOOKS = Object.freeze({
   bindingBroken: "gworld.bindingBroken",
   /**
    * Before a stretch of study is turned into points (since 1.133.0; Characters
-   * pp. 292-293): `{ actor, skill, method, hours, multiplier, lines }`.
+   * pp. 292-293): `{ actor, skill, studied, method, hours, multiplier, lines }`.
    * `multiplier` (1) is mutable, the share of `hours` that counts; push a
-   * string to `lines` for the card.
+   * string to `lines` for the card. Since 1.146.0 study reaches attributes
+   * and advantages too: `studied` is `{ kind, item, attribute, name }`,
+   * `kind` being `skill`, `attribute` or `trait`, and `skill` is null but
+   * for a skill.
    */
   studyModifiers: "gworld.studyModifiers",
 });

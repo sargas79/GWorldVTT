@@ -264,6 +264,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
   declare powerTalent: boolean;
   declare meleeModes: unknown[];
   declare rangedModes: unknown[];
+  declare studyHours: number;
 
   static override defineSchema() {
     return {
@@ -323,6 +324,11 @@ export class TraitData extends foundry.abstract.TypeDataModel {
         integer: true,
         initial: 0,
       }),
+      /**
+       * Hours of study banked toward the trait's next level (Characters
+       * pp. 292, 294), for an advantage learned as if it were a skill.
+       */
+      studyHours: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       /**
        * Total cost at each level, for traits the book prices from a table
        * rather than at a flat rate per level. Wealth runs 10/20/30/50/75 and
