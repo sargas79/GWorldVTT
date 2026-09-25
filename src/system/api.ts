@@ -42,7 +42,7 @@ import { chatApi, sheetsApi } from "./sheet-extensions.js";
 import { magicApi, pointsApi } from "./roll-extensions.js";
 import { conditionLabel, setCondition } from "./conditions.js";
 import { migrationApi } from "./migration.js";
-import { takeInjury, wearDr, type DrWorn, type InjuryTaken } from "./damage.js";
+import { takeInjury, wearDr, type DrWorn, type InjuryTaken, type TakeInjuryOptions } from "./damage.js";
 import { equipmentFailure, type EquipmentFailureResult } from "./repairs.js";
 import { stopBleeding } from "./bleeding.js";
 import { activePoisons, advancePoison, clearPoison, dosePoison, treatIllness, treatPoison, type ActivePoison } from "./poison.js";
@@ -110,7 +110,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.147.0";
+export const API_VERSION = "1.148.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -213,9 +213,14 @@ const actors = {
    * Takes injury, or fatigue with `fatigue: true`, off an actor outside a
    * damage card (since 1.8.0). The health conditions follow, and nothing is
    * posted. Returns the pool and what it went from and to, or null where this
-   * user can't change the actor.
+   * user can't change the actor. Since 1.148.0 `location` takes it at a hit
+   * location as the card would (Campaigns pp. 398-399, 420-421): with
+   * `damageType`, `amount` is damage past DR and the location's wounding
+   * modifier multiplies it; a limb or extremity keeps no more than cripples
+   * it, and a part crippled is recorded. The result's `located` says what
+   * the location did.
    */
-  applyInjury(actor: any, options: { amount: number; fatigue?: boolean; label?: string }): Promise<InjuryTaken | null> {
+  applyInjury(actor: any, options: TakeInjuryOptions): Promise<InjuryTaken | null> {
     return takeInjury(actor, options);
   },
 
