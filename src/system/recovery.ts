@@ -531,7 +531,10 @@ export async function attendPatient(options: {
  * parts are left alone: care changes nothing about when they end. Resolves to
  * the names of the parts it put in care.
  */
-async function putCrippledInCare(patient: any, techLevel: number): Promise<string[]> {
+async function putCrippledInCare(patient: any, rawTechLevel: number): Promise<string[]> {
+  // A listener may leave a fractional TL; a part keeps whole TLs, so compare
+  // on the whole one or every rounds would put the same part in care again.
+  const techLevel = Math.floor(rawTechLevel);
   const names: string[] = [];
   for (const part of crippledParts(patient)) {
     if (part.duration !== "lasting" && part.duration !== "undecided") continue;
