@@ -70,6 +70,8 @@ export async function chargeBattleFatigue(combat: any): Promise<void> {
   const idle = anyMarked ? everyone.filter((actor) => !marked.has(actor)).map((actor) => String(actor.name ?? "")) : [];
 
   const charged: string[] = [];
+  // What each fighter paid, for whoever reads the card later.
+  const paid: Array<{ uuid: string; fp: number }> = [];
   for (const actor of fighters) {
     // By the fighter's encumbrance at the end of the battle.
     const cost = battleFatigueCost(rounds, Number(actor.system?.derived?.encumbrance?.level) || 0);
@@ -101,6 +103,7 @@ export async function chargeBattleFatigue(combat: any): Promise<void> {
     if (extra("strained")) name = game.i18n.format("GWORLD.BattleFatigue.Strained", { name });
     const heat = extra("hotDay");
     if (heat) name = game.i18n.format("GWORLD.BattleFatigue.HotDay", { name, fp: heat.fp });
+    paid.push({ uuid: String(actor.uuid ?? ""), fp: spent.fpLost });
     charged.push(spent.sources.length > 0
       ? game.i18n.format("GWORLD.BattleFatigue.Changed", { name, fp: spent.fpLost, sources: spent.sources.join(", ") })
       : game.i18n.format("GWORLD.BattleFatigue.Paid", { name, fp: spent.fpLost }));
@@ -118,6 +121,6 @@ export async function chargeBattleFatigue(combat: any): Promise<void> {
     }</span><span class="gc-target">${
       game.i18n.format("GWORLD.BattleFatigue.Seconds", { seconds: rounds })
     }</span></div>${lines.map((line) => `<div class="gc-result">${line}</div>`).join("")}</div>`,
-    flags: { [SYSTEM_ID]: { battleFatigue: { rounds, cost: battleFatigueCost(rounds) } } },
+    flags: { [SYSTEM_ID]: { battleFatigue: { rounds, paid } } },
   });
 }

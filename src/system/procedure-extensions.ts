@@ -702,17 +702,27 @@ export function fatigueCost(
 ): { fp: number; sources: string[]; parts: FatigueCostPart[] } {
   const given = (options.parts ?? []).filter(isPart).map((part) => ({ ...part }));
   const asked = options.fp ?? sumOfParts(given);
-  const ctx = callCombatHook<FatigueCostContext>(PROCEDURE_HOOKS.fatigueCost, {
+  const partsOf = (context: { parts: unknown }) => (Array.isArray(context.parts) ? context.parts : []).filter(isPart);
+  // `fp` is always the parts' sum plus whatever the listeners did to `fp`
+  // itself, so a listener that reads it sees an earlier one's part edits,
+  // and one that sets it sets the whole cost.
+  let adjust = asked - sumOfParts(given);
+  const context = {
     actor: options.actor,
-    fp: asked,
     reason: options.reason,
     exertion: options.exertion,
     details: { ...(options.details ?? {}) },
-    sources: [],
+    sources: [] as string[],
     parts: given.map((part) => ({ ...part })),
+  } as FatigueCostContext;
+  Object.defineProperty(context, "fp", {
+    enumerable: true,
+    get: () => adjust + sumOfParts(partsOf(context)),
+    set: (value: unknown) => { adjust = Number(value) - sumOfParts(partsOf(context)); },
   });
-  const parts = (Array.isArray(ctx.parts) ? ctx.parts : []).filter(isPart).map((part) => ({ key: part.key, label: part.label, fp: part.fp }));
-  const fp = Number(ctx.fp) + sumOfParts(parts) - sumOfParts(given);
+  const ctx = callCombatHook<FatigueCostContext>(PROCEDURE_HOOKS.fatigueCost, context);
+  const parts = partsOf(ctx).map((part) => ({ key: part.key, label: part.label, fp: part.fp }));
+  const fp = Number(ctx.fp);
   return {
     fp: Number.isFinite(fp) ? Math.max(0, Math.round(fp)) : asked,
     sources: (Array.isArray(ctx.sources) ? ctx.sources : []).filter((s): s is string => typeof s === "string" && s !== ""),

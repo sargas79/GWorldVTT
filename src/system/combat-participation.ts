@@ -11,6 +11,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { getCombatState, setCombatState } from "./combat-extensions.js";
+import { isRuleOn } from "./optional-rules.js";
 
 const FOUGHT_KEY = "foughtIn";
 
@@ -30,7 +31,8 @@ export function isFightingRoll(kind: unknown): boolean {
  * combatant of. Only an owner can; the roller of an attack or a defense is.
  */
 export async function noteFought(actor: any): Promise<void> {
-  if (!actor?.isOwner) return;
+  // Only battle fatigue reads the mark: with it off, nothing is written.
+  if (!actor?.isOwner || !isRuleOn("battleFatigue")) return;
   const uuid = String(actor.uuid ?? "");
   if (!uuid) return;
   const ids = [...(game.combats ?? [])]

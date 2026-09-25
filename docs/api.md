@@ -2065,7 +2065,7 @@ Two fields a module may read (since 1.62.0):
     settled included) marks the roller as having fought in each started
     combat they are a combatant of, as combat-long state (`combat.getCombatState(actor,
     "gworld", "foughtIn")`, an array of combat ids), cleared when the combat
-    ends. A roll a module makes some other way doesn't mark anyone: call
+    ends. With *Battle fatigue* off nothing is marked. A roll a module makes some other way doesn't mark anyone: call
     `roll.success` with `kind: "attack"` or `"defense"` for a roll that
     should count, or have the fighter's owner make one.
   - *A hot day.* "If the day is hot", a battle that costs fatigue costs 1 FP
@@ -2079,7 +2079,13 @@ Two fields a module may read (since 1.62.0):
     `hotDay` (1); a march's are `hiking` (its hours by encumbrance) and
     `hotDay` (1 an hour). Change a part's `fp`, take a part out or push one
     of your own: the cost moves by what that did to the parts' sum, on top
-    of any change to `fp` itself. `parts` is empty for every other reason.
+    of any change to `fp` itself. `fp` stays the whole cost as the parts
+    change: it reads as their sum plus what the listeners did to `fp`, so a
+    later listener that reads, multiplies or zeroes `fp` sees and acts on an
+    earlier one's part edits. `parts` is empty for every other reason.
+  - *The card* keeps `flags.gworld.battleFatigue` as `{ rounds, paid }`,
+    `paid` being `{ uuid, fp }` for each fighter charged, `fp` the FP they
+    actually lost.
   - *What is left to modules.* The book charges 2 FP rather than 1 for
     anyone in plate armour, an overcoat and the like, and nothing for
     full-coverage armour at TL9+, which is climate-controlled. The system
