@@ -270,6 +270,8 @@ async function shove(actor: any, prep: SlamPreparation, label: string, hits: any
     modifiers: [] as Array<{ label: string; value: number }>,
     distanceYards: damageDistance(actor, undefined),
     source: "shove",
+    // A shove injures nobody, so it sets nothing alight (since API 1.152.0).
+    incendiary: false,
   });
   const parsed = (typeof hooked.formula === "string" ? parseDiceAdds(hooked.formula) : null) ?? parseDiceAdds(given)!;
   const bonus = (Array.isArray(hooked.modifiers) ? hooked.modifiers : [])

@@ -1386,7 +1386,13 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     // Where the blow came from (since 1.139.0), so a listener can add to a
     // slam's damage alone and leave every other crushing roll as it is.
     source: options.source ? String(options.source) : null,
+    // Whether this blow is incendiary (Characters p. 104; since API
+    // 1.152.0): its mode's flag, which a listener may set for this blow
+    // alone -- a round that burns only at close range, say.
+    incendiary: options.incendiary === true,
   });
+  // Only a true or false counts; anything else leaves the mode's own flag.
+  const incendiary = typeof hookedDamage.incendiary === "boolean" ? hookedDamage.incendiary : options.incendiary === true;
   const replaced = typeof hookedDamage.formula === "string" && hookedDamage.formula !== options.formula && parseDiceAdds(hookedDamage.formula)
     ? hookedDamage.formula
     : null;
@@ -1528,7 +1534,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(options.ignoresDr ? { ignoresDr: true } : {}),
           // Carried to the apply, where a dose, a fire and a shove are worked
           // out against the victim rather than against the dice (pp. 104-105).
-          ...(options.incendiary ? { incendiary: true } : {}),
+          ...(incendiary ? { incendiary: true } : {}),
           ...(options.radiation ? { radiation: true } : {}),
           ...(options.doubleKnockback ? { doubleKnockback: true } : {}),
           ...(options.noKnockback ? { noKnockback: true } : {}),
