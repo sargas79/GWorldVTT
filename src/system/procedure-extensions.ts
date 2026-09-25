@@ -464,6 +464,12 @@ export interface SuccessRollContext {
   /** On a control roll, the vehicle: a Gear-tab item or a vehicle actor (since 1.76.0). */
   vehicle?: any;
   /**
+   * On a control roll, whether the operator drives it from outside it
+   * (since 1.154.0): not in a vehicle actor's crew, or said to be remote.
+   * The roll is also tagged `remoteControl`.
+   */
+  remote?: boolean;
+  /**
    * The item the roll is made with, where there is one (since 1.95.0): the
    * weapon of an attack, the tool carried for a skill, the vehicle of a
    * control roll, or what a module's caller passed. Its `techLevel` and

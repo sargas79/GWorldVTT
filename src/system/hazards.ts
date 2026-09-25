@@ -41,7 +41,7 @@ import { skillLevelOf } from "./skill-level.js";
 import { dozingOff, sleepRecovery, stayingUpFatigue, wakingDayHours } from "../rules/sleep.js";
 import { resolveSuccess } from "../rules/success.js";
 import type { DamageType } from "../rules/types.js";
-import { activeMove, controlRoll, fragilityCodes, vehicleMoves } from "../rules/vehicles.js";
+import { activeMove, controlRoll, drivenRemotely, fragilityCodes, vehicleMoves } from "../rules/vehicles.js";
 import { vehicleStats } from "./vehicle-stats.js";
 import {
   brittleLimb, explodesOnMajorWound, fragileExplosion, fragileFromVehicleCodes, fragileIgnition,
@@ -1127,6 +1127,12 @@ export async function controlVehicle(options: {
    * joins the roll's tags, so a listener can tell one control roll from another.
    */
   reason?: string;
+  /**
+   * Whether the operator drives it from outside (since API 1.154.0). Left
+   * out, a vehicle actor's roll is remote where the actor isn't in its crew;
+   * a vehicle carried as gear is driven by whoever carries it.
+   */
+  remote?: boolean;
 }): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor)) return;
@@ -1134,6 +1140,13 @@ export async function controlVehicle(options: {
   const reason = String(options.reason ?? "").trim();
   const vehicle = item?.system?.vehicle;
   if (!item || !vehicle) return;
+  // A remote operator (since API 1.154.0): the roll is theirs all the same,
+  // tagged so a listener can add its own lines for range or signal, or refuse it.
+  const remote = drivenRemotely({
+    said: typeof options.remote === "boolean" ? options.remote : null,
+    crew: Array.isArray(item.system?.crew) ? item.system.crew : null,
+    uuid: typeof actor?.uuid === "string" ? actor.uuid : null,
+  });
 
   const skillName = String(vehicle.skill ?? "");
   const own = skillLevelOf(actor, skillName);
@@ -1159,8 +1172,9 @@ export async function controlVehicle(options: {
   // (since API 1.144.0): no dice, and a card that says why.
   const hooked = procedureRoll({
     actor, label: H("Control"), kind: "skill", skill: skillName, base: skill,
-    tags: ["vehicleControl", ...use.tags, ...(reason ? [reason] : [])], modifiers: [...given], vehicle: item, item,
+    tags: ["vehicleControl", ...use.tags, ...(remote ? ["remoteControl"] : []), ...(reason ? [reason] : [])], modifiers: [...given], vehicle: item, item,
     ...(reason ? { reason } : {}),
+    remote,
   }, { refusable: true });
   // The TL lines as the listeners left them, and what they added.
   const lines = [...given, ...hooked.added].filter((line) => line.value !== 0);
@@ -1202,6 +1216,7 @@ export async function controlVehicle(options: {
     });
     notes.push(H(`Movement.${movement}`));
   }
+  if (remote) notes.push(H("RemoteControl"));
   notes.push(H(`ControlResult.${result}`));
   if (result !== "ok") {
     // What losing control actually does depends on what the thing moves

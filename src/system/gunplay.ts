@@ -21,6 +21,7 @@ import {
 import { canOverpenetrate, coverDr, damageThrough, overpenetrates, type CoverKind } from "../rules/overpenetration.js";
 import { FLINCH_PENALTY, LIQUID_IN_THE_FACE, liquidInTheFace } from "../rules/dirty-tricks.js";
 import { resolveSuccess } from "../rules/success.js";
+import { landedAfterScatter } from "./landed.js";
 
 const GUNPLAY_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/gunplay.hbs`;
 
@@ -61,6 +62,9 @@ export async function rollScatter(options: {
   squared?: boolean;
   /** Dice of fragmentation, for the radius the card reports. */
   fragmentationDice: number;
+  /** The weapon and mode the miss was made with, for `gworld.landed` (since API 1.154.0); null where not said. */
+  item?: any;
+  mode?: { index: number; ranged: boolean; derived?: string } | null;
 }): Promise<void> {
   const direction = new Roll("1d6");
   await direction.evaluate();
@@ -91,6 +95,11 @@ export async function rollScatter(options: {
     fragmentPerMargin: fragmentHits(3),
     rolls: [direction],
   });
+
+  // Where it came down, for the modules whose rules act on the landing
+  // (since API 1.154.0): placed from the one token targeted where the
+  // attacker has a token to face from.
+  landedAfterScatter({ actor: options.actor, item: options.item ?? null, mode: options.mode ?? null, scatter });
 }
 
 /**

@@ -735,6 +735,9 @@ export interface ScatterWeapon {
   fragmentationDice: number;
   /** The row always scatters by the square of the margin. */
   squared: boolean;
+  /** The row's item and mode, for `gworld.landed` (since API 1.154.0). */
+  itemId?: string;
+  mode?: { index: number; ranged: boolean; derived?: string } | null;
 }
 
 /** Asks how badly the grenade was thrown (Campaigns p. 414). */
@@ -745,6 +748,8 @@ export async function promptForScatter(weapons: ScatterWeapon[] = []): Promise<{
   unseen: boolean;
   squared: boolean;
   fragmentationDice: number;
+  /** The weapon picked, where one was (since API 1.154.0). */
+  weapon: ScatterWeapon | null;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Scatter.${key}`);
   const esc = (text: string) => foundry.utils.escapeHTML(text);
@@ -802,6 +807,7 @@ export async function promptForScatter(weapons: ScatterWeapon[] = []): Promise<{
           dodged: ticked("dodged"),
           unseen: ticked("unseen"),
           squared: picked?.squared === true,
+          weapon: picked ?? null,
         };
       },
     },

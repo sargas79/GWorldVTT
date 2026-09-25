@@ -69,6 +69,12 @@ export interface Cone {
   length: number;
   width: number;
   base: number;
+  /**
+   * Its apex where that isn't the area's `center` (since 1.154.0): a cone
+   * opening from where a blast goes off rather than from the attacker. Scene
+   * pixels; left out, the apex is `center`.
+   */
+  origin?: Point | null;
 }
 
 /** Whether a point lies in a circle. */
@@ -158,17 +164,21 @@ export function segmentCrossesCone(a: Point, b: Point, apex: Point, cone: Cone):
   });
 }
 
-/** An area's cone, where it has a usable one, with its apex (since 1.89.0). */
+/**
+ * An area's cone, where it has a usable one, with its apex (since 1.89.0):
+ * the cone's own `origin` where it has one (since 1.154.0), else `center`.
+ */
 export function coneOf(area: ModifierArea): { apex: Point; cone: Cone } | null {
-  const c = area.center;
   const k = area.cone;
+  const o = k?.origin;
+  const c = o && Number.isFinite(o.x) && Number.isFinite(o.y) ? o : area.center;
   if (!c || !k || !Number.isFinite(c.x) || !Number.isFinite(c.y)) return null;
   const direction = Number(k.direction);
   const length = Number(k.length);
   const width = Number(k.width);
   const base = Number(k.base);
   if (!Number.isFinite(direction) || !(length > 0) || !(width > 0) || !(base > 0)) return null;
-  return { apex: { x: c.x, y: c.y }, cone: { direction, length, width, base } };
+  return { apex: { x: c.x, y: c.y }, cone: { direction, length, width, base, ...(c === o ? { origin: { x: c.x, y: c.y } } : {}) } };
 }
 
 /** Whether a line applies to a roll of this kind with these tags. */
