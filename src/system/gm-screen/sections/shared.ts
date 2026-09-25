@@ -6,7 +6,9 @@ import type { GmSectionDef } from "../types.js";
 export const K = "GWORLD.GmScreen";
 
 /** A system section, with its title and summary under `GWORLD.GmScreen.Section.<id>`. */
-export function section(def: Omit<GmSectionDef, "title" | "summary"> & { title?: string; summary?: string | false }): GmSectionDef {
+export function section(
+  def: Omit<GmSectionDef, "title" | "summary"> & { title?: string; summary?: string | false },
+): GmSectionDef {
   const { summary, ...rest } = def;
   return {
     ...rest,

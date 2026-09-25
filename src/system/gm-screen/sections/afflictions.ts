@@ -24,9 +24,15 @@ import { K, partKey, section } from "./shared.js";
 function figures(affliction: Affliction, t: BuildContext["t"]): string {
   const effect = afflictionEffect(affliction);
   const out: string[] = [];
-  const attributes: Array<[string, number]> = [["DX", effect.dx], ["IQ", effect.iq], ["ST", effect.st], ["HT", effect.ht]];
+  const attributes: Array<[string, number]> = [
+    ["DX", effect.dx],
+    ["IQ", effect.iq],
+    ["ST", effect.st],
+    ["HT", effect.ht],
+  ];
   for (const [name, value] of attributes) if (value) out.push(`${name} ${signed(value)}`);
-  if (effect.selfControl) out.push(t(`${K}.Affliction.SelfControl`, { value: signed(effect.selfControl) }));
+  if (effect.selfControl)
+    out.push(t(`${K}.Affliction.SelfControl`, { value: signed(effect.selfControl) }));
   if (effect.defense) out.push(t(`${K}.Affliction.Defense`, { value: signed(effect.defense) }));
   if (effect.helpless) out.push(t("GWORLD.Affliction.NoAction"));
   if (effect.fallsDown) out.push(t("GWORLD.Affliction.FallsDown"));
@@ -43,7 +49,11 @@ function severityPart(severity: AfflictionSeverity, t: BuildContext["t"]): GmPar
       columns: [t(`${K}.Column.Condition`), t(`${K}.Column.Figures`), t(`${K}.Column.Effect`)],
       rows: afflictionsOf(severity).map((affliction) => ({
         key: affliction,
-        cells: [t(`GWORLD.Affliction.Name.${affliction}`), figures(affliction, t), t(`GWORLD.Affliction.What.${affliction}`)],
+        cells: [
+          t(`GWORLD.Affliction.Name.${affliction}`),
+          figures(affliction, t),
+          t(`GWORLD.Affliction.What.${affliction}`),
+        ],
       })),
     },
   };
@@ -65,7 +75,12 @@ export const AFFLICTION_SECTIONS: readonly GmSectionDef[] = [
           cite: "pp. B428-429",
           content: {
             kind: "table",
-            columns: [t(`${K}.Column.Pain`), t(`${K}.Column.Normal`), t(`${K}.Column.HighPain`), t(`${K}.Column.LowPain`)],
+            columns: [
+              t(`${K}.Column.Pain`),
+              t(`${K}.Column.Normal`),
+              t(`${K}.Column.HighPain`),
+              t(`${K}.Column.LowPain`),
+            ],
             rows: PAIN_GRADES.map((grade) => ({
               cells: [
                 t(`GWORLD.Affliction.Name.${grade}Pain`),
@@ -75,13 +90,15 @@ export const AFFLICTION_SECTIONS: readonly GmSectionDef[] = [
               ],
             })),
           },
-          notes: [t(partKey("afflictions", "PainNote"), {
-            agony: AGONY_FP_PER_MINUTE,
-            torture: signed(TORTURE_BONUS),
-            retching: RETCHING_FP,
-            seizure: SEIZURE_FP_DICE,
-            coma: COMA_CHECK_HOURS,
-          })],
+          notes: [
+            t(partKey("afflictions", "PainNote"), {
+              agony: AGONY_FP_PER_MINUTE,
+              torture: signed(TORTURE_BONUS),
+              retching: RETCHING_FP,
+              seizure: SEIZURE_FP_DICE,
+              coma: COMA_CHECK_HOURS,
+            }),
+          ],
         },
       ],
     }),

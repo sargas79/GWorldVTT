@@ -5,7 +5,11 @@
  */
 
 import { GM_SCREEN_TABS, SYSTEM_SECTIONS } from "./layout.js";
-import { registeredGmScreenSections, registeredGmScreenTabs, type AddonSectionDef } from "./registry.js";
+import {
+  registeredGmScreenSections,
+  registeredGmScreenTabs,
+  type AddonSectionDef,
+} from "./registry.js";
 import type { BuildContext, GmPart, GmRollSpec, GmSectionDef } from "./types.js";
 
 export interface ScreenSection {
@@ -78,7 +82,13 @@ function orderedSections(tab: string, added: readonly AddonSectionDef[]): GmSect
 
 /** Everything a section says, for the search box. */
 function searchText(section: Omit<ScreenSection, "search">): string {
-  const words: string[] = [section.title, section.cite, section.summary, section.source ?? "", ...section.notes];
+  const words: string[] = [
+    section.title,
+    section.cite,
+    section.summary,
+    section.source ?? "",
+    ...section.notes,
+  ];
   for (const part of section.parts) {
     words.push(part.heading ?? "", ...(part.notes ?? []));
     const content = part.content;
@@ -128,8 +138,10 @@ export function buildSection(def: GmSectionDef, context: BuildContext): ScreenSe
 /** The whole screen, as this user may see it. */
 export function assembleScreen(context: BuildContext, options: ScreenOptions): ScreenTab[] {
   const added = registeredGmScreenSections();
-  const hidden = new Set(options.isGM ? [] : options.hiddenTabs ?? []);
-  const tabs = [...GM_SCREEN_TABS, ...registeredGmScreenTabs()].filter((tab) => !hidden.has(tab.id));
+  const hidden = new Set(options.isGM ? [] : (options.hiddenTabs ?? []));
+  const tabs = [...GM_SCREEN_TABS, ...registeredGmScreenTabs()].filter(
+    (tab) => !hidden.has(tab.id),
+  );
   return tabs.map((tab) => ({
     id: tab.id,
     label: context.t(tab.label),
@@ -146,7 +158,10 @@ export function assembleScreen(context: BuildContext, options: ScreenOptions): S
 
 /** Every section there is, the system's and the modules', by id. */
 export function sectionDef(id: string): GmSectionDef | undefined {
-  return SYSTEM_SECTIONS.find((def) => def.id === id) ?? registeredGmScreenSections().find((def) => def.id === id);
+  return (
+    SYSTEM_SECTIONS.find((def) => def.id === id) ??
+    registeredGmScreenSections().find((def) => def.id === id)
+  );
 }
 
 /** How a section is rolled on, or null where it is not. */

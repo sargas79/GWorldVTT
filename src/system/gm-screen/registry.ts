@@ -68,17 +68,24 @@ function takenIds(): Set<string> {
 
 /** Checks a placement, and returns the section's id and tab, or why not. */
 function place(r: Placement, what: string): { id: string; tab: string } | string {
-  if (typeof r.module !== "string" || !IDENTIFIER.test(r.module) || typeof r.key !== "string" || !IDENTIFIER.test(r.key)) {
+  if (
+    typeof r.module !== "string" ||
+    !IDENTIFIER.test(r.module) ||
+    typeof r.key !== "string" ||
+    !IDENTIFIER.test(r.key)
+  ) {
     return "the module id or key is missing or malformed";
   }
   if (typeof r.title !== "string" || !r.title.trim()) return "it has no title";
   const id = `${r.module}.${r.key}`;
   if (takenIds().has(id)) return `${what} ${id} is already registered`;
   if (r.slot !== undefined) {
-    if (!GM_SCREEN_SLOTS.includes(r.slot)) return `slot must be one of ${GM_SCREEN_SLOTS.join(", ")}`;
+    if (!GM_SCREEN_SLOTS.includes(r.slot))
+      return `slot must be one of ${GM_SCREEN_SLOTS.join(", ")}`;
     return { id, tab: SYSTEM_SECTIONS.find((s) => s.id === r.slot)!.tab };
   }
-  if (typeof r.tab !== "string" || !tabIds().includes(r.tab)) return `tab must be one of ${tabIds().join(", ")}`;
+  if (typeof r.tab !== "string" || !tabIds().includes(r.tab))
+    return `tab must be one of ${tabIds().join(", ")}`;
   return { id, tab: r.tab };
 }
 
@@ -97,7 +104,9 @@ function common(r: Placement, id: string, tab: string): AddonSectionDef {
 }
 
 function notesOf(r: Placement): string[] {
-  return Array.isArray(r.notes) ? r.notes.filter((note): note is string => typeof note === "string") : [];
+  return Array.isArray(r.notes)
+    ? r.notes.filter((note): note is string => typeof note === "string")
+    : [];
 }
 
 /** Registers a table. Returns its section id, `<module>.<key>`, or null. */
@@ -105,9 +114,12 @@ export function registerGmScreenTable(registration: GmTableRegistration): string
   const r = registration ?? ({} as GmTableRegistration);
   const placed = place(r, "table");
   if (typeof placed === "string") return refuse(`table ${r?.module}.${r?.key}`, placed);
-  if (!Array.isArray(r.columns) || r.columns.some((c) => typeof c !== "string")) return refuse(`table ${placed.id}`, "columns must be a list of strings");
-  if (!Array.isArray(r.rows) && typeof r.rows !== "function") return refuse(`table ${placed.id}`, "rows must be a list or a function");
-  if (r.roll && (typeof r.roll.formula !== "string" || typeof r.roll.rowFor !== "function")) return refuse(`table ${placed.id}`, "a roll needs a formula and a rowFor function");
+  if (!Array.isArray(r.columns) || r.columns.some((c) => typeof c !== "string"))
+    return refuse(`table ${placed.id}`, "columns must be a list of strings");
+  if (!Array.isArray(r.rows) && typeof r.rows !== "function")
+    return refuse(`table ${placed.id}`, "rows must be a list or a function");
+  if (r.roll && (typeof r.roll.formula !== "string" || typeof r.roll.rowFor !== "function"))
+    return refuse(`table ${placed.id}`, "a roll needs a formula and a rowFor function");
   const rowsOf = r.rows;
   const roll = r.roll;
   sections.push({
@@ -115,18 +127,29 @@ export function registerGmScreenTable(registration: GmTableRegistration): string
     build: () => {
       const rows = typeof rowsOf === "function" ? rowsOf() : rowsOf;
       return {
-        parts: [{
-          content: {
-            kind: "table",
-            columns: [...r.columns],
-            rows: (Array.isArray(rows) ? rows : []).map((cells, index) => ({ key: String(index), cells: (Array.isArray(cells) ? cells : []).map(String) })),
+        parts: [
+          {
+            content: {
+              kind: "table",
+              columns: [...r.columns],
+              rows: (Array.isArray(rows) ? rows : []).map((cells, index) => ({
+                key: String(index),
+                cells: (Array.isArray(cells) ? cells : []).map(String),
+              })),
+            },
           },
-        }],
+        ],
         notes: notesOf(r),
       };
     },
     ...(roll
-      ? { roll: { formula: roll.formula, ...(roll.ask === "margin" || roll.ask === "modifier" ? { ask: roll.ask } : {}), rowFor: (total: number) => String(roll.rowFor(total)) } }
+      ? {
+          roll: {
+            formula: roll.formula,
+            ...(roll.ask === "margin" || roll.ask === "modifier" ? { ask: roll.ask } : {}),
+            rowFor: (total: number) => String(roll.rowFor(total)),
+          },
+        }
       : {}),
   });
   return placed.id;
@@ -137,21 +160,24 @@ export function registerGmScreenRuleBlock(registration: GmRuleBlockRegistration)
   const r = registration ?? ({} as GmRuleBlockRegistration);
   const placed = place(r, "rule block");
   if (typeof placed === "string") return refuse(`rule block ${r?.module}.${r?.key}`, placed);
-  if (!Array.isArray(r.items) && typeof r.items !== "function") return refuse(`rule block ${placed.id}`, "items must be a list or a function");
+  if (!Array.isArray(r.items) && typeof r.items !== "function")
+    return refuse(`rule block ${placed.id}`, "items must be a list or a function");
   const itemsOf = r.items;
   sections.push({
     ...common(r, placed.id, placed.tab),
     build: () => {
       const items = typeof itemsOf === "function" ? itemsOf() : itemsOf;
       return {
-        parts: [{
-          content: {
-            kind: "rules",
-            items: (Array.isArray(items) ? items : [])
-              .filter((item) => typeof item?.term === "string" && typeof item?.text === "string")
-              .map((item) => ({ term: item.term, text: item.text })),
+        parts: [
+          {
+            content: {
+              kind: "rules",
+              items: (Array.isArray(items) ? items : [])
+                .filter((item) => typeof item?.term === "string" && typeof item?.text === "string")
+                .map((item) => ({ term: item.term, text: item.text })),
+            },
           },
-        }],
+        ],
         notes: notesOf(r),
       };
     },
@@ -162,13 +188,23 @@ export function registerGmScreenRuleBlock(registration: GmRuleBlockRegistration)
 /** Registers a tab of the module's own, after the system's. Returns its id, or null. */
 export function registerGmScreenTab(registration: GmTabRegistration): string | null {
   const r = registration ?? ({} as GmTabRegistration);
-  if (typeof r.module !== "string" || !IDENTIFIER.test(r.module) || typeof r.key !== "string" || !IDENTIFIER.test(r.key)) {
+  if (
+    typeof r.module !== "string" ||
+    !IDENTIFIER.test(r.module) ||
+    typeof r.key !== "string" ||
+    !IDENTIFIER.test(r.key)
+  ) {
     return refuse(`tab ${r?.module}.${r?.key}`, "the module id or key is missing or malformed");
   }
   const id = `${r.module}.${r.key}`;
   if (typeof r.label !== "string" || !r.label.trim()) return refuse(`tab ${id}`, "it has no label");
   if (tabIds().includes(id)) return refuse(`tab ${id}`, "that key is already registered");
-  tabs.push({ id, label: r.label.trim(), icon: typeof r.icon === "string" && r.icon ? r.icon : "fa-solid fa-puzzle-piece", module: r.module });
+  tabs.push({
+    id,
+    label: r.label.trim(),
+    icon: typeof r.icon === "string" && r.icon ? r.icon : "fa-solid fa-puzzle-piece",
+    module: r.module,
+  });
   return id;
 }
 

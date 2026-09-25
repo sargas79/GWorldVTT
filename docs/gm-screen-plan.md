@@ -1,6 +1,20 @@
 # The GM Screen: an in-game reference of the Basic Set's tables
 
-**Status: proposed, awaiting approval.** Nothing below is implemented.
+**Status: implemented** on `claude/gm-screen-plan-hgw9z3` (sargas79/GWorldVTT#840).
+What changed from the plan during the work, most of it from the mockups:
+
+- All eight tabs are drawn in one part rather than one part a tab, so
+  switching tab and searching need no re-render and a search can count what
+  every tab holds.
+- The Wounds topics are a card each rather than one card of parts, and the
+  tabs read "Wounds" and "Fright", as the mockups have them.
+- Searching also filters a long table to its matching rows, marks the words
+  found, and lists the matches on other tabs in a card of their own.
+- An empty add-on slot shows to the GM as an outline, and to nobody else.
+- A player's copy says it is read-only in its title bar.
+- The prose flag is on the journal entry, and a world journal entry counts
+  as well as a module's compendium.
+- The system's version is left to the release, as the repository does it.
 
 Decisions taken with the user (2026-09-25):
 

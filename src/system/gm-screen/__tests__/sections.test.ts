@@ -50,7 +50,9 @@ describe("the GM Screen's sections", () => {
 
   it("gives every id a journal page can name only once", () => {
     const tabs = assembleScreen(englishContext(), { isGM: true });
-    const ids = tabs.flatMap((tab) => tab.sections.flatMap((s) => [s.id, ...s.parts.flatMap((p) => (p.id ? [p.id] : []))]));
+    const ids = tabs.flatMap((tab) =>
+      tab.sections.flatMap((s) => [s.id, ...s.parts.flatMap((p) => (p.id ? [p.id] : []))]),
+    );
     expect(new Set(ids).size).toBe(ids.length);
   });
 
@@ -66,16 +68,31 @@ describe("the GM Screen's sections", () => {
 
   it("lands every 3d roll on the row the automation's own lookup gives", () => {
     for (let total = 3; total <= 18; total += 1) {
-      expect(rollSpec("criticalHit")!.rowFor(total)).toBe(String(criticalEntry("hit", total).rolls[0]));
-      expect(rollSpec("criticalHeadBlow")!.rowFor(total)).toBe(String(criticalEntry("headBlow", total).rolls[0]));
-      expect(rollSpec("criticalMiss")!.rowFor(total)).toBe(String(criticalEntry("miss", total).rolls[0]));
-      expect(rollSpec("unarmedCriticalMiss")!.rowFor(total)).toBe(String(criticalEntry("missUnarmed", total).rolls[0]));
+      expect(rollSpec("criticalHit")!.rowFor(total)).toBe(
+        String(criticalEntry("hit", total).rolls[0]),
+      );
+      expect(rollSpec("criticalHeadBlow")!.rowFor(total)).toBe(
+        String(criticalEntry("headBlow", total).rolls[0]),
+      );
+      expect(rollSpec("criticalMiss")!.rowFor(total)).toBe(
+        String(criticalEntry("miss", total).rolls[0]),
+      );
+      expect(rollSpec("unarmedCriticalMiss")!.rowFor(total)).toBe(
+        String(criticalEntry("missUnarmed", total).rolls[0]),
+      );
       expect(rollSpec("hitLocations")!.rowFor(total)).toBe(randomHitLocation(total).location);
     }
-    for (let total = 4; total <= 45; total += 1) expect(rollSpec("frightChecks")!.rowFor(total)).toBe(String(frightCheckResult(total).from));
-    for (let total = -5; total <= 25; total += 1) expect(rollSpec("reactions")!.rowFor(total)).toBe(reactionFor(total));
+    for (let total = 4; total <= 45; total += 1)
+      expect(rollSpec("frightChecks")!.rowFor(total)).toBe(String(frightCheckResult(total).from));
+    for (let total = -5; total <= 25; total += 1)
+      expect(rollSpec("reactions")!.rowFor(total)).toBe(reactionFor(total));
     // Every key a roll can land on is a row on the table.
-    const keys = (id: string) => new Set((buildSection(sectionDef(id)!, englishContext())!.parts[0]!.content as GmTable).rows.map((r) => r.key));
+    const keys = (id: string) =>
+      new Set(
+        (buildSection(sectionDef(id)!, englishContext())!.parts[0]!.content as GmTable).rows.map(
+          (r) => r.key,
+        ),
+      );
     for (let total = 3; total <= 18; total += 1) {
       expect(keys("criticalHit").has(rollSpec("criticalHit")!.rowFor(total))).toBe(true);
       expect(keys("hitLocations").has(rollSpec("hitLocations")!.rowFor(total))).toBe(true);
@@ -106,7 +123,15 @@ describe("the GM Screen's sections", () => {
 
   it("gives the attribute levels and the chances of success", () => {
     const levels = table("attributeSkillLevels", 0);
-    expect(levels.rows.map((r) => r.cells[0])).toEqual(["6 or less", "7", "8-9", "10", "11-12", "13-14", "15+"]);
+    expect(levels.rows.map((r) => r.cells[0])).toEqual([
+      "6 or less",
+      "7",
+      "8-9",
+      "10",
+      "11-12",
+      "13-14",
+      "15+",
+    ]);
     const chances = table("attributeSkillLevels", 1);
     expect(row(chances, "10")[1]).toBe("50%");
     expect(row(chances, "16")[1]).toBe("98.1%");
@@ -115,25 +140,40 @@ describe("the GM Screen's sections", () => {
   it("works out the thrown damage and throwing distance rows", () => {
     const thrown = table("thrownDamage");
     expect(thrown.rows.map((r) => r.cells[1])).toEqual([
-      "Thrust, -2 per die", "Thrust, -1 per die", "Thrust", "Thrust, +1 per die", "Thrust", "Thrust, -1 per two dice", "Thrust, -1 per die",
+      "Thrust, -2 per die",
+      "Thrust, -1 per die",
+      "Thrust",
+      "Thrust, +1 per die",
+      "Thrust",
+      "Thrust, -1 per two dice",
+      "Thrust, -1 per die",
     ]);
     expect(row(table("throwingDistance"), "0.05")[1]).toBe("×3.5");
   });
 
   it("groups the criticals by effective skill", () => {
     expect(table("criticals").rows.map((r) => r.cells)).toEqual([
-      ["3", "3-4", "13+"], ["4", "3-4", "14+"], ["5", "3-4", "15+"], ["6", "3-4", "16+"],
-      ["7-14", "3-4", "17+"], ["15", "3-5", "17+"], ["16+", "3-6", "18"],
+      ["3", "3-4", "13+"],
+      ["4", "3-4", "14+"],
+      ["5", "3-4", "15+"],
+      ["6", "3-4", "16+"],
+      ["7-14", "3-4", "17+"],
+      ["15", "3-5", "17+"],
+      ["16+", "3-6", "18"],
     ]);
   });
 
   it("lists the melee and defense modifiers with the automation's figures", () => {
-    const melee = rules("meleeAttackModifiers").items.map((i) => `${i.term}: ${i.text}`).join("\n");
+    const melee = rules("meleeAttackModifiers")
+      .items.map((i) => `${i.term}: ${i.text}`)
+      .join("\n");
     expect(melee).toContain("All-Out Attack (Determined): +4.");
     expect(melee).toContain("Move and Attack: -4, and effective skill no higher than 9.");
     expect(melee).toContain("Rapid Strike: -6");
     expect(melee).toContain("-10 in total darkness (-6 if used to blindness)");
-    const defense = rules("activeDefenseModifiers").items.map((i) => `${i.term}: ${i.text}`).join("\n");
+    const defense = rules("activeDefenseModifiers")
+      .items.map((i) => `${i.term}: ${i.text}`)
+      .join("\n");
     expect(defense).toContain("All-Out Defense (Increased): +2 to one defense.");
     expect(defense).toContain("Retreat: +3 to Dodge, +1 to Parry or Block; +3 to Parry");
     expect(defense).toContain("Combat Reflexes: +1");
@@ -154,7 +194,13 @@ describe("the GM Screen's sections", () => {
   });
 
   it("builds the posture, maneuver, fright and reaction tables", () => {
-    expect(row(table("posture"), "Lying Down")).toEqual(["Lying Down", "-4", "-3", "-2", "1 yard a second"]);
+    expect(row(table("posture"), "Lying Down")).toEqual([
+      "Lying Down",
+      "-4",
+      "-3",
+      "-2",
+      "1 yard a second",
+    ]);
     const maneuvers = table("maneuvers");
     expect(row(maneuvers, "All-Out Attack").slice(1, 3)).toEqual(["Half Move", "None"]);
     expect(maneuvers.rows.find((r) => r.cells[0] === "Determined")!.depth).toBe(1);
@@ -178,16 +224,37 @@ describe("what a player sees", () => {
   it("hides the tabs the GM keeps back and the empty add-on slots", () => {
     const gm = assembleScreen(englishContext(), { isGM: true, hiddenTabs: ["combat"] });
     expect(gm.some((tab) => tab.id === "combat")).toBe(true);
-    expect(gm.find((tab) => tab.id === "checks")!.sections.find((s) => s.id === "aweConfusion")?.placeholder).toBe(true);
+    expect(
+      gm.find((tab) => tab.id === "checks")!.sections.find((s) => s.id === "aweConfusion")
+        ?.placeholder,
+    ).toBe(true);
     const player = assembleScreen(englishContext(), { isGM: false, hiddenTabs: ["combat"] });
     expect(player.some((tab) => tab.id === "combat")).toBe(false);
-    expect(player.find((tab) => tab.id === "checks")!.sections.some((s) => s.id === "aweConfusion")).toBe(false);
+    expect(
+      player.find((tab) => tab.id === "checks")!.sections.some((s) => s.id === "aweConfusion"),
+    ).toBe(false);
   });
 
   it("gives every section words to be found by", () => {
     const tabs = assembleScreen(englishContext(), { isGM: true });
     const stunned = tabs.flatMap((tab) => tab.sections).filter((s) => s.search.includes("stun"));
-    expect(stunned.map((s) => s.id)).toEqual(expect.arrayContaining(["wounds", "activeDefenseModifiers", "frightChecks"]));
+    expect(stunned.map((s) => s.id)).toEqual(
+      expect.arrayContaining(["effectsOfStun", "activeDefenseModifiers", "frightChecks"]),
+    );
   });
 });
 
+describe("the ids a content module names", () => {
+  it("are every one in docs/api.md", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { resolve } = await import("node:path");
+    const docs = readFileSync(resolve(import.meta.dirname, "../../../../docs/api.md"), "utf8");
+    const tabs = assembleScreen(englishContext(), { isGM: true });
+    const ids = tabs.flatMap((tab) =>
+      tab.sections.flatMap((s) =>
+        s.placeholder ? [] : [s.id, ...s.parts.flatMap((p) => (p.id ? [p.id] : []))],
+      ),
+    );
+    for (const id of ids) expect(docs, id).toContain(`\`${id}\``);
+  });
+});

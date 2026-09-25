@@ -11,7 +11,11 @@ import {
   fallingDamage,
   fallingVelocity,
 } from "../../../rules/falling.js";
-import { FRIGHT_CHECK_CEILING, FRIGHT_CHECK_TABLE, frightCheckResult } from "../../../rules/fright.js";
+import {
+  FRIGHT_CHECK_CEILING,
+  FRIGHT_CHECK_TABLE,
+  frightCheckResult,
+} from "../../../rules/fright.js";
 import { REACTION_TABLE, reactionFor } from "../../../rules/reactions.js";
 import { span } from "../format.js";
 import type { GmRow, GmSectionDef } from "../types.js";
@@ -37,22 +41,29 @@ export const CHECK_SECTIONS: readonly GmSectionDef[] = [
     tab: "checks",
     cite: "pp. B360-361",
     build: ({ t }) => ({
-      parts: [{
-        content: {
-          kind: "table",
-          columns: [t(`${K}.Column.Total`), t(`${K}.Column.Effect`)],
-          rows: FRIGHT_CHECK_TABLE.map((row) => ({
-            key: String(row.from),
-            cells: [
-              span(row.from, row.to),
-              t(`GWORLD.Fright.Effect.${row.effect}`) + (row.gmDecides ? ` ${t(`${K}.GmDecides`)}` : ""),
-            ],
-          })),
+      parts: [
+        {
+          content: {
+            kind: "table",
+            columns: [t(`${K}.Column.Total`), t(`${K}.Column.Effect`)],
+            rows: FRIGHT_CHECK_TABLE.map((row) => ({
+              key: String(row.from),
+              cells: [
+                span(row.from, row.to),
+                t(`GWORLD.Fright.Effect.${row.effect}`) +
+                  (row.gmDecides ? ` ${t(`${K}.GmDecides`)}` : ""),
+              ],
+            })),
+          },
         },
-      }],
+      ],
       notes: [t(`${K}.Section.frightChecks.Note`, { cap: FRIGHT_CHECK_CEILING })],
     }),
-    roll: { formula: "3d6", ask: "margin", rowFor: (total) => String(frightCheckResult(total).from) },
+    roll: {
+      formula: "3d6",
+      ask: "margin",
+      rowFor: (total) => String(frightCheckResult(total).from),
+    },
   }),
   section({ id: "aweConfusion", tab: "checks", slot: true, summary: false }),
   section({
@@ -71,8 +82,14 @@ export const CHECK_SECTIONS: readonly GmSectionDef[] = [
             id: "fallingVelocity",
             heading: t(partKey("fallingCollisions", "Velocity")),
             cite: "p. B431",
-            content: { kind: "table", columns: [t(`${K}.Column.FallYards`), t(`${K}.Column.Velocity`)], rows: velocityRows() },
-            notes: [t(partKey("fallingCollisions", "VelocityNote"), { yards: LONGEST_TABULATED_FALL })],
+            content: {
+              kind: "table",
+              columns: [t(`${K}.Column.FallYards`), t(`${K}.Column.Velocity`)],
+              rows: velocityRows(),
+            },
+            notes: [
+              t(partKey("fallingCollisions", "VelocityNote"), { yards: LONGEST_TABULATED_FALL }),
+            ],
           },
           {
             id: "falling",
@@ -84,7 +101,10 @@ export const CHECK_SECTIONS: readonly GmSectionDef[] = [
                 m("Damage", { velocity: example.velocity, dice: `${example.damage.dice}d` }),
                 m("Soft"),
                 m("Acrobatics", { yards: CONTROLLED_FALL_YARDS }),
-                m("Terminal", { low: TERMINAL_VELOCITY.spreadEagled, high: TERMINAL_VELOCITY.swanDive }),
+                m("Terminal", {
+                  low: TERMINAL_VELOCITY.spreadEagled,
+                  high: TERMINAL_VELOCITY.swanDive,
+                }),
               ],
             },
           },
@@ -115,20 +135,28 @@ export const CHECK_SECTIONS: readonly GmSectionDef[] = [
     tab: "checks",
     cite: "p. B560",
     build: ({ t }) => ({
-      parts: [{
-        content: {
-          kind: "table",
-          columns: [t(`${K}.Column.Roll`), t(`${K}.Column.Reaction`), t(`${K}.Column.Description`)],
-          rows: REACTION_TABLE.map((band) => ({
-            key: band.reaction,
-            cells: [
-              band.max !== null && band.min === Number.NEGATIVE_INFINITY ? t(`${K}.OrLess`, { value: band.max }) : span(band.min, band.max),
-              t(`GWORLD.Reaction.${band.reaction}`),
-              t(`${K}.Reaction.${band.reaction}`),
+      parts: [
+        {
+          content: {
+            kind: "table",
+            columns: [
+              t(`${K}.Column.Roll`),
+              t(`${K}.Column.Reaction`),
+              t(`${K}.Column.Description`),
             ],
-          })),
+            rows: REACTION_TABLE.map((band) => ({
+              key: band.reaction,
+              cells: [
+                band.max !== null && band.min === Number.NEGATIVE_INFINITY
+                  ? t(`${K}.OrLess`, { value: band.max })
+                  : span(band.min, band.max),
+                t(`GWORLD.Reaction.${band.reaction}`),
+                t(`${K}.Reaction.${band.reaction}`),
+              ],
+            })),
+          },
         },
-      }],
+      ],
       notes: [t(`${K}.Section.reactions.Note`)],
     }),
     roll: { formula: "3d6", ask: "modifier", rowFor: (total) => reactionFor(total) },

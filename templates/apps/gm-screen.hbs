@@ -1,0 +1,146 @@
+{{!-- The GM Screen: a tab strip with the search beside it (a menu in a
+     narrow window), and every tab's cards drawn at once, so switching tab
+     and searching happen without a re-render. --}}
+
+{{#*inline "gsTable"}}
+  <div class="gs-table-wrap{{#if table.scrolls}} gs-scroll{{/if}}">
+    <table class="gs-table">
+      <thead>
+        {{#if table.groups}}
+          <tr class="gs-groups">
+            {{#each table.groups as |group|}}<th colspan="{{group.span}}" class="{{group.cls}}">{{#if group.label}}<span>{{group.label}}</span>{{/if}}</th>{{/each}}
+          </tr>
+        {{/if}}
+        <tr>{{#each table.head as |col|}}<th scope="col" class="{{col.cls}}">{{col.label}}</th>{{/each}}</tr>
+      </thead>
+      <tbody>
+        {{#each table.body as |row|}}
+          <tr data-row="{{row.key}}" data-search="{{row.search}}" class="gs-depth-{{row.depth}}">
+            {{#each row.cells as |cell|}}
+              <td class="{{cell.cls}}">{{#if cell.sub}}<span class="gs-sub-mark" aria-hidden="true">└</span>{{/if}}{{cell.text}}{{#if cell.badge}}<span class="gs-badge">{{cell.badge}}</span>{{/if}}</td>
+            {{/each}}
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{#if table.scrolls}}<p class="gs-scroll-hint">{{localize "GWORLD.GmScreen.ScrollHint"}}</p>{{/if}}
+{{/inline}}
+
+{{#*inline "gsProse"}}
+  <div class="gs-prose" data-prose-target="{{target}}" hidden>
+    <div class="gs-prose-text"></div>
+    <button type="button" class="gs-read-more" data-action="readMore" aria-expanded="false">{{localize "GWORLD.GmScreen.ReadMore"}}</button>
+  </div>
+{{/inline}}
+
+{{#*inline "gsCard"}}
+  {{#if section.placeholder}}
+    <div class="gs-slot" data-section="{{section.id}}" data-search="{{section.search}}">
+      <b>{{localize "GWORLD.GmScreen.Slot.Title"}} <span class="gs-gm">{{localize "GWORLD.GmScreen.GmOnly"}}</span></b>
+      {{section.slotText}}
+    </div>
+  {{else}}
+    <section class="gs-card{{#if section.wide}} gs-wide{{/if}}{{#if section.collapsed}} collapsed{{/if}}" data-section="{{section.id}}" data-search="{{section.search}}">
+      <header class="gs-card-head">
+        <h2 title="{{section.summary}}">{{section.title}}</h2>
+        {{#if section.source}}<span class="gs-badge">{{section.source}}</span>{{/if}}
+        {{#if section.gmOnly}}<span class="gs-gm">{{localize "GWORLD.GmScreen.GmOnly"}}</span>{{/if}}
+        <span class="gs-meta">{{section.cite}}<span class="gs-meta-rows"></span></span>
+        <div class="gs-tools">
+          <button type="button" class="gs-txt gs-showall" data-action="toggleRows" hidden></button>
+          {{#if section.roll}}
+            <span class="gs-last"{{#unless section.last}} hidden{{/unless}}>{{localize "GWORLD.GmScreen.Last"}} <b>{{section.last}}</b></span>
+            <button type="button" class="gs-dice" data-action="roll" data-tooltip="{{localize 'GWORLD.GmScreen.RollHint'}}" aria-label="{{localize 'GWORLD.GmScreen.RollHint'}}: {{section.title}}">
+              <i class="fa-solid fa-dice" inert></i>{{section.diceLabel}}
+            </button>
+          {{/if}}
+          <button type="button" class="gs-chev" data-action="collapse" aria-expanded="{{#if section.collapsed}}false{{else}}true{{/if}}"
+                  aria-label="{{localize 'GWORLD.GmScreen.Collapse'}}: {{section.title}}"><i class="fa-solid fa-chevron-up" inert></i></button>
+        </div>
+      </header>
+      <div class="gs-card-body">
+        {{#each section.parts as |part|}}
+          <div class="gs-part"{{#if part.id}} data-part="{{part.id}}"{{/if}}>
+            {{#if part.heading}}<h3 class="gs-sub">{{part.heading}}{{#if part.cite}} <span class="gs-meta">{{part.cite}}</span>{{/if}}</h3>{{/if}}
+            {{#if part.table}}{{> gsTable table=part.table}}{{/if}}
+            {{#if part.rules}}
+              <div class="gs-items">
+                {{#each part.rules as |item|}}
+                  <div class="gs-item"><span class="gs-term">{{item.term}}</span><span class="gs-text">{{item.text}}</span></div>
+                {{/each}}
+              </div>
+            {{/if}}
+            {{#if part.diagram}}
+              <figure class="gs-diagram">
+                {{{part.diagram.svg}}}
+                <figcaption class="gs-items">
+                  {{#each part.diagram.legend as |item|}}
+                    <div class="gs-item"><span class="gs-term gs-arc-key gs-arc-key-{{@index}}">{{item.term}}</span><span class="gs-text">{{item.text}}</span></div>
+                  {{/each}}
+                </figcaption>
+              </figure>
+            {{/if}}
+            {{#each part.notes as |note|}}<p class="gs-note">{{note}}</p>{{/each}}
+            {{#if part.id}}{{> gsProse target=part.id}}{{/if}}
+          </div>
+        {{/each}}
+        {{#each section.notes as |note|}}<p class="gs-note">{{note}}</p>{{/each}}
+        {{> gsProse target=section.id}}
+        {{#if @root.isGM}}
+          <footer class="gs-foot"><i class="fa-solid fa-circle-info" inert></i><span>{{localize "GWORLD.GmScreen.NoProse"}}</span></footer>
+        {{/if}}
+      </div>
+    </section>
+  {{/if}}
+{{/inline}}
+
+<div class="gs{{#if readOnly}} gs-readonly{{/if}}">
+  <div class="gs-bar">
+    <nav class="gs-tabs" role="tablist" aria-label="{{localize 'GWORLD.GmScreen.TabsMenu'}}">
+      {{#each tabs as |tab|}}
+        <button type="button" class="gs-tab{{#if tab.active}} active{{/if}}" role="tab" data-action="tab" data-tab-button="{{tab.id}}"
+                aria-selected="{{#if tab.active}}true{{else}}false{{/if}}" data-tooltip="{{tab.hint}}">
+          {{tab.label}}{{#if tab.source}}<span class="gs-badge">{{tab.source}}</span>{{/if}}<span class="gs-count" hidden></span>
+        </button>
+      {{/each}}
+    </nav>
+
+    {{!-- The narrow window's tab strip: one button, and the tabs in a menu. --}}
+    <button type="button" class="gs-menu" data-action="toggleMenu" aria-haspopup="menu" aria-expanded="false">
+      <i class="fa-solid fa-bars" inert></i><span class="gs-menu-label">{{activeLabel}}</span><span class="gs-menu-pos">{{activePosition}}</span>
+    </button>
+    <div class="gs-menu-pop" role="menu" aria-label="{{localize 'GWORLD.GmScreen.TabsMenu'}}" hidden>
+      {{#each tabs as |tab|}}
+        <button type="button" class="gs-menu-item{{#if tab.active}} active{{/if}}" role="menuitemradio" data-action="tab" data-tab-button="{{tab.id}}"
+                aria-checked="{{#if tab.active}}true{{else}}false{{/if}}">
+          <i class="{{tab.icon}}" inert></i>
+          <span><span class="gs-menu-name">{{tab.label}}<span class="gs-count" hidden></span></span><span class="gs-menu-hint">{{tab.hint}}</span></span>
+        </button>
+      {{/each}}
+    </div>
+
+    <label class="gs-search">
+      <i class="fa-solid fa-magnifying-glass" inert></i>
+      <input type="search" name="gm-screen-search" value="{{query}}" autocomplete="off"
+             placeholder="{{localize 'GWORLD.GmScreen.Search'}}" aria-label="{{localize 'GWORLD.GmScreen.Search'}}" />
+      <span class="gs-search-count" aria-live="polite"></span>
+      <button type="button" class="gs-search-clear" data-action="clearSearch" aria-label="{{localize 'GWORLD.GmScreen.ClearSearch'}}" hidden><i class="fa-solid fa-xmark" inert></i></button>
+    </label>
+  </div>
+
+  <div class="gs-body">
+    {{#each tabs as |tab|}}
+      <div class="gs-panel{{#if tab.active}} active{{/if}}" data-tab="{{tab.id}}" role="tabpanel">
+        <div class="gs-grid">
+          {{#each tab.sections as |section|}}{{> gsCard section=section}}{{else}}<p class="gs-none">{{localize "GWORLD.GmScreen.NoSections"}}</p>{{/each}}
+        </div>
+        <p class="gs-empty" hidden>{{localize "GWORLD.GmScreen.NoMatches"}}</p>
+        <section class="gs-card gs-other" hidden>
+          <header class="gs-card-head"><h2>{{localize "GWORLD.GmScreen.OtherTabs"}}</h2><span class="gs-meta"></span></header>
+          <div class="gs-other-list"></div>
+        </section>
+      </div>
+    {{/each}}
+  </div>
+</div>

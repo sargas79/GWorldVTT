@@ -14,7 +14,13 @@ import { TABLES_SECTIONS } from "./sections/tables.js";
 import { WOUNDS_SECTIONS } from "./sections/wounds.js";
 import type { GmSectionDef, GmTabDef } from "./types.js";
 
-const tab = (id: string, icon: string): GmTabDef => ({ id, label: `${K}.Tab.${id}`, hint: `${K}.TabHint.${id}`, icon, module: null });
+const tab = (id: string, icon: string): GmTabDef => ({
+  id,
+  label: `${K}.Tab.${id}`,
+  hint: `${K}.TabHint.${id}`,
+  icon,
+  module: null,
+});
 
 export const GM_SCREEN_TABS: readonly GmTabDef[] = [
   tab("tables", "fa-solid fa-table-list"),
@@ -39,4 +45,6 @@ export const SYSTEM_SECTIONS: readonly GmSectionDef[] = [
 ];
 
 /** The places kept for tables the Basic Set does not have, which a module fills. */
-export const GM_SCREEN_SLOTS: readonly string[] = SYSTEM_SECTIONS.filter((def) => def.slot).map((def) => def.id);
+export const GM_SCREEN_SLOTS: readonly string[] = SYSTEM_SECTIONS.filter((def) => def.slot).map(
+  (def) => def.id,
+);

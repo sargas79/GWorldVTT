@@ -42,7 +42,9 @@ function rapidFireRows(): GmRow[] {
   for (let shots = 2; shots <= 200; shots += 1) {
     const next = rapidFireBonus(shots + 1);
     if (next !== rapidFireBonus(shots) || shots === 200) {
-      rows.push({ cells: [span(from, shots === 200 ? null : shots), signed(rapidFireBonus(shots))] });
+      rows.push({
+        cells: [span(from, shots === 200 ? null : shots), signed(rapidFireBonus(shots))],
+      });
       from = shots + 1;
     }
   }
@@ -60,7 +62,11 @@ function damageRows(): GmRow[] {
 }
 
 function escape(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 /**
@@ -73,11 +79,16 @@ export function visionHexSvg(t: BuildContext["t"]): string {
   const step = Math.sqrt(3) * radius;
   const cx = 130;
   const cy = 130;
-  const hex = (x: number, y: number) => Array.from({ length: 6 }, (_, i) => {
-    const angle = (Math.PI / 3) * i;
-    return `${(x + radius * Math.cos(angle)).toFixed(1)},${(y + radius * Math.sin(angle)).toFixed(1)}`;
-  }).join(" ");
-  const label: Record<Arc, string> = { front: t(`${K}.Arc.front`), side: t(`${K}.Arc.side`), back: t(`${K}.Arc.back`) };
+  const hex = (x: number, y: number) =>
+    Array.from({ length: 6 }, (_, i) => {
+      const angle = (Math.PI / 3) * i;
+      return `${(x + radius * Math.cos(angle)).toFixed(1)},${(y + radius * Math.sin(angle)).toFixed(1)}`;
+    }).join(" ");
+  const label: Record<Arc, string> = {
+    front: t(`${K}.Arc.front`),
+    side: t(`${K}.Arc.side`),
+    back: t(`${K}.Arc.back`),
+  };
   const cells: string[] = [];
   for (let direction = 0; direction < 6; direction += 1) {
     const { arc, side } = attackArc(0, hexDirection(direction));
@@ -85,7 +96,9 @@ export function visionHexSvg(t: BuildContext["t"]): string {
     const x = cx + step * Math.cos(angle);
     const y = cy + step * Math.sin(angle);
     const name = side ? t(`${K}.Arc.${side}`) : label[arc];
-    cells.push(`<polygon class="gs-arc gs-arc-${arc}" points="${hex(x, y)}"/><text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle">${escape(name)}</text>`);
+    cells.push(
+      `<polygon class="gs-arc gs-arc-${arc}" points="${hex(x, y)}"/><text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="middle">${escape(name)}</text>`,
+    );
   }
   const figure = `<polygon class="gs-arc gs-arc-self" points="${hex(cx, cy)}"/><path class="gs-facing" d="M ${cx} ${cy - 18} L ${cx + 10} ${cy + 8} L ${cx} ${cy + 2} L ${cx - 10} ${cy + 8} Z"/>`;
   return `<svg class="gs-vision" viewBox="0 0 260 260" role="img" aria-label="${escape(t(`${K}.Section.visionHexDiagram.Title`))}">${cells.join("")}${figure}</svg>`;
@@ -105,7 +118,9 @@ export const COMBAT_SECTIONS: readonly GmSectionDef[] = [
           content: {
             kind: "table",
             columns: [t(`${K}.Column.Task`), t(`${K}.Column.Modifier`)],
-            rows: TASK_DIFFICULTY.map((row) => ({ cells: [t(`${K}.Task.${row.difficulty}`), signed(row.modifier)] })),
+            rows: TASK_DIFFICULTY.map((row) => ({
+              cells: [t(`${K}.Task.${row.difficulty}`), signed(row.modifier)],
+            })),
           },
         },
         {
@@ -114,16 +129,36 @@ export const COMBAT_SECTIONS: readonly GmSectionDef[] = [
           cite: "p. B345",
           content: {
             kind: "table",
-            columns: [t(`${K}.Column.Equipment`), t(`${K}.Column.Technological`), t(`${K}.Column.OtherSkills`)],
-            rows: (["none", "improvised", "basic", "good", "fine"] as const).map((quality) => ({
-              cells: [
-                t(`${K}.Quality.${quality}`),
-                signed(equipmentQualityModifier(quality, { technological: true })),
-                signed(equipmentQualityModifier(quality, { technological: false })),
-              ],
-            })).concat([{ cells: [t(`${K}.Quality.best`), t(`${K}.Quality.bestText`, { min: signed(equipmentQualityModifier("best", { tl: 0 })) }), t(`${K}.Quality.bestText`, { min: signed(equipmentQualityModifier("best", { tl: 0 })) })] }]),
+            columns: [
+              t(`${K}.Column.Equipment`),
+              t(`${K}.Column.Technological`),
+              t(`${K}.Column.OtherSkills`),
+            ],
+            rows: (["none", "improvised", "basic", "good", "fine"] as const)
+              .map((quality) => ({
+                cells: [
+                  t(`${K}.Quality.${quality}`),
+                  signed(equipmentQualityModifier(quality, { technological: true })),
+                  signed(equipmentQualityModifier(quality, { technological: false })),
+                ],
+              }))
+              .concat([
+                {
+                  cells: [
+                    t(`${K}.Quality.best`),
+                    t(`${K}.Quality.bestText`, {
+                      min: signed(equipmentQualityModifier("best", { tl: 0 })),
+                    }),
+                    t(`${K}.Quality.bestText`, {
+                      min: signed(equipmentQualityModifier("best", { tl: 0 })),
+                    }),
+                  ],
+                },
+              ]),
           },
-          notes: [t(partKey("skillModifiers", "Unfamiliar"), { value: signed(UNFAMILIAR_PENALTY) })],
+          notes: [
+            t(partKey("skillModifiers", "Unfamiliar"), { value: signed(UNFAMILIAR_PENALTY) }),
+          ],
         },
         {
           id: "timeSpent",
@@ -132,7 +167,9 @@ export const COMBAT_SECTIONS: readonly GmSectionDef[] = [
           content: {
             kind: "table",
             columns: [t(`${K}.Column.TimeTaken`), t(`${K}.Column.Modifier`)],
-            rows: EXTRA_TIME.map((row) => ({ cells: [t(`${K}.TimesUsual`, { value: row.multiple }), signed(row.bonus)] })),
+            rows: EXTRA_TIME.map((row) => ({
+              cells: [t(`${K}.TimesUsual`, { value: row.multiple }), signed(row.bonus)],
+            })),
           },
         },
       ],
@@ -143,9 +180,15 @@ export const COMBAT_SECTIONS: readonly GmSectionDef[] = [
     tab: "combat",
     cite: "p. B16",
     build: ({ t }) => ({
-      parts: [{
-        content: { kind: "table", columns: [t(`${K}.Column.St`), t(`${K}.Column.Thrust`), t(`${K}.Column.Swing`)], rows: damageRows() },
-      }],
+      parts: [
+        {
+          content: {
+            kind: "table",
+            columns: [t(`${K}.Column.St`), t(`${K}.Column.Thrust`), t(`${K}.Column.Swing`)],
+            rows: damageRows(),
+          },
+        },
+      ],
       notes: [t(`${K}.Section.damageTable.Note`, { st: MAX_TABULATED_ST })],
     }),
   }),
@@ -165,7 +208,9 @@ export const COMBAT_SECTIONS: readonly GmSectionDef[] = [
               kind: "rules",
               items: [
                 m("Crushing", { value: bluntTrauma({ stopped: 10, penetrated: false }) }),
-                m("Other", { value: bluntTrauma({ stopped: 10, penetrated: false, crushing: false }) }),
+                m("Other", {
+                  value: bluntTrauma({ stopped: 10, penetrated: false, crushing: false }),
+                }),
                 m("Penetrated"),
               ],
             },
@@ -174,8 +219,16 @@ export const COMBAT_SECTIONS: readonly GmSectionDef[] = [
             id: "rapidFire",
             heading: t(partKey("combatRules", "RapidFire")),
             cite: "p. B373",
-            content: { kind: "table", columns: [t(`${K}.Column.Shots`), t(`${K}.Column.Bonus`)], rows: rapidFireRows() },
-            notes: [t(partKey("combatRules", "RapidFireHits"), { example: rapidFireHits({ margin: 4, shotsFired: 10, recoil: 2 }) })],
+            content: {
+              kind: "table",
+              columns: [t(`${K}.Column.Shots`), t(`${K}.Column.Bonus`)],
+              rows: rapidFireRows(),
+            },
+            notes: [
+              t(partKey("combatRules", "RapidFireHits"), {
+                example: rapidFireHits({ margin: 4, shotsFired: 10, recoil: 2 }),
+              }),
+            ],
           },
           {
             id: "hurtingYourself",
@@ -185,7 +238,9 @@ export const COMBAT_SECTIONS: readonly GmSectionDef[] = [
               kind: "rules",
               items: [
                 m("HurtingWhen", { dr: HURTING_YOURSELF_DR }),
-                m("HurtingHow", { example: hurtingYourself({ basicDamage: 12, targetDr: 5, ownDr: 0 }).damage }),
+                m("HurtingHow", {
+                  example: hurtingYourself({ basicDamage: 12, targetDr: 5, ownDr: 0 }).damage,
+                }),
               ],
             },
           },
@@ -210,8 +265,18 @@ export const COMBAT_SECTIONS: readonly GmSectionDef[] = [
               kind: "table",
               columns: [t(`${K}.Column.Situation`), t(`${K}.Column.Modifier`)],
               rows: [
-                { cells: [t(`${K}.Evade.standing`), signed(evadeModifier({ foePosture: "standing" }))] },
-                { cells: [t(`${K}.Evade.kneeling`), signed(evadeModifier({ foePosture: "kneeling" }))] },
+                {
+                  cells: [
+                    t(`${K}.Evade.standing`),
+                    signed(evadeModifier({ foePosture: "standing" })),
+                  ],
+                },
+                {
+                  cells: [
+                    t(`${K}.Evade.kneeling`),
+                    signed(evadeModifier({ foePosture: "kneeling" })),
+                  ],
+                },
                 { cells: [t(`${K}.Evade.lying`), signed(evadeModifier({ foePosture: "lying" }))] },
                 { cells: [t(`${K}.Evade.side`), signed(evadeModifier({ approach: "side" }))] },
                 { cells: [t(`${K}.Evade.back`), signed(evadeModifier({ approach: "back" }))] },
@@ -275,21 +340,38 @@ export const COMBAT_SECTIONS: readonly GmSectionDef[] = [
                   pinnedOne: signed(pinnedOne.grapplerBonus),
                   seconds: pinned.secondsBetweenAttempts,
                 }),
-                m("Stunned", { value: signed(breakFree({ grapplerStunned: true }).grapplerBonus - twoHands.grapplerBonus) }),
+                m("Stunned", {
+                  value: signed(
+                    breakFree({ grapplerStunned: true }).grapplerBonus - twoHands.grapplerBonus,
+                  ),
+                }),
               ],
             },
           },
           {
             id: "takedown",
             heading: t(partKey("unarmedCombat", "Takedown")),
-            content: { kind: "rules", items: [m("TakedownRoll", { kneeling: signed(takedownModifier("kneeling")), lying: signed(takedownModifier("lying")) })] },
+            content: {
+              kind: "rules",
+              items: [
+                m("TakedownRoll", {
+                  kneeling: signed(takedownModifier("kneeling")),
+                  lying: signed(takedownModifier("lying")),
+                }),
+              ],
+            },
           },
           {
             id: "pin",
             heading: t(partKey("unarmedCombat", "Pin")),
             content: {
               kind: "rules",
-              items: [m("PinRoll", { size: signed(pinModifier({ sizeModifier: 1 })), hands: signed(pinModifier({ freeHands: 2, foeFreeHands: 0 })) })],
+              items: [
+                m("PinRoll", {
+                  size: signed(pinModifier({ sizeModifier: 1 })),
+                  hands: signed(pinModifier({ freeHands: 2, foeFreeHands: 0 })),
+                }),
+              ],
             },
           },
           {
@@ -298,7 +380,11 @@ export const COMBAT_SECTIONS: readonly GmSectionDef[] = [
             content: {
               kind: "rules",
               items: [
-                m("ChokeRoll", { one: signed(chokeModifier({ hands: 1 })), extra: signed(chokeModifier({ hands: 3 })), torso: signed(chokeModifier({ aroundTorso: true })) }),
+                m("ChokeRoll", {
+                  one: signed(chokeModifier({ hands: 1 })),
+                  extra: signed(chokeModifier({ hands: 3 })),
+                  torso: signed(chokeModifier({ aroundTorso: true })),
+                }),
                 m("ChokeDamage"),
               ],
             },
@@ -316,22 +402,30 @@ export const COMBAT_SECTIONS: readonly GmSectionDef[] = [
       const back = arcDefense({ arc: "back" });
       const peripheral = arcDefense({ arc: "back", vision: { peripheral: true } });
       return {
-        parts: [{
-          content: {
-            kind: "diagram",
-            svg: visionHexSvg(t),
-            legend: [
-              { term: t(`${K}.Arc.front`), text: t(partKey("visionHexDiagram", "Front")) },
-              { term: t(`${K}.Arc.side`), text: t(partKey("visionHexDiagram", "Side"), { value: signed(side.modifier) }) },
-              {
-                term: t(`${K}.Arc.back`),
-                text: back.helpless
-                  ? t(partKey("visionHexDiagram", "Back"), { value: signed(peripheral.modifier), parry: signed(peripheral.parryModifier) })
-                  : "",
-              },
-            ],
+        parts: [
+          {
+            content: {
+              kind: "diagram",
+              svg: visionHexSvg(t),
+              legend: [
+                { term: t(`${K}.Arc.front`), text: t(partKey("visionHexDiagram", "Front")) },
+                {
+                  term: t(`${K}.Arc.side`),
+                  text: t(partKey("visionHexDiagram", "Side"), { value: signed(side.modifier) }),
+                },
+                {
+                  term: t(`${K}.Arc.back`),
+                  text: back.helpless
+                    ? t(partKey("visionHexDiagram", "Back"), {
+                        value: signed(peripheral.modifier),
+                        parry: signed(peripheral.parryModifier),
+                      })
+                    : "",
+                },
+              ],
+            },
           },
-        }],
+        ],
       };
     },
   }),

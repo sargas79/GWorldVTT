@@ -5,10 +5,18 @@ import { resolve } from "node:path";
 
 import type { BuildContext } from "../types.js";
 
-const lang = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../../lang/en.json"), "utf8"));
+const lang = JSON.parse(
+  readFileSync(resolve(import.meta.dirname, "../../../../lang/en.json"), "utf8"),
+);
 
 function lookup(key: string): unknown {
-  return key.split(".").reduce<unknown>((node, part) => (node && typeof node === "object" ? (node as Record<string, unknown>)[part] : undefined), lang);
+  return key
+    .split(".")
+    .reduce<unknown>(
+      (node, part) =>
+        node && typeof node === "object" ? (node as Record<string, unknown>)[part] : undefined,
+      lang,
+    );
 }
 
 /** A context that localizes from en.json, and the keys asked for that it has no string for. */
@@ -20,7 +28,9 @@ export function englishContext(): BuildContext & { missing: string[] } {
       if (key.startsWith("GWORLD.")) missing.push(key);
       return key;
     }
-    return found.replace(/\{(\w+)\}/g, (whole, name: string) => (data && name in data ? String(data[name]) : whole));
+    return found.replace(/\{(\w+)\}/g, (whole, name: string) =>
+      data && name in data ? String(data[name]) : whole,
+    );
   };
   return { t, moduleTitle: (id: string) => `Module ${id}`, missing };
 }

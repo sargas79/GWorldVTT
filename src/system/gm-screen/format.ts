@@ -43,7 +43,12 @@ export function dice(formula: DiceAdds): string {
 
 /** A fraction of a yard, in inches as the tables print them: 1/5", 1.5". */
 export function inches(value: number): string {
-  const fractions: Array<[number, string]> = [[1 / 5, "1/5"], [1 / 3, "1/3"], [1 / 2, "1/2"], [2 / 3, "2/3"]];
+  const fractions: Array<[number, string]> = [
+    [1 / 5, "1/5"],
+    [1 / 3, "1/3"],
+    [1 / 2, "1/2"],
+    [2 / 3, "2/3"],
+  ];
   const named = fractions.find(([n]) => Math.abs(n - value) < 1e-9);
   return `${named ? named[1] : String(value)}"`;
 }
