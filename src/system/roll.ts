@@ -1813,7 +1813,12 @@ async function rollAction(
           ambidextrous: actor?.system?.derived?.traitEffects?.ambidextrous === true,
           offHandTraining: Number(actor?.system?.derived?.techniques?.offHandWeaponTraining) || 0,
           // A shot at the one foe's weapon, to break it (Campaigns p. 400; since 1.153.0).
-          weaponTargets: rangedWeaponTargets(actor, targetedTokens().length === 1 ? targetedTokens()[0]?.actor : null),
+          // Not for an explosive or fragmenting row, whose blast a blow to the item would lose.
+          weaponTargets: rangedWeaponTargets(
+            actor,
+            targetedTokens().length === 1 ? targetedTokens()[0]?.actor : null,
+            derivedRangedRow(actor, target.closest<HTMLElement>("[data-item-id]")),
+          ),
         })
     : null;
   if (ranged && shot === null) return null;
@@ -1961,6 +1966,12 @@ async function rollAction(
     }
   }
 
+  // The foe's weapon a shot is aimed at, as the damage rolls will need it (since API 1.153.0).
+  const struckFoe = shot?.weaponStrike ? targetedTokens()[0]?.actor : null;
+  const struckWeapon = shot?.weaponStrike && struckFoe?.uuid
+    ? { actorUuid: String(struckFoe.uuid), itemId: shot.weaponStrike.id, name: shot.weaponStrike.name }
+    : null;
+
   // Where the blow was aimed travels to the damage roll, which is a separate
   // click: an attack that went for the skull should not have to be told twice.
   if (rollType === "attack") {
@@ -1970,13 +1981,9 @@ async function rollAction(
     if (melee?.charging) await recordCharge(actor);
     await recordStopThrust(actor, melee?.stopThrustBonus ?? 0);
     await recordLance(actor, melee?.lance ?? null);
-    // A shot at a foe's weapon: the damage roll is aimed at the weapon too (since API 1.153.0).
-    const struckAt = shot?.weaponStrike ?? null;
-    const struckFoe = struckAt ? targetedTokens()[0]?.actor : null;
-    await recordWeaponStrike(
-      actor,
-      struckAt && struckFoe?.uuid ? { actorUuid: String(struckFoe.uuid), itemId: struckAt.id, name: struckAt.name } : null,
-    );
+    // Whatever this row's last attack was aimed at is done with; a shot at a
+    // foe's weapon is held once the roll says how many hits it scored.
+    await recordWeaponStrike(actor, shotRow(target.closest<HTMLElement>("[data-item-id]")), null);
     // Pellets striking as one mass are a fact about this shot that the damage
     // roll, a separate click, has to be told.
     await recordMassShot(actor, shot?.coneMultiplier ?? null);
@@ -2337,6 +2344,15 @@ async function rollAction(
   // An attack that could not be attempted -- effective skill below 3 -- was
   // never made: it spends no shots and no aim (since 1.83.0).
   if (outcome === null && !spotLost) return null;
+  // Every hit of a burst at a weapon lands on the weapon, and a miss on nothing.
+  if (rollType === "attack" && struckWeapon && shot) {
+    await recordWeaponStrike(
+      actor,
+      shotRow(target.closest<HTMLElement>("[data-item-id]")),
+      struckWeapon,
+      weaponStrikeHits(outcome, shot),
+    );
+  }
   // The shot spends the zen skill's success, whatever became of it.
   if (zenShot) await clearZenShot(actor);
 
@@ -2526,6 +2542,29 @@ export async function recordSuppressionShot(actor: any, rowKey: string, rangeYar
   await recordFirstHit(actor, null);
   await recordShotRange(actor, rangeYards, rowKey);
   await recordHalfDamage(actor, beyondHalfDamage({ rangeYards, halfDamageRange }));
+}
+
+/**
+ * How many damage rolls a shot at a weapon lands on it: the burst's hits
+ * (Campaigns p. 373) on a hit, none on a miss (since API 1.153.0).
+ */
+export function weaponStrikeHits(
+  outcome: { success?: boolean; margin?: number } | null,
+  shot: { shotsFired: number; recoil: number },
+): number {
+  if (!outcome?.success) return 0;
+  if (shot.shotsFired <= 1) return 1;
+  return rapidFireHits({ margin: Number(outcome.margin) || 0, shotsFired: shot.shotsFired, recoil: shot.recoil });
+}
+
+/** The character's derived ranged row a sheet row stands for, or null. */
+function derivedRangedRow(actor: any, row: HTMLElement | null | undefined): { explosive?: boolean; fragmentation?: string } | null {
+  if (!row) return null;
+  const rows: any[] = actor?.system?.derived?.ranged ?? [];
+  return rows.find((r) =>
+    String(r?.itemId ?? "") === (row.dataset.itemId ?? "") &&
+    String(r?.modeIndex ?? "") === (row.dataset.modeIndex ?? "") &&
+    String(r?.derivedMode ?? "") === (row.dataset.derivedMode ?? "")) ?? null;
 }
 
 function shotRow(row: HTMLElement | null | undefined): string {
@@ -4453,7 +4492,7 @@ export async function handleDamageAction(
   // rather than asking again -- and, for a chink, so the DR it found is halved.
   const aimed = await consumeCalledShot(actor);
   // A shot aimed at a foe's weapon lands on the weapon (Campaigns p. 400; since 1.153.0).
-  const weaponStruck = await consumeWeaponStrike(actor);
+  const weaponStruck = await consumeWeaponStrike(actor, shotRow(itemRow));
   // Pellets that struck as one mass, recorded by the attack roll.
   const mass = await consumeMassShot(actor);
   // A target past 1/2D, recorded by the attack roll too, and the range the

@@ -397,7 +397,9 @@ and the roll continues.
     hit it, whether it can be knocked away, whether the foe may parry the blow,
     whether their Defense Bonus counts, and whether the disarm's -2 applies even to
     a fencing weapon. The system offers the weapons in hand; add any item the foe
-    carries, or change one. A blow at a shield is resolved by Damage to Shields;
+    carries, or change one. A blow at a shield is resolved by Damage to Shields.
+    Since 1.153.0 it also gets `ranged`: true when the ranged attack dialog
+    asks what a shot may be aimed at, false for a melee strike;
   - `gworld.feintModifiers` (since 1.28.0): before a Feint is rolled, as
     `{ actor, foe, item, mode, ranged, modifiers, refusal }`. `item` and `mode`
     are the row the Feint was made from (null for a natural attack). Push lines
@@ -428,11 +430,17 @@ and the roll continues.
     `{ itemId, name, penalty }`. The ranged dialog offers the foe's weapons
     from `gworld.weaponTargets`, at the same penalties as a melee strike, in
     place of a hit location; the line is keyed `strikeAtWeapon`, the target's
-    `noParry` and `noDefenseBonus` apply to the defense, and the damage roll
-    that follows is aimed at the weapon, as a melee strike to break is. A
-    shot never disarms: knocking a weapon away takes one that can parry. The
-    dialog shows it only while Weapon Breakage is on and one token is
-    targeted;
+    `noParry` and `noDefenseBonus` apply to the defense, and the damage rolls
+    that follow from that row are aimed at the weapon, as a melee strike to
+    break is: one for each hit the attack scored, so every hit of a burst
+    lands on the weapon. A shot never disarms: knocking a weapon away takes
+    one that can parry. The dialog shows it only while Weapon Breakage is on
+    and one token is targeted, and never for an explosive or fragmenting row,
+    whose blast would be lost on a blow to the item. Each row holds its own
+    strike, so both hands of a Dual-Weapon Attack may be rolled before either
+    hand's damage. `gworld.weaponTargets` also gets `ranged` (since 1.153.0):
+    true when the ranged dialog asks, false for a melee strike or disarm, so
+    a listener can offer something only to one or the other;
   - Since 1.19.0, a `gworld.attackModifiers` listener may set `refusal` (text): the
     attack isn't rolled, and the user is told why;
   - Since 1.83.0, `gworld.attackModifiers` also gets `shots`, the shells the

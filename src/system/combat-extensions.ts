@@ -49,7 +49,7 @@ export type DefenseKey = "dodge" | "parry" | "block";
 
 /** The hooks this module fires, by name. */
 export const COMBAT_HOOKS = Object.freeze({
-  /** Before an attack roll: `{ actor, item, mode, rollType, ranged, modifiers, defensePenalty, dataset, skillCap, calledShot, targets, refusal, rangeYards, minRange, spraying, laser, zen, arc, side }`, mutable (`rangeYards` and `minRange` since 1.69.0, `spraying` since 1.70.0, `laser` since 1.86.0, `zen` since 1.91.0, `arc` and `side` since 1.137.0). */
+  /** Before an attack roll: `{ actor, item, mode, rollType, ranged, modifiers, defensePenalty, dataset, skillCap, calledShot, targets, refusal, rangeYards, minRange, spraying, laser, zen, arc, side, dualWeapon, weaponStrike }`, mutable (`rangeYards` and `minRange` since 1.69.0, `spraying` since 1.70.0, `laser` since 1.86.0, `zen` since 1.91.0, `arc` and `side` since 1.137.0, `dualWeapon` and `weaponStrike` since 1.153.0, both read-only). */
   attackModifiers: "gworld.attackModifiers",
   /** The defense card's choices for a defender: `{ defender, attack, delivery, damageType, choices, retreat, feverish, acrobatic }`, mutable. */
   defenseChoices: "gworld.defenseChoices",
@@ -86,7 +86,7 @@ export const COMBAT_HOOKS = Object.freeze({
   meleeAttackOptions: "gworld.meleeAttackOptions",
   /** Before a feint is rolled (since 1.28.0): `{ actor, foe, item, mode, ranged, modifiers, refusal }`, mutable. */
   feintModifiers: "gworld.feintModifiers",
-  /** What may be struck at on a foe (since 1.31.0): `{ actor, foe, targets, arc, side }`, the targets mutable (`arc` and `side` since 1.137.0). */
+  /** What may be struck at on a foe (since 1.31.0): `{ actor, foe, targets, arc, side, ranged }`, the targets mutable (`arc` and `side` since 1.137.0, `ranged` since 1.153.0). */
   weaponTargets: "gworld.weaponTargets",
   /** An unarmed blow applied to a target (since 1.32.0): `{ attacker, target, part, hitLocation, addonLocation, dr, basicDamage, minimumDr, applies }`, mutable. */
   hurtingYourself: "gworld.hurtingYourself",

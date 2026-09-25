@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { dualWeaponChoice, dualWeaponLine, rangedDialogLines } from "../roll.js";
+import { dualWeaponChoice, dualWeaponLine, rangedDialogLines, weaponStrikeHits } from "../roll.js";
 import {
   consumeWeaponStrike,
+  mayShootAtWeapons,
   rangedWeaponTargets,
   recordWeaponStrike,
   weaponStrikeLine,
+  weaponTargetsFor,
   type WeaponTarget,
 } from "../weapon-damage.js";
 
@@ -105,6 +107,22 @@ describe("rangedWeaponTargets", () => {
     expect(weaponStrikeLine(targets[0]!)).toMatchObject({ key: "strikeAtWeapon", itemId: "pistol", value: -5 });
   });
 
+  it("tells gworld.weaponTargets the strike is ranged", () => {
+    const seen: unknown[] = [];
+    globals.Hooks = { callAll: (_event: string, context: any) => seen.push(context.ranged) };
+    rangedWeaponTargets({}, foe);
+    weaponTargetsFor({}, foe);
+    expect(seen).toEqual([true, false]);
+  });
+
+  it("offers nothing for an explosive or fragmenting shot, whose blast would be lost", () => {
+    globals.Hooks = { callAll: () => {} };
+    expect(rangedWeaponTargets({}, foe, { explosive: true })).toEqual([]);
+    expect(rangedWeaponTargets({}, foe, { explosive: false, fragmentation: "2d" })).toEqual([]);
+    expect(rangedWeaponTargets({}, foe, { explosive: false, fragmentation: "" })).toHaveLength(2);
+    expect(mayShootAtWeapons(null)).toBe(true);
+  });
+
   it("offers nothing with Weapon Breakage off, or no foe", () => {
     globals.Hooks = { callAll: () => {} };
     expect(rangedWeaponTargets({}, null)).toEqual([]);
@@ -123,18 +141,52 @@ describe("recordWeaponStrike / consumeWeaponStrike", () => {
       unsetFlag: async (_scope: string, key: string) => void flags.delete(key),
     };
   }
+  const rifle = { actorUuid: "Actor.foe", itemId: "rifle", name: "Rifle" };
+  const pistolStrike = { actorUuid: "Actor.foe", itemId: "pistol", name: "Pistol" };
 
   it("carries the weapon from the attack to the damage roll, once", async () => {
     const actor = shooter();
-    await recordWeaponStrike(actor, { actorUuid: "Actor.foe", itemId: "rifle", name: "Rifle" });
-    expect(await consumeWeaponStrike(actor)).toEqual({ actorUuid: "Actor.foe", itemId: "rifle", name: "Rifle" });
-    expect(await consumeWeaponStrike(actor)).toBeNull();
+    await recordWeaponStrike(actor, "gun|", rifle);
+    expect(await consumeWeaponStrike(actor, "gun|")).toEqual(rifle);
+    expect(await consumeWeaponStrike(actor, "gun|")).toBeNull();
   });
 
-  it("is cleared by an attack at anything else", async () => {
+  it("lands every hit of a burst on the weapon, and no more", async () => {
     const actor = shooter();
-    await recordWeaponStrike(actor, { actorUuid: "Actor.foe", itemId: "rifle", name: "Rifle" });
-    await recordWeaponStrike(actor, null);
-    expect(await consumeWeaponStrike(actor)).toBeNull();
+    await recordWeaponStrike(actor, "smg|", rifle, 3);
+    expect(await consumeWeaponStrike(actor, "smg|")).toEqual(rifle);
+    expect(await consumeWeaponStrike(actor, "smg|")).toEqual(rifle);
+    expect(await consumeWeaponStrike(actor, "smg|")).toEqual(rifle);
+    expect(await consumeWeaponStrike(actor, "smg|")).toBeNull();
+  });
+
+  it("keeps each hand's strike of a Dual-Weapon Attack apart", async () => {
+    const actor = shooter();
+    await recordWeaponStrike(actor, "left|", rifle);
+    await recordWeaponStrike(actor, "right|", pistolStrike);
+    expect(await consumeWeaponStrike(actor, "right|")).toEqual(pistolStrike);
+    expect(await consumeWeaponStrike(actor, "left|")).toEqual(rifle);
+    expect(await consumeWeaponStrike(actor, "other|")).toBeNull();
+  });
+
+  it("is cleared by the row's next attack at anything else, and by a miss", async () => {
+    const actor = shooter();
+    await recordWeaponStrike(actor, "gun|", rifle);
+    await recordWeaponStrike(actor, "other|", pistolStrike);
+    await recordWeaponStrike(actor, "gun|", null);
+    expect(await consumeWeaponStrike(actor, "gun|")).toBeNull();
+    await recordWeaponStrike(actor, "gun|", rifle, 0);
+    expect(await consumeWeaponStrike(actor, "gun|")).toBeNull();
+    expect(await consumeWeaponStrike(actor, "other|")).toEqual(pistolStrike);
+  });
+});
+
+describe("weaponStrikeHits", () => {
+  it("is the burst's hits on a hit, one for a single shot, none on a miss", () => {
+    // RoF 10 at Rcl 2 made by 4: one hit, plus one for every full 2 of margin.
+    expect(weaponStrikeHits({ success: true, margin: 4 }, { shotsFired: 10, recoil: 2 })).toBe(3);
+    expect(weaponStrikeHits({ success: true, margin: 0 }, { shotsFired: 1, recoil: 2 })).toBe(1);
+    expect(weaponStrikeHits({ success: false, margin: -2 }, { shotsFired: 10, recoil: 2 })).toBe(0);
+    expect(weaponStrikeHits(null, { shotsFired: 3, recoil: 2 })).toBe(0);
   });
 });
