@@ -563,14 +563,16 @@ and the roll continues.
     `{ itemId, modeIndex, name, unbalanced, excluded, reason }`: set `excluded`
     to leave a weapon out, or clear it on an unbalanced weapon left out for having
     attacked this turn;
-  - `gworld.injury`: change `damage` before it is worked out;
+  - `gworld.injury`: change `damage` before it is worked out (its
+    `incendiary` since 1.156.0);
   - `gworld.hurtingYourself` (since 1.32.0): an unarmed blow (a punch, kick,
     bite or claw) applied to a target, as `{ attacker, target, part, hitLocation,
     addonLocation, dr, basicDamage, minimumDr, applies }`. The striker takes a
     point of crushing per 5 basic damage, up to `dr`, to `part` (less their own
     DR there) when `dr` is at least `minimumDr` (3). Lower `minimumDr` for a spot
     tougher than its DR, change `dr`, or set `applies: false`;
-  - `gworld.afterDamage`: the blow and its result;
+  - `gworld.afterDamage`: the blow and its result. Since 1.156.0 a listener
+    may set `damage.incendiary`, which the card's apply goes by;
   - `gworld.landed` (since 1.154.0): where a thrown or fired attack came
     down, for a rule that acts on the landing (something that goes off on
     impact, or leaves an area where it falls). The context is `{ actor,
@@ -653,6 +655,24 @@ and the roll continues.
       knockback roll, which fires the hook with `hit` and `line` null, can
       be refused too. A listener that rules one attack's follow-up away
       refuses the roll whose `line` is `followUp`.
+    Since 1.156.0 `gworld.damageModifiers` also gets `halfDamage`: true
+    where the roll is halved for 1/2D (Characters p. 269) as the attack
+    left it (the row's 1/2D against the range, or `roll.damage`'s
+    `halfDamage`), false otherwise. Set it to true or false to halve this
+    roll or not -- a hit with a range of its own, such as the first hit of
+    a mixed load, whose 1/2D isn't the row's. The card then shows the
+    halving as it does for 1/2D. Anything but true or false leaves the
+    attack's.
+    Since 1.156.0 whether the blow is incendiary can also be decided once
+    the DR it met is known: `damage.incendiary` (on `IncomingDamage`) is
+    true for a blow the card carries as incendiary, and a `gworld.injury`
+    listener may set it before the blow is worked out, or a
+    `gworld.afterDamage` listener after, with the DR the blow met and what
+    got through in its `result` (`wornDr`, `effectiveDr`, `penetrating`) --
+    a blow whose flame depends on the armour it meets, say. The card sets
+    the victim's clothes alight (Campaigns pp. 433-434), and counts
+    the blow as burning for Fragile, by what those listeners leave, and the
+    applied result carries it as `incendiary`.
     Since 1.125.0, with Modifying Dice + Adds on, the hook's lines are added
     to the formula before its adds are turned into dice, so a per-die line is
     counted from the dice the hook was given (see
@@ -1971,6 +1991,10 @@ Two fields a module may read (since 1.62.0):
     1-6, and the part is taken to have been untreated until then. It
     resolves to the part, or null for a user who can't change the actor or
     no part by that id or location.
+    Since 1.156.0 a physician's rounds that succeed (the sheet's Attend
+    button and `actors.attendPatient`) do this for the patient's lasting
+    and undecided parts at the rounds' TL, leaving any already in care at
+    that TL or better (see *Physician's rounds*).
   - The parts are kept in `flags.gworld.crippled`. The sheet lists them
     under Recovery, with a button to take each off.
   - Since 1.129.0 the system applies part of what a crippled part does
@@ -3535,6 +3559,13 @@ Two fields a module may read (since 1.62.0):
   listener there may change or remove it. A TL four or more ahead of the
   skill can't be worked at: the user is warned and nothing is rolled. Push
   text to `lines` and the card shows it.
+  Since 1.156.0, rounds that succeed (after these listeners, so at the TL
+  they leave) put the patient's lasting and undecided crippled parts in the
+  physician's care at that TL, as `actors.treatCrippled` does (Campaigns
+  p. 422): a lasting part heals after its 1d months less the relief at that
+  TL, and an undecided one keeps the TL for when it is settled. A part
+  already in care at that TL or better is left as it is, and temporary and
+  permanent parts are not touched. The card names the parts it put in care.
 - **Technique defaults:** `gworld.techniqueDefaults` gets `{ actor, item, defaults }`;
   push `{ from, skill, modifier }` to offer another default. The best one is
   used.
