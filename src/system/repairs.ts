@@ -274,7 +274,24 @@ export async function exposureCheck(options: {
     missedChecks,
     cleaned: options.care > 0,
     brutal: options.care < 0 ? options.care : 0,
-  }));
+  }), null, true);
+  // Something keeping the weather off it -- a holster, a sealed case -- may
+  // call the check off (since API 1.152.0): the card says so, and no dice
+  // are rolled, so the thing can't fail.
+  if (failure.cancel !== null) {
+    const content = await foundry.applications.handlebars.renderTemplate(CARD_TEMPLATE, {
+      name: String(item.name),
+      exposure: true,
+      title: L("ExposureTitle", { name: String(item.name) }),
+      spared: failure.cancel || L("ExposureSpared"),
+    });
+    await ChatMessage.implementation.create({
+      speaker: ChatMessage.implementation.getSpeaker({ actor }),
+      style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+      content,
+    });
+    return;
+  }
   await rollEquipmentFailure({
     actor,
     item,

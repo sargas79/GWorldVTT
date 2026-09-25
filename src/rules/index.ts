@@ -106,6 +106,7 @@ export * from "./sleep.js";
 export * from "./vehicles.js";
 export * from "./swarms.js";
 export * from "./trampling.js";
+export * from "./holdout.js";
 export * from "./unarmed-techniques.js";
 export * from "./vehicle-combat.js";
 export * from "./fragile.js";

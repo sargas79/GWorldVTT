@@ -28,6 +28,7 @@
 
 import * as rules from "../rules/index.js";
 import { skillLevelOf } from "./skill-level.js";
+import { holdoutSizes, rollHoldout } from "./holdout.js";
 import { incompatibleModules, satisfiesApiRange } from "./api-version.js";
 import { combatApi } from "./combat-extensions.js";
 import { clearZenShot, pendingZenShot, registerZenSkill, rollZenSkill, zenSkillsOf } from "./zen.js";
@@ -107,7 +108,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.151.0";
+export const API_VERSION = "1.152.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -794,6 +795,14 @@ export interface GWorldApi {
      * the raw formula and whether anything changed.
      */
     readonly normalizeDamage: typeof normalizeDamage;
+    /**
+     * Holdout for hiding one item (Characters p. 200; since 1.152.0): its
+     * size modifier, clothing and noise as lines, `gworld.successRollModifiers`
+     * tagged `holdout` with the item, and a searcher's Search contest.
+     */
+    readonly holdout: typeof rollHoldout;
+    /** The Holdout size table's rows, `{ key, modifier, label }` (since 1.152.0). */
+    readonly holdoutSizes: typeof holdoutSizes;
   };
   readonly actors: typeof actors;
   readonly items: typeof items;
@@ -973,7 +982,7 @@ export function createApi(): GWorldApi {
     version: API_VERSION,
     rules,
     registry: Object.freeze({ registerRuleGroup, registerRule, namespacedRuleKey, isAddonRuleKey, isRuleOn, activeRules }),
-    roll: Object.freeze({ hitLocation: rollHitLocation, frightCheck: (actor: any, modifier = 0) => rollFrightCheck({ actor, modifier: Number(modifier) || 0 }), success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest, registerContestResolver, equipmentUse: equipmentUseLines, normalizeDamage }),
+    roll: Object.freeze({ hitLocation: rollHitLocation, frightCheck: (actor: any, modifier = 0) => rollFrightCheck({ actor, modifier: Number(modifier) || 0 }), success: rollSuccess, damage: rollDamage, quickContest: rollQuickContest, regularContest: rollRegularContest, registerContestResolver, equipmentUse: equipmentUseLines, normalizeDamage, holdout: rollHoldout, holdoutSizes }),
     actors: Object.freeze(actors),
     items: Object.freeze(items),
     combat,
