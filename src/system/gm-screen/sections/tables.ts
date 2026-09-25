@@ -1,6 +1,6 @@
 /**
- * Tab 1, Tables: the four critical tables, what attribute and skill levels
- * mean, throwing, and cover.
+ * The first two tabs: Criticals, the four critical tables; and Tables, what
+ * attribute and skill levels mean, throwing, and cover.
  */
 
 import { ATTRIBUTE_LEVELS } from "../../../rules/attributes.js";
@@ -84,14 +84,14 @@ function thrownDamageText(perDie: number, t: BuildContext["t"]): string {
 export const TABLES_SECTIONS: readonly GmSectionDef[] = [
   section({
     id: "criticalHit",
-    tab: "tables",
+    tab: "criticalTables",
     cite: "p. B556",
     build: (context) => criticalContent(CRITICAL_HIT, context, `${K}.Section.criticalHit.Note`),
     roll: criticalRoll("hit"),
   }),
   section({
     id: "criticalHeadBlow",
-    tab: "tables",
+    tab: "criticalTables",
     cite: "p. B556",
     build: (context) =>
       criticalContent(CRITICAL_HEAD_BLOW, context, `${K}.Section.criticalHeadBlow.Note`),
@@ -99,14 +99,14 @@ export const TABLES_SECTIONS: readonly GmSectionDef[] = [
   }),
   section({
     id: "criticalMiss",
-    tab: "tables",
+    tab: "criticalTables",
     cite: "p. B556",
     build: (context) => criticalContent(CRITICAL_MISS, context, `${K}.Section.criticalMiss.Note`),
     roll: criticalRoll("miss"),
   }),
   section({
     id: "unarmedCriticalMiss",
-    tab: "tables",
+    tab: "criticalTables",
     cite: "p. B557",
     build: (context) =>
       criticalContent(CRITICAL_MISS_UNARMED, context, `${K}.Section.unarmedCriticalMiss.Note`),

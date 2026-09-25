@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { assembleScreen } from "../assemble.js";
@@ -41,7 +44,7 @@ describe("the screen as the template draws it", () => {
       ]),
     }) as any;
     expect(view.activeLabel).toBe("Wounds");
-    expect(view.activePosition).toBe("2 of 8");
+    expect(view.activePosition).toBe("3 of 9");
     const wounds = view.tabs.find((t: any) => t.id === "wounds");
     expect(wounds.active).toBe(true);
     expect(wounds.sections.find((s: any) => s.id === "shock").collapsed).toBe(true);
@@ -60,5 +63,59 @@ describe("the screen as the template draws it", () => {
       .find((t: any) => t.id === "checks")
       .sections.find((s: any) => s.id === "aweConfusion");
     expect(slot.slotText).toContain("Awe and Confusion");
+  });
+});
+
+describe("the window's buttons", () => {
+  it("never use an action ApplicationV2 keeps for itself", () => {
+    // ApplicationV2 handles data-action="tab" (and close, minimize,
+    // toggleControls) itself, so a button of the screen's own with one of
+    // those names does nothing: the tab strip once did exactly that.
+    const template = readFileSync(
+      resolve(import.meta.dirname, "../../../../templates/apps/gm-screen.hbs"),
+      "utf8",
+    );
+    const actions = [...template.matchAll(/data-action="([^"]+)"/g)].map((m) => m[1]);
+    expect(actions).toContain("showTab");
+    for (const reserved of ["tab", "close", "minimize", "toggleControls"])
+      expect(actions).not.toContain(reserved);
+  });
+
+  it("puts the critical tables on a tab of their own, first", () => {
+    const context = englishContext();
+    const tabs = assembleScreen(context, { isGM: true });
+    expect(tabs.map((t) => t.id).slice(0, 2)).toEqual(["criticalTables", "tables"]);
+    expect(tabs[0]!.sections.map((s) => s.id)).toEqual([
+      "criticalHit",
+      "criticalHeadBlow",
+      "criticalMiss",
+      "unarmedCriticalMiss",
+    ]);
+    expect(tabs[1]!.sections.map((s) => s.id)).toEqual([
+      "attributeSkillLevels",
+      "thrownDamage",
+      "throwingDistance",
+      "coverDr",
+    ]);
+  });
+});
+
+describe("the generic roll", () => {
+  it("is a 3d6 button in the bar, for the GM only", () => {
+    const template = readFileSync(
+      resolve(import.meta.dirname, "../../../../templates/apps/gm-screen.hbs"),
+      "utf8",
+    );
+    const bar = template.slice(
+      template.indexOf('<div class="gs-bar">'),
+      template.indexOf('<div class="gs-body">'),
+    );
+    expect(bar).toMatch(
+      /\{\{#if isGM\}\}\s*<div class="gs-generic">[\s\S]*data-action="rollGeneric"[\s\S]*\{\{\/if\}\}/,
+    );
+    // Its own words, not the table dice's "3d" with a 6 stuck on.
+    expect(bar).toContain('{{localize "GWORLD.GmScreen.Dice.generic"}}');
+    // The last total is drawn from the context, so a redraw keeps it.
+    expect(bar).toContain("<b>{{genericLast}}</b>");
   });
 });

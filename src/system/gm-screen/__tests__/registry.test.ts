@@ -193,7 +193,7 @@ describe("a module's tables and tabs", () => {
       .assembleScreen(englishContext(), { isGM: true })
       .find((t) => t.id === "tables")!;
     expect(tables.sections.some((s) => s.id === "test-addon.broken")).toBe(false);
-    expect(tables.sections.some((s) => s.id === "criticalHit")).toBe(true);
+    expect(tables.sections.some((s) => s.id === "coverDr")).toBe(true);
   });
 });
 
@@ -316,5 +316,50 @@ describe("placing and rolling, at the edges", () => {
     } finally {
       delete globals.game;
     }
+  });
+});
+
+describe("the critical tables' own tab", () => {
+  it("keeps a module's table beside the critical table it followed, on the tab that table moved to", async () => {
+    const api = await load();
+    api.registerGmScreenTable({
+      module: "test-addon",
+      key: "fumbles",
+      tab: "tables",
+      after: "criticalMiss",
+      title: "Fumbles",
+      columns: ["A"],
+      rows: [["1"]],
+    });
+    const tabs = api.assembleScreen(englishContext(), { isGM: true });
+    expect(tabs.find((t) => t.id === "criticalTables")!.sections.map((s) => s.id)).toEqual([
+      "criticalHit",
+      "criticalHeadBlow",
+      "criticalMiss",
+      "test-addon.fumbles",
+      "unarmedCriticalMiss",
+    ]);
+    expect(
+      tabs.find((t) => t.id === "tables")!.sections.some((s) => s.id === "test-addon.fumbles"),
+    ).toBe(false);
+    expect(api.sectionDef("test-addon.fumbles")!.tab).toBe("criticalTables");
+  });
+
+  it("hides the new tab from players where the GM had hidden Tables, once", async () => {
+    vi.resetModules();
+    const { migrateHiddenTabs, CURRENT_LAYOUT } = await import("../settings.js");
+    expect(CURRENT_LAYOUT).toBe(1);
+    expect(migrateHiddenTabs(["tables", "combat"], 0)).toEqual([
+      "tables",
+      "combat",
+      "criticalTables",
+    ]);
+    expect(migrateHiddenTabs(["combat"], 0)).toEqual(["combat"]);
+    expect(migrateHiddenTabs(["tables", "criticalTables"], 0)).toEqual([
+      "tables",
+      "criticalTables",
+    ]);
+    // Already moved on: a GM who then shows Criticals again keeps that choice.
+    expect(migrateHiddenTabs(["tables"], 1)).toEqual(["tables"]);
   });
 });

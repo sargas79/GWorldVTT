@@ -3,7 +3,7 @@
 **Status: implemented** on `claude/gm-screen-plan-hgw9z3` (sargas79/GWorldVTT#840).
 What changed from the plan during the work, most of it from the mockups:
 
-- All eight tabs are drawn in one part rather than one part a tab, so
+- All the tabs are drawn in one part rather than one part a tab, so
   switching tab and searching need no re-render and a search can count what
   every tab holds.
 - The Wounds topics are a card each rather than one card of parts, and the
@@ -15,6 +15,11 @@ What changed from the plan during the work, most of it from the mockups:
 - The prose flag is on the journal entry, and a world journal entry counts
   as well as a module's compendium.
 - The system's version is left to the release, as the repository does it.
+- After v1.53.0 (#856, API 1.158.0): the four critical tables moved from
+  Tables to a Criticals tab of their own (`criticalTables`), first in the
+  strip, so the screen has nine tabs; a module's section placed after a
+  moved table follows it, and a world that hid Tables from players hides
+  Criticals too. A plain 3d6 button beside the search rolls for the GM.
 
 Decisions taken with the user (2026-09-25):
 
@@ -36,7 +41,7 @@ automation reads them: `src/rules/criticals.ts` holds all four critical tables,
 `hit-locations.ts` the locations, `maneuvers.ts` and `posture.ts` their
 tables, and `fright.ts`, `recovery.ts`, `reactions.ts`, `afflictions.ts` and
 `damage.ts` the rest. None of them can be read at the table. The GM Screen
-is one window, in eight tabs, that shows them.
+is one window, in eight tabs (nine since #856), that shows them.
 
 Principles:
 
@@ -114,7 +119,7 @@ Rule of 20 on p. 173.
 
 | File | What |
 |---|---|
-| `src/system/gm-screen/layout.ts` | The eight tabs and, for each, its ordered section ids. Pure data. |
+| `src/system/gm-screen/layout.ts` | The tabs (nine since #856) and, for each, its ordered section ids. Pure data. |
 | `src/system/gm-screen/tables/*.ts` | One builder a section. Pure functions from the rules modules to a `GmTable` or `GmRuleBlock` view model. No Foundry. |
 | `src/system/gm-screen/types.ts` | `GmTable { id, title, cite, columns, rows, notes, source? }`, `GmRuleBlock { id, title, cite, items }`, `GmDiagram`. |
 | `src/system/gm-screen/registry.ts` | Module-registered tables and blocks, validated like `registerGmTool`. |
@@ -129,7 +134,7 @@ For each section: the data it renders from, and what is **new** where the
 system has no data yet. New data goes in `src/rules/` beside the rule it
 belongs to, so the automation can use it later too.
 
-### Tab 1: Tables
+### Tab 1: Tables (the critical tables on a Criticals tab of their own since #856)
 
 | Section | Page | Data |
 |---|---|---|

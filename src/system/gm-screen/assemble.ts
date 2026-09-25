@@ -135,9 +135,20 @@ export function buildSection(def: GmSectionDef, context: BuildContext): ScreenSe
   return { ...shown, search: searchText(shown) };
 }
 
+/**
+ * A module's section placed after one of the system's goes on that section's
+ * tab, whichever tab it named: so a table set beside the Critical Miss table
+ * stays beside it now the critical tables have a tab of their own (1.158.0),
+ * rather than dropping to the end of the tab they left.
+ */
+function followAnchor(def: AddonSectionDef): AddonSectionDef {
+  const anchor = def.after ? SYSTEM_SECTIONS.find((s) => s.id === def.after) : undefined;
+  return anchor && anchor.tab !== def.tab ? { ...def, tab: anchor.tab } : def;
+}
+
 /** The whole screen, as this user may see it. */
 export function assembleScreen(context: BuildContext, options: ScreenOptions): ScreenTab[] {
-  const added = registeredGmScreenSections();
+  const added = registeredGmScreenSections().map(followAnchor);
   const hidden = new Set(options.isGM ? [] : (options.hiddenTabs ?? []));
   const tabs = [...GM_SCREEN_TABS, ...registeredGmScreenTabs()].filter(
     (tab) => !hidden.has(tab.id),
@@ -160,7 +171,9 @@ export function assembleScreen(context: BuildContext, options: ScreenOptions): S
 export function sectionDef(id: string): GmSectionDef | undefined {
   return (
     SYSTEM_SECTIONS.find((def) => def.id === id) ??
-    registeredGmScreenSections().find((def) => def.id === id)
+    registeredGmScreenSections()
+      .map(followAnchor)
+      .find((def) => def.id === id)
   );
 }
 
