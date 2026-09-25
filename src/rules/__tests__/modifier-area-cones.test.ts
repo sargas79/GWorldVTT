@@ -38,4 +38,16 @@ describe("cone areas (since API 1.89.0)", () => {
     expect(coneOf({ ...area, cone: { ...cone, length: 0 } })).toBeNull();
     expect(inShape({ x: -3, y: 0 }, { ...area, radius: 10 })).toBe(false);
   });
+
+  it("opens from its own origin where it has one, not from the area's centre (since API 1.154.0)", () => {
+    // The blast goes off 50 yards out and sprays on east from there.
+    const area: ModifierArea = { id: "b", label: "Burst", center: apex, cone: { ...cone, length: 20, origin: { x: 50, y: 0 } }, lines: [] };
+    expect(coneOf(area)?.apex).toEqual({ x: 50, y: 0 });
+    expect(inShape({ x: 60, y: 0 }, area)).toBe(true);
+    expect(inShape({ x: 10, y: 0 }, area)).toBe(false);
+    expect(inShape({ x: 75, y: 0 }, area)).toBe(false);
+    expect(segmentCrossesShape({ x: 60, y: -20 }, { x: 60, y: 20 }, area)).toBe(true);
+    // With no centre at all, the origin is enough.
+    expect(coneOf({ ...area, center: null })?.apex).toEqual({ x: 50, y: 0 });
+  });
 });

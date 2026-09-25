@@ -19,7 +19,7 @@
 import { vehicleStatFields } from "./items.js";
 import {
   cargoCapacity, cruisingSpeedMph, curbWeight, endurance, fragilityCodes,
-  occupants, safeDecelerationPerTurn, vehicleMoves, type Locomotion,
+  occupants, operatorUuid, safeDecelerationPerTurn, vehicleMoves, type Locomotion,
 } from "../../rules/vehicles.js";
 import {
   MOVE_CRIPPLING_LOCATIONS, locationsOf, mediumOf, type MoveCripplingLocation, type VehicleLocation,
@@ -78,6 +78,7 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
   declare speed: number;
   declare crippled: Record<MoveCripplingLocation, number>;
   declare crew: Occupant[];
+  declare controller: string;
   declare tl: string;
   declare cost: number;
   declare notes: string;
@@ -152,6 +153,14 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
         }),
         { required: true, initial: [] },
       ),
+
+      /**
+       * Someone who drives it from outside, by actor UUID (since API
+       * 1.154.0): a remote operator, who is not aboard. Named, they make its
+       * control rolls and its Dodge and turn are theirs, in place of the
+       * operator in the crew; blank, the crew's operator has the wheel.
+       */
+      controller: new fields.StringField({ required: true, blank: true, initial: "" }),
     };
   }
 
@@ -209,8 +218,9 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
     // own. Initiative is Basic Speed in this system, so borrowing the
     // operator's is all that takes. A vehicle nobody is driving sits at the
     // bottom of the order, which is where a driverless car belongs.
-    const operator = this.crew.find((seat) => seat.operator);
-    const driver = operator ? fromUuidSync(operator.uuid) : null;
+    // One named to drive it from outside has the wheel (since API 1.154.0).
+    const operator = operatorUuid(this, (uuid) => Boolean(fromUuidSync(uuid)));
+    const driver = operator ? fromUuidSync(operator) : null;
 
     // "A vehicle's Dodge score is (operator's control skill/2) + vehicle's
     // Handling, rounded down" (p. 469). A vehicle nobody is driving does not

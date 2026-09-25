@@ -9,6 +9,7 @@ import { rollInfluence } from "../reactions.js";
 import { rollSuccess, successRollMessageMode } from "../roll.js";
 import { toolFor } from "../tech-level.js";
 import { bestTool } from "../../rules/tech-level.js";
+import { drivenRemotely, operatorUuid } from "../../rules/vehicles.js";
 
 /** Influence contests, secret rolls, the item behind a roll, TL on control rolls, and the LC hook (sargas79/GWorldVTT#672). */
 
@@ -197,6 +198,61 @@ describe("tech level on control rolls", () => {
     await controlVehicle({ actor: character("Driver", { items: [driving] }), vehicle: car, modifier: 0 });
     expect(rolled()[0].tags).toEqual(["vehicleControl"]);
     expect(card(cards).target).toBe(11);
+  });
+});
+
+/** A control roll by someone driving from outside (sargas79/GWorldVTT#829; since API 1.154.0). */
+describe("remote control rolls", () => {
+  const driving = { type: "skill", name: "Driving/TL8 (Automobile)", system: { techLevel: "8", attribute: "DX", derived: { level: 12 } } };
+  const drone = () => ({
+    name: "Drone car",
+    system: {
+      tl: "8",
+      vehicle: { skill: "Driving/TL8 (Automobile)", handling: 0, stability: 4, locomotion: "wheels", topSpeed: 20 },
+      crew: [{ uuid: "Actor.Passenger", operator: true, strappedIn: false }],
+      controller: "Actor.Remote",
+    },
+  });
+
+  it("tells the hooks a roll by someone not in the crew is remote, where a listener may add to it", async () => {
+    const { cards, rolled } = foundryWith([3, 3, 3], (event, context) => {
+      if (event === PROCEDURE_HOOKS.successRollModifiers && context.remote) context.modifiers.push({ label: "Weak signal", value: -2 });
+    });
+    await controlVehicle({ actor: character("Remote", { items: [driving] }), vehicle: drone(), modifier: 0 });
+    const context = rolled()[0];
+    expect(context.remote).toBe(true);
+    expect(context.tags).toEqual(["vehicleControl", "remoteControl"]);
+    expect(card(cards).target).toBe(10);
+    expect(card(cards).lines).toContain("GWORLD.Hazard.RemoteControl");
+  });
+
+  it("lets a listener refuse it, out of range", async () => {
+    const { cards } = foundryWith([3, 3, 3], (event, context) => {
+      if (event === PROCEDURE_HOOKS.successRollModifiers && context.remote) context.refusal = "Out of range";
+    });
+    await controlVehicle({ actor: character("Remote", { items: [driving] }), vehicle: drone(), modifier: 0 });
+    expect((globals.ui as any).notifications.warn).toHaveBeenCalledWith("Out of range");
+    expect(cards).toHaveLength(1);
+  });
+
+  it("is not remote for the crew, nor for a vehicle carried as gear unless said", async () => {
+    const { rolled } = foundryWith([3, 3, 3]);
+    await controlVehicle({ actor: character("Passenger", { items: [driving] }), vehicle: drone(), modifier: 0 });
+    const car = { name: "Sedan", system: { tl: "8", vehicle: { skill: "Driving/TL8 (Automobile)", handling: 0, stability: 4, locomotion: "wheels", topSpeed: 50 } } };
+    await controlVehicle({ actor: character("Driver", { items: [driving] }), vehicle: car, modifier: 0 });
+    await controlVehicle({ actor: character("Driver", { items: [driving] }), vehicle: car, modifier: 0, remote: true });
+    expect(rolled().map((c) => [c.remote, c.tags.includes("remoteControl")])).toEqual([[false, false], [false, false], [true, true]]);
+  });
+
+  it("puts the one named to drive from outside at the wheel, before the crew's operator", () => {
+    expect(operatorUuid(drone().system)).toBe("Actor.Remote");
+    expect(operatorUuid({ ...drone().system, controller: "" })).toBe("Actor.Passenger");
+    expect(operatorUuid({ crew: [] })).toBeNull();
+    // A controller who can't be found leaves the wheel with the crew.
+    expect(operatorUuid(drone().system, (uuid) => uuid !== "Actor.Remote")).toBe("Actor.Passenger");
+    expect(drivenRemotely({ crew: drone().system.crew, uuid: "Actor.Remote" })).toBe(true);
+    expect(drivenRemotely({ crew: null, uuid: "Actor.Remote" })).toBe(false);
+    expect(drivenRemotely({ said: false, crew: [], uuid: "Actor.Remote" })).toBe(false);
   });
 });
 

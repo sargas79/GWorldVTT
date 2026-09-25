@@ -145,6 +145,10 @@ interface DamageFlag {
   fragments?: FragmentationSpec;
   /** The first hit of a multiple-projectile shot, rolled with its own line (since API 1.73.0). */
   firstHit?: boolean;
+  /** Which hit of its attack the roll was for (since API 1.154.0). */
+  hit?: { index: number; hits: number | null };
+  /** Which second line of its row the roll was: a follow-up or a linked attack (since API 1.154.0). */
+  line?: "followUp" | "linked";
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -504,6 +508,9 @@ async function applyFromCard(options: {
     ...(flag.mode ? { mode: flag.mode } : {}),
     ...(flag.source ? { source: flag.source } : {}),
     ...(flag.firstHit ? { firstHit: true } : {}),
+    // Which hit of the attack, and which second line (since API 1.154.0).
+    ...(flag.hit && Number.isInteger(flag.hit.index) ? { hit: { index: flag.hit.index, hits: flag.hit.hits ?? null } } : {}),
+    ...(flag.line === "followUp" || flag.line === "linked" ? { line: flag.line } : {}),
     // The maximum belongs to the dice as rolled, so it is only the maximum for
     // someone the blast struck directly: collateral damage has already been
     // scaled down by distance, and pairing it with the undiminished maximum

@@ -126,3 +126,22 @@ export function fragmentTarget(options: {
   const posture = options.airburst ? 0 : options.postureModifier;
   return FRAGMENT_SKILL + options.rangeModifier + posture + options.sizeModifier;
 }
+
+/**
+ * Where a scattered miss came down on the map (p. 414; since API 1.154.0):
+ * `yards` from the point aimed at, in the direction rolled, counted round
+ * clockwise from the way the attacker faces. `facing` is that way in radians
+ * as the canvas measures them (0 to the right, clockwise); points are in
+ * scene pixels.
+ */
+export function scatterPoint(options: {
+  aimedAt: { x: number; y: number };
+  facing: number;
+  direction: number;
+  yards: number;
+  pixelsPerYard: number;
+}): { x: number; y: number } {
+  const angle = options.facing + (scatterBearing(options.direction) * Math.PI) / 180;
+  const reach = Math.max(0, options.yards) * options.pixelsPerYard;
+  return { x: options.aimedAt.x + Math.cos(angle) * reach, y: options.aimedAt.y + Math.sin(angle) * reach };
+}

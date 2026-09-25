@@ -225,6 +225,9 @@ import {
   beyondHalfDamage,
   yardsBetween,
   rollSuccess,
+  lineDropped,
+  secondLineOf,
+  shotRow,
 } from "../roll.js";
 import { currentTargets, targetedTokens } from "../targets.js";
 import type { Attribute, Posture } from "../../rules/types.js";
@@ -2608,7 +2611,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
     // The rows a miss can scatter from: anything that goes off or covers an
     // area, and anything whose miss is always squared (since API 1.72.0).
-    const rows: any[] = [...(this.actor.system?.derived?.ranged ?? []), ...(this.actor.system?.derived?.melee ?? [])];
+    const ranged: any[] = this.actor.system?.derived?.ranged ?? [];
+    const rows: any[] = [...ranged, ...(this.actor.system?.derived?.melee ?? [])];
     const weapons = rows
       .filter((row) => row?.explosive || row?.areaAttack || row?.scatterSquared)
       .map((row) => ({
@@ -2616,11 +2620,22 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         // The dice the fragments roll at this table, as their card counts them.
         fragmentationDice: rolledDice(String(row.fragmentation ?? "")),
         squared: row.scatterSquared === true,
+        // Which row, for where the miss lands (since API 1.154.0).
+        itemId: String(row.itemId ?? ""),
+        mode: Number.isInteger(Number(row.modeIndex))
+          ? { index: Number(row.modeIndex), ranged: ranged.includes(row), ...(row.derivedMode ? { derived: String(row.derivedMode) } : {}) }
+          : null,
       }));
     const asked = await promptForScatter(weapons);
     if (!asked) return;
 
-    await rollScatter({ actor: this.actor, ...asked });
+    const { weapon, ...scatter } = asked;
+    await rollScatter({
+      actor: this.actor,
+      ...scatter,
+      item: weapon?.itemId ? (this.actor.items?.get?.(weapon.itemId) ?? null) : null,
+      mode: weapon?.mode ?? null,
+    });
   }
 
   /** Whether the shot came out the other side (Campaigns p. 408). */
@@ -3078,6 +3093,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!isRuleOn("afflictions")) return;
     const attribute = target.dataset.resist ?? "";
     if (!attribute) return;
+    // A linked affliction the row's last attack left unrolled (since API 1.154.0).
+    const secondLine = secondLineOf(target.dataset.secondLine);
+    if (lineDropped(this.actor, shotRow(target.parentElement?.closest<HTMLElement>("[data-item-id]") ?? null), secondLine)) {
+      ui.notifications?.warn(game.i18n.localize(secondLine === "followUp" ? "GWORLD.Attack.FollowUpDropped" : "GWORLD.Attack.LinkedDropped"));
+      return;
+    }
     const modifier = Number(target.dataset.resistModifier) || 0;
     const label = target.dataset.afflictionLabel ?? "";
     // A ranged affliction past its 1/2D is resisted at +3 (Characters p. 270).

@@ -4,7 +4,7 @@
 {{#if second.affliction}}
   {{!-- A linked affliction is resisted, not rolled for damage: the
         electrolaser's shot burns and shocks on the one attack. --}}
-  <span class="tag rollable" data-action="affliction"
+  <span class="tag rollable" data-action="affliction" data-second-line="{{#if second.followUp}}followUp{{else}}linked{{/if}}"
         data-resist="{{second.afflictionAttribute}}"
         data-resist-modifier="{{second.afflictionModifier}}"
         data-item-id="{{atk.itemId}}" data-mode-index="{{atk.modeIndex}}"
@@ -16,7 +16,7 @@
         data-tooltip="{{#if second.followUp}}{{localize 'GWORLD.Attack.FollowUpHint'}}{{else}}{{localize 'GWORLD.Attack.LinkedHint'}}{{/if}}"
         >{{second.afflictionAttribute}}{{second.afflictionModifier}}{{#unless (eq second.armorDivisor 1)}} ({{second.armorDivisor}}){{/unless}} {{localize "GWORLD.Affliction.Short"}}{{#if second.radius}} {{localize "GWORLD.Attack.Radius" yards=second.radius}}{{/if}}</span>
 {{else}}
-  <span class="tag rollable" data-action="rollDamage"
+  <span class="tag rollable" data-action="rollDamage" data-second-line="{{#if second.followUp}}followUp{{else}}linked{{/if}}"
         data-damage-formula="{{second.damage}}" data-damage-type="{{second.damageType}}"
         data-damage-label="{{atk.name}} {{#if second.label}}{{second.label}}{{else if second.followUp}}{{localize 'GWORLD.Attack.FollowUp'}}{{else}}{{localize 'GWORLD.Attack.Linked'}}{{/if}}"
         data-armor-divisor="{{#if second.armorDivisor}}{{second.armorDivisor}}{{else}}1{{/if}}"

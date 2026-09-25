@@ -21,7 +21,7 @@ import { promptForNumber } from "../roll.js";
 import { promptForVehicleHit } from "./character-prompts.js";
 import { damageAtScale, hitPointsAfterBattle } from "../damage-scale.js";
 import type { DamageScale } from "../../rules/scale.js";
-import { FRAGILITY_CODES, LOCOMOTIONS, activeMove, fragilityCodes, leaveSeat, vehicleMoves } from "../../rules/vehicles.js";
+import { FRAGILITY_CODES, LOCOMOTIONS, activeMove, fragilityCodes, leaveSeat, operatorUuid, vehicleMoves } from "../../rules/vehicles.js";
 import {
   aimableLocations, DR_LOCATIONS, MOVE_CRIPPLING_LOCATIONS, VEHICLE_ARCS, vehicleDrLabel,
 } from "../../rules/vehicle-combat.js";
@@ -130,7 +130,8 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
     const tabs = (context.tabs ?? {}) as Record<string, { label?: string }>;
     const active = this.tabGroups.primary ?? "overview";
     const occupants = await this.#occupants();
-    const operator = occupants.find((p) => p.operator);
+    // Whoever has the wheel, a remote operator included (since API 1.154.0).
+    const operator = await this.#operatorActor();
     const hpMax = Number(system.hp?.max) || 0;
     const hpValue = Number(system.hp?.value) || 0;
 
@@ -602,10 +603,11 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
     }
   }
 
+  /** Whoever has the wheel: one named to drive it from outside (since API 1.154.0), else the crew's operator. */
   async #operatorActor(): Promise<any> {
-    const seat = (this.actor.system.crew ?? []).find((s: { operator: boolean }) => s.operator);
-    if (!seat) return null;
-    return fromUuid(seat.uuid).catch(() => null);
+    const uuid = operatorUuid(this.actor.system, (id) => Boolean(fromUuidSync(id)));
+    if (!uuid) return null;
+    return fromUuid(uuid).catch(() => null);
   }
 
   /** A drop that fails says why, rather than doing nothing. */

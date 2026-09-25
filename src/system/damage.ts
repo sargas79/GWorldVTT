@@ -179,6 +179,14 @@ export interface IncomingDamage {
   injuryCapReason?: string;
   /** The first hit of a multiple-projectile shot, rolled with its own line (since API 1.73.0). */
   firstHit?: boolean;
+  /**
+   * Which hit of its attack the blow's damage was rolled for (since API
+   * 1.154.0): `index` from 0, `hits` the hits the attack scored or null.
+   * Absent where no attack went before the roll.
+   */
+  hit?: { index: number; hits: number | null };
+  /** Which second line of its row the blow is (since API 1.154.0): a follow-up or a linked attack. */
+  line?: "followUp" | "linked";
   /** The item the blow was rolled from, where the card knows it. */
   itemUuid?: string;
   /**

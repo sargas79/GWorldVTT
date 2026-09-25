@@ -29,19 +29,48 @@ export interface ConeInput {
   length?: number | null;
   /** Its width at the far end in yards; left out, one yard per yard of length (p. 413). */
   width?: number | null;
+  /**
+   * Its apex in scene pixels where that isn't the area's `center` (since
+   * 1.154.0): where a blast goes off, say, for a cone that sprays on from
+   * there. Left out, the apex is `center`, as before.
+   */
+  origin?: Point | null;
+  /**
+   * Or, with no `direction` or `toward`, a point behind the apex in scene
+   * pixels (since 1.154.0): the cone opens along the line from here through
+   * the apex and on, as a burst carries the line of fire on from where it
+   * went off. The attacker's position, usually.
+   */
+  from?: Point | null;
 }
 
-/** A module's cone in scene pixels, or null where it gives no usable direction or length. */
-export function coneFrom(input: ConeInput | null | undefined, apex: Point | null, pixelsPerYard: number): Cone | null {
-  if (!input || !apex) return null;
-  const toward = input.toward && Number.isFinite(Number(input.toward.x)) && Number.isFinite(Number(input.toward.y))
-    ? { x: Number(input.toward.x), y: Number(input.toward.y) }
+/** A point a module gave, in numbers, or null where it gave none that is usable. */
+function givenPoint(point: Point | null | undefined): Point | null {
+  return point && Number.isFinite(Number(point.x)) && Number.isFinite(Number(point.y))
+    ? { x: Number(point.x), y: Number(point.y) }
     : null;
+}
+
+/**
+ * A module's cone in scene pixels, or null where it gives no usable direction
+ * or length. `apex` is the area's centre; the cone's own `origin` (since
+ * 1.154.0) takes its place, and is kept on the cone.
+ */
+export function coneFrom(input: ConeInput | null | undefined, center: Point | null, pixelsPerYard: number): Cone | null {
+  const origin = givenPoint(input?.origin);
+  const apex = origin ?? center;
+  if (!input || !apex) return null;
+  const toward = givenPoint(input.toward);
   const distance = toward ? Math.hypot(toward.x - apex.x, toward.y - apex.y) : 0;
   const given = Number(input.direction);
+  // The line of fire carried on past the apex (since 1.154.0).
+  const from = givenPoint(input.from);
+  const behind = from && Math.hypot(apex.x - from.x, apex.y - from.y) > 0 ? from : null;
   const direction = toward && distance > 0
     ? (Math.atan2(toward.y - apex.y, toward.x - apex.x) * 180) / Math.PI
-    : input.direction !== null && input.direction !== undefined && Number.isFinite(given) ? given : NaN;
+    : input.direction !== null && input.direction !== undefined && Number.isFinite(given)
+      ? given
+      : behind ? (Math.atan2(apex.y - behind.y, apex.x - behind.x) * 180) / Math.PI : NaN;
   if (!Number.isFinite(direction)) return null;
   const yards = Number(input.length);
   const length = yards > 0 ? yards * pixelsPerYard : distance;
@@ -52,6 +81,7 @@ export function coneFrom(input: ConeInput | null | undefined, apex: Point | null
     length,
     width: width > 0 ? width * pixelsPerYard : length,
     base: pixelsPerYard,
+    ...(origin ? { origin } : {}),
   };
 }
 
@@ -183,15 +213,28 @@ export function tokensInArea(scene: any, area: string | ModifierArea): any[] {
   return out;
 }
 
-/** A token document's centre in scene pixels, drawn or not. */
-function tokenCentre(doc: any, scene: any): Point | null {
-  const drawn = centerOf(doc?.object);
-  if (drawn) return drawn;
+/**
+ * A token document's centre in scene pixels, drawn or not. A token being
+ * moved -- read from a `moveToken` or `updateToken` listener -- has its new
+ * place in its source data before its prepared data and its drawing catch up,
+ * so that is where it is counted (since API 1.154.0).
+ */
+export function tokenCentre(doc: any, scene: any): Point | null {
+  const source = doc?._source;
+  const sx = Number(source?.x);
+  const sy = Number(source?.y);
+  const moving = source && Number.isFinite(sx) && Number.isFinite(sy) && (sx !== Number(doc?.x) || sy !== Number(doc?.y));
+  if (!moving) {
+    const drawn = centerOf(doc?.object);
+    if (drawn) return drawn;
+  }
   const size = Number(scene?.grid?.size) || 100;
-  const x = Number(doc?.x);
-  const y = Number(doc?.y);
+  const x = moving ? sx : Number(doc?.x);
+  const y = moving ? sy : Number(doc?.y);
   if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
-  return { x: x + ((Number(doc?.width) || 1) * size) / 2, y: y + ((Number(doc?.height) || 1) * size) / 2 };
+  const width = Number(moving ? source.width : doc?.width) || Number(doc?.width) || 1;
+  const height = Number(moving ? source.height : doc?.height) || Number(doc?.height) || 1;
+  return { x: x + (width * size) / 2, y: y + (height * size) / 2 };
 }
 
 /**

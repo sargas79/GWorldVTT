@@ -59,7 +59,10 @@ export const COMBAT_HOOKS = Object.freeze({
   parryWeapons: "gworld.parryWeapons",
   /** Before a defense roll: `{ defender, defense, attack, modifiers, deception, attacker }`, mutable. */
   defenseModifiers: "gworld.defenseModifiers",
-  /** Before a damage roll: `{ actor, item, mode, label, formula, damageType, modifiers, distanceYards, source, incendiary }`, mutable (`distanceYards` since 1.69.0, `source` since 1.139.0, `incendiary` since 1.152.0). */
+  /**
+   * Before a damage roll: `{ actor, item, mode, label, formula, damageType, modifiers, distanceYards, source, incendiary, hit, line, refusal }`,
+   * mutable (`distanceYards` since 1.69.0, `source` since 1.139.0, `incendiary` since 1.152.0, `hit`, `line` and `refusal` since 1.154.0).
+   */
   damageModifiers: "gworld.damageModifiers",
   /** A blow about to be worked out against a target: `{ actor, item, mode, damage }`, the damage mutable. */
   injury: "gworld.injury",
@@ -127,6 +130,12 @@ export const COMBAT_HOOKS = Object.freeze({
    * held }`.
    */
   afterDesignation: "gworld.afterDesignation",
+  /**
+   * Where a thrown or fired attack came down (since 1.154.0): `{ actor, item,
+   * mode, thrown, hit, target, point, scatter }`, after the attack roll, and
+   * again after a scatter roll that could place it (Campaigns p. 414).
+   */
+  landed: "gworld.landed",
 });
 
 /** One piece of worn armour as `gworld.armorDr` hands it to a listener. */

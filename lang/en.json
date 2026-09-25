@@ -3059,6 +3059,7 @@
       "Control": "Control roll",
       "ControlHint": "A control roll against the vehicle's skill at its Handling (Campaigns p. 466)",
       "Controlled": "{vehicle}: {skill} at Handling {handling}",
+      "RemoteControl": "Driven from outside the vehicle",
       "ControlResult": {
         "ok": "In control",
         "minor": "Failed by no more than the Stability Rating: a minor problem, a skid or lost time",
@@ -3674,6 +3675,8 @@
       "Linked": "(linked)",
       "LinkedHint": "A linked attack (Characters p. 106): it lands with this one on the same attack roll, and is rolled separately against DR.",
       "Radius": "({yards} yd)",
+      "FollowUpDropped": "No follow-up is rolled for this attack.",
+      "LinkedDropped": "No linked attack is rolled for this attack.",
       "SkillCap": "Effective skill held to {cap}",
       "PostureLine": "Posture ({posture})",
       "TargetPostureLine": "Target's posture ({posture})"

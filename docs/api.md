@@ -443,6 +443,17 @@ and the roll continues.
     hand's damage. `gworld.weaponTargets` also gets `ranged` (since 1.153.0):
     true when the ranged dialog asks, false for a melee strike or disarm, so
     a listener can offer something only to one or the other;
+  - Since 1.154.0, `gworld.attackModifiers` also gets `dropLines`, `{
+    followUp: false, linked: false }`. Set either true to leave the row's
+    follow-up or its linked attack (Characters p. 106; the row's `followUp`
+    and `followUpAlso`) unrolled for this attack alone -- a round whose
+    follow-up fails to go off on impact, say -- without changing the row.
+    The attack card says so, and until the next attack from that row the
+    Combat tab's roll for that line (a damage roll, or a linked affliction's
+    resistance roll) is refused with the same words. The next attack from
+    the row starts again with every line offered; an attack from another
+    row (the other hand of a Dual-Weapon Attack) leaves it alone. Over a
+    Spraying Fire burst, a line dropped for any target is dropped;
   - Since 1.19.0, a `gworld.attackModifiers` listener may set `refusal` (text): the
     attack isn't rolled, and the user is told why;
   - Since 1.83.0, `gworld.attackModifiers` also gets `shots`, the shells the
@@ -560,6 +571,27 @@ and the roll continues.
     DR there) when `dr` is at least `minimumDr` (3). Lower `minimumDr` for a spot
     tougher than its DR, change `dr`, or set `applies: false`;
   - `gworld.afterDamage`: the blow and its result;
+  - `gworld.landed` (since 1.154.0): where a thrown or fired attack came
+    down, for a rule that acts on the landing (something that goes off on
+    impact, or leaves an area where it falls). The context is `{ actor,
+    item, mode, thrown, hit, target, point, scatter }`, read-only:
+    - It fires after every ranged attack roll from the sheet (not one that
+      couldn't be attempted), once per target of a Spraying Fire burst:
+      `thrown` true for a thrown weapon, false for one fired; `hit` whether
+      the attack roll succeeded (any defense is rolled afterwards); `target`
+      the one token targeted as a token document, or null for none or
+      several; `point` that token's centre in scene pixels on a hit, and
+      null on a miss or with no single target; `scatter` null.
+    - The sheet's Scatter roll (Campaigns p. 414) fires it again for the
+      miss: `hit` false, `thrown` null, `item` and `mode` the row picked in
+      its dialog (null where none was), and `scatter` `{ yards, direction }`
+      as rolled. `point` is where it came down: from the one token targeted,
+      `yards` in the direction rolled, counted round clockwise from the way
+      the attacker's token faces (a roll of 1 is straight on); null where
+      there is no single target or the attacker has no token.
+      `rules.scatterPoint({ aimedAt, facing, direction, yards,
+      pixelsPerYard })` works it out, `facing` in radians as the canvas
+      measures them.
   - `gworld.damageModifiers`, `gworld.injury` and `gworld.afterDamage` also get
     `item` (since 1.8.0): the weapon or spell the damage was rolled from, or
     null. The card keeps it as `itemUuid`, and so does `damage`. Since 1.10.0
@@ -588,6 +620,39 @@ and the roll continues.
     (Characters p. 136). Anything but true or false leaves the mode's flag.
     A shove's roll gets `incendiary: false`, and setting it there changes
     nothing, since a shove injures nobody.
+    Since 1.154.0 `gworld.damageModifiers` also gets `hit`, `line` and
+    `refusal`:
+    - `hit` (read-only) says which hit of an attack the roll is for:
+      `{ index, first, hits }`, `index` from 0 in the order the damage is
+      rolled, `first` whether it is 0, and `hits` the hits the attack roll
+      scored (a burst's or a multiple-projectile shot's, Campaigns p. 373;
+      one for a single shot or a melee blow that hit, 0 for a miss), or
+      null where not known. The Combat tab counts the rolls of a row's own
+      damage off its last attack: the first is 0, the second 1, and so on;
+      a follow-up or linked line goes with the hit rolled last (0 before
+      any). Each row keeps its own count, so another row's attack doesn't
+      reset it; the targets of one Spraying Fire burst add their hits
+      together. The index isn't held to `hits`: a roll past them counts on.
+      A hit from a suppression zone is one hit. Null for a roll no
+      attack from that row went before -- a slam, a fragment, a module's
+      own `roll.damage` without it. `roll.damage` takes `hit` (`{ index,
+      hits }`), and the card keeps it, so `IncomingDamage.hit` carries `{
+      index, hits }` to `gworld.injury` and `gworld.afterDamage`. Defenses
+      rolled afterwards don't change the count: `hits` is what the attack
+      roll scored.
+    - `line` (read-only) is `followUp` or `linked` for a roll of one of the
+      row's second lines (Characters p. 106), null for the row's own damage.
+      `roll.damage` takes it, and `IncomingDamage.line` carries it.
+    - `refusal`, null: set it (text) and the roll isn't made -- no card, a
+      warning with that text, and `roll.damage` resolves to null (a rolled
+      0 is 0, so the two can be told apart). What the attack left for the
+      roll -- its called shot, a weapon strike, 1/2D, the range, the hit --
+      is given back and waits for the next roll from the row. A refused
+      slam or its roll back posts no slam, a refused demolition charge
+      doesn't go off (`hazards.detonate` resolves to null), and a shove's
+      knockback roll, which fires the hook with `hit` and `line` null, can
+      be refused too. A listener that rules one attack's follow-up away
+      refuses the roll whose `line` is `followUp`.
     Since 1.125.0, with Modifying Dice + Adds on, the hook's lines are added
     to the formula before its adds are turned into dice, so a per-die line is
     counted from the dice the hook was given (see
@@ -1977,6 +2042,25 @@ Two fields a module may read (since 1.62.0):
     tags (`vehicleControl` and the rest) in `gworld.successRollModifiers`,
     and the context carries it as `reason`. The sheet's own rolls give
     none.
+  - *Driven from outside* (since 1.154.0): a vehicle actor's
+    `system.controller` names, by actor UUID, someone who drives it from
+    elsewhere -- a remote operator, not in its `crew`. Blank (as it starts),
+    or naming an actor that can't be found, the crew's operator has the
+    wheel as before. Named, the vehicle sheet's
+    Control button rolls for them, and the vehicle's Dodge and its turn in
+    the order are theirs, in place of the crew's operator. Set it with
+    `vehicle.update({ "system.controller": actor.uuid })`.
+    `hazards.controlVehicle` also takes `remote` (boolean); left out, a
+    vehicle actor's roll is remote where the actor isn't in its crew, and a
+    vehicle carried as gear is never remote. A remote roll is tagged
+    `remoteControl`, the `gworld.successRollModifiers` context carries
+    `remote: true` (false otherwise), and the card says it was driven from
+    outside. A listener adds its own lines for range or signal, or refuses
+    the roll (see *The rolls the system's procedures make with their own
+    dice*). `rules.operatorUuid(vehicleSystem, exists?)` gives whose hands
+    the controls are in (`exists(uuid)` says whether a controller can be
+    found), and `rules.drivenRemotely({ said, crew, uuid })`
+    whether a roll is remote.
   - *After a shot at a vehicle*: `gworld.afterVehicleHit` is called once
     `hazards.shootAtVehicle` (or the sheet's Shot at) has worked out and
     posted the hit. The context is `{ vehicle, actor, item, mode, location,
@@ -2700,9 +2784,27 @@ Two fields a module may read (since 1.62.0):
     `areas.list` gives it as `cone: { direction, length, width, base }` in
     scene pixels and degrees, `base` being the yard at the apex; `from` and
     `radius` are not kept beside it.
+  - *A cone that opens elsewhere* (since 1.154.0): a cone also takes
+    `origin` (scene pixels), its apex where that isn't `center` -- a burst
+    in the air spraying on from where it goes off, while `center` stays
+    where the area is centred for anything else. `toward` then aims from
+    the origin. It also takes `from` (scene pixels), used where neither
+    `direction` nor `toward` is given: the cone opens along the line from
+    `from` through its apex and on, as a burst carries the attacker's line
+    of fire on (pass the attacker's position). With an `origin` the area
+    needs no `center`. `areas.list` gives the cone's `origin` where it has
+    one, and `areas.standsIn` and the roll lines read the cone from there;
+    without one, the cone's apex is `center`, as before. The system draws
+    no areas on the canvas, so a module that shows the cone draws it from
+    the same apex.
   - *Who stands in it* (since 1.89.0): `areas.standsIn(scene, idOrArea)`
     returns the token documents on the scene whose centre lies in an area --
     circle, band, cone or region -- by its id or as `areas.list` gives it.
+    Since 1.154.0 a token being moved counts where it is going: in a
+    `moveToken` or `updateToken` listener its new place is in its source
+    data before its prepared position and its drawing catch up, and
+    `standsIn` reads the source there, so a token that has just walked in
+    is found.
   - *Darkness* (since 1.96.0, Campaigns p. 394): `areas.darknessAt(scene,
     tokenOrPoint, { observer? })` reads the darkness at a token (placeable or
     document; its centre and elevation) or a point (`{ x, y, elevation? }` in
