@@ -145,6 +145,29 @@ client makes the change, through a Foundry user query:
   the hooks it fires (`gworld.poisonCycle`, the shock hooks) fire there, not on
   the caller's.
 
+**Areas on a scene the user can't write** (since 1.150.0). Only a GM may write
+a scene, and a player's smoke round, gas cloud or dropped light leaves an area
+on one. `areas.add` and `areas.remove` take the actor the area comes from, and
+go through the active GM's client the same way:
+
+| Call | Resolves to |
+|---|---|
+| `areas.add(scene, area, { source? })` | the area's id, or null where refused |
+| `areas.remove(scene, id, { source? })` | nothing |
+
+- `scene` is the scene the area goes on: the document, or its id or uuid
+  (since 1.150.0). The request carries the scene's uuid, so the area lands on
+  the scene the player named, not the one the GM is viewing.
+- Both calls were already async and still are; a caller who may write the scene
+  (a GM, or a player given ownership of it) writes it on their own client as
+  before, with or without a source.
+- Otherwise, with a `source` the user owns (an actor, or a token whose actor
+  they own), the GM's client places or removes the area, after checking the
+  sender -- named by Foundry, never by the payload -- is a GM, the scene's
+  owner, or the owner of the source named. Without one, `add` returns null and
+  `remove` does nothing, as before. With no GM connected `add` returns null and
+  the user is told.
+
 Lifecycle, in order:
 
 1. `gworld.registerRules`, during `init`: register rule groups and switches.
@@ -2565,7 +2588,10 @@ Two fields a module may read (since 1.62.0):
   apply. `areas.remove(scene, id)` and `areas.list(scene)`. Since 1.70.0 a
   circle may also take `from` (scene pixels): the area is then a band, every
   point within `radius` of the line from `from` to `center`, as a swath of
-  fire from the firer to where they aimed.
+  fire from the firer to where they aimed. Since 1.150.0 `add` and `remove`
+  take a scene id as well as the scene, and a third argument `{ source }`: a
+  player's area goes on through the GM's client (see *Areas on a scene the
+  user can't write*).
   - *Cones* (since 1.89.0, Campaigns p. 413): `cone: { direction?, toward?,
     length?, width? }` in place of `radius` makes the area a cone with its
     apex at `center`. `direction` is in degrees clockwise from the scene's +x

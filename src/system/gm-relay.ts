@@ -14,6 +14,7 @@
  * sent the query (the server fills that in from the sender's own connection),
  * and the GM's client checks that user owns the source, or the target, or is
  * a GM. A GM caller and the target's owner act directly, as they always did.
+ * Areas on a scene go the same way since API 1.150.0 (below).
  */
 
 import { SYSTEM_ID } from "./constants.js";
@@ -22,6 +23,7 @@ import { stopBleeding } from "./bleeding.js";
 import { advancePoison, dosePoison } from "./poison.js";
 import { shock, type ShockOptions } from "./hazards.js";
 import { applyCondition, removeCondition, type ConditionApplication } from "./procedure-extensions.js";
+import { addArea, removeArea } from "./modifier-areas.js";
 import type { Poison } from "../rules/poison.js";
 
 /** The query the GM's client answers. */
@@ -152,8 +154,122 @@ export async function answerEffectQuery(data: unknown, context?: { user?: any })
   return result === undefined ? null : result;
 }
 
+/*
+ * Placing and removing an area through the GM's client (since API 1.150.0).
+ *
+ * A player's smoke round or dropped light leaves an area on the scene, and
+ * only a GM may write the scene. So `areas.add` and `areas.remove` go the same
+ * way as the effects above: here where the user may change the scene, and
+ * through the active GM's client where the user owns the `source` actor the
+ * area comes from. The scene travels by its uuid, so the area goes on the
+ * scene the player named, not the one the GM is viewing.
+ */
+
+/** The query the GM's client answers for areas. */
+export const AREA_QUERY = `${SYSTEM_ID}.area`;
+
+/** What `areas.add` takes. */
+export type AreaInput = Parameters<typeof addArea>[1];
+
+/** What the GM's client is sent for an area. */
+interface AreaRequest {
+  action: "add" | "remove";
+  sceneUuid: string;
+  sourceUuid: string;
+  area?: AreaInput;
+  id?: string;
+}
+
+/** A scene as a module names it: the document, or its id or uuid. */
+export function sceneFrom(scene: any): any {
+  if (typeof scene !== "string") return scene ?? null;
+  const scenes = (game as any).scenes;
+  return scenes?.get?.(scene) ?? scenes?.get?.(scene.replace(/^Scene\./, "")) ?? null;
+}
+
+/** Whether the current user may write the scene here, as `addArea` asks it. */
+function writesScene(scene: any): boolean {
+  return !scene || scene.isOwner === true || (game as any).user?.isGM === true;
+}
+
+/**
+ * Sends an area request to the active GM's client where the user owns the
+ * source; null where it can't be sent, so the caller does it here and is
+ * refused as before.
+ */
+async function relayArea<T>(scene: any, source: any, request: Omit<AreaRequest, "sceneUuid" | "sourceUuid">, refused: T): Promise<T | undefined> {
+  const from = sourceActor(source);
+  if (!owns((game as any).user, from)) return undefined;
+  const gm = (game as any).users?.activeGM;
+  if (!gm || gm.isSelf || typeof gm.query !== "function") {
+    ui.notifications?.warn(game.i18n.format("GWORLD.Chat.NoGmToApply", { names: String(scene?.name ?? "") }));
+    return refused;
+  }
+  const payload: AreaRequest = { ...request, sceneUuid: String(scene.uuid ?? ""), sourceUuid: String(from.uuid ?? "") };
+  try {
+    const result = await gm.query(AREA_QUERY, payload, { timeout: QUERY_TIMEOUT_MS });
+    return (result === null || result === undefined ? refused : result) as T;
+  } catch (error) {
+    console.warn(`${SYSTEM_ID} | the GM's client could not change the scene ${String(scene?.name ?? "")}`, error);
+    return refused;
+  }
+}
+
+/**
+ * `areas.add` (source since 1.150.0): the area on the scene named, here where
+ * the user may write it, else through the GM's client for the owner of
+ * `source`. The area's id, or null where refused.
+ */
+export async function addAreaFor(scene: any, area: AreaInput, options: { source?: any } = {}): Promise<string | null> {
+  const target = sceneFrom(scene);
+  if (!writesScene(target) && area && typeof area === "object") {
+    const relayed = await relayArea<string | null>(target, options?.source, { action: "add", area }, null);
+    if (relayed !== undefined) return relayed;
+  }
+  return target ? addArea(target, area) : null;
+}
+
+/** `areas.remove` (source since 1.150.0): as `addAreaFor`, taking the area off. */
+export async function removeAreaFor(scene: any, id: string, options: { source?: any } = {}): Promise<void> {
+  const target = sceneFrom(scene);
+  if (!writesScene(target)) {
+    const relayed = await relayArea<boolean>(target, options?.source, { action: "remove", id: String(id ?? "") }, false);
+    if (relayed !== undefined) return;
+  }
+  if (target) await removeArea(target, id);
+}
+
+/**
+ * The GM's side of the area query: an area added to or taken off a scene, for
+ * a GM, the scene's owner, or the owner of the source actor named. Returns the
+ * area's id, true for a removal, or null where refused.
+ */
+export async function answerAreaQuery(data: unknown, context?: { user?: any }): Promise<unknown> {
+  const request = data as Partial<AreaRequest> | null;
+  if (!request || typeof request.sceneUuid !== "string" || !request.sceneUuid) return null;
+  if (request.action !== "add" && request.action !== "remove") return null;
+  if (request.action === "add" && (!request.area || typeof request.area !== "object")) return null;
+  if (request.action === "remove" && (typeof request.id !== "string" || !request.id)) return null;
+  const scene = await fromUuid(request.sceneUuid).catch(() => null);
+  if (!scene || (scene as any).documentName !== "Scene") return null;
+  const user = context?.user;
+  if (!user) return null;
+  if (user.isGM !== true && !owns(user, scene)) {
+    const source = typeof request.sourceUuid === "string" && request.sourceUuid
+      ? await fromUuid(request.sourceUuid).catch(() => null)
+      : null;
+    if (!source || (source as any).documentName !== "Actor" || !owns(user, source)) return null;
+  }
+  if (request.action === "add") return (await addArea(scene, request.area as AreaInput)) ?? null;
+  await removeArea(scene, request.id as string);
+  return true;
+}
+
 /** Lets the GM's client answer. Called during `init`. */
 export function registerEffectQuery(): void {
   const queries = (CONFIG as any).queries;
-  if (queries && typeof queries === "object") queries[EFFECT_QUERY] = answerEffectQuery;
+  if (queries && typeof queries === "object") {
+    queries[EFFECT_QUERY] = answerEffectQuery;
+    queries[AREA_QUERY] = answerAreaQuery;
+  }
 }
