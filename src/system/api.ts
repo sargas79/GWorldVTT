@@ -108,7 +108,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.153.0";
+export const API_VERSION = "1.154.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -911,8 +911,9 @@ const hazardsApi = Object.freeze({
     return relayEffect("shock", actor, sourceActor, { options: rest }, null);
   },
   irradiate, detonate: detonateCharge, shootAtVehicle,
-  // A vehicle control roll, with why it is made (since 1.115.0; Campaigns p. 466).
-  controlVehicle: (options: { actor: any; vehicle: any; modifier?: number; reason?: string }) => controlVehicle({ ...options, modifier: Number(options?.modifier) || 0 }),
+  // A vehicle control roll, with why it is made (since 1.115.0; Campaigns p. 466),
+  // and whether it is made from outside the vehicle (since 1.154.0).
+  controlVehicle: (options: { actor: any; vehicle: any; modifier?: number; reason?: string; remote?: boolean }) => controlVehicle({ ...options, modifier: Number(options?.modifier) || 0 }),
   fragileKinds: fragileKindsOf, fragileCatchesFire, fragileExplodes, brittleLimb: rollBrittleLimb,
 });
 

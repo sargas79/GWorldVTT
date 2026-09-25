@@ -30,6 +30,7 @@ import { damageDice, damageDiceRow } from "./damage-dice.js";
 import { maySpray, promptForSpray, type SprayShot } from "./spraying-fire.js";
 import { fireSuppression, suppressing } from "./suppression-fire.js";
 import { targetedTokens, withTargets } from "./targets.js";
+import { landedAfterAttack } from "./landed.js";
 import {
   afterSuccessRoll,
   attackSequenceFor,
@@ -1342,6 +1343,19 @@ export interface DamageRollOptions {
   /** The first hit of a multiple-projectile shot, rolled with its own line (since API 1.73.0). */
   firstHit?: boolean;
   /**
+   * Which hit of an attack this roll is for (since API 1.154.0): `index` from
+   * 0 in the order the damage is rolled, and `hits` the hits the attack
+   * scored, null where not known. Null or left out for a roll no attack went
+   * before.
+   */
+  hit?: AttackHit | null;
+  /**
+   * Which of a row's second lines this roll is (since API 1.154.0): its
+   * follow-up or its linked attack (Characters p. 106), null for the row's
+   * own damage.
+   */
+  line?: SecondLineKind | null;
+  /**
    * How far the target was, in yards, for the modules' damage hooks (since
    * 1.69.0): the range the attack was made at, or else the distance to the one
    * targeted token. Null where neither is known.
@@ -1371,7 +1385,7 @@ export function damageDistance(actor: any, given: number | null | undefined): nu
  * Applying it to a target needs that target's DR, so the card carries the
  * numbers a GM needs rather than guessing at whom it hit.
  */
-export async function rollDamage(options: DamageRollOptions): Promise<number> {
+export async function rollDamage(options: DamageRollOptions): Promise<number | null> {
   const { actor, label, damageType, armorDivisor = 1, fragmentation = "" } = options;
   // A module may add lines to a damage roll, with what they are for, and put
   // another formula in its place.
@@ -1380,6 +1394,8 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
   // How far away the target was: 1/2D already turns on it (Characters
   // p. 269), and a module's damage may too, explosive or not (since 1.69.0).
   const distanceYards = damageDistance(actor, options.distanceYards);
+  const hit = hitContext(options.hit);
+  const line: SecondLineKind | null = options.line === "followUp" || options.line === "linked" ? options.line : null;
   const hookedDamage = callCombatHook(COMBAT_HOOKS.damageModifiers, {
     actor, item, mode, label, formula: options.formula, damageType, modifiers: [...(options.modifiers ?? [])],
     distanceYards,
@@ -1390,7 +1406,22 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     // 1.152.0): its mode's flag, which a listener may set for this blow
     // alone -- a round that burns only at close range, say.
     incendiary: options.incendiary === true,
+    // Which hit of the attack this is (since API 1.154.0), `{ index, first,
+    // hits }`, or null for a roll no attack went before. Read-only.
+    hit: hit ? { ...hit } : null,
+    // Which second line of the row this is (since API 1.154.0): `followUp`,
+    // `linked`, or null for the row's own damage. Read-only.
+    line,
+    // Set (text) to leave this roll unmade (since API 1.154.0): a follow-up
+    // that doesn't go off for this attack, say.
+    refusal: null as string | null,
   });
+  // A listener's rules may leave this line unrolled (since API 1.154.0):
+  // null, not 0, so a caller can tell a refused roll from a rolled 0.
+  if (typeof hookedDamage.refusal === "string" && hookedDamage.refusal.trim()) {
+    ui.notifications?.warn(hookedDamage.refusal.trim());
+    return null;
+  }
   // Only a true or false counts; anything else leaves the mode's own flag.
   const incendiary = typeof hookedDamage.incendiary === "boolean" ? hookedDamage.incendiary : options.incendiary === true;
   const replaced = typeof hookedDamage.formula === "string" && hookedDamage.formula !== options.formula && parseDiceAdds(hookedDamage.formula)
@@ -1552,6 +1583,9 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           ...(mode ? { mode } : {}),
           ...(options.source ? { source: String(options.source) } : {}),
           ...(options.firstHit ? { firstHit: true } : {}),
+          // Which hit of the attack, and which second line (since API 1.154.0).
+          ...(hit ? { hit: { index: hit.index, hits: hit.hits } } : {}),
+          ...(line ? { line } : {}),
           ...(options.weaponTarget ? { weaponTarget: options.weaponTarget } : {}),
           // Who struck bare-handed, and with what, for Hurting Yourself (p. 379).
           ...(options.strikingPart && typeof options.actor?.uuid === "string" ? { strikingPart: options.strikingPart, strikerUuid: options.actor.uuid } : {}),
@@ -2141,6 +2175,10 @@ async function rollAction(
         weaponStrike: shot?.weaponStrike
           ? { itemId: shot.weaponStrike.id, name: shot.weaponStrike.name, penalty: shot.weaponStrike.penalty }
           : (null as { itemId: string; name: string; penalty: number } | null),
+        // Since 1.154.0: set either true to leave the row's follow-up or its
+        // linked attack (Characters p. 106) unrolled for this attack alone --
+        // a round whose follow-up fails to go off, say.
+        dropLines: { followUp: false, linked: false },
       })
     : null;
   // A module's rules may make this attack impossible here: it isn't rolled.
@@ -2158,6 +2196,8 @@ async function rollAction(
   const laserDodge = hooked?.laser
     ? Math.max(0, Math.floor(Number(hooked.laser.dodgeBonus) || 0))
     : (shot?.dodgeBonus ?? 0);
+  // The second lines a listener left unrolled for this attack (since 1.154.0).
+  const droppedLines = { followUp: hooked?.dropLines?.followUp === true, linked: hooked?.dropLines?.linked === true };
 
   // A shot taken at a measured range says so on the card, where the number
   // came from being the one thing a player will want to check -- and so does
@@ -2178,6 +2218,9 @@ async function rollAction(
     // One target of a Spraying Fire burst (Campaigns p. 409).
     ...(spray ? [game.i18n.format("GWORLD.Spraying.Card", { index: spray.index + 1, count: spray.count, shots: spray.shots, recoil: spray.recoil })] : []),
     ...(addon?.notes ?? []).map((note) => game.i18n.localize(note)),
+    // A follow-up or linked attack this attack doesn't roll (since 1.154.0).
+    ...(droppedLines.followUp ? [game.i18n.localize("GWORLD.Attack.FollowUpDropped")] : []),
+    ...(droppedLines.linked ? [game.i18n.localize("GWORLD.Attack.LinkedDropped")] : []),
   ];
   const label = [
     measured
@@ -2361,6 +2404,17 @@ async function rollAction(
   }
   // The shot spends the zen skill's success, whatever became of it.
   if (zenShot) await clearZenShot(actor);
+  // The damage rolls that follow count off this attack's hits, and skip the
+  // second lines a listener dropped for it (since API 1.154.0).
+  if (rollType === "attack") {
+    const row = shotRow(target.closest<HTMLElement>("[data-item-id]"));
+    // A later target of a Spraying Fire burst adds to the burst's hits.
+    await recordAttackRow(actor, row, {
+      hits: shot ? weaponStrikeHits(outcome, shot) : outcome?.success ? 1 : 0,
+      dropped: droppedLines,
+      add: (spray?.index ?? 0) > 0,
+    });
+  }
 
   // A shot at a random location behind cover (p. 407): "For shots that hit a
   // location that is only half exposed, roll 1d: on a roll of 4-6, the shot
@@ -2435,6 +2489,12 @@ async function rollAction(
       await item.update({ "system.unready": true });
       ui.notifications?.info(game.i18n.format("GWORLD.Ready.NowUnready", { name: String(item.name) }));
     }
+  }
+
+  // Where a thrown or fired attack came down, for the modules whose rules
+  // act on the landing (since API 1.154.0).
+  if (rollType === "attack" && ranged) {
+    landedAfterAttack({ actor, item: rolledItem ?? null, mode: attackMode, thrown: delivery === "thrown", hit: (outcome as { success?: boolean } | null)?.success === true });
   }
 
   // A launch that lost its spot still counts as the attack made this turn,
@@ -2546,6 +2606,8 @@ export async function recordSuppressionShot(actor: any, rowKey: string, rangeYar
   await recordAttackOptions(actor, {});
   await recordMassShot(actor, null);
   await recordFirstHit(actor, null);
+  // One hit, the zone's, and every second line its own (since API 1.154.0).
+  await recordAttackRow(actor, rowKey, { hits: 1 });
   await recordShotRange(actor, rangeYards, rowKey);
   await recordHalfDamage(actor, beyondHalfDamage({ rangeYards, halfDamageRange }));
 }
@@ -2573,7 +2635,8 @@ function derivedRangedRow(actor: any, row: HTMLElement | null | undefined): { ex
     String(r?.derivedMode ?? "") === (row.dataset.derivedMode ?? "")) ?? null;
 }
 
-function shotRow(row: HTMLElement | null | undefined): string {
+/** The key a sheet row's attack and damage rolls share: its item, derived mode and mode. */
+export function shotRow(row: HTMLElement | null | undefined): string {
   if (!row) return "";
   return [row.dataset.itemId ?? "", row.dataset.derivedMode ?? "", row.dataset.modeIndex ?? ""].join("|");
 }
@@ -2629,6 +2692,118 @@ async function consumeFirstHit(actor: any, row: string): Promise<boolean> {
   if (pending !== row) return false;
   if (actor.isOwner) await actor.unsetFlag(SYSTEM_ID, FIRST_HIT_FLAG);
   return true;
+}
+
+/** Which hit of an attack a damage roll is for (since API 1.154.0). */
+export interface AttackHit {
+  /** From 0, in the order the attack's damage is rolled. */
+  index: number;
+  /** The hits the attack scored, or null where that isn't known. */
+  hits: number | null;
+}
+
+/** A row's second line (Characters p. 106): a follow-up, or a linked attack. */
+export type SecondLineKind = "followUp" | "linked";
+
+/** A hit as a damage hook sees it, `first` said outright; null for none. */
+export function hitContext(hit: AttackHit | null | undefined): (AttackHit & { first: boolean }) | null {
+  const index = Number(hit?.index);
+  if (!hit || !Number.isInteger(index) || index < 0) return null;
+  const hits = hit.hits === null || hit.hits === undefined || !Number.isFinite(Number(hit.hits)) ? null : Math.max(0, Math.floor(Number(hit.hits)));
+  return { index, first: index === 0, hits };
+}
+
+/**
+ * What each row's last attack left for the damage rolls that follow (since
+ * API 1.154.0), one entry a row: the hits it scored, how many damage rolls
+ * have been made for it, and the second lines a listener dropped. An attack
+ * replaces only its own row's entry, so one hand's attack of a Dual-Weapon
+ * Attack leaves the other's alone.
+ */
+const ATTACK_ROWS_FLAG = "attackRows";
+
+/** One row's entry in `ATTACK_ROWS_FLAG`. */
+interface AttackRowState {
+  row: string;
+  hits: number | null;
+  rolled: number;
+  followUp: boolean;
+  linked: boolean;
+}
+
+function attackRows(actor: any): AttackRowState[] {
+  const held = actor?.getFlag?.(SYSTEM_ID, ATTACK_ROWS_FLAG);
+  return Array.isArray(held) ? held.filter((e) => e && typeof e.row === "string") : [];
+}
+
+async function storeAttackRows(actor: any, rows: AttackRowState[]): Promise<void> {
+  if (!actor?.isOwner) return;
+  // Replaced whole: a flag set over an array is the new array.
+  await actor.update({ [`flags.${SYSTEM_ID}.${ATTACK_ROWS_FLAG}`]: rows });
+}
+
+/**
+ * Starts the count for an attack from a row: `hits` scored, none rolled yet,
+ * and the second lines a listener dropped. With `add` -- a later target of
+ * one Spraying Fire burst -- the hits join the burst's so far, and a line
+ * dropped for any target of it is dropped.
+ */
+export async function recordAttackRow(
+  actor: any,
+  row: string,
+  state: { hits: number | null; dropped?: { followUp: boolean; linked: boolean }; add?: boolean },
+): Promise<void> {
+  if (!actor?.isOwner) return;
+  const scored = state.hits === null || !Number.isFinite(state.hits) ? null : Math.max(0, Math.floor(state.hits));
+  const rows = attackRows(actor);
+  const before = state.add ? rows.find((e) => e.row === row) : undefined;
+  const entry: AttackRowState = {
+    row,
+    hits: before ? (before.hits === null || scored === null ? null : before.hits + scored) : scored,
+    rolled: before ? before.rolled : 0,
+    followUp: (before?.followUp ?? false) || state.dropped?.followUp === true,
+    linked: (before?.linked ?? false) || state.dropped?.linked === true,
+  };
+  await storeAttackRows(actor, [...rows.filter((e) => e.row !== row), entry]);
+}
+
+/** Each actor's count of hits, taken one at a time, so two quick clicks don't both get the same hit. */
+const hitQueues = new Map<string, Promise<unknown>>();
+
+/**
+ * Which hit of the row's last attack a damage roll is for, counting it off
+ * (since API 1.154.0); null where that row has made no attack. `peek` reads
+ * the hit whose damage was rolled last without counting another: a follow-up
+ * or linked line lands with its hit. The index isn't held to the hits
+ * scored: a roll past them still counts on, and `hits` says how many there
+ * were.
+ */
+export function nextAttackHit(actor: any, row: string, peek = false): Promise<AttackHit | null> {
+  const key = String(actor?.uuid ?? actor?.id ?? "");
+  const run = async (): Promise<AttackHit | null> => {
+    const rows = attackRows(actor);
+    const held = rows.find((e) => e.row === row);
+    if (!held) return null;
+    const rolled = Math.max(0, Math.floor(Number(held.rolled) || 0));
+    const hits = held.hits === null || held.hits === undefined ? null : Number(held.hits);
+    if (peek) return { index: Math.max(0, rolled - 1), hits };
+    await storeAttackRows(actor, rows.map((e) => (e.row === row ? { ...e, rolled: rolled + 1 } : e)));
+    return { index: rolled, hits };
+  };
+  const next = (hitQueues.get(key) ?? Promise.resolve()).then(run, run);
+  hitQueues.set(key, next.catch(() => null));
+  return next;
+}
+
+/** Whether the row's last attack left this second line unrolled (since API 1.154.0). */
+export function lineDropped(actor: any, row: string, line: SecondLineKind | null | undefined): boolean {
+  if (line !== "followUp" && line !== "linked") return false;
+  return attackRows(actor).find((e) => e.row === row)?.[line] === true;
+}
+
+/** A second line's kind from a sheet control's `data-second-line`, or null. */
+export function secondLineOf(value: string | undefined): SecondLineKind | null {
+  return value === "followUp" || value === "linked" ? value : null;
 }
 
 /** What the map knows about a shot: how far, and at what size. */
@@ -4464,6 +4639,16 @@ export async function handleDamageAction(
   // The row the damage was rolled from names the weapon, which a module's
   // hooks may want to know.
   const itemRow = target.closest<HTMLElement>("[data-item-id]");
+  // A follow-up or linked line the row's last attack left unrolled (since
+  // API 1.154.0) isn't rolled, and nothing the attack left is spent on it.
+  const secondLine = secondLineOf(target.dataset.secondLine);
+  if (lineDropped(actor, shotRow(itemRow), secondLine)) {
+    ui.notifications?.warn(game.i18n.localize(secondLine === "followUp" ? "GWORLD.Attack.FollowUpDropped" : "GWORLD.Attack.LinkedDropped"));
+    return;
+  }
+  // What the attack left for this roll, as it stands before any of it is
+  // spent: a roll a listener refuses gives it all back (since API 1.154.0).
+  const leftByAttack = flagsSnapshot(actor);
   // The first hit of a multiple-projectile shot whose first projectile has a
   // line of its own (since API 1.73.0): the first damage roll from the row
   // after the attack uses it, and every roll after that the row's own.
@@ -4493,6 +4678,11 @@ export async function handleDamageAction(
 
   const modifiers = await maybePromptModifiers(event);
   if (modifiers === null) return;
+
+  // Which hit of the row's last attack this is (since API 1.154.0): each roll
+  // of the row's own damage counts one off, and a second line goes with the
+  // hit rolled last.
+  const hit = await nextAttackHit(actor, shotRow(itemRow), secondLine !== null);
 
   // Where the attack was aimed, so the apply control opens on that location
   // rather than asking again -- and, for a chink, so the DR it found is halved.
@@ -4607,7 +4797,7 @@ export async function handleDamageAction(
       })
     : null;
 
-  await rollDamage({
+  const rolled = await rollDamage({
     actor,
     label: [
       damageLabel ?? "Damage",
@@ -4625,6 +4815,8 @@ export async function handleDamageAction(
     damageType: struck ? struck.type : couched ? couched.type : (damageType as DamageType),
     armorDivisor: Number(armorDivisor) || 1,
     ...(line.firstHit ? { firstHit: true } : {}),
+    ...(hit ? { hit } : {}),
+    ...(secondLine ? { line: secondLine } : {}),
     ...(aimed && !weaponStruck ? { calledShot: aimed } : {}),
     ...(weaponStruck ? { weaponTarget: weaponStruck } : {}),
     ...(Object.keys(attackOptions).length > 0 ? { attackOptions } : {}),
@@ -4650,6 +4842,29 @@ export async function handleDamageAction(
     ...explosionDataset(target.dataset),
     modifiers,
   });
+  // Refused: the called shot, the hit, 1/2D and the rest wait for the next roll.
+  if (rolled === null) await restoreFlags(actor, leftByAttack);
+}
+
+/** The system's flags on an actor as they are now, to put back later. */
+export function flagsSnapshot(actor: any): Record<string, unknown> {
+  const flags = actor?.flags?.[SYSTEM_ID];
+  return flags && typeof flags === "object" ? JSON.parse(JSON.stringify(flags)) : {};
+}
+
+/**
+ * Puts back the system's flags a refused damage roll spent (since API
+ * 1.154.0): each one that differs from the snapshot is set back to it, and
+ * one it didn't have is taken off.
+ */
+export async function restoreFlags(actor: any, before: Record<string, unknown>): Promise<void> {
+  if (!actor?.isOwner) return;
+  const now = flagsSnapshot(actor);
+  for (const key of new Set([...Object.keys(before), ...Object.keys(now)])) {
+    if (JSON.stringify(before[key]) === JSON.stringify(now[key])) continue;
+    if (now[key] !== undefined) await actor.unsetFlag(SYSTEM_ID, key);
+    if (before[key] !== undefined) await actor.setFlag(SYSTEM_ID, key, before[key]);
+  }
 }
 
 /**
