@@ -87,8 +87,12 @@ export interface GmRollSpec {
   ask?: "margin" | "modifier";
   /** The key of the row a total lands on. */
   rowFor: (total: number) => string;
-  /** Whether a row needs a 1d roll for its side, as a hand or foot does. */
-  sideFor?: (rowKey: string) => boolean;
+  side?: {
+    /** Whether the row a total lands on needs 1d to say which side, as a hand or foot does. */
+    needsDie: (total: number) => boolean;
+    /** The side a total lands on, with that 1d where one was rolled; null where the row has none. */
+    of: (total: number, die?: number) => "right" | "left" | null;
+  };
 }
 
 /** A section as it is defined, by the system or by a module. */

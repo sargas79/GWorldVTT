@@ -9,6 +9,7 @@ import { SYSTEM_ID } from "../constants.js";
 import { successRollMessageMode } from "../roll.js";
 import { buildSection, rollSpec, sectionDef } from "./assemble.js";
 import { K } from "./sections/shared.js";
+import { hiddenTabs, mayOpen } from "./settings.js";
 import type { BuildContext, GmTable } from "./types.js";
 
 export const ROLL_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/gm-screen-roll.hbs`;
@@ -22,8 +23,8 @@ export interface ScreenRoll {
   total: number;
   /** The key of the row it landed on. */
   row: string;
-  /** For a hand or foot, which one: the 1d and the side it gives. */
-  side: { die: number; side: "right" | "left" } | null;
+  /** Which side, for a location that has one: the table's for an arm or leg, a 1d's for a hand or foot. */
+  side: { die: number | null; side: "right" | "left" } | null;
 }
 
 /** The context the screen builds with, in this user's language. */
@@ -159,6 +160,17 @@ async function ask(
     : null;
 }
 
+/**
+ * Whether this user may roll on a section: a GM on any, a player only where
+ * the screen would show it to them -- the screen open to players, the tab
+ * not kept back, the section not the GM's alone. Otherwise the card would
+ * give away what the screen keeps from them.
+ */
+export function mayRollOn(def: { tab: string; gmOnly?: boolean }): boolean {
+  if ((game as any).user?.isGM === true) return true;
+  return mayOpen() && def.gmOnly !== true && !hiddenTabs().includes(def.tab);
+}
+
 /** The row's words for the card: what it is called, and what it says. */
 function describeRow(
   table: GmTable | undefined,
@@ -186,7 +198,7 @@ export async function rollOnSection(
 ): Promise<ScreenRoll | null> {
   const spec = rollSpec(id);
   const def = sectionDef(id);
-  if (!spec || !def) return null;
+  if (!spec || !def || !mayRollOn(def)) return null;
   const context = foundryContext();
   const section = buildSection(def, context);
   if (!section) return null;
@@ -210,13 +222,16 @@ export async function rollOnSection(
 
   let side: ScreenRoll["side"] = null;
   const rolls: any[] = [roll];
-  if (spec.sideFor?.(row)) {
-    const sideRoll = new Roll("1d6");
-    await sideRoll.evaluate();
-    rolls.push(sideRoll);
-    const die = Number(sideRoll.total);
-    // "Roll 1d: 1-3 is the right, 4-6 the left" (Campaigns p. 552).
-    side = { die, side: die <= 3 ? "right" : "left" };
+  if (spec.side) {
+    let die: number | null = null;
+    if (spec.side.needsDie(total)) {
+      const sideRoll = new Roll("1d6");
+      await sideRoll.evaluate();
+      rolls.push(sideRoll);
+      die = Number(sideRoll.total);
+    }
+    const which = spec.side.of(total, die ?? undefined);
+    if (which) side = { die, side: which };
   }
 
   const table = section.parts.find((part) => part.content.kind === "table")?.content as
@@ -236,7 +251,9 @@ export async function rollOnSection(
     result: described?.result ?? context.t(`${K}.Card.NoRow`, { total }),
     detail: described?.detail ?? "",
     side: side
-      ? context.t(`${K}.Card.Side`, { side: context.t(`${K}.Card.${side.side}`), die: side.die })
+      ? side.die === null
+        ? context.t(`${K}.Card.SideOnly`, { side: context.t(`${K}.Card.${side.side}`) })
+        : context.t(`${K}.Card.Side`, { side: context.t(`${K}.Card.${side.side}`), die: side.die })
       : "",
   });
   const mode = messageMode ? successRollMessageMode({ rollMode: messageMode }) : null;

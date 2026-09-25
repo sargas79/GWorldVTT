@@ -1,5 +1,5 @@
 /**
- * The GM Screen as the add-on API offers it (since 1.156.0): opening it,
+ * The GM Screen as the add-on API offers it (since 1.157.0): opening it,
  * rolling on its tables, and adding a module's own tables, lists and tabs.
  *
  * The window registers how it opens at init, so the API doesn't load the

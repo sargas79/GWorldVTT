@@ -373,7 +373,15 @@ export const WOUNDS_SECTIONS: readonly GmSectionDef[] = [
     roll: {
       formula: "3d6",
       rowFor: (total) => randomHitLocation(total).location,
-      sideFor: (row) => row === "hand" || row === "foot",
+      // The automation's own lookup gives the side: from the table for an arm
+      // or leg, from the 1d for a hand or foot.
+      side: {
+        needsDie: (total) => {
+          const { location } = randomHitLocation(total);
+          return location === "hand" || location === "foot";
+        },
+        of: (total, die) => randomHitLocation(total, die).side ?? null,
+      },
     },
   }),
   section({

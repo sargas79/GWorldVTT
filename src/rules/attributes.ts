@@ -155,9 +155,3 @@ export const ATTRIBUTE_LEVELS: ReadonlyArray<{ level: AttributeLevel; upTo: numb
   { level: "exceptional", upTo: 14 },
   { level: "amazing", upTo: null },
 ];
-
-/** The level a score reads as. */
-export function attributeLevel(score: number): AttributeLevel {
-  const whole = Math.floor(score);
-  return ATTRIBUTE_LEVELS.find((row) => row.upTo === null || whole <= row.upTo)!.level;
-}

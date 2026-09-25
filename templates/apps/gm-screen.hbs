@@ -50,7 +50,7 @@
         <div class="gs-tools">
           <button type="button" class="gs-txt gs-showall" data-action="toggleRows" hidden></button>
           {{#if section.roll}}
-            <span class="gs-last"{{#unless section.last}} hidden{{/unless}}>{{localize "GWORLD.GmScreen.Last"}} <b>{{section.last}}</b></span>
+            <span class="gs-last"{{#unless section.hasLast}} hidden{{/unless}}>{{localize "GWORLD.GmScreen.Last"}} <b>{{section.last}}</b></span>
             <button type="button" class="gs-dice" data-action="roll" data-tooltip="{{localize 'GWORLD.GmScreen.RollHint'}}" aria-label="{{localize 'GWORLD.GmScreen.RollHint'}}: {{section.title}}">
               <i class="fa-solid fa-dice" inert></i>{{section.diceLabel}}
             </button>

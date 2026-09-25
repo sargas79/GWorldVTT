@@ -35,7 +35,10 @@ describe("the screen as the template draws it", () => {
       readOnly: false,
       query: "",
       collapsed: { shock: true },
-      last: new Map([["hitLocations", { row: "skull", total: 4 }]]),
+      last: new Map([
+        ["hitLocations", { row: "skull", total: 4 }],
+        ["reactions", { row: "disastrous", total: 0 }],
+      ]),
     }) as any;
     expect(view.activeLabel).toBe("Wounds");
     expect(view.activePosition).toBe("2 of 8");
@@ -48,6 +51,11 @@ describe("the screen as the template draws it", () => {
       .find((t: any) => t.id === "checks")
       .sections.find((s: any) => s.id === "frightChecks");
     expect(fright.diceLabel).toBe("3d + MoF");
+    // A Disastrous reaction of 0 is still a roll to show.
+    const reactions = view.tabs
+      .find((t: any) => t.id === "checks")
+      .sections.find((s: any) => s.id === "reactions");
+    expect(reactions).toMatchObject({ last: 0, hasLast: true });
     const slot = view.tabs
       .find((t: any) => t.id === "checks")
       .sections.find((s: any) => s.id === "aweConfusion");

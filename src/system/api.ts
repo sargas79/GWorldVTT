@@ -110,7 +110,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.156.0";
+export const API_VERSION = "1.157.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -861,7 +861,7 @@ export interface GWorldApi {
   readonly world: typeof worldApi;
   /** Social rolls (since 1.103.0): the skills the Influence roll offers. */
   readonly social: typeof socialApi;
-  /** The GM Screen (since 1.156.0): open it, roll on its tables, add a module's tables, lists and tabs. */
+  /** The GM Screen (since 1.157.0): open it, roll on its tables, add a module's tables, lists and tabs. */
   readonly gmScreen: typeof gmScreenApi;
   /** The hooks the API fires, by name; `partyChanged` since 1.68.0, `campaignChanged` since 1.82.0. */
   readonly hooks: { readonly registerRules: string; readonly ready: string; readonly partyChanged: string; readonly campaignChanged: string };

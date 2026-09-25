@@ -100,7 +100,9 @@ export function registerGmScreen(): void {
     hint: `${K}.Keybinding.Hint`,
     editable: [],
     onDown: () => {
-      void GmScreen.open();
+      void GmScreen.open().catch((error) =>
+        console.warn("gworld | the GM Screen failed to open", error),
+      );
       return true;
     },
   });

@@ -31,6 +31,9 @@ import { normaliseQuery } from "../rule-search.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
+/** How many journal entries are loaded at once. */
+const PROSE_BATCH = 6;
+
 /** Where to take the screen when it opens: a tab, a section on it, a row to mark. */
 export interface ScreenFocus {
   tab?: string;
@@ -78,6 +81,12 @@ export class GmScreen extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /** Prose already loaded, by section or part id: the HTML, or "" for none. */
   #prose = new Map<string, string>();
+
+  /** The journal entry for each section id, found once for the window's life. */
+  #sources: Map<string, string> | null = null;
+
+  /** Whether prose is loading now. */
+  #loading = false;
 
   /** The screen as last built. */
   #tabs: ScreenTab[] = [];
@@ -406,7 +415,14 @@ export class GmScreen extends HandlebarsApplicationMixin(ApplicationV2) {
     const rows = [...card.querySelectorAll<HTMLElement>("tr[data-search]")];
     const toggle = card.querySelector<HTMLElement>(".gs-showall");
     const meta = card.querySelector<HTMLElement>(".gs-meta-rows");
-    const head = (card.querySelector(".gs-card-head")?.textContent ?? "").toLowerCase();
+    // The card's own title and page: not its buttons, whose labels ("3d + mod", the last total) aren't what it says.
+    const head = [
+      card.querySelector(".gs-card-head h2"),
+      card.querySelector(".gs-card-head > .gs-meta"),
+    ]
+      .map((el) => el?.textContent ?? "")
+      .join(" ")
+      .toLowerCase();
     const matching = rows.filter((row) => row.dataset.search!.includes(query));
     const narrow =
       Boolean(query) &&
@@ -461,43 +477,70 @@ export class GmScreen extends HandlebarsApplicationMixin(ApplicationV2) {
    * entry is loaded once; later renders put it back from the cache.
    */
   async #loadProse(): Promise<void> {
-    let sources: Map<string, string>;
+    // One load at a time: a render while one runs leaves it to finish, and
+    // the next render picks up anything it didn't reach.
+    if (this.#loading) return;
+    this.#loading = true;
     try {
-      sources = await proseEntries();
+      await this.#loadMissingProse();
+    } finally {
+      this.#loading = false;
+    }
+  }
+
+  async #loadMissingProse(): Promise<void> {
+    // The packs are indexed once for the window's life, not on every render.
+    try {
+      this.#sources ??= await proseEntries();
     } catch (error) {
       console.warn("gworld | the GM Screen could not look for prose", error);
       return;
     }
+    const sources = this.#sources;
     const order = [...this.#tabs].sort(
       (a, b) => Number(b.id === this.#tab) - Number(a.id === this.#tab),
     );
     const wanted: Array<{ id: string; load: () => Promise<string> }> = [];
+    const seen = new Set<string>();
+    const want = (id: string, load: () => Promise<string>) => {
+      if (this.#prose.has(id) || seen.has(id)) return;
+      seen.add(id);
+      wanted.push({ id, load });
+    };
     for (const tab of order) {
       for (const section of tab.sections) {
-        if (section.prose && !this.#prose.has(section.id))
-          wanted.push({ id: section.id, load: () => moduleProseHtml(section.prose!) });
+        if (section.prose) want(section.id, () => moduleProseHtml(section.prose!));
       }
       for (const id of proseTargets([tab])) {
         const uuid = sources.get(id);
-        if (uuid && !this.#prose.has(id)) wanted.push({ id, load: () => proseHtml(uuid) });
+        if (uuid) want(id, () => proseHtml(uuid));
       }
     }
+    // A few at a time, the tab showing first: fast enough to fill the screen,
+    // without asking for every compendium document at once.
     let changed = false;
-    for (const { id, load } of wanted) {
-      if (this.#prose.has(id)) continue;
-      const html = await load().catch((error: unknown) => {
-        console.warn(`gworld | GM Screen prose for ${id} failed`, error);
-        return "";
-      });
-      this.#prose.set(id, html);
-      if (!html || !this.element) continue;
-      const slot = this.element.querySelector<HTMLElement>(
-        `.gs-prose[data-prose-target="${CSS.escape(id)}"]`,
+    for (let at = 0; at < wanted.length; at += PROSE_BATCH) {
+      const batch = wanted.slice(at, at + PROSE_BATCH);
+      const loaded = await Promise.all(
+        batch.map(({ id, load }) =>
+          load().catch((error: unknown) => {
+            console.warn(`gworld | GM Screen prose for ${id} failed`, error);
+            return "";
+          }),
+        ),
       );
-      if (slot) {
-        this.#showProse(slot, html);
-        changed = true;
-      }
+      batch.forEach(({ id }, index) => {
+        const html = loaded[index] ?? "";
+        this.#prose.set(id, html);
+        if (!html || !this.element) return;
+        const slot = this.element.querySelector<HTMLElement>(
+          `.gs-prose[data-prose-target="${CSS.escape(id)}"]`,
+        );
+        if (slot) {
+          this.#showProse(slot, html);
+          changed = true;
+        }
+      });
     }
     if (changed && this.#query) this.#applySearch();
   }

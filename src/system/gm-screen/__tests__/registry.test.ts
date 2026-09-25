@@ -256,3 +256,65 @@ describe("the modules' additions to the Basic Set's tables", () => {
     });
   });
 });
+
+describe("placing and rolling, at the edges", () => {
+  it("still shows sections that name each other in a ring, and refuses one that follows itself", async () => {
+    const api = await load();
+    expect(
+      api.registerGmScreenRuleBlock({
+        module: "test-addon",
+        key: "self",
+        tab: "tables",
+        after: "test-addon.self",
+        title: "Self",
+        items: [],
+      }),
+    ).toBeNull();
+    api.registerGmScreenRuleBlock({
+      module: "test-addon",
+      key: "a",
+      tab: "tables",
+      after: "test-addon.b",
+      title: "A",
+      items: [],
+    });
+    api.registerGmScreenRuleBlock({
+      module: "test-addon",
+      key: "b",
+      tab: "tables",
+      after: "test-addon.a",
+      title: "B",
+      items: [],
+    });
+    const ids = api
+      .assembleScreen(englishContext(), { isGM: true })
+      .find((t) => t.id === "tables")!
+      .sections.map((s) => s.id);
+    expect(ids.slice(-2).sort()).toEqual(["test-addon.a", "test-addon.b"]);
+  });
+
+  it("lets a player roll only on what the screen shows them", async () => {
+    vi.resetModules();
+    const { mayRollOn } = await import("../roll.js");
+    const globals = globalThis as Record<string, unknown>;
+    const settings: Record<string, unknown> = {
+      gmScreenPlayers: true,
+      gmScreenHiddenTabs: ["combat"],
+    };
+    globals.game = {
+      user: { isGM: false },
+      settings: { get: (_s: string, key: string) => settings[key] },
+    };
+    try {
+      expect(mayRollOn({ tab: "tables" })).toBe(true);
+      expect(mayRollOn({ tab: "combat" })).toBe(false);
+      expect(mayRollOn({ tab: "tables", gmOnly: true })).toBe(false);
+      settings.gmScreenPlayers = false;
+      expect(mayRollOn({ tab: "tables" })).toBe(false);
+      (globals.game as any).user.isGM = true;
+      expect(mayRollOn({ tab: "combat", gmOnly: true })).toBe(true);
+    } finally {
+      delete globals.game;
+    }
+  });
+});

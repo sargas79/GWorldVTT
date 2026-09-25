@@ -84,6 +84,7 @@ function place(r: Placement, what: string): { id: string; tab: string } | string
       return `slot must be one of ${GM_SCREEN_SLOTS.join(", ")}`;
     return { id, tab: SYSTEM_SECTIONS.find((s) => s.id === r.slot)!.tab };
   }
+  if (r.after === id) return "it can't follow itself";
   if (typeof r.tab !== "string" || !tabIds().includes(r.tab))
     return `tab must be one of ${tabIds().join(", ")}`;
   return { id, tab: r.tab };

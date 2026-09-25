@@ -111,7 +111,7 @@ Contents:
 | `points`, `magic` | Point pools, energy sources and spell attacks (since 1.4.0), and resistance cards (since 1.9.0). |
 | `migration` | Moving world data from the system into a module (since 1.6.0). |
 | `world` | Facts about the campaign world (since 1.77.0): `controlRating()`, and `weather(actor?)` and `setTemperature(temperatureF)` (since 1.138.0). See [The campaign world](#the-campaign-world). |
-| `gmScreen` | The GM Screen (since 1.156.0): `open(tab?)`, `roll(sectionId, options?)`, `registerTable`, `registerRuleBlock`, `registerTab`. See [The GM Screen](#the-gm-screen). |
+| `gmScreen` | The GM Screen (since 1.157.0): `open(tab?)`, `roll(sectionId, options?)`, `registerTable`, `registerRuleBlock`, `registerTab`. See [The GM Screen](#the-gm-screen). |
 
 Since 1.5.0, `combat`, `roll` and `actors` also carry the procedure extension
 points described under [Inside the system's own procedures](#inside-the-systems-own-procedures).
@@ -3633,7 +3633,7 @@ that are world settings rather than anything on an actor:
 
 ## The GM Screen
 
-Since 1.156.0 the system has a GM Screen: the Basic Set's tables in eight tabs,
+Since 1.157.0 the system has a GM Screen: the Basic Set's tables in eight tabs,
 opened from a button in the token controls, an unbound keybinding, or
 `game.gworld.api.gmScreen.open()`. Every figure on it is read from the rules
 the automation uses. Players open the same window read-only, unless the GM

@@ -83,6 +83,8 @@ export function screenView(
         collapsed: options.collapsed[section.id] === true,
         diceLabel: section.roll ? diceLabel(section, t) : "",
         last: options.last.get(section.id)?.total ?? null,
+        // A total of 0 is a roll too: a Disastrous reaction.
+        hasLast: options.last.has(section.id),
         slotText: section.placeholder ? t(`${K}.Slot.${section.id}`) : "",
         parts: section.parts.map((part) => ({ ...part, ...contentView(part.content) })),
       })),

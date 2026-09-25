@@ -60,21 +60,21 @@ function orderedSections(tab: string, added: readonly AddonSectionDef[]): GmSect
   const mine = added.filter((def) => def.tab === tab);
   const known = new Set([...own, ...mine].map((def) => def.id));
   const out: GmSectionDef[] = [];
-  const placeAfter = (id: string) => {
-    for (const def of mine.filter((d) => d.after === id)) {
-      out.push(def);
-      placeAfter(def.id);
-    }
+  const placed = new Set<string>();
+  const place = (def: GmSectionDef) => {
+    if (placed.has(def.id)) return;
+    placed.add(def.id);
+    out.push(def);
+    placeAfter(def.id);
   };
-  for (const def of own) {
-    out.push(def);
-    placeAfter(def.id);
-  }
-  // Anything that names no section here, or one that isn't, goes at the end.
-  for (const def of mine.filter((d) => !d.after || !known.has(d.after))) {
-    out.push(def);
-    placeAfter(def.id);
-  }
+  const placeAfter = (id: string): void => {
+    for (const def of mine.filter((d) => d.after === id)) place(def);
+  };
+  for (const def of own) place(def);
+  // Anything that names no section here, or one that isn't, goes at the end,
+  // and so does anything left over: sections that name each other in a ring.
+  for (const def of mine.filter((d) => !d.after || !known.has(d.after))) place(def);
+  for (const def of mine) place(def);
   // A slot is a place, not a section: once something fills it, the filler is what shows.
   const filled = new Set(mine.map((def) => def.after));
   return out.filter((def) => !def.slot || !filled.has(def.id));

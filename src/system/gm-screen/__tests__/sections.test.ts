@@ -97,8 +97,14 @@ describe("the GM Screen's sections", () => {
       expect(keys("criticalHit").has(rollSpec("criticalHit")!.rowFor(total))).toBe(true);
       expect(keys("hitLocations").has(rollSpec("hitLocations")!.rowFor(total))).toBe(true);
     }
-    expect(rollSpec("hitLocations")!.sideFor!("hand")).toBe(true);
-    expect(rollSpec("hitLocations")!.sideFor!("arm")).toBe(false);
+    const side = rollSpec("hitLocations")!.side!;
+    expect(side.needsDie(15)).toBe(true);
+    expect(side.needsDie(8)).toBe(false);
+    expect(side.of(8)).toBe("right");
+    expect(side.of(12)).toBe("left");
+    expect(side.of(15, 2)).toBe("right");
+    expect(side.of(16, 5)).toBe("left");
+    expect(side.of(10)).toBeNull();
     expect(rollSpec("frightChecks")!.ask).toBe("margin");
     expect(rollSpec("reactions")!.ask).toBe("modifier");
     expect(rollSpec("damageTable")).toBeNull();

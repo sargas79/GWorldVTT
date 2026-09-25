@@ -40,11 +40,6 @@ export const TASK_DIFFICULTY: ReadonlyArray<{ difficulty: TaskDifficulty; modifi
   { difficulty: "impossible", modifier: -10 },
 ];
 
-/** The modifier for a step of difficulty. */
-export function taskDifficultyModifier(difficulty: TaskDifficulty): number {
-  return TASK_DIFFICULTY.find((row) => row.difficulty === difficulty)?.modifier ?? 0;
-}
-
 /**
  * Taking extra time (p. 346): +1 for twice the time the task needs, +2 for
  * four times, +3 for eight, +4 for fifteen and +5, the most there is, for
@@ -58,9 +53,3 @@ export const EXTRA_TIME: ReadonlyArray<{ multiple: number; bonus: number }> = [
   { multiple: 30, bonus: 5 },
 ];
 
-/** The bonus for spending this multiple of the usual time, 0 below double. */
-export function extraTimeBonus(multiple: number): number {
-  let bonus = 0;
-  for (const row of EXTRA_TIME) if (multiple >= row.multiple) bonus = row.bonus;
-  return bonus;
-}
