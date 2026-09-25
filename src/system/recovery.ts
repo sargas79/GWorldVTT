@@ -23,6 +23,7 @@ import {
 import { resolveSuccess, type SuccessRollResult } from "../rules/success.js";
 import { afterSuccessRoll, firstAidRules, physicianRoundsRules, procedureRoll } from "./procedure-extensions.js";
 import { stopBleeding } from "./bleeding.js";
+import { crippledPartName, crippledParts, treatCrippled } from "./crippling.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { refuseWhileHeld } from "./knockdown.js";
@@ -496,6 +497,11 @@ export async function attendPatient(options: {
   const now = Math.min(max, previous + moved);
   if (moved !== 0) await patient.update({ "system.hp.value": now });
 
+  // Rounds that succeed put the patient in this physician's care, and a
+  // lasting crippling heals sooner for it (p. 422; since 1.156.0), at the TL
+  // the rounds were made at once the listeners have had their say.
+  const inCare = outcome.success ? await putCrippledInCare(patient, rules.techLevel) : [];
+
   await post(patient, {
     kind: R("Attend"),
     detail: F("AttendBy", { healer: options.label ?? String(healer?.name ?? ""), skill }),
@@ -507,6 +513,7 @@ export async function attendPatient(options: {
       ...rules.lines,
       R(`Cure.${result}`),
       ...(moved !== 0 ? [F("CureHp", { hp: Math.abs(moved), previous, now })] : []),
+      ...(inCare.length > 0 ? [F("AttendCrippled", { parts: inCare.join(", "), tl: rules.techLevel })] : []),
       // "Anyone under the care of a competent physician gets +1 on all rolls
       // for natural recovery" -- which is true whatever this roll did.
       ...(competentCare(skill) ? [F("CareBonus", { bonus: careBonus(skill) })] : []),
@@ -515,6 +522,24 @@ export async function attendPatient(options: {
     bad: moved < 0,
     rolls: [roll],
   });
+}
+
+/**
+ * Puts the patient's lasting and undecided crippled parts in a physician's
+ * care at this medical TL (p. 422; since 1.156.0), as `treatCrippled` does,
+ * leaving any already in care at that TL or better. Temporary and permanent
+ * parts are left alone: care changes nothing about when they end. Resolves to
+ * the names of the parts it put in care.
+ */
+async function putCrippledInCare(patient: any, techLevel: number): Promise<string[]> {
+  const names: string[] = [];
+  for (const part of crippledParts(patient)) {
+    if (part.duration !== "lasting" && part.duration !== "undecided") continue;
+    if (typeof part.treatedAtTl === "number" && part.treatedAtTl >= techLevel) continue;
+    const treated = await treatCrippled(patient, part.id, { treatedAtTl: techLevel });
+    if (treated) names.push(part.label || crippledPartName(part.location));
+  }
+  return names;
 }
 
 /** The healer's Physician skill item, compared through the "/TL" marker, or null. */

@@ -1971,6 +1971,10 @@ Two fields a module may read (since 1.62.0):
     1-6, and the part is taken to have been untreated until then. It
     resolves to the part, or null for a user who can't change the actor or
     no part by that id or location.
+    Since 1.156.0 a physician's rounds that succeed (the sheet's Attend
+    button and `actors.attendPatient`) do this for the patient's lasting
+    and undecided parts at the rounds' TL, leaving any already in care at
+    that TL or better (see *Physician's rounds*).
   - The parts are kept in `flags.gworld.crippled`. The sheet lists them
     under Recovery, with a button to take each off.
   - Since 1.129.0 the system applies part of what a crippled part does
@@ -3535,6 +3539,13 @@ Two fields a module may read (since 1.62.0):
   listener there may change or remove it. A TL four or more ahead of the
   skill can't be worked at: the user is warned and nothing is rolled. Push
   text to `lines` and the card shows it.
+  Since 1.156.0, rounds that succeed (after these listeners, so at the TL
+  they leave) put the patient's lasting and undecided crippled parts in the
+  physician's care at that TL, as `actors.treatCrippled` does (Campaigns
+  p. 422): a lasting part heals after its 1d months less the relief at that
+  TL, and an undecided one keeps the TL for when it is settled. A part
+  already in care at that TL or better is left as it is, and temporary and
+  permanent parts are not touched. The card names the parts it put in care.
 - **Technique defaults:** `gworld.techniqueDefaults` gets `{ actor, item, defaults }`;
   push `{ from, skill, modifier }` to offer another default. The best one is
   used.
