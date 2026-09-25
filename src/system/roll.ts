@@ -26,6 +26,7 @@ import { consumePulledBlow, pulledFormula, recordPulledBlow } from "./pulled-blo
 import { isRuleOn } from "./optional-rules.js";
 import { normalizeDamage, rolledDice } from "./modifying-dice.js";
 import { rollBreakdown, signed, type RollBreakdown } from "./roll-breakdown.js";
+import { damageDice, damageDiceRow } from "./damage-dice.js";
 import { maySpray, promptForSpray, type SprayShot } from "./spraying-fire.js";
 import { fireSuppression, suppressing } from "./suppression-fire.js";
 import { targetedTokens, withTargets } from "./targets.js";
@@ -1431,6 +1432,9 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
   const full = applyDamageFloor(roll.total * mass, damageType);
   // "Damaging attacks on targets at or beyond 1/2D inflict half damage."
   const basicDamage = options.halfDamage ? halveDamage(full, damageType) : full;
+  // Each die as it came up, and the adds and multipliers that took them to
+  // the total, so the card reads as the table would add it up.
+  const dice = damageDice({ roll, rolled, mass });
 
   // Shown against DR 0 so the card states raw injury; the GM subtracts real DR.
   const undefended = computeInjury({ basicDamage, dr: 0, type: damageType });
@@ -1450,6 +1454,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     hasArmorDivisor: armorDivisor !== 1,
     modifiers: modifiers.filter((m) => m.value !== 0),
     basicDamage,
+    dice: damageDiceRow(dice, basicDamage, damageType),
     halvedFrom: options.halfDamage ? full : null,
     massMultiplier: mass > 1 ? mass : null,
     woundingModifier: undefended.woundingModifier,
@@ -1503,6 +1508,9 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
           // The most these dice could have come up, for the critical results
           // that replace the roll with maximum damage.
           maxDamage: applyDamageFloor(maxRoll(rolled) * mass, damageType),
+          // The dice themselves (since API 1.151.0), so the card that applies
+          // a critical can show them maximised, and a module can read them.
+          dice,
           ...(mass > 1 ? { drMultiplier: mass } : {}),
           ...(options.material ? { material: options.material } : {}),
           ...(options.ignoresDr ? { ignoresDr: true } : {}),

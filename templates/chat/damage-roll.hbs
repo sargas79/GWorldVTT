@@ -5,11 +5,23 @@
   </div>
 
   <div class="gc-dice">
+    {{!-- The dice as they came up, grouped by set, then the adds and whatever
+         multiplied them: dice + adds = basic damage, the total the headline. --}}
+    {{#each dice.sets as |set|}}
+      <span class="gc-dice-set">{{#each set as |die|}}<span class="gc-die">{{die}}</span>{{/each}}</span>
+    {{/each}}
+    {{#if dice.adds}}<span class="gc-mod gc-adds">{{dice.adds}}</span>{{/if}}
+    {{#each dice.times as |times|}}<span class="gc-mod gc-times">{{times}}</span>{{/each}}
+    {{#if dice.total}}<span class="gc-mod gc-dice-total">= {{dice.total}}</span>{{/if}}
     <span class="gc-total">{{basicDamage}}</span>
     <span class="gc-mod">{{localize "GWORLD.Chat.BasicDamage"}}</span>
   </div>
 
   <div class="gc-mods">
+    {{#if dice.floor includeZero=true}}
+      {{!-- The dice came to less than the damage type allows (p. 378). --}}
+      <span class="gc-mod">{{localize "GWORLD.Chat.DamageFloor" minimum=dice.floor}}</span>
+    {{/if}}
     {{#if modifiedFrom}}
       {{!-- Modifying Dice + Adds (Characters p. 269): the adds rolled as dice.
            It opens the rules page, read-only for a player, to say why. --}}

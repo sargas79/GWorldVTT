@@ -898,6 +898,10 @@
 .gworld-chat .gc-mod { color: var(--color-accent-700); }
 .gworld-chat .gc-rules-link { cursor: pointer; text-decoration: underline dotted; }
 .gworld-chat .gc-dice { display: flex; align-items: center; gap: 6px; }
+/* A damage roll's dice, one group per set thrown, a plus between the groups. */
+.gworld-chat .gc-dice { flex-wrap: wrap; }
+.gworld-chat .gc-dice-set { display: inline-flex; gap: 3px; }
+.gworld-chat .gc-dice-set + .gc-dice-set::before { content: "+"; align-self: center; margin-right: 3px; }
 .gworld-chat .gc-die {
   display: inline-flex;
   align-items: center;

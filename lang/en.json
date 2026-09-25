@@ -2024,7 +2024,8 @@
       "Cancel": "Cancel",
       "MassShot": "pellets as one mass: damage and DR ×{times}",
       "HalfDamage": "Past 1/2D: halved from {full}",
-      "ModifiedDice": "Adds rolled as dice, from {formula}"
+      "ModifiedDice": "Adds rolled as dice, from {formula}",
+      "DamageFloor": "Raised to the minimum damage, {minimum}"
     },
     "HitLocation": {
       "torso": "Torso",

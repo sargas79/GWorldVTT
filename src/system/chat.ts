@@ -78,6 +78,7 @@ import { occupantMayDodge } from "../rules/scale.js";
 import { afflictionsOf, type Affliction } from "../rules/afflictions.js";
 import type { DamageType } from "../rules/types.js";
 import { afterPickBlow } from "./picks.js";
+import { criticalDiceRow, storedDamageDice, type DamageDice } from "./damage-dice.js";
 
 const APPLIED_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/damage-applied.hbs`;
 
@@ -92,6 +93,8 @@ interface DamageFlag {
   diceOfDamage?: number;
   /** The most those dice could have come up, for a critical that maximises them. */
   maxDamage?: number;
+  /** The dice as they came up, with the adds and multipliers (since API 1.151.0). */
+  dice?: DamageDice;
   /** Where the attack was aimed, if it was aimed anywhere. */
   hitLocation?: HitLocation;
   /** True when it went for a gap in the armour, which halves what it finds. */
@@ -642,6 +645,12 @@ async function applyFromCard(options: {
           gmDecides: critical.hit.entry.gmDecides === true,
           table: game.i18n.localize(`GWORLD.Critical.Table.${critical.hit.table}`),
         }
+      : null,
+    // What a critical made of the dice (p. 556): all sixes, or the roll
+    // multiplied. A blast's figure is set by the distance as well, so its
+    // dice are not the whole story and are left off.
+    criticalDice: critical && !flag.explosive
+      ? criticalDiceRow(storedDamageDice(flag.dice), flag.basicDamage, critical.hit.entry.damage)
       : null,
     label: blast && !blast.direct
       ? `${flag.label} - ${game.i18n.format("GWORLD.Chat.Collateral", { yards: distanceYards })}`
