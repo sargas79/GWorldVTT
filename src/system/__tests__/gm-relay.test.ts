@@ -136,7 +136,7 @@ describe("a player's effect on an actor only the GM owns (API 1.149.0)", () => {
       made.length = 0;
       expect(await call(), action).toEqual(EXPECTED[action as keyof typeof EXPECTED]);
       expect(made.map((m) => m.action), action).toEqual([action]);
-      expect(made[0].actor, action).toBe(foe);
+      expect(made[0]?.actor, action).toBe(foe);
     }
     expect(query).toHaveBeenCalledTimes(6);
     expect(query).toHaveBeenCalledWith(EFFECT_QUERY, { action: "dosePoison", actorUuid: "Actor.foe", sourceUuid: "Actor.mine", args: { poison: { name: "Nerve gas" }, doublings: 1 } }, expect.anything());
