@@ -66,6 +66,7 @@ import {
   studyTrait,
   studiableTrait,
   STUDY_ATTRIBUTES,
+  STUDY_ATTRIBUTES_RULE,
   type StudyAttribute,
   workAMonth,
   adjustCash,
@@ -3514,8 +3515,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
    *
    * The skills offered are the ones on the sheet: study improves a skill the
    * character already has some of, and a new one is added first. So are the
-   * attributes and secondary characteristics, and the advantages bought by
-   * the level with a level still to go, which study raises a level at a time.
+   * learnable advantages bought by the level with a level still to go
+   * (p. 294), and, where the GM has switched on `studyAttributes`, the
+   * attributes and secondary characteristics; study raises those a level at
+   * a time.
    */
   static async #onStudy(this: GWorldCharacterSheet) {
     if (!isRuleOn("study")) return;
@@ -3524,7 +3527,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const skills = [...this.actor.items].filter((item: any) => item.type === "skill").map(subjectOf).sort(byName);
     const traits = [...this.actor.items].filter((item: any) => studiableTrait(item)).map(subjectOf).sort(byName);
     const banked = (this.actor.system as any)?.studyHours ?? {};
-    const attributes = (Object.keys(STUDY_ATTRIBUTES) as StudyAttribute[]).map((key) => ({
+    const keys = isRuleOn(STUDY_ATTRIBUTES_RULE) ? (Object.keys(STUDY_ATTRIBUTES) as StudyAttribute[]) : [];
+    const attributes = keys.map((key) => ({
       id: key,
       name: game.i18n.localize(STUDY_ATTRIBUTES[key].label),
       banked: Number(banked[key]) || 0,

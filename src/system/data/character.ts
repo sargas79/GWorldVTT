@@ -766,8 +766,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
       /**
        * Hours of study banked toward the next level of each attribute and
-       * secondary characteristic (Characters pp. 290, 292), for one improved
-       * through study rather than with earned points.
+       * secondary characteristic, for a table that lets study raise them.
+       * That is a GM's option (`studyAttributes`), not a book rule: the book
+       * raises them with earned points (Characters p. 290).
        */
       studyHours: new fields.SchemaField({
         ST: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),

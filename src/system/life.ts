@@ -20,6 +20,7 @@ import { studyLevels, studyPoints, type StudyMethod } from "../rules/study.js";
 import { ATTRIBUTE_COST_PER_LEVEL, BASIC_SPEED_STEP, SECONDARY_COST_PER_LEVEL } from "../rules/attributes.js";
 import { traitPoints } from "../rules/traits.js";
 import { callCombatHook } from "./combat-extensions.js";
+import { isRuleOn } from "./optional-rules.js";
 import { PROCEDURE_HOOKS } from "./procedure-extensions.js";
 
 const LIFE_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/life.hbs`;
@@ -268,13 +269,20 @@ export async function studySkill(options: {
   return result.points;
 }
 
+/** The GM's option that lets study raise attributes (since API 1.146.0). */
+export const STUDY_ATTRIBUTES_RULE = "studyAttributes";
+
 /**
- * Studies an attribute or secondary characteristic for a stretch of hours
- * (Characters pp. 290, 292), where the GM allows it: 200 hours of learning a
- * point, as for a skill, but the score only moves when a whole level is paid
- * for -- ten points of HT, five of Will. The hours short of that are banked on
- * the character, and the level's points go onto the ledger as an award.
- * Returns the points the levels gained cost.
+ * Studies an attribute or secondary characteristic for a stretch of hours.
+ *
+ * This is a GM's option, not a book rule: the book raises attributes with
+ * earned points (Characters p. 290) and lets study reach skills, spells,
+ * techniques and some advantages (p. 292). With the `studyAttributes` switch
+ * on, the hours count as for a skill, 200 of learning a point, but the score
+ * only moves when a whole level is paid for at the p. 290 price -- ten points
+ * of HT, five of Will. The hours short of that are banked on the character,
+ * and the level's points go onto the ledger as an award. Returns the points
+ * the levels gained cost; 0, with nothing done, while the switch is off.
  */
 export async function studyAttribute(options: {
   actor: any;
@@ -283,6 +291,7 @@ export async function studyAttribute(options: {
   method: StudyMethod;
 }): Promise<number> {
   const { actor } = options;
+  if (!isRuleOn(STUDY_ATTRIBUTES_RULE)) return 0;
   if (!mayChange(actor)) return 0;
   if (!Object.prototype.hasOwnProperty.call(STUDY_ATTRIBUTES, options.attribute)) return 0;
   const spec = STUDY_ATTRIBUTES[options.attribute];
@@ -328,7 +337,9 @@ export async function studyAttribute(options: {
 /**
  * What the next levels of a trait cost, one at a time: the change in what it
  * is billed, modifiers and all, so the award keeps the ledger even. Null past
- * the book's last level or the table's end.
+ * the book's last level or the table's end. A step that costs 0 points or
+ * less -- two levels a cost table prices the same -- stops study there
+ * (`studyLevels`), since no hours could be said to pay for it.
  */
 function traitLevelCost(trait: any): (n: number) => number | null {
   const system = trait?.system ?? {};
@@ -355,11 +366,12 @@ function traitLevelCost(trait: any): (n: number) => number | null {
 }
 
 /**
- * Whether study can raise a trait: an advantage or perk bought by the level,
- * with a level still to go (Characters p. 294, Learnable Advantages).
+ * Whether study can raise a trait: one flagged `learnable` (Learnable
+ * Advantages, Characters p. 294), an advantage or perk bought by the level,
+ * with a level still to go that costs something.
  */
 export function studiableTrait(trait: any): boolean {
-  if (trait?.type !== "trait") return false;
+  if (trait?.type !== "trait" || trait.system?.learnable !== true) return false;
   if (!["advantage", "perk"].includes(String(trait.system?.category))) return false;
   const next = traitLevelCost(trait)(0);
   return next !== null && next > 0;

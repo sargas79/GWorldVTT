@@ -113,6 +113,11 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "disease", reference: "Campaigns pp. 442-444", default: true },
     { key: "battleFatigue", reference: "Campaigns p. 426", default: true },
     { key: "study", reference: "Characters p. 292", default: true },
+    // Not a book rule but a GM's option: the book raises attributes with
+    // earned points (p. 290) and lets study reach skills, spells, techniques
+    // and some advantages (p. 292). A table that wants study to raise HT too
+    // opts in; the reference is to the page that prices the levels.
+    { key: "studyAttributes", reference: "Characters p. 290", default: false },
     { key: "jobs", reference: "Campaigns pp. 516-518", default: true },
     { key: "aging", reference: "Campaigns p. 444", default: true },
     { key: "socialBackground", reference: "Characters pp. 23-24", default: true },

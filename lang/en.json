@@ -687,6 +687,10 @@
           "Name": "Improvement through study",
           "Hint": "Hours of study become character points in the skill studied: 200 with a teacher, 400 alone or on the job."
         },
+        "studyAttributes": {
+          "Name": "Study raises attributes (GM option)",
+          "Hint": "Not a rule of the book, which raises attributes only with earned points: the Study tool also offers the attributes and secondary characteristics, which go up a level once the hours pay for it at 200 hours a point."
+        },
         "jobs": {
           "Name": "Jobs and cost of living",
           "Hint": "Money on the sheet: a monthly job roll that pays or does not, and a month's cost of living at your Status."
@@ -3504,7 +3508,7 @@
     },
     "Life": {
       "Study": "Study",
-      "StudyHint": "200 hours of learning make a point: an hour of instruction is an hour, intensive training counts double, self-teaching counts half and work a quarter (Characters pp. 292-293). Hours short of a point are banked on the skill; an attribute or an advantage goes up when the hours pay for a whole level, and banks the rest.",
+      "StudyHint": "200 hours of learning make a point: an hour of instruction is an hour, intensive training counts double, self-teaching counts half and work a quarter (Characters pp. 292-293). Hours short of a point are banked on the skill. A learnable advantage (Characters p. 294), or an attribute where the GM allows it, goes up when the hours pay for a whole level, and banks the rest.",
       "StudyAward": "Study: {skill}",
       "Studied": "{hours} hours of {method} on {skill}",
       "Method": {

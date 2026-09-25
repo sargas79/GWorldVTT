@@ -54,6 +54,7 @@ import {
 } from "./gdf.mjs";
 import { existingIds as existingSpellIds, parseSpells } from "./parse-gdf-spells.mjs";
 import { needsSpecialty } from "./specified-traits.mjs";
+import { learnable } from "./learnable-traits.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -584,6 +585,10 @@ function parseTraits(recs, reject, note, source) {
         // book makes them say it.
         specialty: "",
         needsSpecialty: needsSpecialty(bare, r.text),
+        // One of the Basic Set's Learnable Advantages (p. 294), which study
+        // can reach. Another book's list is its own module's to make. Only
+        // written where true: the field's default is false.
+        ...(source?.basic === true && learnable(name) ? { learnable: true } : {}),
         // A disadvantage the book prices with a self-control roll comes with
         // the standard number; the sheet's dropdown reprices it for another.
         selfControl: takesSelfControlRoll(f.get("mods")) ? STANDARD_SELF_CONTROL : null,
@@ -2672,6 +2677,7 @@ function main() {
     overlap: (section, name, page) => overlaps.push({ section, name, page }),
     // A supplement's new ids stay clear of the Basic Set's.
     basicIds: basic ? null : basicSetIds(),
+    basic,
   };
 
   const text = readFileSync(file, "utf8");

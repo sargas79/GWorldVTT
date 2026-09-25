@@ -11,7 +11,7 @@ afterEach(() => {
 });
 
 /** A Foundry just big enough for the study tool, with the listeners given. */
-function stage(options: { banked?: number; listeners?: ((context: any) => void)[] } = {}) {
+function stage(options: { banked?: number; listeners?: ((context: any) => void)[]; studyAttributes?: boolean } = {}) {
   const posted: any[] = [];
   globals.Hooks = {
     callAll: (event: string, context: any) => {
@@ -26,6 +26,8 @@ function stage(options: { banked?: number; listeners?: ((context: any) => void)[
     utils: { getProperty: (object: any, path: string) => path.split(".").reduce((o, k) => o?.[k], object) },
   };
   globals.game = {
+    // The GM's option that lets study raise attributes: on unless a test says otherwise.
+    settings: { get: () => ({ studyAttributes: options.studyAttributes ?? true }) },
     i18n: { localize: (k: string) => k, format: (k: string, d: any) => `${k} ${JSON.stringify(d)}` },
   };
   globals.ui = { notifications: { warn: vi.fn() } };
@@ -39,10 +41,10 @@ function stage(options: { banked?: number; listeners?: ((context: any) => void)[
   const trait = {
     id: "t1",
     type: "trait",
-    name: "Acute Hearing",
+    name: "G-Experience",
     system: {
-      category: "advantage", points: 0, levels: 1, pointsPerLevel: 2, costTable: [], maxLevels: 0,
-      modifiers: [], selfControl: null, studyHours: 0,
+      category: "advantage", points: 0, levels: 1, pointsPerLevel: 1, costTable: [], maxLevels: 10,
+      modifiers: [], selfControl: null, studyHours: 0, learnable: true,
     },
     update: vi.fn(async () => undefined),
   };
@@ -154,29 +156,51 @@ describe("study of attributes and advantages (since 1.146.0)", () => {
     expect(changes["system.points.awards"]).toMatchObject([{ points: 5 }]);
   });
 
+  it("leaves attributes alone while the GM's studyAttributes option is off", async () => {
+    const heard: any[] = [];
+    const { actor, posted } = stage({ studyAttributes: false, listeners: [(context) => heard.push(context)] });
+    expect(await studyAttribute({ actor, attribute: "HT", hours: 5000, method: "education" })).toBe(0);
+    expect(actor.update).not.toHaveBeenCalled();
+    expect(heard).toHaveLength(0);
+    expect(posted).toHaveLength(0);
+  });
+
   it("ignores an attribute it doesn't know", async () => {
     const { actor } = stage();
     expect(await studyAttribute({ actor, attribute: "toString" as any, hours: 5000, method: "education" })).toBe(0);
     expect(actor.update).not.toHaveBeenCalled();
   });
 
-  it("raises an advantage bought by the level, and names it on the context", async () => {
+  it("raises a learnable advantage bought by the level, and names it on the context", async () => {
     const heard: any[] = [];
     const { actor, trait } = stage({ listeners: [(context) => heard.push(context)] });
-    // Acute Hearing is 2 points a level: 400 hours of instruction, 50 over.
+    // G-Experience is 1 point a level (p. 294 names it): 450 hours of instruction are two levels, 50 over.
     const points = await studyTrait({ actor, traitId: "t1", hours: 450, method: "education" });
     expect(heard[0].skill).toBeNull();
-    expect(heard[0].studied).toEqual({ kind: "trait", item: trait, attribute: null, name: "Acute Hearing" });
+    expect(heard[0].studied).toEqual({ kind: "trait", item: trait, attribute: null, name: "G-Experience" });
     expect(points).toBe(2);
-    expect(trait.update).toHaveBeenCalledWith({ "system.studyHours": 50, "system.levels": 2 });
+    expect(trait.update).toHaveBeenCalledWith({ "system.studyHours": 50, "system.levels": 3 });
     expect(actor.update).toHaveBeenCalledWith({ "system.points.awards": [expect.objectContaining({ points: 2 })] });
   });
 
-  it("offers only advantages with a level to go", () => {
+  it("won't study an advantage that isn't flagged learnable", async () => {
+    const { actor, trait } = stage();
+    trait.system.learnable = false;
+    expect(await studyTrait({ actor, traitId: "t1", hours: 5000, method: "education" })).toBe(0);
+    expect(trait.update).not.toHaveBeenCalled();
+  });
+
+  it("offers only learnable advantages with a level to go", () => {
     const trait = (system: Record<string, unknown>) => ({
       type: "trait",
-      system: { category: "advantage", points: 0, levels: 0, pointsPerLevel: 0, costTable: [], maxLevels: 0, modifiers: [], ...system },
+      system: {
+        category: "advantage", points: 0, levels: 0, pointsPerLevel: 0, costTable: [], maxLevels: 0, modifiers: [],
+        learnable: true, ...system,
+      },
     });
+    // Wealth and Magery have levels to go, but p. 294 doesn't make them learnable.
+    expect(studiableTrait(trait({ learnable: false, costTable: [10, 20, 30, 50, 75], levels: 1 }))).toBe(false);
+    expect(studiableTrait(trait({ learnable: false, points: 5, pointsPerLevel: 10, levels: 1, maxLevels: 3 }))).toBe(false);
     expect(studiableTrait(trait({ pointsPerLevel: 2, levels: 1 }))).toBe(true);
     expect(studiableTrait(trait({ points: 15 }))).toBe(false);
     expect(studiableTrait(trait({ pointsPerLevel: 2, levels: 4, maxLevels: 4 }))).toBe(false);

@@ -2076,13 +2076,28 @@ Two fields a module may read (since 1.62.0):
   of those banked on the skill, as before. When the multiplier isn't 1 the
   card says what the hours counted as, then shows the listeners' lines.
 
-  Since 1.146.0 the Study tool also offers the attributes and secondary
-  characteristics (Characters p. 290), and the advantages and perks bought
-  by the level that have a level still to go (Learnable Advantages, p. 294).
+  Since 1.146.0 the Study tool also offers two more kinds of subject:
+  - **Learnable advantages** (Characters p. 294): a trait whose
+    `system.learnable` is true (a new field, false by default), that is an
+    advantage or perk bought by the level, with a level still to go. The
+    Basic Set compendium flags the ones p. 294 names (Combat Reflexes, Fit,
+    Enhanced Dodge, G-Experience, the psionic Talents and so on); a module
+    flags its own book's traits the same way, `learnable: true` in its pack
+    data. A trait on a sheet copied before 1.146.0 keeps `false` until
+    flagged. Wealth, Magery, Status and other traits that aren't flagged are
+    never offered.
+  - **Attributes and secondary characteristics**, only where the GM has
+    switched on the `studyAttributes` optional rule (off by default). It is
+    a GM's option, not a book rule: the book raises attributes with earned
+    points (p. 290), and study reaches skills, spells, techniques and some
+    advantages (p. 292).
+
   These move only by the whole level: the counted hours bank until they pay
   for the next level at 200 hours of learning a point (10 points for a level
   of HT, 5 for +0.25 Basic Speed, the change in the trait's cost for a
-  trait's next level). Hours short of it bank on the character
+  trait's next level). A step that costs 0 points or less -- two levels a
+  cost table prices the same -- stops study there, and the hours stay
+  banked. Hours short of a level bank on the character
   (`system.studyHours.<key>`) or on the trait (`system.studyHours`), and the
   level's points go onto the ledger as an award, as a skill's do.
 - **Fragile** (since 1.93.0; Characters pp. 136-137): the disadvantage's
