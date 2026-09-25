@@ -8,6 +8,7 @@
 
 import { registerConsciousnessTurns } from "./system/consciousness.js";
 import { registerHeldWeaponQuery } from "./system/held-weapons.js";
+import { registerEffectQuery } from "./system/gm-relay.js";
 import "./styles/gworld.css";
 import "./styles/sheet-v2.css";
 import "./styles/party.css";
@@ -155,6 +156,8 @@ Hooks.once("init", () => {
   // A disarm changes the foe's weapon, which a player rarely owns, so the
   // GM's client makes the change when asked.
   registerHeldWeaponQuery();
+  // A dose, a shock or a condition on somebody else's character, the same way.
+  registerEffectQuery();
 
   const { DocumentSheetConfig } = foundry.applications.apps;
   DocumentSheetConfig.unregisterSheet(Actor, "core", foundry.applications.sheets.ActorSheetV2);

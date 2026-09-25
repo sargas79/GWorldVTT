@@ -2007,6 +2007,7 @@
       "DamageApplied": "damage applied",
       "NoTarget": "Target or select a token first.",
       "CannotApply": "You do not have permission to change: {names}",
+      "NoGmToApply": "No GM is connected to make the change to: {names}",
       "DrSubtracted": "DR",
       "Penetrating": "through",
       "Stopped": "Stopped by DR {dr}.",
