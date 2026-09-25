@@ -280,13 +280,17 @@ export interface WeaponTarget {
  * The things a character may strike at on a foe: the weapons in hand, at the
  * penalty for their size, and what a module's rules add or change.
  */
-export function weaponTargetsFor(actor: any, foe: any): WeaponTarget[] {
+export function weaponTargetsFor(actor: any, foe: any, options: { ranged?: boolean } = {}): WeaponTarget[] {
   const targets: WeaponTarget[] = weaponsInHand(foe).map((w) => ({ ...w, canDisarm: true, noParry: false, noDefenseBonus: false, disarmPenaltyForAll: false }));
   // Where the blow comes from, read as a called shot reads it (since API
   // 1.137.0): some of what a foe carries can't be reached from every side.
   // Only for the one token targeted, which is the foe a strike is made at.
   const facing = targetedTokens()[0]?.actor === foe ? facingAgainstTarget(actor) : null;
-  const hooked = callCombatHook(COMBAT_HOOKS.weaponTargets, { actor, foe, targets, arc: facing?.arc ?? null, side: facing?.side ?? null });
+  // Since API 1.153.0 the hook is told whether the strike is a shot, which
+  // can only break what it hits, never knock it away.
+  const hooked = callCombatHook(COMBAT_HOOKS.weaponTargets, {
+    actor, foe, targets, arc: facing?.arc ?? null, side: facing?.side ?? null, ranged: options.ranged === true,
+  });
   const out = new Map<string, WeaponTarget>();
   for (const t of Array.isArray(hooked.targets) ? hooked.targets : []) {
     const id = String(t?.id ?? "");
@@ -302,6 +306,112 @@ export function weaponTargetsFor(actor: any, foe: any): WeaponTarget[] {
     });
   }
   return [...out.values()];
+}
+
+/**
+ * What a ranged attack may be aimed at on a foe (p. 400; since API
+ * 1.153.0). A blow to break a weapon may be made with any weapon, a firearm
+ * included, so a shot may be; knocking one away takes a weapon that can
+ * parry, so a shot only ever breaks. The same targets, at the same penalties,
+ * as the melee strike, with nothing offered while weapon breakage is off.
+ */
+export function rangedWeaponTargets(
+  actor: any,
+  foe: any,
+  row: { explosive?: boolean; fragmentation?: string } | null = null,
+): WeaponTarget[] {
+  if (!foe || !isRuleOn("weaponBreakage") || !mayShootAtWeapons(row)) return [];
+  return weaponTargetsFor(actor, foe, { ranged: true });
+}
+
+/**
+ * Whether a ranged row may be aimed at a weapon. An explosive or fragmenting
+ * shot is not: its blast and fragments land around where it strikes, which a
+ * blow applied to the item alone would lose.
+ */
+export function mayShootAtWeapons(row: { explosive?: boolean; fragmentation?: string } | null): boolean {
+  return !(row?.explosive === true || Boolean(row?.fragmentation));
+}
+
+/** A strike at a foe's weapon, as the attack records it for the damage roll (since API 1.153.0). */
+export interface WeaponStrike {
+  actorUuid: string;
+  itemId: string;
+  name: string;
+}
+
+/** A strike waiting for its damage rolls: which row made it, and how many hits are left. */
+interface HeldWeaponStrike extends WeaponStrike {
+  row: string;
+  hits: number;
+}
+
+/**
+ * The line a strike at a weapon puts on the attack: the penalty for the
+ * weapon's size (p. 400), keyed `strikeAtWeapon` and carrying the item's id,
+ * so a listener can tell which weapon is being shot at (since API 1.153.0).
+ */
+export function weaponStrikeLine(target: Pick<WeaponTarget, "id" | "penalty">): {
+  label: string;
+  value: number;
+  key: string;
+  itemId: string;
+} {
+  return { label: L("StrikePenalty"), value: target.penalty, key: "strikeAtWeapon", itemId: target.id };
+}
+
+/** Where a shot at a weapon waits between the attack and the damage roll. */
+export const WEAPON_STRIKE_FLAG = "weaponStrike";
+
+/** The strikes held on an actor, one per row, read defensively. */
+function heldWeaponStrikes(actor: any): HeldWeaponStrike[] {
+  const held = actor?.getFlag?.(SYSTEM_ID, WEAPON_STRIKE_FLAG);
+  if (!Array.isArray(held)) return [];
+  return held
+    .map((h: any) => ({
+      row: String(h?.row ?? ""),
+      actorUuid: String(h?.actorUuid ?? ""),
+      itemId: String(h?.itemId ?? ""),
+      name: String(h?.name ?? ""),
+      hits: Math.max(0, Math.floor(Number(h?.hits) || 0)),
+    }))
+    .filter((h) => h.actorUuid && h.itemId && h.hits > 0);
+}
+
+async function storeWeaponStrikes(actor: any, strikes: HeldWeaponStrike[]): Promise<void> {
+  if (strikes.length > 0) await actor.setFlag(SYSTEM_ID, WEAPON_STRIKE_FLAG, strikes);
+  else if (actor.getFlag?.(SYSTEM_ID, WEAPON_STRIKE_FLAG) !== undefined) await actor.unsetFlag(SYSTEM_ID, WEAPON_STRIKE_FLAG);
+}
+
+/**
+ * Remembers that the attack made from `row` was aimed at a weapon, so its
+ * damage rolls -- separate clicks -- are aimed at it too: `hits` of them, one
+ * per hit of a burst (Campaigns p. 373). Kept per row, so the two hands of a
+ * Dual-Weapon Attack can both be rolled before either's damage. Null clears
+ * the row's: every attack says what it was aimed at, so an old one never
+ * carries over.
+ */
+export async function recordWeaponStrike(
+  actor: any,
+  row: string,
+  strike: WeaponStrike | null,
+  hits = 1,
+): Promise<void> {
+  if (!actor?.isOwner) return;
+  const others = heldWeaponStrikes(actor).filter((h) => h.row !== row);
+  const count = Math.max(0, Math.floor(Number(hits) || 0));
+  await storeWeaponStrikes(actor, strike && count > 0 ? [...others, { ...strike, row, hits: count }] : others);
+}
+
+/** Collects one hit of the row's strike for a damage roll; null where it has none left. */
+export async function consumeWeaponStrike(actor: any, row: string): Promise<WeaponStrike | null> {
+  const held = heldWeaponStrikes(actor);
+  const mine = held.find((h) => h.row === row);
+  if (!mine) return null;
+  if (actor.isOwner) {
+    await storeWeaponStrikes(actor, held.flatMap((h) => (h.row !== row ? [h] : h.hits > 1 ? [{ ...h, hits: h.hits - 1 }] : [])));
+  }
+  return { actorUuid: mine.actorUuid, itemId: mine.itemId, name: mine.name };
 }
 
 /**

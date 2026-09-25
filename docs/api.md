@@ -397,7 +397,9 @@ and the roll continues.
     hit it, whether it can be knocked away, whether the foe may parry the blow,
     whether their Defense Bonus counts, and whether the disarm's -2 applies even to
     a fencing weapon. The system offers the weapons in hand; add any item the foe
-    carries, or change one. A blow at a shield is resolved by Damage to Shields;
+    carries, or change one. A blow at a shield is resolved by Damage to Shields.
+    Since 1.153.0 it also gets `ranged`: true when the ranged attack dialog
+    asks what a shot may be aimed at, false for a melee strike;
   - `gworld.feintModifiers` (since 1.28.0): before a Feint is rolled, as
     `{ actor, foe, item, mode, ranged, modifiers, refusal }`. `item` and `mode`
     are the row the Feint was made from (null for a natural attack). Push lines
@@ -413,6 +415,32 @@ and the roll continues.
     `gworld.attackArc` listener later makes of the arc on the defense card.
     Read-only: a rule about striking at something on a foe's back, or from
     behind, reads them rather than working facing out from the tokens;
+  - Since 1.153.0, `gworld.attackModifiers` also gets `dualWeapon` and
+    `weaponStrike`, both read-only. `dualWeapon` is null, or for a
+    Dual-Weapon Attack (Campaigns p. 417) `{ hand, sameTarget }`: `primary`
+    or `off`, and whether both attacks are at one foe, who then defends at -1
+    (already in `defensePenalty`). The ranged attack dialog offers it as the
+    melee one does, since either hand may fire a pistol, with the
+    same penalties, the Dual-Weapon Attack technique and Off-Hand Weapon
+    Training or Ambidexterity buying them back; its line is keyed
+    `dualWeapon`. A rule that limits it to one-handed weapons, or to some
+    weapons, refuses or changes the line. `weaponStrike` is null, or for a
+    shot aimed at a weapon the one targeted foe holds (Campaigns p. 400: a
+    weapon may be struck at to break it with any weapon, a firearm included)
+    `{ itemId, name, penalty }`. The ranged dialog offers the foe's weapons
+    from `gworld.weaponTargets`, at the same penalties as a melee strike, in
+    place of a hit location; the line is keyed `strikeAtWeapon`, the target's
+    `noParry` and `noDefenseBonus` apply to the defense, and the damage rolls
+    that follow from that row are aimed at the weapon, as a melee strike to
+    break is: one for each hit the attack scored, so every hit of a burst
+    lands on the weapon. A shot never disarms: knocking a weapon away takes
+    one that can parry. The dialog shows it only while Weapon Breakage is on
+    and one token is targeted, and never for an explosive or fragmenting row,
+    whose blast would be lost on a blow to the item. Each row holds its own
+    strike, so both hands of a Dual-Weapon Attack may be rolled before either
+    hand's damage. `gworld.weaponTargets` also gets `ranged` (since 1.153.0):
+    true when the ranged dialog asks, false for a melee strike or disarm, so
+    a listener can offer something only to one or the other;
   - Since 1.19.0, a `gworld.attackModifiers` listener may set `refusal` (text): the
     attack isn't rolled, and the user is told why;
   - Since 1.83.0, `gworld.attackModifiers` also gets `shots`, the shells the
@@ -2789,6 +2817,12 @@ Two fields a module may read (since 1.62.0):
   Since 1.141.0 a `vehicle` platform's line also carries `vehicle`, the
   vehicle actor, so a module can tell one kind of vehicle from another and
   tie a skill, a technique or a fitting to it. A mount's line has none.
+  Since 1.153.0 also `dualWeapon`, a Dual-Weapon Attack's penalty for the
+  hand being rolled (Campaigns p. 417), on a melee or a ranged attack, with
+  `hand` (`primary` or `off`); and `strikeAtWeapon`, the penalty for aiming a
+  shot at a foe's weapon (Campaigns p. 400), with `itemId`, the foe's item.
+  Both are also on `gworld.attackModifiers` as `dualWeapon` and
+  `weaponStrike`.
   `gworld.attackModifiers` also receives `movement: { maneuver, yards }` (yards
   from the token's movement history, null where the map can't say) and `aim:
   { turns, braced, target, bonuses }`. A module aiding an aim at one foe writes

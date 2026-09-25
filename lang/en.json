@@ -345,6 +345,7 @@
       "DualNone": "One weapon",
       "DualPrimary": "Dual-Weapon Attack",
       "DualOff": "Dual-Weapon Attack, off hand",
+      "DualSameTarget": "Both attacks at this foe (-1 to their defense)",
       "WildSwing": "Wild Swing",
       "WildSwingHint": "At a foe to your side or back, or one you can't see: -5 or the visibility penalty if worse, skill no higher than 9, and a random hit location",
       "StopThrust": "Stop thrust: yards the foe moved",
@@ -3928,7 +3929,10 @@
       "AimDisarm": "To disarm",
       "AimBreak": "To break the weapon",
       "Weapon": "Weapon",
-      "NoWeaponToStrike": "The foe has no weapon in hand to strike at."
+      "NoWeaponToStrike": "The foe has no weapon in hand to strike at.",
+      "StrikeAt": "Aim at a weapon",
+      "StrikeAtNone": "The foe",
+      "StrikeAtHint": "Shoot at a weapon the foe holds, to break it (Campaigns p. 400): at the penalty for its size, and the damage lands on the weapon. A shot can't knock a weapon away."
     },
     "ItemDamage": {
       "Label": "{name} is damaged",

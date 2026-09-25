@@ -138,7 +138,14 @@ import { levelDifference } from "../rules/melee-situations.js";
 import { effectiveLevelDifference } from "../rules/unarmed-techniques.js";
 import { turnedBlade } from "../rules/subduing.js";
 import { coverShot, struckCover, type CoverApproach } from "../rules/cover.js";
-import { breakWeapon } from "./weapon-damage.js";
+import {
+  breakWeapon,
+  consumeWeaponStrike,
+  rangedWeaponTargets,
+  recordWeaponStrike,
+  weaponStrikeLine,
+  type WeaponTarget,
+} from "./weapon-damage.js";
 import { announceShots, shotsReady, shotsSourceOf, spendShots, type ShotsTally } from "./ammunition.js";
 import { malfunctionOf, malfunctionWithHooks, setMalfunction, type MalfunctionReport } from "./malfunctions.js";
 import { strikingPart } from "../rules/hurting-yourself.js";
@@ -194,10 +201,15 @@ export interface RollModifier {
    * `accuracy`, `aim`, `braced`, `aimTarget`; since 1.86.0 `darkness`
    * and `laser`; since 1.87.0 `movingPlatform`; since 1.91.0 `size` on a
    * ranged attack, and `zen`, a zen skill's line (with `zen`, the skill's id);
-   * since 1.105.0 `afflictionDr`, the DR bonus to an affliction's resistance roll.
+   * since 1.105.0 `afflictionDr`, the DR bonus to an affliction's resistance roll;
+   * since 1.153.0 `dualWeapon` (with `hand`) and `strikeAtWeapon` (with `itemId`).
    * Blank or absent on lines nobody has named.
    */
   key?: string;
+  /** On a `dualWeapon` line, the hand rolled: `primary` or `off` (since 1.153.0). */
+  hand?: "primary" | "off";
+  /** On a `strikeAtWeapon` line, the id of the foe's item struck at (since 1.153.0). */
+  itemId?: string;
   /** Why a `bulk` line applies: `moveAndAttack` or `closeCombat` (since 1.63.0). */
   situation?: string;
   /** On an `accuracy` line, how much of it a scope gives (since 1.63.0). */
@@ -1802,6 +1814,17 @@ async function rollAction(
           actor,
           item: rolledItem,
           effectiveSkill: base + equipmentShift,
+          // Two pistols at once (Campaigns p. 417; since 1.153.0).
+          dualWeaponTechnique: Number(actor?.system?.derived?.techniques?.dualWeaponAttack) || 0,
+          ambidextrous: actor?.system?.derived?.traitEffects?.ambidextrous === true,
+          offHandTraining: Number(actor?.system?.derived?.techniques?.offHandWeaponTraining) || 0,
+          // A shot at the one foe's weapon, to break it (Campaigns p. 400; since 1.153.0).
+          // Not for an explosive or fragmenting row, whose blast a blow to the item would lose.
+          weaponTargets: rangedWeaponTargets(
+            actor,
+            targetedTokens().length === 1 ? targetedTokens()[0]?.actor : null,
+            derivedRangedRow(actor, target.closest<HTMLElement>("[data-item-id]")),
+          ),
         })
     : null;
   if (ranged && shot === null) return null;
@@ -1949,6 +1972,12 @@ async function rollAction(
     }
   }
 
+  // The foe's weapon a shot is aimed at, as the damage rolls will need it (since API 1.153.0).
+  const struckFoe = shot?.weaponStrike ? targetedTokens()[0]?.actor : null;
+  const struckWeapon = shot?.weaponStrike && struckFoe?.uuid
+    ? { actorUuid: String(struckFoe.uuid), itemId: shot.weaponStrike.id, name: shot.weaponStrike.name }
+    : null;
+
   // Where the blow was aimed travels to the damage roll, which is a separate
   // click: an attack that went for the skull should not have to be told twice.
   if (rollType === "attack") {
@@ -1958,6 +1987,9 @@ async function rollAction(
     if (melee?.charging) await recordCharge(actor);
     await recordStopThrust(actor, melee?.stopThrustBonus ?? 0);
     await recordLance(actor, melee?.lance ?? null);
+    // Whatever this row's last attack was aimed at is done with; a shot at a
+    // foe's weapon is held once the roll says how many hits it scored.
+    await recordWeaponStrike(actor, shotRow(target.closest<HTMLElement>("[data-item-id]")), null);
     // Pellets striking as one mass are a fact about this shot that the damage
     // roll, a separate click, has to be told.
     await recordMassShot(actor, shot?.coneMultiplier ?? null);
@@ -2035,7 +2067,7 @@ async function rollAction(
         rollType,
         ranged: Boolean(ranged),
         modifiers,
-        defensePenalty: (melee?.defensePenalty ?? 0) + feint,
+        defensePenalty: (melee?.defensePenalty ?? shot?.defensePenalty ?? 0) + feint,
         defenseModifiers: [...(addon?.defenseModifiers ?? [])],
         dataset: { ...target.dataset },
         // Move and Attack and a Wild Swing both hold skill to 9.
@@ -2096,6 +2128,19 @@ async function rollAction(
         // outside tactical combat or without a single target. Read-only.
         arc: facing?.arc ?? null,
         side: facing?.side ?? null,
+        // Since 1.153.0: a Dual-Weapon Attack (Campaigns p. 417), melee or
+        // ranged, as `{ hand, sameTarget }`, or null; its line is in
+        // `modifiers`, keyed `dualWeapon`. Read-only.
+        dualWeapon: (() => {
+          const dual = melee?.dualWeapon ?? shot?.dualWeapon ?? null;
+          return dual ? { hand: dual.hand, sameTarget: dual.sameTarget } : null;
+        })() as DualWeaponChoice | null,
+        // Since 1.153.0: the foe's weapon a shot is aimed at to break it
+        // (Campaigns p. 400), as `{ itemId, name, penalty }`, or null; its
+        // line is in `modifiers`, keyed `strikeAtWeapon`. Read-only.
+        weaponStrike: shot?.weaponStrike
+          ? { itemId: shot.weaponStrike.id, name: shot.weaponStrike.name, penalty: shot.weaponStrike.penalty }
+          : (null as { itemId: string; name: string; penalty: number } | null),
       })
     : null;
   // A module's rules may make this attack impossible here: it isn't rolled.
@@ -2108,7 +2153,7 @@ async function rollAction(
   // lines as the listeners left them.
   const zenApplied = hooked?.zen && typeof hooked.zen.id === "string" ? zenLine(hooked.zen, modifiers) : null;
   if (zenApplied) modifiers.push(zenApplied);
-  const defensePenalty = Number(hooked?.defensePenalty ?? (melee?.defensePenalty ?? 0) + feint) || 0;
+  const defensePenalty = Number(hooked?.defensePenalty ?? (melee?.defensePenalty ?? shot?.defensePenalty ?? 0) + feint) || 0;
   // What the laser dot gives the target's Dodge, after the listeners (since 1.86.0).
   const laserDodge = hooked?.laser
     ? Math.max(0, Math.floor(Number(hooked.laser.dodgeBonus) || 0))
@@ -2280,6 +2325,10 @@ async function rollAction(
       ? { rapidFire: { shotsFired: shot.shotsFired, recoil: shot.recoil } }
       : {}),
     ...(laserDodge ? { dodgeBonus: laserDodge } : {}),
+    // What the foe may do about a shot at a weapon a module's rules limit (since 1.153.0).
+    ...(shot?.weaponStrike && (shot.weaponStrike.noParry || shot.weaponStrike.noDefenseBonus)
+      ? { strikeLimits: { noParry: shot.weaponStrike.noParry, noDefenseBonus: shot.weaponStrike.noDefenseBonus } }
+      : {}),
     // Where an aimed blow that misses by 1 lands instead (p. 552).
     ...(missedInto ? { missFallback: missedInto.label, missFallbackShot: { hitLocation: missedInto.hitLocation, addonLocation: missedInto.addonLocation } } : {}),
     ...(aimedShot ? { calledShot: { hitLocation: aimedShot.hitLocation, addonLocation: aimedShot.addonLocation ?? null } } : {}),
@@ -2301,6 +2350,15 @@ async function rollAction(
   // An attack that could not be attempted -- effective skill below 3 -- was
   // never made: it spends no shots and no aim (since 1.83.0).
   if (outcome === null && !spotLost) return null;
+  // Every hit of a burst at a weapon lands on the weapon, and a miss on nothing.
+  if (rollType === "attack" && struckWeapon && shot) {
+    await recordWeaponStrike(
+      actor,
+      shotRow(target.closest<HTMLElement>("[data-item-id]")),
+      struckWeapon,
+      weaponStrikeHits(outcome, shot),
+    );
+  }
   // The shot spends the zen skill's success, whatever became of it.
   if (zenShot) await clearZenShot(actor);
 
@@ -2490,6 +2548,29 @@ export async function recordSuppressionShot(actor: any, rowKey: string, rangeYar
   await recordFirstHit(actor, null);
   await recordShotRange(actor, rangeYards, rowKey);
   await recordHalfDamage(actor, beyondHalfDamage({ rangeYards, halfDamageRange }));
+}
+
+/**
+ * How many damage rolls a shot at a weapon lands on it: the burst's hits
+ * (Campaigns p. 373) on a hit, none on a miss (since API 1.153.0).
+ */
+export function weaponStrikeHits(
+  outcome: { success?: boolean; margin?: number } | null,
+  shot: { shotsFired: number; recoil: number },
+): number {
+  if (!outcome?.success) return 0;
+  if (shot.shotsFired <= 1) return 1;
+  return rapidFireHits({ margin: Number(outcome.margin) || 0, shotsFired: shot.shotsFired, recoil: shot.recoil });
+}
+
+/** The character's derived ranged row a sheet row stands for, or null. */
+function derivedRangedRow(actor: any, row: HTMLElement | null | undefined): { explosive?: boolean; fragmentation?: string } | null {
+  if (!row) return null;
+  const rows: any[] = actor?.system?.derived?.ranged ?? [];
+  return rows.find((r) =>
+    String(r?.itemId ?? "") === (row.dataset.itemId ?? "") &&
+    String(r?.modeIndex ?? "") === (row.dataset.modeIndex ?? "") &&
+    String(r?.derivedMode ?? "") === (row.dataset.derivedMode ?? "")) ?? null;
 }
 
 function shotRow(row: HTMLElement | null | undefined): string {
@@ -2698,6 +2779,12 @@ interface RangedShot {
   rateOfFire?: number;
   /** True where the shooter said a homing weapon had locked on (since 1.128.0). */
   lockedOn?: boolean;
+  /** A Dual-Weapon Attack with two pistols, and which hand (Campaigns p. 417; since 1.153.0). */
+  dualWeapon?: DualWeaponChoice | null;
+  /** What the shot takes off the target's defense: -1 for both hands at one foe (since 1.153.0). */
+  defensePenalty?: number;
+  /** The foe's weapon the shot is aimed at, to break it (Campaigns p. 400; since 1.153.0). */
+  weaponStrike?: WeaponTarget | null;
 }
 
 /** The context a module's attack option is shown and applied with. */
@@ -2781,9 +2868,72 @@ function drawBreakdown(root: HTMLElement, breakdown: RollBreakdown): void {
  * what is shown here is what will be rolled -- short of what a module's hook
  * adds at roll time, which nothing can know yet.
  */
+/** What the ranged dialog was answered with, beyond the table's own inputs. */
+type RangedDialogInput = RangedInput & {
+  calledShot?: string;
+  addonValues?: Record<string, unknown>;
+  /** A Dual-Weapon Attack, and which hand (since 1.153.0). */
+  dual?: DualWeaponChoice | null;
+  /** The id of the foe's weapon aimed at, or blank (since 1.153.0). */
+  weaponStrike?: string;
+};
+
+/**
+ * The select for aiming a shot at a foe's weapon (Campaigns p. 400), offered
+ * only where the one foe targeted has something to aim at. Its penalty is
+ * the weapon's size, as for a blow.
+ */
+function weaponStrikeField(targets: WeaponTarget[]): string {
+  if (targets.length === 0) return "";
+  const esc = (text: string) => foundry.utils.escapeHTML(text);
+  const options = targets
+    .map((t) => `<option value="${esc(t.id)}">${esc(t.name)} (${t.penalty})</option>`)
+    .join("");
+  return `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px"
+         title="${esc(game.i18n.localize("GWORLD.Breakage.StrikeAtHint"))}">
+    <span>${game.i18n.localize("GWORLD.Breakage.StrikeAt")}</span>
+    <select name="weaponStrike" style="width:180px">
+      <option value="">${game.i18n.localize("GWORLD.Breakage.StrikeAtNone")}</option>
+      ${options}
+    </select>
+  </label>`;
+}
+
+/**
+ * The ranged dialog's lines that are not the table's: where the shot is
+ * aimed -- a hit location, or a weapon in the foe's hand -- and a Dual-Weapon
+ * Attack. One function for the running total and the shot, so the two agree.
+ *
+ * A shot at a weapon is aimed at the weapon, not at a part of the man, so a
+ * called shot chosen as well is dropped: the weapon's penalty is the whole of
+ * what the aim costs (Campaigns p. 400).
+ */
+export function rangedDialogLines(
+  input: Pick<RangedDialogInput, "calledShot" | "dual" | "weaponStrike">,
+  options: Pick<Parameters<typeof promptForRangedAttack>[0], "damageType" | "tightBeam" | "actor" | "weaponTargets"> & DualWeaponFighter,
+): {
+  modifiers: RollModifier[];
+  aimed: ReturnType<typeof calledShotModifier>;
+  defensePenalty: number;
+  weaponStrike: WeaponTarget | null;
+} {
+  const modifiers: RollModifier[] = [];
+  const weaponStrike = input.weaponStrike
+    ? (options.weaponTargets ?? []).find((t) => t.id === input.weaponStrike) ?? null
+    : null;
+  const aimed = weaponStrike
+    ? { shot: null, modifier: null }
+    : calledShotModifier(input.calledShot ?? UNAIMED, options.damageType, options.tightBeam === true, options.actor);
+  if (weaponStrike) modifiers.push(weaponStrikeLine(weaponStrike));
+  if (aimed.modifier) modifiers.push(aimed.modifier);
+  const dual = dualWeaponLine(input.dual ?? null, options);
+  if (dual.modifier) modifiers.push(dual.modifier);
+  return { modifiers, aimed, defensePenalty: dual.defensePenalty, weaponStrike };
+}
+
 function showRangedBreakdown(
   root: HTMLElement,
-  input: RangedInput & { calledShot?: string; addonValues?: Record<string, unknown> },
+  input: RangedDialogInput,
   options: Parameters<typeof promptForRangedAttack>[0],
 ): void {
   const actor = options.actor;
@@ -2813,8 +2963,7 @@ function showRangedBreakdown(
   });
 
   const fromDialog = rangedModifiers({ ...input, shots: pellets.effectiveShots }, options);
-  const called = calledShotModifier(input.calledShot ?? UNAIMED, options.damageType, options.tightBeam === true, actor);
-  if (called.modifier) fromDialog.push(called.modifier);
+  fromDialog.push(...rangedDialogLines(input, options).modifiers);
   fromDialog.push(...chosen.modifiers);
 
   // What the roll will add once the dialog closes: the shooter's condition and
@@ -2965,6 +3114,14 @@ export async function promptForRangedAttack(options: {
   fixedShots?: number;
   /** How the projectile steers: a homing one is asked whether it locked on (since 1.128.0). */
   guidance?: string;
+  /** Levels of the Dual-Weapon Attack technique (Campaigns p. 417; since 1.153.0). */
+  dualWeaponTechnique?: number;
+  /** Ambidexterity, or full Off-Hand Weapon Training. */
+  ambidextrous?: boolean;
+  /** Levels of Off-Hand Weapon Training, for somebody who is not. */
+  offHandTraining?: number;
+  /** The weapons on the one foe targeted that the shot may be aimed at (Campaigns p. 400; since 1.153.0). */
+  weaponTargets?: WeaponTarget[];
 }): Promise<RangedShot | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   const addonContext = attackContextFor({
@@ -3061,6 +3218,8 @@ export async function promptForRangedAttack(options: {
       ${field("size", L("TargetSize"), "0")}
       ${shotsField}
       ${calledShotField(options.damageType, options.tightBeam === true, options.actor)}
+      ${weaponStrikeField(options.weaponTargets ?? [])}
+      ${dualWeaponFields()}
       ${sightField()}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${game.i18n.localize("GWORLD.Cover.Label")}</span>
@@ -3131,6 +3290,8 @@ export async function promptForRangedAttack(options: {
       cover: cover as CoverApproach | "none",
       calledShot,
       aimed,
+      dual: readDualWeapon(form),
+      weaponStrike: form?.querySelector<HTMLSelectElement>('select[name="weaponStrike"]')?.value ?? "",
       lockedOn: form?.querySelector<HTMLInputElement>('input[name="lockedOn"]')?.checked ?? false,
       laser: {
         on: form?.querySelector<HTMLInputElement>('input[name="laser"]')?.checked ?? false,
@@ -3189,7 +3350,7 @@ export async function promptForRangedAttack(options: {
 
   if (!result || typeof result !== "object") return null;
 
-  const input = result as RangedInput & { calledShot?: string; addonValues?: Record<string, unknown> };
+  const input = result as RangedDialogInput;
   // The options are read first: one of them may halve the Rate of Fire
   // (Campaigns p. 408), which the dialog's own field could not know when it
   // was drawn, so the shots asked for are capped by what is left of it.
@@ -3217,9 +3378,10 @@ export async function promptForRangedAttack(options: {
     halfDamageRange: options.halfDamageRange ?? 0,
   });
 
-  const aimed = calledShotModifier(input.calledShot ?? UNAIMED, options.damageType, options.tightBeam === true, options.actor);
   const modifiers = rangedModifiers({ ...input, shots: pellets.effectiveShots }, options);
-  if (aimed.modifier) modifiers.push(aimed.modifier);
+  const extras = rangedDialogLines(input, options);
+  modifiers.push(...extras.modifiers);
+  const aimed = extras.aimed;
   const addon = chosenOptions;
   modifiers.push(...addon.modifiers);
 
@@ -3236,6 +3398,9 @@ export async function promptForRangedAttack(options: {
     rangeYards: input.range,
     cover: input.cover ?? "none",
     lockedOn: input.lockedOn === true,
+    dualWeapon: input.dual ?? null,
+    defensePenalty: extras.defensePenalty,
+    weaponStrike: extras.weaponStrike,
     laser: { on: input.laser?.on === true, targetSees: input.laser?.targetSees === true },
     // "But if the target can see it, he gets +1 to Dodge!"
     dodgeBonus: input.laser?.on
@@ -3751,6 +3916,86 @@ export function darknessModifier(darkness: number, eyes: Eyes = {}): RollModifie
  *
  * Returns null when the dialog is dismissed, which cancels the roll.
  */
+/** A Dual-Weapon Attack as the dialog left it (Campaigns p. 417; since API 1.153.0). */
+export interface DualWeaponChoice {
+  /** The hand this roll is for: each hand is rolled separately. */
+  hand: "primary" | "off";
+  /** Both attacks aimed at one foe, whose defenses against them are at -1. */
+  sameTarget: boolean;
+}
+
+/** What a fighter brings to a Dual-Weapon Attack, off the sheet. */
+export interface DualWeaponFighter {
+  /** Levels of the Dual-Weapon Attack technique, which buy the -4 back. */
+  dualWeaponTechnique?: number;
+  /** Ambidexterity, or full Off-Hand Weapon Training. */
+  ambidextrous?: boolean;
+  /** Levels of Off-Hand Weapon Training, for somebody who is not. */
+  offHandTraining?: number;
+}
+
+/** The dialog's answer read as a choice, or null for one weapon. */
+export function dualWeaponChoice(value: string, sameTarget: boolean): DualWeaponChoice | null {
+  return value === "primary" || value === "off" ? { hand: value, sameTarget: sameTarget === true } : null;
+}
+
+/**
+ * What a Dual-Weapon Attack does to the roll of the hand being rolled, and to
+ * the defense against it (Campaigns p. 417). The same for a melee weapon and
+ * a pistol: either hand may strike bare, with a one-handed melee weapon, or
+ * fire a pistol. The line is keyed `dualWeapon` and says which hand (since
+ * API 1.153.0).
+ */
+export function dualWeaponLine(
+  choice: DualWeaponChoice | null,
+  fighter: DualWeaponFighter,
+): { modifier: RollModifier | null; defensePenalty: number } {
+  if (!choice) return { modifier: null, defensePenalty: 0 };
+  const both = dualWeaponAttack({
+    technique: fighter.dualWeaponTechnique ?? 0,
+    ambidextrous: fighter.ambidextrous === true,
+    offHandTraining: fighter.offHandTraining ?? 0,
+    sameTarget: choice.sameTarget,
+  });
+  const value = choice.hand === "off" ? both.offHand : both.primary;
+  return {
+    modifier: {
+      label: game.i18n.localize(choice.hand === "off" ? "GWORLD.Melee.DualOff" : "GWORLD.Melee.DualPrimary"),
+      value,
+      key: "dualWeapon",
+      hand: choice.hand,
+    },
+    defensePenalty: both.defensePenalty,
+  };
+}
+
+/** The Dual-Weapon Attack fields, for the melee and the ranged dialogs alike. */
+function dualWeaponFields(): string {
+  if (!isRuleOn("dualWeaponAttack")) return "";
+  const M = (key: string) => game.i18n.localize(`GWORLD.Melee.${key}`);
+  return `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <span>${M("DualWeapon")}</span>
+      <select name="dual" style="width:150px">
+        <option value="no">${M("DualNone")}</option>
+        <option value="primary">${M("DualPrimary")}</option>
+        <option value="off">${M("DualOff")}</option>
+      </select>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" name="dualSameTarget">
+      <span>${M("DualSameTarget")}</span>
+    </label>`;
+}
+
+/** Reads the Dual-Weapon Attack fields back. */
+function readDualWeapon(form: HTMLElement | null): DualWeaponChoice | null {
+  if (!isRuleOn("dualWeaponAttack")) return null;
+  return dualWeaponChoice(
+    form?.querySelector<HTMLSelectElement>('select[name="dual"]')?.value ?? "no",
+    form?.querySelector<HTMLInputElement>('input[name="dualSameTarget"]')?.checked ?? false,
+  );
+}
+
 /** What the melee dialog was answered with, as the modifier lines read it. */
 interface MeleeAnswers {
   deceptive: number;
@@ -3761,7 +4006,7 @@ interface MeleeAnswers {
   darkness: number;
   calledShot: string;
   ground: number;
-  dual: string;
+  dual: DualWeaponChoice | null;
   charging: boolean;
   wildSwing: boolean;
   addonValues: Record<string, unknown>;
@@ -3775,6 +4020,8 @@ interface MeleeAssembly {
   aimed: ReturnType<typeof calledShotModifier>;
   addon: ReturnType<typeof applyAttackOptions>;
   groundPenalty: number;
+  /** What a Dual-Weapon Attack at one foe takes off their defense. */
+  dualDefense: number;
 }
 
 /**
@@ -3830,17 +4077,8 @@ function assembleMeleeAttack(
   // Both hands at once: each roll is separate, so this is the modifier for the
   // hand being rolled now (p. 417). The technique and Ambidexterity come off the
   // sheet rather than being asked about again.
-  if (dual === "primary" || dual === "off") {
-    const both = dualWeaponAttack({
-      technique: options.dualWeaponTechnique ?? 0,
-      ambidextrous: options.ambidextrous === true,
-      offHandTraining: options.offHandTraining ?? 0,
-    });
-    modifiers.push({
-      label: game.i18n.localize(dual === "off" ? "GWORLD.Melee.DualOff" : "GWORLD.Melee.DualPrimary"),
-      value: dual === "off" ? both.offHand : both.primary,
-    });
-  }
+  const dualWeapon = dualWeaponLine(dual, options);
+  if (dualWeapon.modifier) modifiers.push(dualWeapon.modifier);
 
   // "You cannot target a particular part of the foe's body" on a Wild Swing:
   // the location is rolled (p. 388).
@@ -3880,7 +4118,7 @@ function assembleMeleeAttack(
   );
   const groundPenalty = levels.negligible ? 0 : levels.lower.defense;
 
-  return { modifiers, deception, flurried, aimed, addon, groundPenalty };
+  return { modifiers, deception, flurried, aimed, addon, groundPenalty, dualDefense: dualWeapon.defensePenalty };
 }
 
 export async function promptForMeleeAttack(options: {
@@ -3913,6 +4151,8 @@ export async function promptForMeleeAttack(options: {
 }): Promise<{
   /** A Wild Swing was declared (Campaigns p. 388). */
   wildSwing: boolean;
+  /** A Dual-Weapon Attack, and which hand this roll is for (Campaigns p. 417). */
+  dualWeapon: DualWeaponChoice | null;
   /** The stop thrust's damage bonus, or 0. */
   stopThrustBonus: number;
   /** What the modules' attack options chosen in the dialog add up to. */
@@ -3963,7 +4203,6 @@ export async function promptForMeleeAttack(options: {
     .join("");
   const deceptionAllowed = isRuleOn("deceptiveAttack") && offered.deceptiveAttack?.available !== false;
   const rapidAllowed = isRuleOn("rapidStrike") && offered.rapidStrike?.available !== false;
-  const dualAllowed = isRuleOn("dualWeaponAttack");
   const effortAllowed = isRuleOn("extraEffort");
   // Trained By A Master or Weapon Master halves it, and Flurry of Blows halves what is left.
   const rapidPenalty = rapidStrikePenalty(options.halvedRapidStrike === true);
@@ -4023,16 +4262,7 @@ export async function promptForMeleeAttack(options: {
              <span>${game.i18n.localize("GWORLD.Mounted.Jousting")}</span>
            </label>`
         : ""}
-      ${dualAllowed
-        ? `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-             <span>${game.i18n.localize("GWORLD.Melee.DualWeapon")}</span>
-             <select name="dual" style="width:150px">
-               <option value="no">${game.i18n.localize("GWORLD.Melee.DualNone")}</option>
-               <option value="primary">${game.i18n.localize("GWORLD.Melee.DualPrimary")}</option>
-               <option value="off">${game.i18n.localize("GWORLD.Melee.DualOff")}</option>
-             </select>
-           </label>`
-        : ""}
+      ${dualWeaponFields()}
       ${effortAllowed && offered.mightyBlows?.available !== false
         ? `<label style="display:flex;align-items:center;gap:8px">
              <input type="checkbox" name="mighty">
@@ -4136,7 +4366,7 @@ export async function promptForMeleeAttack(options: {
       turned: ticked("turned"),
       ground:
         Number(form?.querySelector<HTMLSelectElement>('select[name="ground"]')?.value ?? 0) || 0,
-      dual: form?.querySelector<HTMLSelectElement>('select[name="dual"]')?.value ?? "no",
+      dual: readDualWeapon(form),
       charging: ticked("charging"),
       pullSt: num("pullSt"),
       lanceSt: num("lanceSt"),
@@ -4165,7 +4395,7 @@ export async function promptForMeleeAttack(options: {
     calledShot: string;
     turned: boolean;
     ground: number;
-    dual: string;
+    dual: DualWeaponChoice | null;
     charging: boolean;
     pullSt: number;
     lanceSt: number;
@@ -4181,7 +4411,7 @@ export async function promptForMeleeAttack(options: {
     options,
     { addonContext, effortAllowed, rapidPenalty },
   );
-  const { modifiers, deception, flurried, aimed, addon, groundPenalty } = assembled;
+  const { modifiers, deception, flurried, aimed, addon, groundPenalty, dualDefense } = assembled;
 
   const mightyBlows = mighty && effortAllowed;
   return {
@@ -4191,7 +4421,8 @@ export async function promptForMeleeAttack(options: {
     options: addonValues ?? {},
     deceptive: deception.defensePenalty,
     modifiers,
-    defensePenalty: deception.defensePenalty + groundPenalty,
+    defensePenalty: deception.defensePenalty + groundPenalty + dualDefense,
+    dualWeapon: dual,
     // Both cost a flat point each, and both are paid before the roll -- as is
     // whatever the modules' options cost.
     fatigue: (flurried ? EXTRA_EFFORT_FP : 0) + (mightyBlows ? EXTRA_EFFORT_FP : 0) + addon.fatigue,
@@ -4266,6 +4497,8 @@ export async function handleDamageAction(
   // Where the attack was aimed, so the apply control opens on that location
   // rather than asking again -- and, for a chink, so the DR it found is halved.
   const aimed = await consumeCalledShot(actor);
+  // A shot aimed at a foe's weapon lands on the weapon (Campaigns p. 400; since 1.153.0).
+  const weaponStruck = await consumeWeaponStrike(actor, shotRow(itemRow));
   // Pellets that struck as one mass, recorded by the attack roll.
   const mass = await consumeMassShot(actor);
   // A target past 1/2D, recorded by the attack roll too, and the range the
@@ -4386,12 +4619,14 @@ export async function handleDamageAction(
           })]
         : []),
       ...(struck ? [game.i18n.localize("GWORLD.Subdue.Turned")] : []),
+      ...(weaponStruck ? [game.i18n.format("GWORLD.Breakage.DamageLabel", { weapon: weaponStruck.name })] : []),
     ].join(" \u2014 "),
     formula: struck ? formatDiceAdds(struck.damage) : baseFormula,
     damageType: struck ? struck.type : couched ? couched.type : (damageType as DamageType),
     armorDivisor: Number(armorDivisor) || 1,
     ...(line.firstHit ? { firstHit: true } : {}),
-    ...(aimed ? { calledShot: aimed } : {}),
+    ...(aimed && !weaponStruck ? { calledShot: aimed } : {}),
+    ...(weaponStruck ? { weaponTarget: weaponStruck } : {}),
     ...(Object.keys(attackOptions).length > 0 ? { attackOptions } : {}),
     ...(mass > 1 ? { massMultiplier: mass } : {}),
     ...(halved ? { halfDamage: true } : {}),
