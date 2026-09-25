@@ -2496,6 +2496,7 @@
       "AttendAtTl": "Treating at TL{tl}",
       "AttendBeyondTl": "Treatment at TL{tl} is beyond a Physician skill learned at TL{skill} (Characters p. 168).",
       "CureHp": "{hp} HP: {previous} → {now}",
+      "AttendCrippled": "In the physician's care at TL{tl}, where a lasting crippling heals sooner (Campaigns p. 422): {parts}",
       "CareBonus": "Under competent care: +{bonus} on every roll for natural recovery",
       "Cure": {
         "healedWell": "The patient rallies.",

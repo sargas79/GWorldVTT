@@ -450,6 +450,8 @@ const actors = {
    * Since 1.142.0 `gworld.physicianRounds` hears it, as it hears the sheet's button: a
    * listener may refuse it, move it to another tech level or add lines to the card.
    * `techLevel` is the TL of the healer's Physician skill, or of `skill` where one is given.
+   * Since 1.156.0 rounds that succeed put the patient's lasting and undecided crippled parts
+   * in the physician's care at the rounds' TL, as `treatCrippled` does (p. 422).
    */
   attendPatient(options: { healer: any; patient: any; skill?: number; techLevel?: number; label?: string; modifier?: number }): Promise<void> {
     return attendPatient({ ...options, modifier: options.modifier ?? 0 });

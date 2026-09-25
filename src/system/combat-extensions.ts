@@ -60,13 +60,17 @@ export const COMBAT_HOOKS = Object.freeze({
   /** Before a defense roll: `{ defender, defense, attack, modifiers, deception, attacker }`, mutable. */
   defenseModifiers: "gworld.defenseModifiers",
   /**
-   * Before a damage roll: `{ actor, item, mode, label, formula, damageType, modifiers, distanceYards, source, incendiary, hit, line, refusal }`,
-   * mutable (`distanceYards` since 1.69.0, `source` since 1.139.0, `incendiary` since 1.152.0, `hit`, `line` and `refusal` since 1.154.0).
+   * Before a damage roll: `{ actor, item, mode, label, formula, damageType, modifiers, distanceYards, source, incendiary, halfDamage, hit, line, refusal }`,
+   * mutable (`distanceYards` since 1.69.0, `source` since 1.139.0, `incendiary` since 1.152.0, `hit`, `line` and `refusal` since 1.154.0,
+   * `halfDamage` since 1.156.0).
    */
   damageModifiers: "gworld.damageModifiers",
   /** A blow about to be worked out against a target: `{ actor, item, mode, damage }`, the damage mutable. */
   injury: "gworld.injury",
-  /** A blow that has been applied: `{ actor, item, mode, damage, result }`. */
+  /**
+   * A blow that has been applied: `{ actor, item, mode, damage, result }`. Since 1.156.0 a
+   * listener may set `damage.incendiary`, knowing the DR the blow met, and the card goes by it.
+   */
   afterDamage: "gworld.afterDamage",
   /** Before a heavy-parry breakage roll: `{ defender, item, attackWeapon, breakage }`, `breakage` mutable. */
   breakageOdds: "gworld.breakageOdds",

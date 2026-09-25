@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createApi } from "../api.js";
+import { SECONDS_PER_MONTH, crippledParts } from "../crippling.js";
 import { PROCEDURE_HOOKS } from "../procedure-extensions.js";
 import { attendPatient } from "../recovery.js";
 
@@ -12,8 +13,9 @@ afterEach(() => {
 });
 
 /** A character a physician's rounds read and write: a TL8 doctor with Physician/TL 14 by default. */
-function character(name: string, options: { hp?: number; physician?: Record<string, unknown> | null } = {}) {
+function character(name: string, options: { hp?: number; physician?: Record<string, unknown> | null; crippled?: Array<Record<string, unknown>> } = {}) {
   const physician = options.physician === undefined ? { type: "skill", name: "Physician/TL", system: { attribute: "IQ", derived: { level: 14 } } } : options.physician;
+  const flags: Record<string, unknown> = { crippled: options.crippled ?? [] };
   return {
     name,
     uuid: `Actor.${name}`,
@@ -23,8 +25,8 @@ function character(name: string, options: { hp?: number; physician?: Record<stri
     items: physician ? [physician] : [],
     statuses: new Set<string>(),
     effects: [],
-    getFlag: () => undefined,
-    setFlag: async () => {},
+    getFlag: (_scope: string, key: string) => flags[key],
+    setFlag: async (_scope: string, key: string, value: unknown) => { flags[key] = value; },
     unsetFlag: async () => {},
     update: async function (this: any, data: Record<string, unknown>) {
       if (typeof data["system.hp.value"] === "number") this.system.hp.value = data["system.hp.value"];
@@ -162,5 +164,80 @@ describe("a physician's rounds and gworld.physicianRounds", () => {
     await createApi().actors.attendPatient({ healer: character("Doc"), patient: character("Patient") });
     expect(cards).toHaveLength(0);
     expect((globals.ui as any).notifications.warn).toHaveBeenCalled();
+  });
+});
+
+/** A crippled part as kept on the actor, crippled at world time 0. */
+function part(id: string, location: string, duration: string, extra: Record<string, unknown> = {}) {
+  return { id, location, duration, injury: true, label: "", since: 0, months: null, healsAt: null, ...extra };
+}
+
+/** A patient with a lasting arm, an undecided leg, a foot already in TL8 care, a temporary eye and a permanent hand. */
+function crippledPatient() {
+  return character("Patient", {
+    crippled: [
+      part("arm", "arm", "lasting", { label: "Left arm", months: 5, roll: 5, healsAt: 5 * SECONDS_PER_MONTH }),
+      part("leg", "leg", "undecided", { label: "Right leg" }),
+      part("foot", "foot", "lasting", { label: "Left foot", months: 3, roll: 6, treatedAtTl: 8, healsAt: 3 * SECONDS_PER_MONTH }),
+      part("eye", "eye", "temporary", { label: "Left eye" }),
+      part("hand", "hand", "permanent", { label: "Right hand" }),
+    ],
+  });
+}
+
+const byId = (patient: any) => Object.fromEntries(crippledParts(patient).map((p) => [p.id, p]));
+
+/** Rounds put crippled parts in the physician's care (Campaigns p. 422; sargas79/GWorldVTT#849, API 1.156.0). */
+describe("a physician's rounds and the patient's crippled parts", () => {
+  it("puts lasting and undecided parts in care at the rounds' TL on a success, and says so on the card", async () => {
+    const { cards } = foundryWith();
+    const patient = crippledPatient();
+    await createApi().actors.attendPatient({ healer: character("Doc"), patient });
+    const parts = byId(patient);
+    // 1d 5, less 3 at TL7+.
+    expect(parts.arm).toMatchObject({ treatedAtTl: 8, roll: 5, months: 2, healsAt: 2 * SECONDS_PER_MONTH });
+    expect(parts.leg).toMatchObject({ duration: "undecided", treatedAtTl: 8 });
+    expect(parts.foot).toMatchObject({ treatedAtTl: 8, months: 3 });
+    expect(parts.eye).not.toHaveProperty("treatedAtTl");
+    expect(parts.hand).not.toHaveProperty("treatedAtTl");
+    expect(content(cards[0])).toContain("GWORLD.Recovery.AttendCrippled");
+    expect(content(cards[0])).toContain("Left arm, Right leg");
+    expect(content(cards[0])).not.toContain("Left foot");
+  });
+
+  it("works at the TL a listener leaves, and leaves a part in care at a better TL", async () => {
+    const { cards } = foundryWith((context) => { context.techLevel = 6; });
+    const patient = crippledPatient();
+    await attendPatient({ healer: character("Doc"), patient, modifier: async () => 0 });
+    const parts = byId(patient);
+    // 1d 5, less 2 at TL6.
+    expect(parts.arm).toMatchObject({ treatedAtTl: 6, months: 3 });
+    expect(parts.foot).toMatchObject({ treatedAtTl: 8, months: 3 });
+    expect(content(cards[0])).toContain('\\"tl\\":6');
+  });
+
+  it("moves a part up to a better TL than the one it was in care at", async () => {
+    foundryWith();
+    const patient = character("Patient", { crippled: [part("arm", "arm", "lasting", { months: 4, roll: 6, treatedAtTl: 6, healsAt: 4 * SECONDS_PER_MONTH })] });
+    await createApi().actors.attendPatient({ healer: character("Doc"), patient });
+    expect(byId(patient).arm).toMatchObject({ treatedAtTl: 8, months: 3 });
+  });
+
+  it("names a part with no label by its location", async () => {
+    const { cards } = foundryWith();
+    await createApi().actors.attendPatient({ healer: character("Doc"), patient: character("Patient", { crippled: [part("leg", "leg", "undecided")] }) });
+    expect(content(cards[0])).toContain("GWORLD.HitLocation.leg");
+  });
+
+  it("changes nothing, and says nothing, on a failure or where nothing is left to treat", async () => {
+    const { cards } = foundryWith();
+    const patient = crippledPatient();
+    await createApi().actors.attendPatient({ healer: character("Doc"), patient, modifier: -10 });
+    expect(byId(patient).arm).toMatchObject({ months: 5 });
+    expect(byId(patient).arm).not.toHaveProperty("treatedAtTl");
+    expect(byId(patient).leg).not.toHaveProperty("treatedAtTl");
+    expect(content(cards[0])).not.toContain("AttendCrippled");
+    await createApi().actors.attendPatient({ healer: character("Doc"), patient: character("Patient") });
+    expect(content(cards[1])).not.toContain("AttendCrippled");
   });
 });
