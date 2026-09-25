@@ -183,7 +183,9 @@ describe("fatigue costs", () => {
       }
     });
     const hot = character("Knight");
-    await chargeBattleFatigue({ round: 30, combatants: [{ actor: hot }] });
+    // An attack or defense roll in the combat (Campaigns p. 426).
+    await hot.setFlag("gworld", "combatState.gworld.foughtIn", { value: ["C1"], lifetime: "combat" });
+    await chargeBattleFatigue({ id: "C1", round: 30, combatants: [{ actor: hot }] });
     expect(hot.system.fp.value).toBe(8);
     expect(String(cards[0]?.content)).toContain("GWORLD.BattleFatigue.Changed");
     expect(String(cards[0]?.content)).toContain("A hot day");

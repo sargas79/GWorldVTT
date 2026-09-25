@@ -111,13 +111,16 @@ export function spendFatigue(options: {
 export const BATTLE_FATIGUE_AFTER_SECONDS = 10;
 
 /**
- * What a battle costs in fatigue: "After any battle that lasts longer than
- * 10 seconds, lose 1 FP." A skirmish over in a few turns costs nothing; a
- * fight that ran on costs a point, however long it ran, with extra effort
+ * What a battle costs in fatigue: any battle that lasts more than 10 seconds
+ * costs 1 FP with no encumbrance, and a point more for each level of it, up
+ * to 5 FP at Extra-Heavy. A skirmish over in a few turns costs nothing; a
+ * fight that ran on costs the same however long it ran, with extra effort
  * charged separately as it is spent.
  */
-export function battleFatigueCost(seconds: number): number {
-  return seconds > BATTLE_FATIGUE_AFTER_SECONDS ? 1 : 0;
+export function battleFatigueCost(seconds: number, encumbranceLevel = 0): number {
+  if (!(seconds > BATTLE_FATIGUE_AFTER_SECONDS)) return 0;
+  const level = Math.max(0, Math.min(4, Math.floor(Number(encumbranceLevel) || 0)));
+  return 1 + level;
 }
 
 /**

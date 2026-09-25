@@ -23,6 +23,7 @@
 
 import { sceneAreaLines } from "./modifier-areas.js";
 import { SYSTEM_ID } from "./constants.js";
+import { isFightingRoll, noteFought } from "./combat-participation.js";
 import { everyActor } from "./every-actor.js";
 import { pendingModifierLines, spendPendingModifiers } from "./pending-modifiers.js";
 import {
@@ -634,6 +635,9 @@ function hookedSuccessRoll(context: SuccessRollContext, refusable: boolean): { m
 
 /** Tells the listeners how a success roll went. */
 export function afterSuccessRoll(context: Omit<SuccessRollContext, "modifiers" | "base"> & { outcome: unknown }): void {
+  // An attack or a defense is what makes a fighter pay a battle's fatigue
+  // (Campaigns p. 426).
+  if (isFightingRoll(context.kind)) void noteFought(context.actor);
   callCombatHook(PROCEDURE_HOOKS.afterSuccessRoll, context);
 }
 

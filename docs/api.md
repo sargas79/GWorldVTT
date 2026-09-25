@@ -2029,8 +2029,8 @@ Two fields a module may read (since 1.62.0):
   - *Battle and hiking* pass it to `gworld.fatigueCost` and
     `gworld.afterFatigue`: `details.temperatureF` (null where none is set)
     and `details.hot`, for the one paying. Before 1.147.0 a battle's `hot`
-    was only told; since then the system charges it (see *A battle on a hot
-    day*). The sheet's hiking dialog starts with "A hot day" ticked where the
+    was only told; since then the system charges it (see *A battle's
+    fatigue*). The sheet's hiking dialog starts with "A hot day" ticked where the
     day is hot for the marcher, and the GM can untick it; `hot` is what was
     charged either way.
   - *After fatigue*: `gworld.afterFatigue` fires once the FP has been
@@ -2049,14 +2049,30 @@ Two fields a module may read (since 1.62.0):
     critical failure the same again in HP, which is `hpLost`). It doesn't
     fire where a listener brought the cost to 0, or for
     `actors.applyInjury({ fatigue: true })`, which takes FP as given.
-- **A battle on a hot day** (since 1.147.0; Campaigns p. 426). "If the day
-  is hot", a battle that costs fatigue costs 1 FP more. The system charges
-  it when a combat ends to each fighter the day's temperature is hot for
-  (`world.weather(actor).hot`), with the *Battle fatigue* and *Heat, cold,
-  hunger and thirst* optional rules both on; the card names who paid it.
+- **A battle's fatigue: encumbrance, the fighters, a hot day** (since
+  1.147.0; Campaigns p. 426).
+  - *By encumbrance.* A battle of more than 10 seconds costs 1 FP with no
+    encumbrance and one more a level, to 5 FP at Extra-Heavy, read off each
+    fighter's encumbrance when the combat ends. Before 1.147.0 it was a flat
+    1 FP. It is the `battle` part (below), whose `fp` is that figure.
+  - *Only those who fought.* A combatant who made no attack or defense roll
+    in the combat pays nothing, and the card lists them as exempt. Every
+    success roll of kind `attack` or `defense` (every roll whose
+    `gworld.afterSuccessRoll` context has that `kind`, a defense a listener
+    settled included) marks the roller as having fought in each started
+    combat they are a combatant of, as combat-long state (`combat.getCombatState(actor,
+    "gworld", "foughtIn")`, an array of combat ids), cleared when the combat
+    ends. A roll a module makes some other way doesn't mark anyone: call
+    `roll.success` with `kind: "attack"` or `"defense"` for a roll that
+    should count, or have the fighter's owner make one.
+  - *A hot day.* "If the day is hot", a battle that costs fatigue costs 1 FP
+    more. The system charges it to each fighter the day's temperature is
+    hot for (`world.weather(actor).hot`), with the *Heat, cold, hunger and
+    thirst* optional rule on as well; the card names who paid it.
+  - All of it is behind the *Battle fatigue* optional rule.
   - *Keyed parts.* `gworld.fatigueCost` gets `parts`, the cost's pieces as
     `{ key, label, fp }`, and `fp` starts as their sum. A battle's are
-    `battle` (1), `strained` (1, a weapon above the wielder's ST) and
+    `battle` (1 to 5, by encumbrance), `strained` (1, a weapon above the wielder's ST) and
     `hotDay` (1); a march's are `hiking` (its hours by encumbrance) and
     `hotDay` (1 an hour). Change a part's `fp`, take a part out or push one
     of your own: the cost moves by what that did to the parts' sum, on top
@@ -2366,9 +2382,10 @@ Two fields a module may read (since 1.62.0):
     FP, before the fatigue chart and Very Fit's halving, with
     `{ actor, fp, reason, exertion, details, sources, parts }`. Set `fp` (rounded,
     never below 0) and push a label to `sources`; since 1.147.0 `parts` are
-    the cost's keyed pieces for a battle and a march (see *A battle on a hot
-    day*). `reason` is `battle` (the
-    end of a fight, p. 426; `details.seconds`, `details.strained`, and since
+    the cost's keyed pieces for a battle and a march (see *A battle's
+    fatigue*). `reason` is `battle` (the
+    end of a fight, p. 426, for each combatant who made an attack or defense
+    roll, since 1.147.0 by encumbrance; `details.seconds`, `details.strained`, and since
     1.138.0 `temperatureF` and `hot`), `hiking` (`hours`, `hot`, and since
     1.138.0 `temperatureF`), `missedSleep`, `exposure` (`heat`, `temperatureF`,
     `heatStroke`), `deprivation` (`mealsMissed`, `hunger`, `thirst`,

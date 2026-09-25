@@ -729,7 +729,7 @@
         },
         "battleFatigue": {
           "Name": "Battle fatigue",
-          "Hint": "A fight that runs past ten seconds costs everyone in it a point of fatigue when the tracker closes, and a point more on a hot day while heat and cold are in play."
+          "Hint": "A fight that runs past ten seconds costs everyone who made an attack or defense roll in it fatigue when the tracker closes: 1 FP, one more per level of encumbrance, and one more on a hot day while heat and cold are in play."
         },
         "trampling": {
           "Name": "Trampling",
@@ -3707,7 +3707,9 @@
     "BattleFatigue": {
       "Title": "Battle fatigue",
       "Seconds": "{seconds} seconds of fighting",
-      "Charged": "{fp} FP from {names}",
+      "Charged": "Fatigue: {names}",
+      "Paid": "{name} ({fp} FP)",
+      "Exempt": "No attack or defense roll, so no fatigue: {names}",
       "Strained": "{name} (+1 for a weapon above their ST)",
       "HotDay": "{name} (+{fp} for a hot day)",
       "Changed": "{name} ({fp} FP: {sources})",
