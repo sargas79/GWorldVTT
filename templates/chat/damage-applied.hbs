@@ -27,6 +27,17 @@
       {{/if}}
 
       {{#if r.criticalDamage}}
+        {{#if ../criticalDice}}
+          {{!-- The dice at their maximum, or the rolled damage multiplied (p. 556). --}}
+          <div class="gc-dice gc-critical-dice">
+            {{#each ../criticalDice.sets as |set|}}
+              <span class="gc-dice-set">{{#each set as |die|}}<span class="gc-die">{{die}}</span>{{/each}}</span>
+            {{/each}}
+            {{#if ../criticalDice.from}}<span class="gc-mod">{{../criticalDice.from}}</span>{{/if}}
+            {{#if ../criticalDice.adds}}<span class="gc-mod gc-adds">{{../criticalDice.adds}}</span>{{/if}}
+            {{#each ../criticalDice.times as |times|}}<span class="gc-mod gc-times">{{times}}</span>{{/each}}
+          </div>
+        {{/if}}
         <div class="gc-mods">
           <span class="gc-mod">{{localize "GWORLD.Critical.BasicDamage"}} {{r.criticalDamage}}</span>
         </div>

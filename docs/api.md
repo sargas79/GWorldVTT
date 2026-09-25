@@ -3422,6 +3422,27 @@ and a formula with no dice are left alone, and a multiplier is kept.
   a player it is read-only, opening on the rules in play. The card's "Adds
   rolled as dice" line opens it too.
 
+## The dice on the damage card
+
+Since 1.151.0 the damage card shows each die as it came up, the adds (every
+modifier summed in) and anything that multiplied them -- a formula's
+multiplier (6dx10), then pellets striking as one mass -- beside basic damage,
+which stays the headline. Where the damage type's minimum (Campaigns p. 378)
+or 1/2D changed the figure, the card shows what the dice came to as well.
+
+- **`flags.gworld.damage.dice`** keeps them on the message, `{ sets, adds,
+  multiplier, mass, total }`: `sets` an array of arrays of faces, one per set
+  of dice thrown (an ordinary roll has one), a die a modifier discarded left
+  out; `adds` the adds rolled; `multiplier` and `mass` 1 where there is none;
+  `total` what the dice and adds came to, multiplied, before the minimum and
+  any halving. With Modifying Dice + Adds in play they are the dice actually
+  rolled: 1d+9 rolled as 3d+2 keeps three dice and adds of 2. A card rolled
+  before 1.151.0 has no `dice`.
+- **A critical** that takes maximum damage shows the same dice at 6 on the
+  card that applies it, and one that doubles or triples the damage shows the
+  rolled figure times that (Campaigns p. 556). An explosion's card leaves
+  them off, since the distance sets its figure too.
+
 ## Taking over data the system is dropping
 
 When rules move from the system into a module, existing worlds still store
