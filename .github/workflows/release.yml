@@ -1,0 +1,73 @@
+name: Release
+
+# Publishes a release of the system: builds it from the ref it is run on,
+# checks the version in src/system.json is the one asked for, and creates
+# the vX.Y.Z release with gworld.zip and system.json, the two files
+# Foundry's manifest and download URLs point at. Run by hand, after the
+# "Release vX.Y.Z" pull request that bumps the version has merged.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The version to release, without the v (e.g. 1.53.0)"
+        required: true
+      title:
+        description: "The release's title, after the tag (e.g. The GM Screen)"
+        required: true
+      notes:
+        description: "The release notes, in Markdown"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Check the version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          test "$(node -p "require('./src/system.json').version")" = "$VERSION"
+          test "$(node -p "require('./package.json').version")" = "$VERSION"
+          node -e "const d=require('./src/system.json').download; if (!d.endsWith('/v'+process.env.VERSION+'/gworld.zip')) { console.error(d); process.exit(1); }"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null; then
+            echo "v$VERSION is already tagged" >&2
+            exit 1
+          fi
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+      - name: Package
+        run: |
+          set -euo pipefail
+          mkdir -p release/gworld
+          cp -r dist/. release/gworld/
+          cp dist/system.json release/system.json
+          (cd release && zip -qr gworld.zip gworld)
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          TITLE: ${{ inputs.title }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          set -euo pipefail
+          printf '%s\n' "$NOTES" > release/notes.md
+          gh release create "v$VERSION" release/gworld.zip release/system.json \
+            --target "$GITHUB_SHA" \
+            --title "v$VERSION — $TITLE" \
+            --notes-file release/notes.md
