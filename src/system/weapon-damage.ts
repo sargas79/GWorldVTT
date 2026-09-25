@@ -305,6 +305,67 @@ export function weaponTargetsFor(actor: any, foe: any): WeaponTarget[] {
 }
 
 /**
+ * What a ranged attack may be aimed at on a foe (p. 400; since API
+ * 1.153.0). A blow to break a weapon may be made with any weapon, a firearm
+ * included, so a shot may be; knocking one away takes a weapon that can
+ * parry, so a shot only ever breaks. The same targets, at the same penalties,
+ * as the melee strike, with nothing offered while weapon breakage is off.
+ */
+export function rangedWeaponTargets(actor: any, foe: any): WeaponTarget[] {
+  if (!foe || !isRuleOn("weaponBreakage")) return [];
+  return weaponTargetsFor(actor, foe);
+}
+
+/** A strike at a foe's weapon, as the attack records it for the damage roll (since API 1.153.0). */
+export interface WeaponStrike {
+  actorUuid: string;
+  itemId: string;
+  name: string;
+}
+
+/**
+ * The line a strike at a weapon puts on the attack: the penalty for the
+ * weapon's size (p. 400), keyed `strikeAtWeapon` and carrying the item's id,
+ * so a listener can tell which weapon is being shot at (since API 1.153.0).
+ */
+export function weaponStrikeLine(target: Pick<WeaponTarget, "id" | "penalty">): {
+  label: string;
+  value: number;
+  key: string;
+  itemId: string;
+} {
+  return { label: L("StrikePenalty"), value: target.penalty, key: "strikeAtWeapon", itemId: target.id };
+}
+
+/** Where a shot at a weapon waits between the attack and the damage roll. */
+export const WEAPON_STRIKE_FLAG = "weaponStrike";
+
+/**
+ * Remembers that the attack was aimed at a weapon, so the damage roll -- a
+ * separate click -- is aimed at it too. Null clears it: every attack says
+ * what it was aimed at, so an old one never carries over.
+ */
+export async function recordWeaponStrike(actor: any, strike: WeaponStrike | null): Promise<void> {
+  if (!actor?.isOwner) return;
+  if (!strike) {
+    if (actor.getFlag?.(SYSTEM_ID, WEAPON_STRIKE_FLAG)) await actor.unsetFlag(SYSTEM_ID, WEAPON_STRIKE_FLAG);
+    return;
+  }
+  await actor.setFlag(SYSTEM_ID, WEAPON_STRIKE_FLAG, { ...strike });
+}
+
+/** Collects it for the damage roll, and clears it either way. */
+export async function consumeWeaponStrike(actor: any): Promise<WeaponStrike | null> {
+  const held = actor?.getFlag?.(SYSTEM_ID, WEAPON_STRIKE_FLAG);
+  if (!held) return null;
+  if (actor.isOwner) await actor.unsetFlag(SYSTEM_ID, WEAPON_STRIKE_FLAG);
+  const itemId = String(held.itemId ?? "");
+  const actorUuid = String(held.actorUuid ?? "");
+  if (!itemId || !actorUuid) return null;
+  return { actorUuid, itemId, name: String(held.name ?? "") };
+}
+
+/**
  * Strikes at a foe's weapon to break it (p. 401): an ordinary attack at
  * the penalty for the weapon's size, and "if you hit and your foe fails to
  * defend, roll your normal damage against his weapon".
