@@ -23,7 +23,7 @@ const tab = (id: string, icon: string): GmTabDef => ({
 });
 
 export const GM_SCREEN_TABS: readonly GmTabDef[] = [
-  tab("criticals", "fa-solid fa-burst"),
+  tab("criticalTables", "fa-solid fa-burst"),
   tab("tables", "fa-solid fa-table-list"),
   tab("wounds", "fa-solid fa-person"),
   tab("melee", "fa-solid fa-khanda"),

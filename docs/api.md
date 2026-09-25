@@ -3685,10 +3685,13 @@ module's title. For anything else:
 - **`gmScreen.registerTab({ module, key, label, icon? })`** adds a tab after
   the system's; its id is `<module>.<key>`, for `tab` above.
 
-Placing: `tab` is a tab's id (`criticals` since 1.158.0, `tables`, `wounds`, `melee`, `ranged`,
+Placing: `tab` is a tab's id (`criticalTables` since 1.158.0, `tables`, `wounds`, `melee`, `ranged`,
 `maneuvers`, `combat`, `afflictions`, `checks`, or a registered tab), and
 `after` the id of the section it follows; left out, or naming nothing on the
-tab, it goes at the end. `slot` fills one of the places the Basic Set leaves
+tab, it goes at the end. Since 1.158.0 a section placed `after` one of the
+Basic Set's goes on that section's tab, whichever tab it names, so it stays
+beside it when the system moves it (the critical tables moved from `tables`
+to `criticalTables` in 1.158.0). `slot` fills one of the places the Basic Set leaves
 for other books' tables, where the slot is on its tab: `aweConfusion` (Fright
 tab) and `postureHitLocations` (Afflictions tab). An empty slot shows only to
 the GM, as an outline. A module adds; it never replaces a Basic Set table.

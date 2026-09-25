@@ -9,11 +9,15 @@ import { SYSTEM_ID } from "../constants.js";
 import { setGmScreenOpener } from "./api.js";
 import { K } from "./sections/shared.js";
 import {
+  CURRENT_LAYOUT,
   GM_SCREEN_COLLAPSED,
   GM_SCREEN_HIDDEN_TABS,
+  GM_SCREEN_LAYOUT,
   GM_SCREEN_PLAYERS,
   GM_SCREEN_TAB,
+  hiddenTabs,
   mayOpen,
+  migrateHiddenTabs,
 } from "./settings.js";
 
 /** A player's open screen, redrawn or closed when the GM changes what players may see. */
@@ -73,6 +77,31 @@ export function registerGmScreen(): void {
     default: [],
     onChange: () => refreshPlayerScreens(),
   });
+  game.settings.register(SYSTEM_ID, GM_SCREEN_LAYOUT, {
+    scope: "world",
+    config: false,
+    type: Number,
+    default: 0,
+  });
+  // Once the world is loaded, the active GM moves the hidden list on to this
+  // version's tabs, so a tab split out of a hidden one stays hidden.
+  Hooks.once("ready", () => {
+    const g = game as any;
+    if (!g.user?.isGM || (g.users?.activeGM && !g.users.activeGM.isSelf)) return;
+    const layout = Number(g.settings.get(SYSTEM_ID, GM_SCREEN_LAYOUT)) || 0;
+    if (layout >= CURRENT_LAYOUT) return;
+    void (async () => {
+      await g.settings.set(
+        SYSTEM_ID,
+        GM_SCREEN_HIDDEN_TABS,
+        migrateHiddenTabs(hiddenTabs(), layout),
+      );
+      await g.settings.set(SYSTEM_ID, GM_SCREEN_LAYOUT, CURRENT_LAYOUT);
+    })().catch((error) =>
+      console.warn("gworld | the GM Screen's hidden tabs could not be moved on", error),
+    );
+  });
+
   game.settings.registerMenu(SYSTEM_ID, "gmScreenPlayerTabs", {
     name: `${K}.Setting.HiddenTabsMenu.Name`,
     label: `${K}.Setting.HiddenTabsMenu.Label`,
@@ -86,7 +115,7 @@ export function registerGmScreen(): void {
     scope: "client",
     config: false,
     type: String,
-    default: "criticals",
+    default: "criticalTables",
   });
   game.settings.register(SYSTEM_ID, GM_SCREEN_COLLAPSED, {
     scope: "client",

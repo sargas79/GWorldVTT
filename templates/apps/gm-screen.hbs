@@ -131,10 +131,10 @@
     {{!-- A plain 3d6 for whatever the GM needs rolled that no table covers. --}}
     {{#if isGM}}
       <div class="gs-generic">
-        <span class="gs-last gs-generic-last" hidden>{{localize "GWORLD.GmScreen.Last"}} <b></b></span>
+        <span class="gs-last gs-generic-last"{{#if (eq genericLast null)}} hidden{{/if}}>{{localize "GWORLD.GmScreen.Last"}} <b>{{genericLast}}</b></span>
         <button type="button" class="gs-dice" data-action="rollGeneric"
                 data-tooltip="{{localize 'GWORLD.GmScreen.GenericRollHint'}}" aria-label="{{localize 'GWORLD.GmScreen.GenericRollHint'}}">
-          <i class="fa-solid fa-dice" inert></i>{{localize "GWORLD.GmScreen.Dice.plain"}}6
+          <i class="fa-solid fa-dice" inert></i>{{localize "GWORLD.GmScreen.Dice.generic"}}
         </button>
       </div>
     {{/if}}

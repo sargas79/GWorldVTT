@@ -84,7 +84,7 @@ describe("the window's buttons", () => {
   it("puts the critical tables on a tab of their own, first", () => {
     const context = englishContext();
     const tabs = assembleScreen(context, { isGM: true });
-    expect(tabs.map((t) => t.id).slice(0, 2)).toEqual(["criticals", "tables"]);
+    expect(tabs.map((t) => t.id).slice(0, 2)).toEqual(["criticalTables", "tables"]);
     expect(tabs[0]!.sections.map((s) => s.id)).toEqual([
       "criticalHit",
       "criticalHeadBlow",
@@ -113,5 +113,9 @@ describe("the generic roll", () => {
     expect(bar).toMatch(
       /\{\{#if isGM\}\}\s*<div class="gs-generic">[\s\S]*data-action="rollGeneric"[\s\S]*\{\{\/if\}\}/,
     );
+    // Its own words, not the table dice's "3d" with a 6 stuck on.
+    expect(bar).toContain('{{localize "GWORLD.GmScreen.Dice.generic"}}');
+    // The last total is drawn from the context, so a redraw keeps it.
+    expect(bar).toContain("<b>{{genericLast}}</b>");
   });
 });

@@ -6,6 +6,24 @@ import { SYSTEM_ID } from "../constants.js";
 export const GM_SCREEN_PLAYERS = "gmScreenPlayers";
 /** World: the tabs players don't see. */
 export const GM_SCREEN_HIDDEN_TABS = "gmScreenHiddenTabs";
+/** World: which layout of tabs the hidden list was written for, for moving it on when tabs split. */
+export const GM_SCREEN_LAYOUT = "gmScreenLayout";
+
+/** The layout this version's tabs are: 1 since the critical tables got a tab of their own (1.158.0). */
+export const CURRENT_LAYOUT = 1;
+
+/**
+ * The hidden tabs, moved on to the current layout: a tab split out of one
+ * the GM hid starts hidden too, so nothing kept from players shows up on its
+ * new tab. The critical tables left Tables for Criticals in layout 1.
+ */
+export function migrateHiddenTabs(hidden: readonly string[], layout: number): string[] {
+  const out = [...hidden];
+  if (layout < 1 && out.includes("tables") && !out.includes("criticalTables"))
+    out.push("criticalTables");
+  return out;
+}
+
 /** Client: the tab the screen was last left on. */
 export const GM_SCREEN_TAB = "gmScreenTab";
 /** Client: the sections this user folded. */
@@ -30,7 +48,7 @@ export function hiddenTabs(): string[] {
 }
 
 export function lastTab(): string {
-  return String(read(GM_SCREEN_TAB, "criticals") || "criticals");
+  return String(read(GM_SCREEN_TAB, "criticalTables") || "criticalTables");
 }
 
 export function collapsedSections(): Record<string, boolean> {

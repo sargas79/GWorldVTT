@@ -97,6 +97,9 @@ export class GmScreen extends HandlebarsApplicationMixin(ApplicationV2) {
   /** Where to go once drawn. */
   #focus: ScreenFocus | null = null;
 
+  /** The last generic 3d6, for the chip beside its button. */
+  #genericLast: number | null = null;
+
   /** The last roll on each section, for the chip beside its dice. */
   #last = new Map<string, { row: string; total: number }>();
 
@@ -132,15 +135,19 @@ export class GmScreen extends HandlebarsApplicationMixin(ApplicationV2) {
     const context = foundryContext();
     this.#tabs = assembleScreen(context, { isGM: !this.readOnly, hiddenTabs: hiddenTabs() });
     if (!this.#tabs.some((tab) => tab.id === this.#tab))
-      this.#tab = this.#tabs[0]?.id ?? "criticals";
-    return screenView(this.#tabs, {
-      t: context.t,
-      active: this.#tab,
-      readOnly: this.readOnly,
-      query: this.#query,
-      collapsed: this.#collapsed,
-      last: this.#last,
-    });
+      this.#tab = this.#tabs[0]?.id ?? "criticalTables";
+    return {
+      ...screenView(this.#tabs, {
+        t: context.t,
+        active: this.#tab,
+        readOnly: this.readOnly,
+        query: this.#query,
+        collapsed: this.#collapsed,
+        last: this.#last,
+      }),
+      // Kept across a redraw, as each table's last roll is.
+      genericLast: this.#genericLast,
+    };
   }
 
   override async _onRender(context: object, options: object): Promise<void> {
@@ -249,12 +256,12 @@ export class GmScreen extends HandlebarsApplicationMixin(ApplicationV2) {
         speaker: ChatMessage.implementation.getSpeaker(),
         flavor: game.i18n.localize(`${K}.GenericRoll`),
       });
-      const chip = this.element.querySelector<HTMLElement>(".gs-generic-last");
-      const value = chip?.querySelector("b");
-      if (chip && value) {
-        value.textContent = String(roll.total);
-        chip.removeAttribute("hidden");
-      }
+      this.#genericLast = Number(roll.total);
+      // The window may have closed, or redrawn, while the dice rolled.
+      showChip(
+        this.element?.querySelector<HTMLElement>(".gs-generic-last") ?? null,
+        this.#genericLast,
+      );
     } finally {
       target.removeAttribute("disabled");
     }
@@ -275,13 +282,8 @@ export class GmScreen extends HandlebarsApplicationMixin(ApplicationV2) {
   #markRoll(section: string, row: string, total: number | null): void {
     if (total !== null) this.#last.set(section, { row, total });
     this.#markRow(section, row);
-    const card = this.#card(section);
-    const chip = card?.querySelector<HTMLElement>(".gs-last");
-    if (chip && total !== null) {
-      chip.removeAttribute("hidden");
-      const value = chip.querySelector("b");
-      if (value) value.textContent = String(total);
-    }
+    if (total !== null)
+      showChip(this.#card(section)?.querySelector<HTMLElement>(".gs-last") ?? null, total);
     this.#reveal(section, row);
   }
 
@@ -569,6 +571,14 @@ export class GmScreen extends HandlebarsApplicationMixin(ApplicationV2) {
     }
     if (changed && this.#query) this.#applySearch();
   }
+}
+
+/** Shows a roll's total in the "Last" chip beside its dice. */
+function showChip(chip: HTMLElement | null, total: number): void {
+  const value = chip?.querySelector("b");
+  if (!chip || !value) return;
+  value.textContent = String(total);
+  chip.removeAttribute("hidden");
 }
 
 /** Takes out the marks a search left. */
