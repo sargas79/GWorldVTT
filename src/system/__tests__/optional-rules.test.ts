@@ -59,8 +59,9 @@ describe("the rule catalogue", () => {
     // Familiarity is not optional in the book, but it is off until a table
     // keeps the list: with none kept, every weapon would be unfamiliar.
     // Modifying Dice + Adds is headed "Optional Rule" (Characters p. 269), and
-    // changes every damage figure a player already knows.
-    expect(off.sort()).toEqual(["bleeding", "damageToShields", "familiarity", "modifyingDiceAdds"]);
+    // changes every damage figure a player already knows. Study of attributes
+    // is a GM's option, not a book rule (Characters pp. 290, 292).
+    expect(off.sort()).toEqual(["bleeding", "damageToShields", "familiarity", "modifyingDiceAdds", "studyAttributes"]);
   });
 
   /**

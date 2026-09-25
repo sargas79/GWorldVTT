@@ -22,6 +22,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { everyActor } from "./every-actor.js";
 import { OPTIONAL_RULES_KEY } from "./optional-rules.js";
+import { learnableByName } from "../../tools/learnable-traits.mjs";
 
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
 
@@ -447,6 +448,33 @@ export function warnUncoveredData(): void {
   for (const [install, labels] of byInstall) {
     ui.notifications?.warn(game.i18n.format("GWORLD.Migration.Uncovered", { label: labels.join(", "), install }), { permanent: true });
   }
+}
+
+/** The system's step that flagged the learnable advantages already on sheets. */
+export const LEARNABLE_TRAITS_STEP = "learnable-traits";
+
+/**
+ * Flags the learnable advantages (Characters p. 294) that worlds already hold
+ * (since API 1.146.0). The compendium's copies carry `learnable` from 1.146.0
+ * on; a trait put on a sheet before that is flagged here, once, by its name or
+ * its base name -- "Enhanced Dodge 2" and "Weapon Master (Broadsword)" are the
+ * pack's Enhanced Dodge and Weapon Master. Owned traits, the world's own and
+ * those in unlocked compendia are all reached; a trait the GM has flagged by
+ * hand is left as it is. The step is recorded only when every save succeeded.
+ */
+export async function migrateLearnableTraits(): Promise<MigrationResult> {
+  const none = { skipped: false, changed: 0, failed: 0 };
+  if (!game.user?.isGM) return none;
+  if (hasMigrated(SYSTEM_ID, LEARNABLE_TRAITS_STEP)) return { ...none, skipped: true };
+  const entries: Array<{ save: (changes: object[]) => Promise<unknown>; change: object }> = [];
+  for (const { item, save } of await itemsEverywhere()) {
+    if (item?.type !== "trait" || item._source?.system?.learnable === true) continue;
+    if (!learnableByName(item.name)) continue;
+    entries.push({ save, change: { _id: item.id, "system.learnable": true } });
+  }
+  const result = await saveEach(entries, game.i18n.localize("GWORLD.Migration.Learnable"));
+  if (result.failed === 0) await recordMigration(SYSTEM_ID, LEARNABLE_TRAITS_STEP);
+  return { skipped: false, ...result };
 }
 
 /** What the API exposes. */

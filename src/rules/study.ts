@@ -49,3 +49,45 @@ export function studyPoints(options: {
   const points = Math.floor(total / rate);
   return { points, bankedHours: total - points * rate };
 }
+
+export interface StudyLevelsResult {
+  /** Levels gained, to go onto the attribute or trait studied. */
+  levels: number;
+  /** Character points those levels cost, for the ledger. */
+  points: number;
+  /** Hours toward the next level, to be banked on what was studied. */
+  bankedHours: number;
+}
+
+/**
+ * What a stretch of study is worth toward something bought by the level
+ * rather than by the point: an attribute, or an advantage that can be learned
+ * as if it were a skill (pp. 292, 294). A skill takes a point at a time; an
+ * attribute or a trait only moves when a whole level is paid for, so the
+ * hours are banked until they come to the next level's cost at 200 hours of
+ * learning a point.
+ *
+ * `levelCost(n)` is what the n-th level from here costs (0 first), or null
+ * when there is no such level. A level that costs nothing, or less, can't be
+ * studied toward and stops the count.
+ */
+export function studyLevels(options: {
+  hours: number;
+  method: StudyMethod;
+  /** Hours already banked toward the next level. */
+  banked?: number;
+  levelCost: (n: number) => number | null;
+}): StudyLevelsResult {
+  const rate = STUDY_HOURS_PER_POINT[options.method];
+  let total = Math.max(0, options.banked ?? 0) + Math.max(0, options.hours);
+  let levels = 0;
+  let points = 0;
+  for (;;) {
+    const cost = options.levelCost(levels);
+    if (cost === null || !Number.isFinite(cost) || cost <= 0 || total < cost * rate) break;
+    total -= cost * rate;
+    points += cost;
+    levels += 1;
+  }
+  return { levels, points, bankedHours: total };
+}

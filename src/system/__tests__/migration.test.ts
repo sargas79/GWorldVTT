@@ -164,3 +164,47 @@ describe("coverage", () => {
     expect((globals.game as any).settings.set).not.toHaveBeenCalled();
   });
 });
+
+/** Learnable advantages already on sheets (Characters p. 294; since API 1.146.0). */
+describe("migrateLearnableTraits", () => {
+  const trait = (id: string, name: string, learnable = false) => ({
+    id, uuid: `Actor.a1.Item.${id}`, type: "trait", name, _source: { system: { learnable } },
+  });
+
+  it("flags the learnable traits characters hold, by name or base name, once", async () => {
+    const api = await load();
+    const w = world();
+    w.actor.items = [
+      trait("t1", "Enhanced Dodge 2"),
+      trait("t2", "Weapon Master (Broadsword)"),
+      trait("t3", "G-Experience"),
+      trait("t4", "Enhanced Parry (Broadsword)"),
+      trait("t5", "Wealth"),
+      trait("t6", "Magery 3"),
+      trait("t7", "Combat Reflexes", true),
+      { id: "s1", uuid: "Actor.a1.Item.s1", type: "skill", name: "Fit", _source: { system: {} } },
+    ] as any;
+    const result = await api.migrateLearnableTraits();
+    expect(result).toEqual({ skipped: false, changed: 4, failed: 0 });
+    expect(w.embeddedUpdates.flat()).toEqual([
+      { _id: "t1", "system.learnable": true },
+      { _id: "t2", "system.learnable": true },
+      { _id: "t3", "system.learnable": true },
+      { _id: "t4", "system.learnable": true },
+    ]);
+    expect(api.hasMigrated("gworld", api.LEARNABLE_TRAITS_STEP)).toBe(true);
+    expect(await api.migrateLearnableTraits()).toEqual({ skipped: true, changed: 0, failed: 0 });
+  });
+
+  it("stays unrecorded when a save fails, and leaves a player's world alone", async () => {
+    const api = await load();
+    const w = world();
+    w.actor.items = [trait("t1", "Fit")] as any;
+    w.actor.updateEmbeddedDocuments.mockRejectedValueOnce(new Error("nope"));
+    expect(await api.migrateLearnableTraits()).toEqual({ skipped: false, changed: 0, failed: 1 });
+    expect(api.hasMigrated("gworld", api.LEARNABLE_TRAITS_STEP)).toBe(false);
+
+    (globals.game as any).user.isGM = false;
+    expect(await api.migrateLearnableTraits()).toEqual({ skipped: false, changed: 0, failed: 0 });
+  });
+});

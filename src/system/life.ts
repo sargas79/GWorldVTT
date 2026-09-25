@@ -16,8 +16,11 @@ import { CRITICAL_RAISE, jobRoll, type JobKind } from "../rules/jobs.js";
 import { setCondition } from "./conditions.js";
 import { skillLevelOf } from "./skill-level.js";
 import { resolveSuccess } from "../rules/success.js";
-import { studyPoints, type StudyMethod } from "../rules/study.js";
+import { studyLevels, studyPoints, type StudyMethod } from "../rules/study.js";
+import { ATTRIBUTE_COST_PER_LEVEL, BASIC_SPEED_STEP, SECONDARY_COST_PER_LEVEL } from "../rules/attributes.js";
+import { traitPoints } from "../rules/traits.js";
 import { callCombatHook } from "./combat-extensions.js";
+import { isRuleOn } from "./optional-rules.js";
 import { PROCEDURE_HOOKS } from "./procedure-extensions.js";
 
 const LIFE_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/life.hbs`;
@@ -89,10 +92,53 @@ export async function adjustCash(options: { actor: any; amount: number; note?: s
   });
 }
 
+/**
+ * The attributes and secondary characteristics study can raise (Characters
+ * pp. 290, 292), by the key the character's banked hours are kept under:
+ * where the bought figure is, what a level adds to it, and what it costs.
+ */
+export const STUDY_ATTRIBUTES = Object.freeze({
+  ST: { path: "system.attributes.ST", step: 1, cost: ATTRIBUTE_COST_PER_LEVEL.ST, label: "GWORLD.Attribute.ST" },
+  DX: { path: "system.attributes.DX", step: 1, cost: ATTRIBUTE_COST_PER_LEVEL.DX, label: "GWORLD.Attribute.DX" },
+  IQ: { path: "system.attributes.IQ", step: 1, cost: ATTRIBUTE_COST_PER_LEVEL.IQ, label: "GWORLD.Attribute.IQ" },
+  HT: { path: "system.attributes.HT", step: 1, cost: ATTRIBUTE_COST_PER_LEVEL.HT, label: "GWORLD.Attribute.HT" },
+  hp: { path: "system.purchased.hp", step: 1, cost: SECONDARY_COST_PER_LEVEL.hp, label: "GWORLD.Secondary.HP" },
+  will: { path: "system.purchased.will", step: 1, cost: SECONDARY_COST_PER_LEVEL.will, label: "GWORLD.Secondary.Will" },
+  per: { path: "system.purchased.per", step: 1, cost: SECONDARY_COST_PER_LEVEL.per, label: "GWORLD.Secondary.Per" },
+  fp: { path: "system.purchased.fp", step: 1, cost: SECONDARY_COST_PER_LEVEL.fp, label: "GWORLD.Secondary.FP" },
+  basicSpeed: {
+    path: "system.purchased.basicSpeed",
+    step: BASIC_SPEED_STEP,
+    cost: SECONDARY_COST_PER_LEVEL.basicSpeedQuarter,
+    label: "GWORLD.Secondary.BasicSpeed",
+  },
+  basicMove: { path: "system.purchased.basicMove", step: 1, cost: SECONDARY_COST_PER_LEVEL.basicMove, label: "GWORLD.Secondary.BasicMove" },
+});
+
+export type StudyAttribute = keyof typeof STUDY_ATTRIBUTES;
+
+/**
+ * What a stretch of study goes into (since API 1.146.0): a skill, an
+ * attribute or secondary characteristic, or an advantage learned as if it
+ * were a skill (Characters pp. 292, 294).
+ */
+export interface Studied {
+  kind: "skill" | "attribute" | "trait";
+  /** The skill or trait item; null for an attribute. */
+  item: any;
+  /** The attribute's key (`ST`, `DX`, `IQ`, `HT`, `hp`, `will`, `per`, `fp`, `basicSpeed`, `basicMove`); null otherwise. */
+  attribute: StudyAttribute | null;
+  /** What the card calls it. */
+  name: string;
+}
+
 /** What a `gworld.studyModifiers` listener is handed (since API 1.133.0). */
 export interface StudyModifiers {
   actor: any;
+  /** The skill item studied; null when the study is of an attribute or a trait (since API 1.146.0). */
   skill: any;
+  /** What is studied, whatever its kind (since API 1.146.0). Frozen. */
+  studied: Readonly<Studied>;
   method: StudyMethod;
   /** The hours of the clock spent, to read. */
   hours: number;
@@ -121,6 +167,58 @@ export function studyHoursCounted(context: StudyModifiers): { hours: number; mul
   return { hours, multiplier, lines };
 }
 
+/** Asks the listeners what the hours count for, with what is studied named. */
+function countStudy(actor: any, studied: Studied, hours: number, method: StudyMethod) {
+  return studyHoursCounted({
+    actor,
+    skill: studied.kind === "skill" ? studied.item : null,
+    studied: Object.freeze({ ...studied }),
+    method,
+    hours,
+    multiplier: 1,
+    lines: [],
+  });
+}
+
+/** The card for a stretch of study, whatever went into it. */
+async function postStudy(options: {
+  actor: any;
+  name: string;
+  hours: number;
+  method: StudyMethod;
+  counted: { hours: number; multiplier: number; lines: string[] };
+  outcome: string;
+  banked: number;
+  good: boolean;
+}): Promise<void> {
+  const { counted } = options;
+  await post(options.actor, {
+    kind: game.i18n.localize("GWORLD.Life.Study"),
+    detail: game.i18n.format("GWORLD.Life.Studied", {
+      hours: options.hours,
+      skill: options.name,
+      method: game.i18n.localize(`GWORLD.Life.Method.${options.method}`),
+    }),
+    lines: [
+      // The card says what the hours were worth when a module changed it,
+      // so the table can see why the points don't match the clock.
+      ...(counted.multiplier !== 1 ? [game.i18n.format("GWORLD.Life.StudyCounted", { hours: counted.hours })] : []),
+      ...counted.lines,
+      options.outcome,
+      game.i18n.format("GWORLD.Life.Banked", { hours: options.banked }),
+    ],
+    good: options.good,
+  });
+}
+
+/** Points learned go onto the ledger as an award: a point learned is a point earned. */
+function studyAward(actor: any, points: number, name: string): Record<string, unknown> {
+  if (points <= 0) return {};
+  const awards = [...(actor.system?.points?.awards ?? [])];
+  awards.push({ points, note: game.i18n.format("GWORLD.Life.StudyAward", { skill: name }), at: Date.now() });
+  return { "system.points.awards": awards };
+}
+
 /**
  * Studies a skill for a stretch of hours (Characters p. 292).
  *
@@ -139,14 +237,8 @@ export async function studySkill(options: {
   const skill = actor.items?.get(options.skillId);
   if (!skill || skill.type !== "skill") return 0;
 
-  const counted = studyHoursCounted({
-    actor,
-    skill,
-    method: options.method,
-    hours: options.hours,
-    multiplier: 1,
-    lines: [],
-  });
+  const name = String(skill.name);
+  const counted = countStudy(actor, { kind: "skill", item: skill, attribute: null, name }, options.hours, options.method);
   const result = studyPoints({
     hours: counted.hours,
     method: options.method,
@@ -159,34 +251,175 @@ export async function studySkill(options: {
   }
   await skill.update(changes);
 
-  if (result.points > 0) {
-    const awards = [...(actor.system?.points?.awards ?? [])];
-    awards.push({
-      points: result.points,
-      note: game.i18n.format("GWORLD.Life.StudyAward", { skill: String(skill.name) }),
-      at: Date.now(),
-    });
-    await actor.update({ "system.points.awards": awards });
-  }
+  if (result.points > 0) await actor.update(studyAward(actor, result.points, name));
 
-  await post(actor, {
-    kind: game.i18n.localize("GWORLD.Life.Study"),
-    detail: game.i18n.format("GWORLD.Life.Studied", {
-      hours: options.hours,
-      skill: String(skill.name),
-      method: game.i18n.localize(`GWORLD.Life.Method.${options.method}`),
-    }),
-    lines: [
-      // The card says what the hours were worth when a module changed it,
-      // so the table can see why the points don't match the clock.
-      ...(counted.multiplier !== 1 ? [game.i18n.format("GWORLD.Life.StudyCounted", { hours: counted.hours })] : []),
-      ...counted.lines,
-      result.points > 0
-        ? game.i18n.format("GWORLD.Life.PointsEarned", { points: result.points })
-        : game.i18n.localize("GWORLD.Life.NoPointYet"),
-      game.i18n.format("GWORLD.Life.Banked", { hours: result.bankedHours }),
-    ],
+  await postStudy({
+    actor,
+    name,
+    hours: options.hours,
+    method: options.method,
+    counted,
+    outcome: result.points > 0
+      ? game.i18n.format("GWORLD.Life.PointsEarned", { points: result.points })
+      : game.i18n.localize("GWORLD.Life.NoPointYet"),
+    banked: result.bankedHours,
     good: result.points > 0,
+  });
+
+  return result.points;
+}
+
+/** The GM's option that lets study raise attributes (since API 1.146.0). */
+export const STUDY_ATTRIBUTES_RULE = "studyAttributes";
+
+/**
+ * Studies an attribute or secondary characteristic for a stretch of hours.
+ *
+ * This is a GM's option, not a book rule: the book raises attributes with
+ * earned points (Characters p. 290) and lets study reach skills, spells,
+ * techniques and some advantages (p. 292). With the `studyAttributes` switch
+ * on, the hours count as for a skill, 200 of learning a point, but the score
+ * only moves when a whole level is paid for at the p. 290 price -- ten points
+ * of HT, five of Will. The hours short of that are banked on the character,
+ * and the level's points go onto the ledger as an award. Returns the points
+ * the levels gained cost; 0, with nothing done, while the switch is off.
+ */
+export async function studyAttribute(options: {
+  actor: any;
+  attribute: StudyAttribute;
+  hours: number;
+  method: StudyMethod;
+}): Promise<number> {
+  const { actor } = options;
+  if (!isRuleOn(STUDY_ATTRIBUTES_RULE)) return 0;
+  if (!mayChange(actor)) return 0;
+  if (!Object.prototype.hasOwnProperty.call(STUDY_ATTRIBUTES, options.attribute)) return 0;
+  const spec = STUDY_ATTRIBUTES[options.attribute];
+
+  const name = game.i18n.localize(spec.label);
+  const counted = countStudy(
+    actor,
+    { kind: "attribute", item: null, attribute: options.attribute, name },
+    options.hours,
+    options.method,
+  );
+  const result = studyLevels({
+    hours: counted.hours,
+    method: options.method,
+    banked: Number(actor.system?.studyHours?.[options.attribute]) || 0,
+    levelCost: () => spec.cost,
+  });
+
+  const changes: Record<string, unknown> = { [`system.studyHours.${options.attribute}`]: result.bankedHours };
+  if (result.levels > 0) {
+    const bought = Number(foundry.utils.getProperty(actor, spec.path)) || 0;
+    changes[spec.path] = bought + result.levels * spec.step;
+    Object.assign(changes, studyAward(actor, result.points, name));
+  }
+  await actor.update(changes);
+
+  await postStudy({
+    actor,
+    name,
+    hours: options.hours,
+    method: options.method,
+    counted,
+    outcome: result.levels > 0
+      ? game.i18n.format("GWORLD.Life.LevelsEarned", { name, amount: result.levels * spec.step, points: result.points })
+      : game.i18n.localize("GWORLD.Life.NoLevelYet"),
+    banked: result.bankedHours,
+    good: result.levels > 0,
+  });
+
+  return result.points;
+}
+
+/**
+ * What the next levels of a trait cost, one at a time: the change in what it
+ * is billed, modifiers and all, so the award keeps the ledger even. Null past
+ * the book's last level or the table's end. A step that costs 0 points or
+ * less -- two levels a cost table prices the same -- stops study there
+ * (`studyLevels`), since no hours could be said to pay for it.
+ */
+function traitLevelCost(trait: any): (n: number) => number | null {
+  const system = trait?.system ?? {};
+  const table: number[] = Array.isArray(system.costTable) ? system.costTable : [];
+  const perLevel = Number(system.pointsPerLevel) || 0;
+  const max = Number(system.maxLevels) || 0;
+  const levels = Number(system.levels) || 0;
+  const cost = (at: number) =>
+    traitPoints({
+      points: Number(system.points) || 0,
+      levels: at,
+      pointsPerLevel: perLevel,
+      costTable: table,
+      modifiers: (system.modifiers ?? []).map((m: { value: unknown }) => Number(m?.value) || 0),
+      selfControl: system.selfControl ?? null,
+    });
+  return (n) => {
+    const at = levels + n;
+    if (table.length === 0 && perLevel <= 0) return null;
+    if (table.length > 0 && at >= table.length) return null;
+    if (max > 0 && at >= max) return null;
+    return cost(at + 1) - cost(at);
+  };
+}
+
+/**
+ * Whether study can raise a trait: one flagged `learnable` (Learnable
+ * Advantages, Characters p. 294), an advantage or perk bought by the level,
+ * with a level still to go that costs something.
+ */
+export function studiableTrait(trait: any): boolean {
+  if (trait?.type !== "trait" || trait.system?.learnable !== true) return false;
+  if (!["advantage", "perk"].includes(String(trait.system?.category))) return false;
+  const next = traitLevelCost(trait)(0);
+  return next !== null && next > 0;
+}
+
+/**
+ * Studies an advantage learned as if it were a skill (Characters p. 294) for a
+ * stretch of hours: the trait goes up a level when the hours come to that
+ * level's cost at 200 hours of learning a point. The hours short of it are
+ * banked on the trait, and the level's points go onto the ledger as an award.
+ * Returns the points the levels gained cost.
+ */
+export async function studyTrait(options: {
+  actor: any;
+  traitId: string;
+  hours: number;
+  method: StudyMethod;
+}): Promise<number> {
+  const { actor } = options;
+  if (!mayChange(actor)) return 0;
+  const trait = actor.items?.get(options.traitId);
+  if (!studiableTrait(trait)) return 0;
+
+  const name = String(trait.name);
+  const counted = countStudy(actor, { kind: "trait", item: trait, attribute: null, name }, options.hours, options.method);
+  const result = studyLevels({
+    hours: counted.hours,
+    method: options.method,
+    banked: Number(trait.system?.studyHours) || 0,
+    levelCost: traitLevelCost(trait),
+  });
+
+  const changes: Record<string, unknown> = { "system.studyHours": result.bankedHours };
+  if (result.levels > 0) changes["system.levels"] = (Number(trait.system?.levels) || 0) + result.levels;
+  await trait.update(changes);
+  if (result.levels > 0) await actor.update(studyAward(actor, result.points, name));
+
+  await postStudy({
+    actor,
+    name,
+    hours: options.hours,
+    method: options.method,
+    counted,
+    outcome: result.levels > 0
+      ? game.i18n.format("GWORLD.Life.LevelsEarned", { name, amount: result.levels, points: result.points })
+      : game.i18n.localize("GWORLD.Life.NoLevelYet"),
+    banked: result.bankedHours,
+    good: result.levels > 0,
   });
 
   return result.points;

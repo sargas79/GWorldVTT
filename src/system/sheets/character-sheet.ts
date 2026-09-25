@@ -62,6 +62,12 @@ import {
   payCostOfLiving,
   rollAging,
   studySkill,
+  studyAttribute,
+  studyTrait,
+  studiableTrait,
+  STUDY_ATTRIBUTES,
+  STUDY_ATTRIBUTES_RULE,
+  type StudyAttribute,
   workAMonth,
   adjustCash,
   jobRollLevel,
@@ -3505,24 +3511,34 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   }
 
   /**
-   * Hours with a teacher, a book or the job (Characters p. 292).
+   * Hours with a teacher, a book or the job (Characters pp. 292, 294).
    *
    * The skills offered are the ones on the sheet: study improves a skill the
-   * character already has some of, and a new one is added first.
+   * character already has some of, and a new one is added first. So are the
+   * learnable advantages bought by the level with a level still to go
+   * (p. 294), and, where the GM has switched on `studyAttributes`, the
+   * attributes and secondary characteristics; study raises those a level at
+   * a time.
    */
   static async #onStudy(this: GWorldCharacterSheet) {
     if (!isRuleOn("study")) return;
-    const skills = [...this.actor.items]
-      .filter((item: any) => item.type === "skill")
-      .map((item: any) => ({ id: String(item.id), name: String(item.name), banked: Number(item.system?.studyHours) || 0 }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-    if (skills.length === 0) {
-      ui.notifications?.warn(game.i18n.localize("GWORLD.Life.NoSkills"));
-      return;
-    }
-    const asked = await promptForStudy(skills);
+    const subjectOf = (item: any) => ({ id: String(item.id), name: String(item.name), banked: Number(item.system?.studyHours) || 0 });
+    const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
+    const skills = [...this.actor.items].filter((item: any) => item.type === "skill").map(subjectOf).sort(byName);
+    const traits = [...this.actor.items].filter((item: any) => studiableTrait(item)).map(subjectOf).sort(byName);
+    const banked = (this.actor.system as any)?.studyHours ?? {};
+    const keys = isRuleOn(STUDY_ATTRIBUTES_RULE) ? (Object.keys(STUDY_ATTRIBUTES) as StudyAttribute[]) : [];
+    const attributes = keys.map((key) => ({
+      id: key,
+      name: game.i18n.localize(STUDY_ATTRIBUTES[key].label),
+      banked: Number(banked[key]) || 0,
+    }));
+    const asked = await promptForStudy({ skills, attributes, traits });
     if (!asked) return;
-    await studySkill({ actor: this.actor, ...asked });
+    const { hours, method } = asked;
+    if (asked.kind === "attribute") await studyAttribute({ actor: this.actor, attribute: asked.id as StudyAttribute, hours, method });
+    else if (asked.kind === "trait") await studyTrait({ actor: this.actor, traitId: asked.id, hours, method });
+    else await studySkill({ actor: this.actor, skillId: asked.id, hours, method });
   }
 
   /** A month at the job (Campaigns p. 517). */

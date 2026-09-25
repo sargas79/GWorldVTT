@@ -478,6 +478,7 @@
       "Progress": "{label}: {done} of {total}",
       "ItemType": "Moving items from {from} to {to}",
       "Fields": "Moving {document} fields",
+      "Learnable": "Flagging learnable advantages",
       "Uncovered": "This world holds {label}, which the GURPS system has stopped defining or will stop defining. Install and enable {install}, and load the world with it under a system release that still defines this data before updating the system, or that data will be lost."
     },
     "Api": {
@@ -686,6 +687,10 @@
         "study": {
           "Name": "Improvement through study",
           "Hint": "Hours of study become character points in the skill studied: 200 with a teacher, 400 alone or on the job."
+        },
+        "studyAttributes": {
+          "Name": "Study raises attributes (GM option)",
+          "Hint": "Not a rule of the book, which raises attributes only with earned points: the Study tool also offers the attributes and secondary characteristics, which go up a level once the hours pay for it at 200 hours a point."
         },
         "jobs": {
           "Name": "Jobs and cost of living",
@@ -1369,6 +1374,8 @@
       "Power": "Power this belongs to",
       "PowerHint": "The power an ability belongs to, as its book names it (Bioenhancement, Mysticism, ESP). The Basic Set's psi abilities are recognised by their power modifier and can leave this blank. Tick the box on the power's Talent; its maximum level is where the GM's permission starts.",
       "PowerTalent": "This is the power's Talent",
+      "Learnable": "Can be learned through study",
+      "LearnableHint": "Some advantages can be learned as if they were skills (Characters p. 294), and the Study tool offers only those, a level at a time. The Basic Set's come flagged; the GM ticks the box for another.",
       "TalentSkillsHint": "Fill this in for a Talent and each skill named gets +1 per level; a specialty counts as its skill. The Basic Set's Talents are read by name when this is empty.",
       "CostTableHint": "A few traits are priced from a table rather than at a flat rate per level: Wealth runs 10/20/30/50/75. Fill this in and it replaces the points and per-level figures. Leave it empty for the great majority, which are priced evenly.",
       "TabledNote": "priced from the table",
@@ -3505,7 +3512,7 @@
     },
     "Life": {
       "Study": "Study",
-      "StudyHint": "200 hours of learning make a point: an hour of instruction is an hour, intensive training counts double, self-teaching counts half and work a quarter (Characters pp. 292-293). Hours short of a point are banked on the skill.",
+      "StudyHint": "200 hours of learning make a point: an hour of instruction is an hour, intensive training counts double, self-teaching counts half and work a quarter (Characters pp. 292-293). Hours short of a point are banked on the skill. A learnable advantage (Characters p. 294), or an attribute where the GM allows it, goes up when the hours pay for a whole level, and banks the rest.",
       "StudyAward": "Study: {skill}",
       "Studied": "{hours} hours of {method} on {skill}",
       "Method": {
@@ -3515,14 +3522,19 @@
         "onTheJob": "work"
       },
       "Skill": "Skill",
+      "Subject": "Study",
+      "Skills": "Skills",
+      "Attributes": "Attributes",
+      "Traits": "Advantages",
       "Hours": "Hours",
       "How": "How",
       "PointsEarned": "{points} character point(s) into the skill",
       "NoPointYet": "Not a whole point yet",
+      "LevelsEarned": "{name} +{amount} ({points} character points)",
+      "NoLevelYet": "Not a whole level yet",
       "StudyCounted": "Counted as {hours} hours",
       "Banked": "{hours} hours banked toward the next",
       "BankedShort": "{hours} h banked",
-      "NoSkills": "Nothing to study: add a skill first",
       "Money": "Money",
       "Cash": "Cash",
       "StartingWealth": "started with",

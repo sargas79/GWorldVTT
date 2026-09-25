@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { agingModifier, agingRoll, agingRollsPerYear, diesOfAge, lifespanFrom } from "../aging.js";
 import { jobRoll } from "../jobs.js";
 import { culturePenalty, languagePenalty } from "../languages.js";
-import { studyPoints } from "../study.js";
+import { studyLevels, studyPoints } from "../study.js";
 import {
   costOfLiving, gearCost, monthlyIncomeFromTraits, monthlyPay, startingWealth, statusFrom,
   wealthFrom, wealthMultiplier,
@@ -21,6 +21,19 @@ describe("study", () => {
 
   it("counts the hours already banked", () => {
     expect(studyPoints({ hours: 100, method: "education", banked: 150 })).toEqual({ points: 1, bankedHours: 50 });
+  });
+
+  it("raises an attribute or a trait only by the whole level, banking the rest (pp. 292, 294)", () => {
+    // A level of HT is 10 points: 2,000 hours of instruction.
+    expect(studyLevels({ hours: 1999, method: "education", levelCost: () => 10 })).toEqual({ levels: 0, points: 0, bankedHours: 1999 });
+    expect(studyLevels({ hours: 1500, method: "intensive", banked: 600, levelCost: () => 10 }))
+      .toEqual({ levels: 2, points: 20, bankedHours: 100 });
+    // Uneven steps, and no level past the last.
+    const steps = [5, 10];
+    expect(studyLevels({ hours: 5000, method: "education", levelCost: (n) => steps[n] ?? null }))
+      .toEqual({ levels: 2, points: 15, bankedHours: 2000 });
+    // A level that costs nothing can't be studied toward.
+    expect(studyLevels({ hours: 5000, method: "education", levelCost: () => 0 })).toEqual({ levels: 0, points: 0, bankedHours: 5000 });
   });
 });
 
