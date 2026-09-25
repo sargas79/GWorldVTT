@@ -43,21 +43,31 @@ export async function chargeBattleFatigue(combat: any): Promise<void> {
   // Who fought, read before anything is awaited: the combat's end clears the
   // marks the attack and defense rolls left.
   const combatId = String(combat?.id ?? "");
-  const fighters: any[] = [];
-  const idle: string[] = [];
+  const everyone: any[] = [];
+  const marked = new Set<any>();
+  let anyMarked = false;
   const seen = new Set<string>();
   for (const combatant of combat?.combatants ?? []) {
     const actor = combatant?.actor;
-    if (!actor?.isOwner) continue;
+    if (!actor) continue;
+    // Anyone's mark counts, owned or not: it says the table's rolls reached
+    // the system in this combat.
+    const fought = combatsFoughtIn(actor).includes(combatId);
+    anyMarked ||= fought;
+    if (!actor.isOwner) continue;
     const key = String(actor.uuid ?? actor.id ?? "");
     if (!key || seen.has(key)) continue;
     seen.add(key);
     if (!Number.isFinite(Number(actor.system?.fp?.value))) continue;
-    // "Those who make no attack or defense rolls during the fight are exempt
-    // from this fatigue."
-    if (combatsFoughtIn(actor).includes(combatId)) fighters.push(actor);
-    else idle.push(String(actor.name ?? ""));
+    everyone.push(actor);
+    if (fought) marked.add(actor);
   }
+  // "Those who make no attack or defense rolls during the fight are exempt
+  // from this fatigue." Only where somebody's rolls were seen at all: a
+  // combat fought with the table's own dice leaves no marks, and then
+  // everyone pays, as they did before the exemption.
+  const fighters = anyMarked ? everyone.filter((actor) => marked.has(actor)) : everyone;
+  const idle = anyMarked ? everyone.filter((actor) => !marked.has(actor)).map((actor) => String(actor.name ?? "")) : [];
 
   const charged: string[] = [];
   for (const actor of fighters) {

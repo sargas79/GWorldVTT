@@ -2056,7 +2056,10 @@ Two fields a module may read (since 1.62.0):
     fighter's encumbrance when the combat ends. Before 1.147.0 it was a flat
     1 FP. It is the `battle` part (below), whose `fp` is that figure.
   - *Only those who fought.* A combatant who made no attack or defense roll
-    in the combat pays nothing, and the card lists them as exempt. Every
+    in the combat pays nothing, and the card lists them as exempt -- but
+    only where at least one combatant carries a mark for that combat. Where
+    nobody does (a table rolling physical dice, a fight rolled entirely
+    through a module's own dice), everyone pays, as before 1.147.0. Every
     success roll of kind `attack` or `defense` (every roll whose
     `gworld.afterSuccessRoll` context has that `kind`, a defense a listener
     settled included) marks the roller as having fought in each started

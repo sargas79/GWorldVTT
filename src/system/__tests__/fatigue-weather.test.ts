@@ -313,6 +313,15 @@ describe("a battle's fatigue by encumbrance, for those who fought", () => {
     expect(card).toMatch(/BattleFatigue\.Exempt:[^<]*Bystander, Elsewhere/);
   });
 
+  it("charges everyone where nobody in the combat carries a mark, as a table rolling its own dice leaves none", async () => {
+    const { cards } = foundryWith();
+    const first = character("First", { fought: [] });
+    const second = character("Second", { fought: ["C2"] });
+    await chargeBattleFatigue({ id: "C1", round: 30, combatants: [{ actor: first }, { actor: second }] });
+    expect([first, second].map((a) => a.system.fp.value)).toEqual([9, 9]);
+    expect(String(cards[0]?.content)).not.toContain("BattleFatigue.Exempt");
+  });
+
   it("marks an attack or defense roller as having fought in the started combats they are in", async () => {
     foundryWith();
     const actor = character("Duelist", { fought: [] });
