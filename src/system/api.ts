@@ -599,9 +599,9 @@ const items = {
    * Takes `shots` off a ranged mode for a module's own procedure (since
    * 1.155.0), as an attack spends them: never below 0, across a shared
    * magazine, and nothing where Infinite Ammunition keeps the count. Fires
-   * `gworld.afterShots` with `kind: "module"` and `reason`. Returns the new
-   * count, or null where the mode keeps no count or the user doesn't own the
-   * item.
+   * `gworld.afterShots` with `kind: "module"` and `reason` for the shots
+   * actually fired, and not where none were. Returns the new count, or null
+   * where the mode keeps no count or the user doesn't own the item.
    */
   spendShots(item: any, modeIndex: number, shots: number, options: { reason?: string } = {}): Promise<number | null> {
     return spendModeShots(item, modeIndex, shots, options);

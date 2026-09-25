@@ -300,7 +300,8 @@
         "HeartAttackSurvives": "If survived: {hp} HP"
       },
       "PastHalfDamage": "Past 1/2D",
-      "OutsideRadius": "Beyond its {yards} yards, and left out: {names}"
+      "OutsideRadius": "Beyond its {yards} yards, and left out: {names}",
+      "RadiusUnmeasured": "No template placed for its {yards}-yard area: every target resists, and the GM leaves out anyone beyond it"
     },
     "Slam": {
       "Action": "Slam",
@@ -1539,7 +1540,7 @@
       "SpecialDamageShort": "spec.",
       "SpecialDamageHint": "The table prints “spec.”: a net entangles, a lasso catches. The attack rolls to hit and its own rules say what a hit does.",
       "Surge": "Surge",
-      "SurgeHint": "Burning damage with the Surge modifier (Characters p. 105), doubled against anything electrical.",
+      "SurgeHint": "Surge (Characters p. 105): an electrical surge that can disable electronics or anything with the Electrical disadvantage; a critical hit knocks out a character with Electrical (p. 134).",
       "Incendiary": "Incendiary",
       "IncendiaryHint": "A secondary flame effect that can ignite volatile material (Characters p. 104). The card checks the victim's clothes as burning damage would.",
       "Radiation": "Radiation",

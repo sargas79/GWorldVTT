@@ -129,6 +129,12 @@ export const FLINCH_NEXT_TURN_ROLLS = ["DX", "vision", "hearing", "tasteSmell", 
  * defenses that turn" -- until the victim's own turn comes round -- and -2 "to
  * any DX or Sense roll on his next turn", through the end of it; blindness
  * lasts its 1d seconds.
+ *
+ * An approximation: a timed condition can't wait to begin, nor end when the
+ * combat turn passes, so the defense penalty lasts until the victim's own turn
+ * begins (not only through the thrower's turn), and the DX and Sense penalty
+ * begins at once rather than at the victim's next turn. Both are gone by the
+ * end of that turn, as the page has it.
  */
 export function liquidEffects(result: LiquidResult): LiquidEffect[] {
   if (result.blinded) {

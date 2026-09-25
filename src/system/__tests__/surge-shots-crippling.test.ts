@@ -87,6 +87,17 @@ describe("items.spendShots", () => {
     expect(heard[0].context).toMatchObject({ kind: "module", reason: "barrage", shots: 3, fired: 3, modeIndex: 0, targets: 0 });
   });
 
+  it("tells of only the shots the mode held, and nothing for an empty mode", async () => {
+    const item = rifle(2);
+    expect(await spendModeShots(item, 0, 5)).toBe(0);
+    expect(heard.map((h) => h.context.fired)).toEqual([2]);
+    expect(await spendModeShots(item, 0, 5)).toBe(0);
+    expect(heard).toHaveLength(1);
+    // Infinite Ammunition fires every one and keeps the count.
+    await spendModeShots(rifle(20, { infinite: true }), 0, 5);
+    expect(heard[1].context.fired).toBe(5);
+  });
+
   it("keeps the count under Infinite Ammunition", async () => {
     const item = rifle(20, { infinite: true });
     expect(await spendModeShots(item, 0, 5)).toBe(20);
@@ -145,10 +156,23 @@ describe("a physician's TL on a crippled part (Campaigns p. 422)", () => {
     expect(crippledParts(actor)[0]).not.toHaveProperty("treatedAtTl");
   });
 
-  it("reads the die back from the months where it wasn't kept, never under a month", () => {
+  it("reads the die back from the months where it wasn't kept, held to 1-6, never under a month", () => {
     expect(treatedMonths({ months: 2, treatedAtTl: 7 }, null)).toBe(5);
     expect(treatedMonths({ months: 1 }, 7)).toBe(1);
+    expect(treatedMonths({ months: 10 }, 7)).toBe(3);
     expect(treatedMonths({ months: null }, 7)).toBeNull();
+  });
+
+  it("keeps months a caller gave as given, with no TL to take off again", async () => {
+    foundryAt(0);
+    const actor = character();
+    const given = await cripple(actor, "arm", { duration: "lasting", months: 4, treatedAtTl: 7 });
+    expect(given).toMatchObject({ months: 4 });
+    expect(given).not.toHaveProperty("treatedAtTl");
+    expect(given).not.toHaveProperty("roll");
+    // The physician's relief comes off the 4 once, and the die is kept from then on.
+    expect(await treatCrippled(actor, "arm", { treatedAtTl: 7 })).toMatchObject({ months: 1, roll: 4, treatedAtTl: 7 });
+    expect(await treatCrippled(actor, "arm", { treatedAtTl: 6 })).toMatchObject({ months: 2, roll: 4, treatedAtTl: 6 });
   });
 
   it("keeps the TL on an undecided part for when it is settled", async () => {

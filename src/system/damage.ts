@@ -140,7 +140,7 @@ export interface IncomingDamage {
    * injury -- what gets through DR bruises nobody further.
    */
   kineticOnly?: boolean;
-  /** Surge (Characters p. 105): burning damage that does double to anything electrical, for the modules that read it (since API 1.63.0). */
+  /** Surge (Characters p. 105): an electrical surge that can disable electronics or anything with Electrical (p. 134); since API 1.63.0. */
   surge?: boolean;
   /**
    * A tight-beam burn (Campaigns p. 399; since API 1.97.0): a laser rather

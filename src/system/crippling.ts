@@ -171,6 +171,7 @@ export async function cripple(actor: any, location: string, options: CripplingLe
   if (duration !== "undecided" && !DURATIONS.includes(duration)) return null;
   const injury = options.injury !== false;
   const since = worldTime();
+  const length = await lengthOf(duration, injury, since, options);
   const part: CrippledPart = {
     id: foundry.utils.randomID(),
     location: String(location),
@@ -178,8 +179,8 @@ export async function cripple(actor: any, location: string, options: CripplingLe
     injury,
     label: String(options.label ?? ""),
     since,
-    ...treatment(options.treatedAtTl),
-    ...(await lengthOf(duration, injury, since, options)),
+    ...keptTreatment(duration, options.treatedAtTl, length),
+    ...length,
   };
   await actor.setFlag(SYSTEM_ID, CRIPPLED_FLAG, [...crippledParts(actor), part]);
   return part;
@@ -202,11 +203,14 @@ export async function settleCrippling(actor: any, which: string, options: Crippl
   if (!part) return null;
   // A physician recorded on the part before it was settled treats it still (since 1.155.0).
   const treatedAtTl = options.treatedAtTl ?? part.treatedAtTl ?? null;
+  const length = await lengthOf(options.duration, part.injury, part.since, { ...options, treatedAtTl });
+  const untreated: CrippledPart = { ...part };
+  delete untreated.treatedAtTl;
   const settled: CrippledPart = {
-    ...part,
+    ...untreated,
     duration: options.duration,
-    ...treatment(treatedAtTl),
-    ...(await lengthOf(options.duration, part.injury, part.since, { ...options, treatedAtTl })),
+    ...keptTreatment(options.duration, treatedAtTl, length),
+    ...length,
   };
   parts[index] = settled;
   await actor.setFlag(SYSTEM_ID, CRIPPLED_FLAG, parts);
@@ -220,15 +224,36 @@ function treatment(treatedAtTl: unknown): { treatedAtTl?: number } {
 }
 
 /**
+ * The treating TL a part keeps (since 1.155.0). A lasting part keeps it only
+ * where its months came from a die the relief was taken off, so that a later
+ * treatment can work from that die; months a caller gave stand as given, with
+ * no TL beside them to be taken off again.
+ */
+function keptTreatment(duration: CrippledDuration, treatedAtTl: unknown, length: { roll?: number }): { treatedAtTl?: number } {
+  if (duration === "lasting" && length.roll === undefined) return {};
+  return treatment(treatedAtTl);
+}
+
+/**
  * The months a lasting crippling takes once a physician at this medical TL
  * treats it (p. 422; since 1.155.0): its 1d again, less the new relief, never
  * under a month. A part whose die wasn't kept is read back from its months
  * and the relief it had.
  */
 export function treatedMonths(part: Pick<CrippledPart, "months" | "roll" | "treatedAtTl">, treatedAtTl: number | null): number | null {
+  const roll = crippledDie(part);
+  return roll === null ? null : cripplingMonths({ roll, treatedAtTl });
+}
+
+/**
+ * The 1d behind a lasting crippling's months (since 1.155.0): the one kept,
+ * or else read back from the months and any relief recorded -- which for a
+ * part recorded before 1.155.0, or given its months, is none. Held to 1-6.
+ */
+export function crippledDie(part: Pick<CrippledPart, "months" | "roll" | "treatedAtTl">): number | null {
   if (part.months === null) return null;
-  const roll = typeof part.roll === "number" ? part.roll : part.months + cripplingRelief(part.treatedAtTl ?? null);
-  return cripplingMonths({ roll, treatedAtTl });
+  const die = typeof part.roll === "number" ? part.roll : part.months + cripplingRelief(part.treatedAtTl ?? null);
+  return Math.min(6, Math.max(1, Math.round(die)));
 }
 
 /**
@@ -249,8 +274,11 @@ export async function treatCrippled(actor: any, which: string, options: { treate
   const treated: CrippledPart = { ...part, ...kept };
   if (kept.treatedAtTl === undefined) delete treated.treatedAtTl;
   if (part.duration === "lasting") {
-    const months = treatedMonths(part, kept.treatedAtTl ?? null);
-    if (months !== null) {
+    const roll = crippledDie(part);
+    if (roll !== null) {
+      const months = cripplingMonths({ roll, treatedAtTl: kept.treatedAtTl ?? null });
+      // The die is kept, so a later treatment works from it and not from these months.
+      treated.roll = roll;
       treated.months = months;
       treated.healsAt = part.since + months * SECONDS_PER_MONTH;
     }

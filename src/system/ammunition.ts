@@ -648,8 +648,9 @@ export async function refundShots(item: any, modeIndex: number, shots: number): 
  * a card of rounds fired that no attack roll made. As an attack spends them:
  * never below 0, across a shared magazine, and nothing where Infinite
  * Ammunition keeps the count. Fires `gworld.afterShots` with `kind: "module"`
- * and the `reason` given. Returns the new count, or null where the mode keeps
- * none or the user can't change it.
+ * and the `reason` given, for the shots actually fired, and not where none
+ * were. Returns the new count, or null where the mode keeps none or the user
+ * can't change it.
  */
 export async function spendModeShots(item: any, modeIndex: number, shots: number, options: { reason?: string } = {}): Promise<number | null> {
   if (!item?.isOwner || !isRuleOn("reloading")) return null;
@@ -661,16 +662,22 @@ export async function spendModeShots(item: any, modeIndex: number, shots: number
   const loaded = Math.max(0, Number(mode.loaded ?? 0) || 0);
   const count = Math.max(0, Math.floor(Number(shots) || 0));
   if (count === 0) return loaded;
-  const after = shotsAfterFiring({ loaded, fired: count, infinite: hasInfiniteAmmunition((item as { actor?: any }).actor ?? null) });
+  const infinite = hasInfiniteAmmunition((item as { actor?: any }).actor ?? null);
+  const after = shotsAfterFiring({ loaded, fired: count, infinite });
   if (after !== loaded) {
     await setLoaded(item, index, after);
     if (after === 0) ui.notifications?.info(L("Empty", { name: String(item.name) }));
   }
-  announceShots({
-    actor: (item as { actor?: any }).actor ?? null, item, modeIndex: index,
-    fired: count, extra: 0, wasted: 0, kind: "module", targets: 0,
-    reason: typeof options?.reason === "string" ? options.reason : "",
-  });
+  // What was actually fired: all of it under Infinite Ammunition, else no
+  // more than the mode held. An empty mode fired nothing, and says nothing.
+  const fired = infinite ? count : loaded - after;
+  if (fired > 0) {
+    announceShots({
+      actor: (item as { actor?: any }).actor ?? null, item, modeIndex: index,
+      fired, extra: 0, wasted: 0, kind: "module", targets: 0,
+      reason: typeof options?.reason === "string" ? options.reason : "",
+    });
+  }
   return after;
 }
 

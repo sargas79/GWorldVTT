@@ -1315,7 +1315,7 @@ export interface DamageRollOptions {
   noKnockback?: boolean;
   /** A blow whose whole effect is knockback and blunt trauma, with no other injury (since API 1.63.0). */
   kineticOnly?: boolean;
-  /** Surge (Characters p. 105): burning damage that does double to anything electrical, for the modules that read it (since API 1.63.0). */
+  /** Surge (Characters p. 105): an electrical surge that can disable electronics or anything with Electrical (p. 134); since API 1.63.0. */
   surge?: boolean;
   /**
    * A linked line's own area, in yards from where the attack landed (since
