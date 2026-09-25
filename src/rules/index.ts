@@ -130,3 +130,4 @@ export * from "./vulnerability.js";
 export * from "./tech-level.js";
 export * from "./zen-archery.js";
 export * from "./surprise.js";
+export * from "./task-difficulty.js";

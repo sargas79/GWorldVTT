@@ -1,0 +1,1034 @@
+/*
+ * The GM Screen (templates/apps/gm-screen.hbs), after the mockups: the V2
+ * sheet's colours -- cream cards on a dark frame, steel for actions, gold for
+ * what a roll or a search found -- in a grid of cards that stacks, and turns
+ * its tab strip into a menu, when the window is narrow.
+ */
+
+.gworld-gm-screen {
+  --gs-frame: #1e2226;
+  --gs-frame-2: #181b1e;
+  --gs-frame-3: #2b3035;
+  --gs-frame-line: #3b4249;
+  --gs-frame-text: #ebe6da;
+  --gs-frame-muted: #a49e91;
+  --gs-panel: #efe9dc;
+  --gs-panel-2: #e4dbc9;
+  --gs-panel-line: #cbbfa6;
+  --gs-panel-rule: #ddd3bf;
+  --gs-ink: #24272a;
+  --gs-ink-muted: #625c51;
+  --gs-steel: #4e7195;
+  --gs-steel-deep: #3f5f80;
+  --gs-gold: #d9a441;
+  --gs-gold-soft: #ecc97a;
+  --gs-radius: 4px;
+}
+
+.gworld-gm-screen .window-content {
+  padding: 0;
+  background: var(--gs-frame);
+  color: var(--gs-frame-text);
+  overflow: hidden;
+}
+
+.gworld-gm-screen .gs {
+  container: gs / inline-size;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  font-family: var(--font-body);
+}
+
+/* ── the bar: tabs, menu, search ─────────────────────────────────────────── */
+
+.gworld-gm-screen .gs-bar {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--gs-frame-line);
+  flex-shrink: 0;
+}
+
+.gworld-gm-screen .gs-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.gworld-gm-screen .gs-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin-bottom: -1px;
+  background: transparent;
+  color: var(--gs-frame-muted);
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.gworld-gm-screen .gs-tab:hover,
+.gworld-gm-screen .gs-tab:focus-visible {
+  color: var(--gs-frame-text);
+}
+.gworld-gm-screen .gs-tab.active {
+  color: var(--gs-frame-text);
+  border-bottom-color: var(--gs-gold);
+}
+.gworld-gm-screen .gs-tab.dim {
+  color: #6c675e;
+}
+
+.gworld-gm-screen .gs-count {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--gs-steel);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gworld-gm-screen .gs-count[hidden] {
+  display: none;
+}
+.gworld-gm-screen .gs-count.zero {
+  background: transparent;
+  border: 1px solid var(--gs-frame-line);
+  color: #7d786e;
+}
+.gworld-gm-screen .gs-tab.active .gs-count:not(.zero) {
+  background: var(--gs-gold);
+  color: var(--gs-ink);
+}
+
+.gworld-gm-screen .gs-menu {
+  display: none;
+  align-self: center;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  width: auto;
+  padding: 0 10px;
+  border: 1px solid var(--gs-frame-line);
+  border-radius: var(--gs-radius);
+  background: var(--gs-frame-2);
+  color: var(--gs-frame-text);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gworld-gm-screen .gs-menu[aria-expanded="true"] {
+  border-color: var(--gs-gold);
+}
+.gworld-gm-screen .gs-menu-pos {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--gs-frame-muted);
+}
+
+.gworld-gm-screen .gs-menu-pop {
+  position: absolute;
+  left: 12px;
+  top: calc(100% + 4px);
+  z-index: 5;
+  width: min(312px, calc(100% - 24px));
+  padding: 6px;
+  background: var(--gs-frame-2);
+  border: 1px solid #59626b;
+  border-radius: 6px;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.55);
+}
+
+.gworld-gm-screen .gs-menu-pop[hidden] {
+  display: none;
+}
+
+.gworld-gm-screen .gs-menu-item {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 46px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: var(--gs-radius);
+  background: transparent;
+  color: var(--gs-frame-text);
+  text-align: left;
+}
+
+.gworld-gm-screen .gs-menu-item i {
+  color: #8f897d;
+}
+.gworld-gm-screen .gs-menu-item.active {
+  background: var(--gs-frame-3);
+}
+.gworld-gm-screen .gs-menu-item.active i {
+  color: var(--gs-gold);
+}
+.gworld-gm-screen .gs-menu-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+.gworld-gm-screen .gs-menu-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--gs-frame-muted);
+}
+
+
+.gworld-gm-screen .gs-search {
+  margin-left: auto;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 270px;
+  min-width: 0;
+  height: 30px;
+  padding: 0 4px 0 10px;
+  background: var(--gs-panel);
+  border: 1px solid var(--gs-panel-line);
+  border-radius: var(--gs-radius);
+  color: var(--gs-ink-muted);
+  font-size: 13px;
+}
+
+.gworld-gm-screen .gs-search.searching {
+  border-color: var(--gs-gold);
+  box-shadow: 0 0 0 2px rgb(217 164 65 / 0.35);
+}
+
+.gworld-gm-screen .gs-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--gs-ink);
+  font: inherit;
+  font-size: 14px;
+  box-shadow: none;
+  outline: none;
+}
+
+.gworld-gm-screen .gs-search-count {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.gworld-gm-screen .gs-search-clear {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--gs-ink-muted);
+  flex-shrink: 0;
+}
+
+.gworld-gm-screen .gs-search-clear[hidden] {
+  display: none;
+}
+
+/* ── the cards ───────────────────────────────────────────────────────────── */
+
+.gworld-gm-screen .gs-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 18px 12px 12px;
+  scrollbar-color: #5d666f #2b3035;
+}
+
+.gworld-gm-screen .gs-panel {
+  display: none;
+}
+.gworld-gm-screen .gs-panel.active {
+  display: block;
+}
+
+/* A masonry of cards: they fill the columns down, and a wide one crosses them all. */
+.gworld-gm-screen .gs-grid {
+  columns: 3 300px;
+  column-gap: 12px;
+}
+
+.gworld-gm-screen .gs-card,
+.gworld-gm-screen .gs-slot {
+  break-inside: avoid;
+  margin: 0 0 12px;
+}
+
+.gworld-gm-screen .gs-card[hidden],
+.gworld-gm-screen .gs-slot[hidden] {
+  display: none;
+}
+
+.gworld-gm-screen .gs-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 10px 12px 12px;
+  background: var(--gs-panel);
+  border-radius: var(--gs-radius);
+  color: var(--gs-ink);
+}
+
+.gworld-gm-screen .gs-wide {
+  column-span: all;
+}
+
+.gworld-gm-screen .gs-card-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 4px 8px;
+  min-height: 30px;
+  padding-bottom: 7px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--gs-panel-line);
+}
+
+.gworld-gm-screen .gs-card.collapsed .gs-card-head {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: 0;
+}
+.gworld-gm-screen .gs-card.collapsed .gs-card-body {
+  display: none;
+}
+.gworld-gm-screen .gs-card.collapsed .gs-chev i {
+  transform: rotate(180deg);
+}
+
+.gworld-gm-screen .gs-card-head h2 {
+  margin: 0;
+  border: 0;
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  color: var(--gs-ink);
+}
+
+.gworld-gm-screen .gs-meta {
+  font-size: 12px;
+  color: var(--gs-ink-muted);
+  white-space: nowrap;
+}
+
+.gworld-gm-screen .gs-card-head h2 {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.gworld-gm-screen .gs-card-head > .gs-meta {
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gworld-gm-screen .gs-tools {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gworld-gm-screen .gs-dice,
+.gworld-gm-screen .gs-txt,
+.gworld-gm-screen .gs-chev {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: auto;
+  height: 26px;
+  margin: 0;
+  padding: 0 8px;
+  border-radius: var(--gs-radius);
+  line-height: 1;
+  box-shadow: none;
+  white-space: nowrap;
+}
+
+.gworld-gm-screen .gs-dice {
+  border: 1px solid var(--gs-steel);
+  background: var(--gs-steel);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.gworld-gm-screen .gs-dice:hover,
+.gworld-gm-screen .gs-dice:focus-visible {
+  background: #2f4d6b;
+  border-color: #2f4d6b;
+}
+.gworld-gm-screen .gs-dice[disabled] {
+  box-shadow: 0 0 0 2px rgb(217 164 65 / 0.6);
+}
+
+.gworld-gm-screen .gs-txt {
+  border: 1px solid var(--gs-panel-line);
+  background: transparent;
+  color: var(--gs-steel-deep);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.gworld-gm-screen .gs-txt[hidden] {
+  display: none;
+}
+
+.gworld-gm-screen .gs-chev {
+  width: 26px;
+  padding: 0;
+  border: 1px solid var(--gs-panel-line);
+  background: transparent;
+  color: var(--gs-ink-muted);
+}
+
+.gworld-gm-screen .gs-last {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--gs-gold);
+  border-radius: var(--gs-radius);
+  background: #f3e3bd;
+  color: var(--gs-ink);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.gworld-gm-screen .gs-last[hidden] {
+  display: none;
+}
+.gworld-gm-screen .gs-last b {
+  font-family: var(--font-heading);
+  font-size: 15px;
+}
+
+.gworld-gm-screen .gs-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border: 1px solid var(--gs-steel);
+  border-radius: 3px;
+  background: #e3e4df;
+  color: var(--gs-steel-deep);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  vertical-align: 1px;
+}
+
+.gworld-gm-screen .gs-gm {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--gs-frame-line);
+  border-radius: 9px;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gs-gold);
+  vertical-align: middle;
+}
+
+.gworld-gm-screen .gs-card .gs-gm {
+  color: #8a6a1f;
+  border-color: var(--gs-panel-line);
+}
+
+.gworld-gm-screen .gs-sub {
+  margin: 10px 0 4px;
+  border: 0;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gs-ink-muted);
+}
+
+.gworld-gm-screen .gs-part:first-child > .gs-sub {
+  margin-top: 0;
+}
+
+/* ── tables ──────────────────────────────────────────────────────────────── */
+
+.gworld-gm-screen .gs-table-wrap {
+  min-width: 0;
+  overflow-x: auto;
+}
+.gworld-gm-screen .gs-scroll {
+  overflow-x: auto;
+  scrollbar-color: #8b9aa9 var(--gs-panel-2);
+}
+
+.gworld-gm-screen .gs-table {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.gworld-gm-screen .gs-scroll .gs-table {
+  width: max-content;
+  min-width: 100%;
+}
+
+.gworld-gm-screen .gs-table thead {
+  background: transparent;
+}
+
+.gworld-gm-screen .gs-table th {
+  padding: 0 6px 5px;
+  border-bottom: 1px solid var(--gs-panel-line);
+  background: var(--gs-panel);
+  color: var(--gs-ink-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  vertical-align: bottom;
+}
+
+.gworld-gm-screen .gs-groups th {
+  padding-bottom: 2px;
+  border-bottom: 0;
+  font-size: 10.5px;
+  text-align: center;
+}
+.gworld-gm-screen .gs-groups th span {
+  display: block;
+  margin: 0 4px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--gs-panel-line);
+}
+
+.gworld-gm-screen .gs-table td {
+  padding: 4px 6px;
+  border: 0;
+  vertical-align: baseline;
+  background: var(--gs-panel);
+}
+
+.gworld-gm-screen .gs-table tbody tr:nth-child(even) td {
+  background: var(--gs-panel-2);
+}
+.gworld-gm-screen .gs-table tbody tr[hidden] {
+  display: none;
+}
+
+.gworld-gm-screen .gs-table td:first-child {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.gworld-gm-screen .gs-table .gs-c {
+  text-align: center;
+}
+.gworld-gm-screen .gs-scroll td,
+.gworld-gm-screen .gs-scroll th {
+  white-space: nowrap;
+}
+.gworld-gm-screen .gs-scroll td:last-child {
+  white-space: normal;
+  min-width: 16em;
+}
+
+.gworld-gm-screen .gs-depth-1 td:not(:first-child) {
+  color: #3a3d40;
+  font-size: 12.5px;
+}
+.gworld-gm-screen .gs-sub-mark {
+  margin-right: 4px;
+  color: var(--gs-ink-muted);
+}
+
+/* The first columns of a wide table stay put while the rest scrolls under them. */
+.gworld-gm-screen .gs-pin {
+  position: sticky;
+  z-index: 1;
+}
+.gworld-gm-screen .gs-pin-group {
+  left: 0;
+}
+.gworld-gm-screen .gs-pin-0 {
+  left: 0;
+  min-width: 5.5em;
+  max-width: 5.5em;
+}
+.gworld-gm-screen .gs-pin-1 {
+  left: 5.5em;
+  min-width: 10em;
+  border-right: 1px solid var(--gs-panel-line);
+  box-shadow: 5px 0 8px -4px rgb(36 39 42 / 0.28);
+}
+
+.gworld-gm-screen .gs-table tr.gs-hit td {
+  background: var(--gs-gold);
+  font-weight: 600;
+}
+
+.gworld-gm-screen .gs-scroll-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--gs-ink-muted);
+}
+
+/* ── lists, notes, prose ─────────────────────────────────────────────────── */
+
+.gworld-gm-screen .gs-item {
+  display: grid;
+  grid-template-columns: minmax(6em, max-content) minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--gs-panel-rule);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.gworld-gm-screen .gs-item:last-child {
+  border-bottom: 0;
+}
+
+.gworld-gm-screen .gs-term {
+  max-width: 13em;
+  padding: 1px 6px;
+  border: 1px solid var(--gs-panel-line);
+  border-radius: var(--gs-radius);
+  background: var(--gs-panel-2);
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.gworld-gm-screen .gs-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--gs-ink-muted);
+}
+
+.gworld-gm-screen .gs-prose {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--gs-panel-line);
+}
+.gworld-gm-screen .gs-prose[hidden] {
+  display: none;
+}
+.gworld-gm-screen .gs-prose-text {
+  max-height: 7.8em;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.gworld-gm-screen .gs-prose.open .gs-prose-text {
+  max-height: none;
+}
+.gworld-gm-screen .gs-prose-text p {
+  margin: 0 0 6px;
+}
+.gworld-gm-screen .gs-prose-page {
+  margin: 6px 0 2px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  text-transform: uppercase;
+  color: var(--gs-ink-muted);
+}
+.gworld-gm-screen .gs-read-more {
+  display: none;
+  width: auto;
+  height: 22px;
+  margin-top: 4px;
+  padding: 0 8px;
+  border: 1px solid var(--gs-panel-line);
+  border-radius: var(--gs-radius);
+  background: transparent;
+  color: var(--gs-steel-deep);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+.gworld-gm-screen .gs-prose.long .gs-read-more,
+.gworld-gm-screen .gs-prose.open .gs-read-more {
+  display: inline-flex;
+  align-items: center;
+}
+
+.gworld-gm-screen .gs-foot {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid var(--gs-panel-line);
+  font-size: 12px;
+  color: var(--gs-ink-muted);
+}
+.gworld-gm-screen .gs-foot[hidden] {
+  display: none;
+}
+
+.gworld-gm-screen mark.gs-mark {
+  background: var(--gs-gold-soft);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* ── the vision diagram ──────────────────────────────────────────────────── */
+
+.gworld-gm-screen .gs-diagram {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.gworld-gm-screen .gs-diagram figcaption {
+  align-self: stretch;
+}
+.gworld-gm-screen .gs-vision {
+  width: 220px;
+  height: 220px;
+}
+.gworld-gm-screen .gs-vision text {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--gs-ink);
+  text-transform: uppercase;
+}
+.gworld-gm-screen .gs-arc {
+  stroke: var(--gs-panel);
+  stroke-width: 2;
+}
+.gworld-gm-screen .gs-arc-front {
+  fill: #cad8e5;
+}
+.gworld-gm-screen .gs-arc-side {
+  fill: #f3e1b4;
+}
+.gworld-gm-screen .gs-arc-back {
+  fill: #efd3cd;
+}
+.gworld-gm-screen .gs-arc-self {
+  fill: var(--gs-panel-2);
+  stroke: var(--gs-panel-line);
+}
+.gworld-gm-screen .gs-facing {
+  fill: var(--gs-ink);
+}
+.gworld-gm-screen .gs-arc-key-0 {
+  background: #cad8e5;
+}
+.gworld-gm-screen .gs-arc-key-1 {
+  background: #f3e1b4;
+}
+.gworld-gm-screen .gs-arc-key-2 {
+  background: #efd3cd;
+}
+
+/* ── places kept for add-ons, and searching ──────────────────────────────── */
+
+.gworld-gm-screen .gs-slot {
+  display: block;
+  padding: 10px 12px;
+  border: 1px dashed #6b737b;
+  border-radius: var(--gs-radius);
+  color: #b9b3a6;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.gworld-gm-screen .gs-slot b {
+  display: block;
+  margin-bottom: 3px;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gs-frame-text);
+}
+
+.gworld-gm-screen .gs-empty,
+.gworld-gm-screen .gs-none {
+  margin: 0 0 12px;
+  color: var(--gs-frame-muted);
+  font-size: 13px;
+}
+.gworld-gm-screen .gs-empty[hidden] {
+  display: none;
+}
+
+.gworld-gm-screen .gs-other-link {
+  display: grid;
+  grid-template-columns: 96px 170px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  height: auto;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--gs-ink);
+  font-size: 13px;
+  text-align: left;
+  line-height: 1.3;
+}
+
+.gworld-gm-screen .gs-other-link:nth-child(even) {
+  background: var(--gs-panel-2);
+}
+.gworld-gm-screen .gs-other-link:hover {
+  background: #f3e3bd;
+}
+.gworld-gm-screen .gs-other-tab {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gs-steel-deep);
+}
+.gworld-gm-screen .gs-other-title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gworld-gm-screen .gs-other-snippet {
+  color: var(--gs-ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── a narrow window: the tabs in a menu, the cards in one column ────────── */
+
+@container gs (max-width: 640px) {
+  .gworld-gm-screen .gs-bar {
+    min-height: 48px;
+  }
+  .gworld-gm-screen .gs-tabs {
+    display: none;
+  }
+  .gworld-gm-screen .gs-menu {
+    display: inline-flex;
+  }
+  .gworld-gm-screen .gs-search {
+    flex: 1 1 auto;
+    width: auto;
+    height: 32px;
+  }
+  .gworld-gm-screen .gs-search-count {
+    display: none;
+  }
+  .gworld-gm-screen .gs-grid {
+    columns: 1;
+  }
+  .gworld-gm-screen .gs-other-link {
+    grid-template-columns: 80px minmax(0, 1fr);
+  }
+  .gworld-gm-screen .gs-other-snippet {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ── the roll prompt and the chat card ───────────────────────────────────── */
+
+.gworld-gm-screen-ask .gs-ask p {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.gworld-gm-screen-ask .gs-ask-label {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.gworld-gm-screen-ask .gs-ask-row {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+}
+.gworld-gm-screen-ask .gs-step {
+  display: flex;
+  align-items: stretch;
+  height: 44px;
+  width: 170px;
+  overflow: hidden;
+  border: 1px solid #cbbfa6;
+  border-radius: 4px;
+}
+.gworld-gm-screen-ask .gs-step button {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  font-size: 20px;
+}
+.gworld-gm-screen-ask .gs-step input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 700;
+}
+.gworld-gm-screen-ask .gs-ask-preview {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+.gworld-gm-screen-ask .gs-ask-preview b {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  opacity: 1;
+}
+.gworld-gm-screen-ask .gs-ask-mode {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.gworld-gm-screen-ask .gs-ask-mode select {
+  width: auto;
+  flex: 0 1 60%;
+}
+
+.gworld-chat.gs-roll-card .gs-roll-result {
+  display: grid;
+  grid-template-columns: minmax(34px, max-content) minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 3px;
+  background: #d9a441;
+  color: #24272a;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.gworld-chat.gs-roll-card .gs-roll-key {
+  font-family: var(--font-heading);
+  font-size: 16px;
+}
+.gworld-chat.gs-roll-card .gs-roll-detail {
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+}
+.gworld-chat.gs-roll-card .gs-roll-side {
+  margin-top: 4px;
+  font-size: 12px;
+}
+.gworld-chat.gs-roll-card .gs-roll-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  opacity: 0.8;
+}
+.gworld-chat.gs-roll-card .gs-roll-show {
+  width: auto;
+  height: 24px;
+  margin-left: auto;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.gworld-gm-screen .gs-sub .gs-meta {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}

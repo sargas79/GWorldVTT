@@ -177,7 +177,7 @@ import {
   steeringDuty,
   type Guidance,
 } from "../rules/guided.js";
-import { WILD_SWING_SKILL_CAP, allOutAttackBonus, stopThrustBonus, strongAttackDamageBonus, wildSwingPenalty, type AllOutAttackOption } from "../rules/maneuvers.js";
+import { MOVE_AND_ATTACK_PENALTY, WILD_SWING_SKILL_CAP, allOutAttackBonus, stopThrustBonus, strongAttackDamageBonus, wildSwingPenalty, type AllOutAttackOption } from "../rules/maneuvers.js";
 import { flailKind, type FlailKind } from "../rules/defenses.js";
 import { canTargetFromArc, missByOneHitsTorso } from "../rules/hit-locations.js";
 import { facingAgainstTarget } from "./attack-arc.js";
@@ -939,7 +939,7 @@ export function positionRollLines(actor: any, options: { rollType: string | unde
   // "Roll against your skill at -4", and "your effective skill cannot exceed
   // 9": the cap is taken once every other modifier is in; a module may lift it.
   if (!ranged && actor?.system?.maneuver === "moveAndAttack") {
-    lines.push({ label: game.i18n.localize("GWORLD.Maneuver.moveAndAttack"), value: -4 });
+    lines.push({ label: game.i18n.localize("GWORLD.Maneuver.moveAndAttack"), value: MOVE_AND_ATTACK_PENALTY });
   }
   return lines;
 }

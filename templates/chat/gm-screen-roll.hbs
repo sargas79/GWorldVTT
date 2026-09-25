@@ -1,0 +1,25 @@
+{{!-- A roll made from the GM Screen: the table, the dice, and the row the
+     total landed on, as the screen shows it. --}}
+<div class="gworld gworld-chat gs-roll-card" data-gm-screen-section="{{section}}" data-gm-screen-row="{{row}}">
+  <div class="gc-head">
+    <span class="gc-label">{{title}}</span>
+    {{#if cite}}<span class="gc-target">{{cite}}</span>{{/if}}
+  </div>
+
+  <div class="gc-dice">
+    {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
+    {{#if extra}}<span class="gc-mod">{{extra}}</span>{{/if}}
+    <span class="gc-total">{{total}}</span>
+  </div>
+
+  <div class="gs-roll-result">
+    <span class="gs-roll-key">{{rollCell}}</span>
+    <span class="gs-roll-text">{{result}}{{#if detail}} <span class="gs-roll-detail">{{detail}}</span>{{/if}}</span>
+  </div>
+  {{#if side}}<div class="gs-roll-side">{{side}}</div>{{/if}}
+
+  <div class="gs-roll-foot">
+    <span>{{localize "GWORLD.GmScreen.FromScreen"}}</span>
+    <button type="button" class="gs-roll-show" data-gm-screen-show>{{localize "GWORLD.GmScreen.ShowOnScreen"}}</button>
+  </div>
+</div>

@@ -111,6 +111,7 @@ Contents:
 | `points`, `magic` | Point pools, energy sources and spell attacks (since 1.4.0), and resistance cards (since 1.9.0). |
 | `migration` | Moving world data from the system into a module (since 1.6.0). |
 | `world` | Facts about the campaign world (since 1.77.0): `controlRating()`, and `weather(actor?)` and `setTemperature(temperatureF)` (since 1.138.0). See [The campaign world](#the-campaign-world). |
+| `gmScreen` | The GM Screen (since 1.157.0): `open(tab?)`, `roll(sectionId, options?)`, `registerTable`, `registerRuleBlock`, `registerTab`. See [The GM Screen](#the-gm-screen). |
 
 Since 1.5.0, `combat`, `roll` and `actors` also carry the procedure extension
 points described under [Inside the system's own procedures](#inside-the-systems-own-procedures).
@@ -3629,6 +3630,83 @@ that are world settings rather than anything on an actor:
   temperature (rounded to a whole degree), or clears it with null. Only the
   GM may. It resolves to whether it was set: false for anyone else or a
   value that isn't a number.
+
+## The GM Screen
+
+Since 1.157.0 the system has a GM Screen: the Basic Set's tables in eight tabs,
+opened from a button in the token controls, an unbound keybinding, or
+`game.gworld.api.gmScreen.open()`. Every figure on it is read from the rules
+the automation uses. Players open the same window read-only, unless the GM
+turns that off in the system settings, and without the tabs the GM keeps from
+them (the *GM Screen for players* menu).
+
+### The book's text
+
+The system can't ship the books' prose, so each card shows the figures and a
+short summary. A content module supplies the text: a journal entry (in a
+compendium of an active module, or in the world) flagged with the id of the
+section or part it covers, `flags.<module>.gmScreen = "criticalHit"`, or a
+list of ids where one passage covers several. The screen finds entries by the
+flag alone, shows their text pages in order under the card, enriched so links
+and inline rolls work, and folds a long passage behind *Read more*. A player
+sees an entry only where they may observe it. The first entry to name an id
+keeps it.
+
+The ids, tab by tab (parts in brackets):
+
+| Tab | Ids |
+|---|---|
+| Tables | `criticalHit`, `criticalHeadBlow`, `criticalMiss`, `unarmedCriticalMiss`, `attributeSkillLevels` (`attributeLevels`, `successChances`), `thrownDamage`, `throwingDistance`, `coverDr` (`coverShots`, `coverWalls`) |
+| Wounds | `hitLocations`, `shock`, `knockback`, `majorWound`, `knockdownStunning`, `effectsOfStun`, `cripplingInjury`, `mortalWounds`, `bleeding` |
+| Melee | `meleeAttackModifiers`, `activeDefenseModifiers`, `lostHitPoints`, `lostFatiguePoints`, `criticals`, `rulesOf` (`ruleOf14`, `ruleOf16`, `ruleOf20`) |
+| Ranged | `rangedAttackModifiers`, `sizeSpeedRange`, `dodgeBlockParry`, `woundingModifiers`, `firstAid`, `naturalRecovery`, `unconsciousness` |
+| Maneuvers | `maneuvers`, `extraEffort`, `posture` |
+| Combat | `skillModifiers` (`taskDifficulty`, `equipmentModifiers`, `timeSpent`), `damageTable`, `combatRules` (`bluntTrauma`, `rapidFire`, `hurtingYourself`), `closeCombat` (`evade`, `slam`), `unarmedCombat` (`grabbing`, `grappling`, `takedown`, `pin`, `strangle`), `visionHexDiagram` |
+| Afflictions | `afflictions` (`afflictions.irritating`, `afflictions.incapacitating`, `afflictions.mortal`, `pain`) |
+| Fright | `frightChecks`, `fallingCollisions` (`fallingVelocity`, `falling`, `collisions`), `reactions` |
+
+### What a module adds
+
+A module's hit locations (`combat.registerHitLocation`), maneuvers
+(`combat.registerManeuver`) and extra effort (`combat.registerExtraEffort`)
+appear in the screen's own tables without anything more, marked with the
+module's title. For anything else:
+
+- **`gmScreen.registerTable({ module, key, tab | slot, after?, title, cite?, columns, rows, notes?, gmOnly?, prose?, roll? })`**
+  adds a table. `rows` is a list of rows of strings, or a function returning
+  one, called each time the screen is drawn. `roll` is
+  `{ formula, ask?, rowFor(total) }`: the dice, `"margin"` or `"modifier"`
+  where the roll asks for one first, and the index of the row a total lands
+  on. Resolves to the section's id, `<module>.<key>`, or null with a console
+  warning saying why.
+- **`gmScreen.registerRuleBlock({ module, key, tab | slot, after?, title, cite?, items, notes?, gmOnly?, prose? })`**
+  adds a list of `{ term, text }`, or a function returning one.
+- **`gmScreen.registerTab({ module, key, label, icon? })`** adds a tab after
+  the system's; its id is `<module>.<key>`, for `tab` above.
+
+Placing: `tab` is a tab's id (`tables`, `wounds`, `melee`, `ranged`,
+`maneuvers`, `combat`, `afflictions`, `checks`, or a registered tab), and
+`after` the id of the section it follows; left out, or naming nothing on the
+tab, it goes at the end. `slot` fills one of the places the Basic Set leaves
+for other books' tables, where the slot is on its tab: `aweConfusion` (Fright
+tab) and `postureHitLocations` (Afflictions tab). An empty slot shows only to
+the GM, as an outline. A module adds; it never replaces a Basic Set table.
+
+`gmOnly` keeps a section from players. `prose` is the section's text: HTML,
+or a journal entry's (or page's) uuid. A section whose builder throws is left
+off the screen with a warning, and the rest of the screen is drawn.
+
+### Rolling from it
+
+- **`gmScreen.roll(sectionId, { extra?, messageMode? })`** rolls on a
+  table as its dice button does and posts the card, resolving to
+  `{ section, total, row, side }` (`side` for a hand or foot, from a 1d), or
+  null where the section isn't rolled on or the question was cancelled.
+  `extra` answers the question a table asks first (the Fright Check's margin,
+  the reaction modifiers); `messageMode` is who sees the card, the user's
+  own chat mode otherwise.
+- The hook **`gworld.gmScreenRolled`** fires with the same object on the
+  roller's client.
 
 ## Modifying dice + adds
 

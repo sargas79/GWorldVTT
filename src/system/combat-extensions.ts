@@ -790,6 +790,8 @@ interface AddonAttackOption {
   apply: (context: AttackContext, value: unknown) => AttackEffect | null;
   /** FP, for an extra-effort option. */
   fp: number;
+  /** An extra-effort option's name, without the cost the dialog adds to its label. */
+  effort?: string;
   /** Whether the attack must ask about it (since 1.94.0). */
   required: (context: AttackContext) => boolean;
 }
@@ -881,6 +883,8 @@ interface AddonDefenseOption {
   apply: (context: DefenseContext, value?: unknown) => DefenseEffect | null;
   after: (context: DefenseContext, outcome: { success: boolean; margin: number } | null, value?: unknown) => void | Promise<void>;
   fp: number;
+  /** An extra-effort option's name, without the cost the dialog adds to its label. */
+  effort?: string;
 }
 
 const defenseOptions = new Map<string, AddonDefenseOption>();
@@ -976,6 +980,25 @@ export function moduleDefensesFor(defender: any, attack: string): Array<ModuleDe
   return out;
 }
 
+/** An extra-effort option as a reference lists it. */
+export interface RegisteredExtraEffort {
+  key: string;
+  module: string;
+  label: string;
+  kind: "offense" | "defense";
+  fp: number;
+}
+
+/** Every registered extra-effort option, offense then defense, for a reference such as the GM Screen. */
+export function registeredExtraEfforts(): RegisteredExtraEffort[] {
+  const listed = (kind: RegisteredExtraEffort["kind"], option: { key: string; module: string; fp: number; effort?: string }) =>
+    option.effort === undefined ? [] : [{ key: option.key, module: option.module, label: option.effort, kind, fp: option.fp }];
+  return [
+    ...[...attackOptions.values()].flatMap((option) => listed("offense", option)),
+    ...[...defenseOptions.values()].flatMap((option) => listed("defense", option)),
+  ];
+}
+
 /** Registers an extra-effort option: an attack or defense option that costs FP. Returns its key, or null. */
 export function registerExtraEffort(registration: ExtraEffortRegistration): string | null {
   const r = registration ?? ({} as ExtraEffortRegistration);
@@ -993,7 +1016,7 @@ export function registerExtraEffort(registration: ExtraEffortRegistration): stri
   if (r.kind === "offense") {
     attackOptions.set(key, {
       key, module: r.module, label, attack: "any", input: { type: "checkbox" },
-      available, refuse: refusal, fp: r.fp, required: () => false,
+      available, refuse: refusal, fp: r.fp, effort: r.label.trim(), required: () => false,
       apply: (context) => {
         const effect = (r.apply(context) ?? {}) as AttackEffect;
         return { ...effect, fatigue: (effect.fatigue ?? 0) + r.fp };
@@ -1002,7 +1025,7 @@ export function registerExtraEffort(registration: ExtraEffortRegistration): stri
   } else {
     defenseOptions.set(key, {
       key, module: r.module, label, defenses: ALL_DEFENSES, input: { type: "checkbox" },
-      available, refuse: refusal, fp: r.fp, after: () => undefined,
+      available, refuse: refusal, fp: r.fp, effort: r.label.trim(), after: () => undefined,
       apply: (context) => {
         const effect = (r.apply(context) ?? {}) as DefenseEffect;
         return { ...effect, fatigue: (effect.fatigue ?? 0) + r.fp };
@@ -1552,6 +1575,11 @@ export function registeredLocationAllowsArc(addonLocation: string | null | undef
 
 export function registeredHitLocation(key: string): AddonHitLocation | undefined {
   return hitLocations.get(key);
+}
+
+/** Every registered hit location, in the order registered, for a reference such as the GM Screen. */
+export function registeredHitLocations(): AddonHitLocation[] {
+  return [...hitLocations.values()];
 }
 
 /** The registered locations offered for this attack. */

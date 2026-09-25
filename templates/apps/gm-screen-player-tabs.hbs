@@ -1,0 +1,9 @@
+<div class="gs-player-tabs">
+  <p class="hint">{{localize "GWORLD.GmScreen.Setting.HiddenTabsMenu.Hint"}}</p>
+  {{#each tabs as |tab|}}
+    <label class="checkbox"><input type="checkbox" name="shown" value="{{tab.id}}" {{#if tab.shown}}checked{{/if}} /> {{localize tab.label}}</label>
+  {{/each}}
+  <footer class="form-footer">
+    <button type="submit"><i class="fa-solid fa-floppy-disk" inert></i> {{localize "GWORLD.GmScreen.Setting.HiddenTabsMenu.Save"}}</button>
+  </footer>
+</div>

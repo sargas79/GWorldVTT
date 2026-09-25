@@ -59,6 +59,13 @@ export const MANEUVERS: Record<Maneuver, ManeuverInfo> = {
   wait: { key: "wait", label: "Wait", movement: "none", defense: "any", attacks: false },
 };
 
+/**
+ * Move and Attack in melee (Campaigns p. 365): "Roll against your skill at
+ * -4", and the effective skill that leaves "cannot exceed 9", the same cap a
+ * wild swing has.
+ */
+export const MOVE_AND_ATTACK_PENALTY = -4;
+
 /** All-Out Attack options (GURPS Basic Set: Campaigns p. 365). */
 export type AllOutAttackOption = "determined" | "double" | "feint" | "strong" | "suppression";
 

@@ -257,7 +257,7 @@ export const CLIMB_ROLL_MINUTES = 5;
  * falls between two values, use the higher value" -- so a heavier throw is
  * always priced at the harder row.
  */
-const THROW_TABLE: ReadonlyArray<readonly [number, number]> = [
+export const THROWING_DISTANCE_TABLE: ReadonlyArray<readonly [number, number]> = [
   [0.05, 3.5], [0.10, 2.5], [0.15, 2.0], [0.20, 1.5], [0.25, 1.2], [0.30, 1.1],
   [0.40, 1.0], [0.50, 0.8], [0.75, 0.7], [1.00, 0.6], [1.50, 0.4], [2.0, 0.30],
   [2.5, 0.25], [3.0, 0.20], [4.0, 0.15], [5.0, 0.12], [6.0, 0.10], [7.0, 0.09],
@@ -275,7 +275,7 @@ export const MAX_THROWABLE_MULTIPLE = LIFT_MULTIPLES.twoHanded;
  */
 export function throwDistanceModifier(weightRatio: number): number | null {
   const ratio = Math.max(0, weightRatio);
-  const row = THROW_TABLE.find(([listed]) => ratio <= listed);
+  const row = THROWING_DISTANCE_TABLE.find(([listed]) => ratio <= listed);
   return row ? row[1] : null;
 }
 

@@ -13,6 +13,7 @@ import "./styles/gworld.css";
 import "./styles/sheet-v2.css";
 import "./styles/party.css";
 import "./styles/vehicle.css";
+import "./styles/gm-screen.css";
 
 import * as rules from "./rules/index.js";
 import { registerChatHooks } from "./system/chat.js";
@@ -51,6 +52,7 @@ import { GWorldItemSheet } from "./system/sheets/item-sheet.js";
 import { GWorldGenericItemSheet } from "./system/sheets/generic-item-sheet.js";
 import { setGenericSheetRegistrar } from "./system/data-extensions.js";
 import { registerSheetExtensionHooks, settleGmTools } from "./system/sheet-extensions.js";
+import { registerGmScreen } from "./system/gm-screen/register.js";
 import { registerDemolitionTool } from "./system/demolition.js";
 import { GWorldNpcSheet } from "./system/sheets/npc-sheet.js";
 import { GWorldVehicleSheet } from "./system/sheets/vehicle-sheet.js";
@@ -110,6 +112,8 @@ Hooks.once("init", () => {
   // settings that store them exist and before anything asks about a rule.
   openRuleRegistration();
   registerSettings();
+  // The Basic Set's tables in one window, for the GM and, read-only, players.
+  registerGmScreen();
   registerMigrationSettings();
   configureDeprecatedData();
   registerTemplateHelpers();
