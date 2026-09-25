@@ -63,6 +63,12 @@ export interface TraitEffects {
   /** Intimidation fails against them outright (Unfazeable, Characters p. 95). */
   slaveMentality: boolean;
   /**
+   * Electrical (Characters p. 134; since API 1.155.0): open to attacks that
+   * affect only electrical things, Surge among them, and knocked out by a
+   * critical hit from one.
+   */
+  electrical?: boolean;
+  /**
    * Levels added to the four attributes by traits that buy them as traits --
    * Extra ST, Extra DX and so on (Characters pp. 14-17 price them; GCA
    * carries them by these names). Read everywhere the attribute is.
@@ -403,6 +409,9 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   // (Campaigns p. 359).
   indomitable: () => ({ indomitable: true }),
   "slave mentality": () => ({ slaveMentality: true }),
+  // "A critical hit from an electrical attack causes you to 'short-circuit',
+  // rendering you unconscious" (Characters p. 134).
+  electrical: () => ({ electrical: true }),
   "no legs (aquatic)": () => ({ aquatic: true }),
 
   // The attributes bought as traits. Each level is a point of the attribute,
@@ -760,6 +769,7 @@ export function addTraitEffects(total: TraitEffects, applied: Partial<TraitEffec
   total.ambidextrous ||= applied.ambidextrous ?? false;
   total.indomitable ||= applied.indomitable ?? false;
   total.slaveMentality ||= applied.slaveMentality ?? false;
+  if (applied.electrical) total.electrical = true;
 
   total.shockMultiplier = Math.max(total.shockMultiplier, applied.shockMultiplier ?? 1);
   total.enhancedMove = Math.max(total.enhancedMove, applied.enhancedMove ?? 1);

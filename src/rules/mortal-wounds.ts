@@ -103,7 +103,11 @@ export function cripplingMonths(options: {
   /** The tech level of the medicine treating it, or null for none at all. */
   treatedAtTl?: number | null;
 }): number {
-  const tl = options.treatedAtTl;
-  const relief = tl === null || tl === undefined ? 0 : tl >= 7 ? 3 : tl === 6 ? 2 : tl === 5 ? 1 : 0;
-  return Math.max(1, Math.round(options.roll) - relief);
+  return Math.max(1, Math.round(options.roll) - cripplingRelief(options.treatedAtTl));
+}
+
+/** The months a physician takes off a lasting crippling at this medical TL (p. 422): 3 at TL7+, 2 at TL6, 1 at TL5. */
+export function cripplingRelief(treatedAtTl: number | null | undefined): number {
+  const tl = treatedAtTl;
+  return tl === null || tl === undefined ? 0 : tl >= 7 ? 3 : tl === 6 ? 2 : tl === 5 ? 1 : 0;
 }

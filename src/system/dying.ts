@@ -220,12 +220,14 @@ export async function rollCripplingDuration(options: {
   /** For that part, if no injury caused it: how long a temporary crippling lasts. */
   seconds?: number;
 }): Promise<{ duration: CripplingDuration; months: number | null; part: CrippledPart | null } | null> {
-  const { actor, treatedAtTl = null } = options;
+  const { actor } = options;
   if (!actor?.isOwner) return null;
   const waiting = options.part
     ? crippledParts(actor).find((p) => p.duration === "undecided" && (p.id === options.part || p.location === options.part))
     : undefined;
   if (options.part && !waiting) return null;
+  // A physician recorded on the part already treats it (since API 1.155.0).
+  const treatedAtTl = options.treatedAtTl ?? waiting?.treatedAtTl ?? null;
 
   const ht = healthRollScore(actor);
 
@@ -268,7 +270,8 @@ export async function rollCripplingDuration(options: {
   const part = waiting
     ? await settleCrippling(actor, waiting.id, {
         duration,
-        ...(monthsToHeal !== null ? { months: monthsToHeal } : {}),
+        ...(monthsToHeal !== null ? { months: monthsToHeal, roll: months.total } : {}),
+        ...(treatedAtTl !== null ? { treatedAtTl } : {}),
         ...(options.seconds !== undefined ? { seconds: options.seconds } : {}),
       })
     : null;

@@ -24,6 +24,7 @@ import {
   type BlastPlacement, type FragmentationSpec,
 } from "../rules/explosions.js";
 import { criticalEntry, criticalHitTableFor, isUnarmedSkill } from "../rules/criticals.js";
+import { surgeEffect, type SurgeEffect } from "../rules/surge.js";
 import { BLOCKS_PER_TURN, acrobaticDefenseModifier, bareHandedParryModifier, mayTryAcrobatic, blockableAttack, canParryFlail, flailDefenseModifier, masterHalvesParry, multipleParryPenalty, parriedLimbStrikeModifier, thrownParryModifier } from "../rules/defenses.js";
 import { getCombatState, setCombatState } from "./combat-extensions.js";
 import { rollKnockdown } from "./knockdown.js";
@@ -121,7 +122,7 @@ interface DamageFlag {
   noKnockback?: boolean;
   /** A blow whose whole effect is knockback and blunt trauma, with no other injury (since API 1.63.0). */
   kineticOnly?: boolean;
-  /** Surge (Characters p. 105): burning damage that does double to anything electrical, for the modules that read it (since API 1.63.0). */
+  /** Surge (Characters p. 105): an electrical surge that can disable electronics or anything with Electrical (p. 134); since API 1.63.0. */
   surge?: boolean;
   /** A tight-beam burn (Campaigns p. 399; since API 1.97.0). */
   tightBeam?: boolean;
@@ -528,10 +529,12 @@ async function applyFromCard(options: {
     ...(options.largeArea ? { largeArea: true } : {}),
     // Yards from the blast's centre, for the damage hooks (since API 1.63.0).
     ...(flag.explosive ? { blastDistance: Math.max(0, distanceYards) } : {}),
-    ...(flag.surge ? { surge: true } : {}),
   };
 
   const applied: AppliedDamage[] = [];
+  // What a Surge blow did to a victim with Electrical (Characters pp. 105,
+  // 134; since API 1.155.0), by the result it goes with.
+  const surged = new Map<AppliedDamage, SurgeEffect>();
   const refused: string[] = [];
   const knockdowns: Array<{ actor: any; result: AppliedDamage }> = [];
   // The rolls a Fragile body owes after the blow (Characters p. 136).
@@ -594,6 +597,14 @@ async function applyFromCard(options: {
       // means -- so the token says so without anybody being asked.
       await syncHealthConditions(actor);
       if (result.bleeds && isRuleOn("bleeding")) await setCondition(actor, "bleeding", true);
+      // "A critical hit from an electrical attack causes you to
+      // 'short-circuit', rendering you unconscious in addition to any other
+      // damage effects" (p. 134). Any other hit is the GM's to judge.
+      const surge = surgeEffect({ surge: flag.surge === true, electrical: traitsOf(actor).electrical === true, criticalHit: options.critical });
+      if (surge) {
+        surged.set(result, surge);
+        if (surge === "shortCircuit") await setCondition(actor, "unconscious", true);
+      }
       // Incendiary (Characters p. 104) "gives the damage a secondary flame
       // effect that can ignite volatile material", and Campaigns p. 433 counts
       // incendiary damage with burning for what it takes to set things alight.
@@ -718,6 +729,9 @@ async function applyFromCard(options: {
       vulnerabilityNote: result.vulnerability
         ? game.i18n.format("GWORLD.Chat.Vulnerable", { multiplier: result.vulnerability.multiplier, label: result.vulnerability.label })
         : "",
+      // A Surge blow on somebody with Electrical (since API 1.155.0).
+      surgeNote: surged.has(result) ? game.i18n.localize(`GWORLD.Chat.Surge.${surged.get(result)}`) : "",
+      shortCircuit: surged.get(result) === "shortCircuit",
     })),
   });
 

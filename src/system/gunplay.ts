@@ -19,8 +19,12 @@ import {
   scatterDistance,
 } from "../rules/scatter.js";
 import { canOverpenetrate, coverDr, damageThrough, overpenetrates, type CoverKind } from "../rules/overpenetration.js";
-import { FLINCH_PENALTY, LIQUID_IN_THE_FACE, liquidInTheFace } from "../rules/dirty-tricks.js";
+import {
+  FLINCH_PENALTY, LIQUID_IN_THE_FACE, liquidDefended, liquidEffects, liquidInTheFace, type LiquidDefense, type LiquidResult,
+} from "../rules/dirty-tricks.js";
 import { resolveSuccess } from "../rules/success.js";
+import { relayEffect } from "./gm-relay.js";
+import type { ConditionApplication } from "./procedure-extensions.js";
 import { landedAfterScatter } from "./landed.js";
 
 const GUNPLAY_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/gunplay.hbs`;
@@ -224,32 +228,58 @@ export async function hearTheShot(options: {
   });
 }
 
+/** What a splash in the face is called with. */
+export interface SplashOptions {
+  /** The thrower, whom the card speaks for. */
+  actor: any;
+  /** The victim, who is the one who rolls. */
+  victim: any;
+  hit: boolean;
+  criticalHit: boolean;
+  /** Whether a defense worked; `defense` in its place works it out. */
+  defended?: boolean;
+  /** True where a parry was tried, which does nothing against a liquid. */
+  parried?: boolean;
+  /** The defense tried and made (since API 1.155.0): a parry stops nothing. */
+  defense?: LiquidDefense;
+  /** What was thrown, for the card (since API 1.155.0). */
+  liquid?: string;
+  /** Leaves the flinch or the blindness on the victim as timed conditions (since API 1.155.0). */
+  apply?: boolean;
+  /** The actor it comes from, for a victim the user doesn't own: the thrower where left out (since API 1.155.0). */
+  source?: any;
+}
+
+/** What a splash did, and the conditions it left (since API 1.155.0). */
+export interface SplashOutcome extends LiquidResult {
+  /** The victim's Will, which the roll to keep from flinching was made against. */
+  will: number;
+  /** The ids of the conditions `apply` left on the victim. */
+  conditions: string[];
+}
+
 /**
  * A drink in somebody's face (p. 405).
  *
  * The throw itself is an ordinary ranged attack at -5 for the face, which the
  * attacker makes with whatever they are holding; what this rolls is the Will
  * check that decides whether they flinch, since that is the part with a number
- * on it.
+ * on it. A module's weapon that squirts something starts it through
+ * `combat.liquidInTheFace` (since API 1.155.0).
  */
-export async function splashInTheFace(options: {
-  actor: any;
-  /** The victim, who is the one who rolls. */
-  victim: any;
-  hit: boolean;
-  criticalHit: boolean;
-  defended: boolean;
-  /** True where a parry was tried, which does nothing against a liquid. */
-  parried?: boolean;
-}): Promise<void> {
+export async function splashInTheFace(options: SplashOptions): Promise<SplashOutcome> {
   const will = Number(options.victim?.system?.derived?.will) || 10;
+  // The defense tried, where the caller names it: a parry stops nothing (since API 1.155.0).
+  const defense = typeof options.defense === "string" ? options.defense : null;
+  const defended = defense !== null ? liquidDefended(defense) : options.defended === true;
+  const parried = defense !== null ? defense === "parry" : options.parried === true;
 
   // Only somebody who was actually splashed rolls: a critical hit allows no
   // defense and blinds outright, and a miss is a miss.
   const rolls: any[] = [];
   let keptComposure = true;
 
-  if (options.hit && !options.criticalHit && !options.defended) {
+  if (options.hit && !options.criticalHit && !defended) {
     const roll = new Roll("3d6");
     await roll.evaluate();
     rolls.push(roll);
@@ -265,23 +295,45 @@ export async function splashInTheFace(options: {
   const result = liquidInTheFace({
     hit: options.hit,
     criticalHit: options.criticalHit,
-    defended: options.defended,
+    defended,
     keptComposure,
     ...(blind ? { blindRoll: blind.total } : {}),
   });
 
+  // What it leaves on the victim, as timed conditions, where the caller asks
+  // (since API 1.155.0): through the GM's client for a victim the user
+  // doesn't own, on behalf of the thrower.
+  const conditions: string[] = [];
+  if (options.apply === true) {
+    const L = (key: string) => game.i18n.localize(`GWORLD.Splash.${key}`);
+    for (const effect of liquidEffects(result)) {
+      const label = L(`Effect.${effect.key}`);
+      const application: ConditionApplication = {
+        module: SYSTEM_ID,
+        key: `splash-${effect.key}`,
+        label,
+        effects: { modifiers: effect.value === 0 ? [] : [{ label, value: effect.value, rolls: effect.rolls }] },
+        duration: { ...(effect.turns !== null ? { turns: effect.turns } : {}), seconds: effect.seconds },
+      };
+      const id = await relayEffect("applyCondition", options.victim, options.source ?? options.actor, { application }, null);
+      if (id) conditions.push(id);
+    }
+  }
+
   await post(options.actor, {
     splash: true,
+    liquid: typeof options.liquid === "string" ? options.liquid.trim() : "",
     victim: String(options.victim?.name ?? ""),
     will,
     accuracy: LIQUID_IN_THE_FACE.accuracy,
     maxRange: LIQUID_IN_THE_FACE.maxRangeYards,
     faceModifier: LIQUID_IN_THE_FACE.faceModifier,
     ...result,
-    triedToParry: options.parried === true,
+    triedToParry: parried,
     flinchPenalty: FLINCH_PENALTY,
     dice: rolls[0] ? dieResults(rolls[0]) : null,
     roll: rolls[0]?.total ?? null,
     rolls,
   });
+  return { ...result, will, conditions };
 }

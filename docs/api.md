@@ -103,9 +103,9 @@ Contents:
 | `rules` | The Basic Set's pure rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer includes the rule group removed in system 1.5.0. Since 1.17.0 it includes every rules module, including attack options (slams, evading), explosions, the tactical rules and shield damage. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. `normalizeDamage(formula)` (since 1.125.0) gives a damage formula as the table rolls it; see [Modifying dice + adds](#modifying-dice--adds). `holdout(actor, item, options)` and `holdoutSizes()` (since 1.152.0) roll Holdout to hide one item; see [Hiding an item with Holdout](#hiding-an-item-with-holdout). |
-| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0; at a hit location since 1.148.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0; `dosePoison`, `advancePoison`, `stopBleeding`, `applyCondition` and `removeCondition` take a `source` since 1.149.0, see *Effects on a character the user doesn't own*), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0), and `bind(actor, options)`, `unbind(actor)`, `binding(actor)` and `breakFree(actor)` (since 1.107.0; see *Binding*), and `spendFatigue(actor, fp, options)` (since 1.109.0; see *Medical hooks*), and `changeTrait(actor, options)` (since 1.112.0; `operate` also resolves to its outcome since then; it adds and removes traits since 1.124.0), and `tow(actor, options)` and `stopTowing(actor)` (since 1.113.0; see *Towing and the wheelchair*), and `cripple(actor, location, options)`, `crippled(actor)` and `healCrippled(actor, which)` (since 1.114.0; see *Crippled parts*), and `vehicleAboard(actor)` (since 1.141.0; see *The vehicle a character is aboard*). and `addPendingModifier(actor, request)`, `pendingModifiers(actor)` and `removePendingModifier(actor, id)` (since 1.132.0; see *A bonus held for a later roll*). and `settleCrippling(actor, which, options)` (since 1.129.0; see *Crippled parts*). |
-| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. `stuck(item)`, `setStuck(item, stuck)`, `freeStuck(actor, item)` and `letGoOfStuck(actor, item)` (since 1.105.0) read, set and end a weapon's being stuck in a foe (see *A weapon stuck in a foe*). `equipmentFailure({ actor?, item, modifier?, label?, apply? })` (since 1.118.0) rolls an equipment failure roll for a thing (see *Equipment failure rolls*). `setUnready(item, unready, { reason?, attacker?, contest? })` and `knockAway(item, { reason?, attacker?, contest? })` (since 1.136.0) leave a weapon unready or knock it out of its holder's hands, through the GM's client where the user doesn't own it: for a GM, or since 1.143.0 on behalf of an `attacker` the user owns with the `contest` card of the disarm they won (see *Disarms*). `applyDamage({ item, damage, type, armorDivisor?, label? })` (since 1.126.0) puts a blow on a thing that keeps hit points (see *Damage to things*). `changeQuantity(item, delta, { reason? })` (since 1.123.0) adds `delta` to a stack of an item, or takes it off with a negative one, for a module that makes, finds or uses up consumables: rounds put in a box, supplies spent. A fraction is dropped toward none. The quantity never goes below 0, and an emptied stack stays on the actor. Weight and cost are kept per unit, so the carried weight and the stack's worth follow with nothing else to change. It resolves to `{ from, to, reason }` -- the quantity before and after, `reason` as given, for the module's own card -- or null for an item that keeps no quantity, a user who doesn't own it, or a delta that isn't a number. |
-| `combat` | Combat extension points (since 1.1.0). |
+| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0; at a hit location since 1.148.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0; `dosePoison`, `advancePoison`, `stopBleeding`, `applyCondition` and `removeCondition` take a `source` since 1.149.0, see *Effects on a character the user doesn't own*), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0), and `bind(actor, options)`, `unbind(actor)`, `binding(actor)` and `breakFree(actor)` (since 1.107.0; see *Binding*), and `spendFatigue(actor, fp, options)` (since 1.109.0; see *Medical hooks*), and `changeTrait(actor, options)` (since 1.112.0; `operate` also resolves to its outcome since then; it adds and removes traits since 1.124.0), and `tow(actor, options)` and `stopTowing(actor)` (since 1.113.0; see *Towing and the wheelchair*), and `cripple(actor, location, options)`, `crippled(actor)` and `healCrippled(actor, which)` (since 1.114.0; see *Crippled parts*), and `vehicleAboard(actor)` (since 1.141.0; see *The vehicle a character is aboard*). and `addPendingModifier(actor, request)`, `pendingModifiers(actor)` and `removePendingModifier(actor, id)` (since 1.132.0; see *A bonus held for a later roll*). and `settleCrippling(actor, which, options)` (since 1.129.0; see *Crippled parts*). and `treatCrippled(actor, which, { treatedAtTl })` (since 1.155.0; see *Crippled parts*). |
+| `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `spendShots(item, modeIndex, shots, { reason? })` (since 1.155.0) takes shots off a ranged mode for a module's own procedure, a card of rounds fired that no attack roll made: as an attack spends them, never below 0, across a shared magazine, and nothing where Infinite Ammunition keeps the count. It fires `gworld.afterShots` with `kind: "module"` and the `reason` for the shots actually fired (no more than the mode held; every one under Infinite Ammunition), and nothing where none were, and returns the new count, or null as `load` does (0 shots spends nothing and returns the count). `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. `stuck(item)`, `setStuck(item, stuck)`, `freeStuck(actor, item)` and `letGoOfStuck(actor, item)` (since 1.105.0) read, set and end a weapon's being stuck in a foe (see *A weapon stuck in a foe*). `equipmentFailure({ actor?, item, modifier?, label?, apply? })` (since 1.118.0) rolls an equipment failure roll for a thing (see *Equipment failure rolls*). `setUnready(item, unready, { reason?, attacker?, contest? })` and `knockAway(item, { reason?, attacker?, contest? })` (since 1.136.0) leave a weapon unready or knock it out of its holder's hands, through the GM's client where the user doesn't own it: for a GM, or since 1.143.0 on behalf of an `attacker` the user owns with the `contest` card of the disarm they won (see *Disarms*). `applyDamage({ item, damage, type, armorDivisor?, label? })` (since 1.126.0) puts a blow on a thing that keeps hit points (see *Damage to things*). `changeQuantity(item, delta, { reason? })` (since 1.123.0) adds `delta` to a stack of an item, or takes it off with a negative one, for a module that makes, finds or uses up consumables: rounds put in a box, supplies spent. A fraction is dropped toward none. The quantity never goes below 0, and an emptied stack stays on the actor. Weight and cost are kept per unit, so the carried weight and the stack's worth follow with nothing else to change. It resolves to `{ from, to, reason }` -- the quantity before and after, `reason` as given, for the module's own card -- or null for an item that keeps no quantity, a user who doesn't own it, or a delta that isn't a number. |
+| `combat` | Combat extension points (since 1.1.0). `liquidInTheFace(options)` (since 1.155.0); see [Liquids in the face](#liquids-in-the-face). |
 | `data` | Data extension points (since 1.2.0). |
 | `sheets`, `chat` | Sheet and chat extension points (since 1.3.0). |
 | `points`, `magic` | Point pools, energy sources and spell attacks (since 1.4.0), and resistance cards (since 1.9.0). |
@@ -129,6 +129,8 @@ client makes the change, through a Foundry user query:
 | `actors.applyCondition(actor, application, { source? })` | `source` |
 | `actors.removeCondition(actor, id, { source? })` | `source` |
 | `hazards.shock({ actor, ..., sourceActor? })` | `sourceActor` (its `source` is already the text name the hooks see) |
+| `hazards.irradiate({ actor, rads, protectionFactor, modifier, sourceActor? })` (since 1.155.0) | `sourceActor` |
+| `combat.liquidInTheFace({ ..., apply: true, source? })` (since 1.155.0) | `source`, the `attacker` where left out |
 
 - The source is an actor the user owns, or a token whose actor they own.
 - A GM caller, and the target's owner, act on their own client as before, and
@@ -1030,6 +1032,9 @@ and the roll continues.
     than one shell), `spraying` (fired once for the whole burst, after its
     last target, with `targets` its count) or `suppression` (`targets` 0).
     For heat, fouling or wear without watching item updates.
+    Since 1.155.0 `kind` may also be `module`, for shots a module spent
+    with `items.spendShots` (`targets` 0), which then carries `reason`, the
+    text the module gave ("" for none).
     Since 1.101.0 it also carries `derivedMode`: the `<module>.<key>` of the
     derived attack mode fired, where a module's row spent a stored mode's
     rounds (see `combat.registerDerivedAttackMode`), and null otherwise;
@@ -1950,6 +1955,22 @@ Two fields a module may read (since 1.62.0):
     as time passes.
   - `actors.healCrippled(actor, idOrLocation)` takes one off. It resolves
     to false where there was none.
+  - `actors.treatCrippled(actor, idOrLocation, { treatedAtTl })` (since
+    1.155.0) puts a part in a physician's care after it was recorded:
+    `treatedAtTl` is the medical TL, or null to take the care off. A lasting
+    part then heals after its 1d months less the relief at that TL, never
+    under one, counted from when it was crippled; a later call replaces the
+    TL rather than adding to it. An undecided part keeps the TL, and
+    `settleCrippling` (and the sheet's roll) uses it where it is given
+    none. A temporary or permanent part only records it. Parts now keep
+    `roll` (the 1d) for a lasting one, and `treatedAtTl`; a lasting part
+    keeps the TL only where its months came from a die the relief was
+    taken off, so months a caller gave `cripple` or `settleCrippling`
+    stand without it. Where the die wasn't kept -- given months, or a part
+    recorded before 1.155.0 -- it is read back from the months, held to
+    1-6, and the part is taken to have been untreated until then. It
+    resolves to the part, or null for a user who can't change the actor or
+    no part by that id or location.
   - The parts are kept in `flags.gworld.crippled`. The sheet lists them
     under Recovery, with a button to take each off.
   - Since 1.129.0 the system applies part of what a crippled part does
@@ -2118,7 +2139,8 @@ Two fields a module may read (since 1.62.0):
   `sourceActor`, the actor the shock comes from: where the user owns it but not
   the victim, the GM's client gives the shock (see *Effects on a character the
   user doesn't own*). `hazards.irradiate({ actor, rads,
-  protectionFactor, modifier })` adds a dose of radiation (p. 435). Before a
+  protectionFactor, modifier })` adds a dose of radiation (p. 435); since
+  1.155.0 it also takes `sourceActor`, as `shock` does. Before a
   dose is added, `gworld.radiationDose` fires with `{ actor, rads,
   protectionFactor, sources }`: change `rads`, and push a label to `sources`.
   Since 1.79.0 `hazards.shootAtVehicle({ actor, vehicle, damage?,
@@ -2379,6 +2401,31 @@ Two fields a module may read (since 1.62.0):
   distance alone, say; its reach grows to match. A linked or follow-up line
   carries `radiation` and `surge` as a mode does, and `surge` travels to the
   apply as `IncomingDamage.surge`.
+- **A linked line's own area** (since 1.155.0; Campaigns p. 381). A linked
+  or follow-up line (`linked`, `linkedAlso` on a mode, or a row's
+  `followUp`/`followUpAlso` from `gworld.weaponAttacks`) takes `radius`,
+  yards from where the attack landed; 0 or left out, it reaches whoever the
+  attack did, as before. The Combat tab shows it after the line. A linked
+  affliction with a radius is resisted as an area affliction (centred as
+  one is, with `attack.distance`), and a targeted token beyond the radius
+  isn't rolled for; the user is told who was left out. The radius is
+  measured only from a template the user placed; with none, every target
+  resists and the user is told the GM must leave out anyone beyond it. A damage line's card
+  says "everyone within N yards" (`DamageRollOptions.areaRadius`, which
+  `roll.damage` takes too); the GM targets them and applies it, as for a
+  blast.
+- **Surge and Electrical** (since 1.155.0; Characters pp. 105, 134). The
+  Electrical disadvantage is read from the character's traits as
+  `traitEffects.electrical` (true, or left out). When the damage card
+  applies a Surge blow to a character with it, and the card's Critical hit
+  box is ticked (the critical tables switch shows it), the victim
+  short-circuits: the token gets `unconscious`, on top of the blow's other
+  effects, and the card says so. Any other Surge hit on such a character
+  only gets a note that what the surge disables is the GM's call, since
+  p. 105 gives no roll or number for it, and nothing is done to a victim
+  without Electrical. What a surge does to electronics, a vehicle or
+  another machine is left to the GM too; a module that has a rule for it
+  reads `IncomingDamage.surge` in the damage hooks.
 - **Tight-beam burning** (since 1.97.0; Campaigns pp. 399, 408, 433-434): a
   ranged burn that isn't a jet, cone, area, explosion or follow-up -- a laser,
   not a flamethrower.
@@ -2465,7 +2512,7 @@ Two fields a module may read (since 1.62.0):
     damage it has taken already. It speaks for the one controlled token, if
     any.
   - *`hazards.detonate({ explosive?, ref?, weightLbs, placement?,
-    distanceYards?, structure?, actor?, label? })`* does the same without the
+    distanceYards?, structure?, actor?, label?, structureMultiplier? })`* does the same without the
     dialog. `explosive` is an id from `data.explosives()`; `ref` stands in for
     one on no list. The charge posts an ordinary crushing explosive damage
     card (`source: "demolition"`, `blastPlacement: "contact"` for a contact
@@ -2479,6 +2526,12 @@ Two fields a module may read (since 1.62.0):
     structure }`, `structure` being the `StructureBlast` below with `damage`,
     `dr`, `maxHp`, `held` and `stands` (null where no roll was made), or null
     for no structure; the whole is null for no charge.
+    Since 1.155.0 `structureMultiplier` (1 by default; a figure that isn't
+    above 0 counts as 1) multiplies what the charge does to the structure,
+    and nothing else: a module's rule that a charge does double against what
+    it is packed against gives 2. The people's damage card is as before. The
+    structure card names the multiplier, and `structure` carries
+    `multiplier`; its `damage` is the multiplied figure.
   - *Rules:* `RELATIVE_EXPLOSIVE_FORCE` (`{ id, name, tl, ref }` rows) and
     `explosiveForce(id)`; `chargeMultiplier(weightLbs, ref)`, the n in 6dxn;
     `explosiveWeightFor(n, ref)`, the pounds a 6dxn blast takes;
@@ -3599,6 +3652,45 @@ or 1/2D changed the figure, the card shows what the dice came to as well.
   card that applies it, and one that doubles or triples the damage shows the
   rolled figure times that (Campaigns p. 556). An explosion's card leaves
   them off, since the distance sets its figure too.
+
+## Liquids in the face
+
+Since 1.155.0 a module's weapon that squirts something in a face starts the
+system's own procedure for it (Campaigns p. 405), the one the sheet's
+Splash button runs.
+
+- **`combat.liquidInTheFace({ attacker, victim, hit, criticalHit, defense?,
+  defended?, parried?, liquid?, apply?, source? })`**. The throw is the
+  module's own attack (the page treats it as a thrown weapon, Acc 1, Max 3,
+  at -5 for the face); this takes how it went. `defense` is `none`,
+  `dodge`, `block` or `parry` for a defense tried and made, and a parry
+  stops nothing ("it is impossible to parry a liquid"); `defended` and
+  `parried` stand in for it as the button gives them. `liquid` names what
+  was thrown on the card.
+- A critical hit blinds for 1d seconds, with no defense. Any other hit the
+  victim didn't stop calls for a Will roll, rolled here; on a failure the
+  victim flinches. A victim who keeps composure is unaffected. Bad Temper's
+  reaction is the GM's.
+- It posts the card and resolves to `{ blinded, blindSeconds, flinched,
+  defended, will, conditions }`.
+- With `apply: true` it also leaves the result on the victim as timed
+  conditions (the button doesn't): a flinch is `gworld.splash-flinchDefense`
+  (-2 to rolls tagged `defense`, until the victim's next turn begins) and
+  `gworld.splash-flinchNextTurn` (-2 to rolls tagged `DX` or a sense,
+  `vision`, `hearing`, `tasteSmell` or `touch`, through that turn); each
+  also ends after 1 and 2 seconds of world time. This is an approximation of
+  p. 405, which gives -2 to defenses for the rest of that turn and -2 to DX
+  and Sense rolls on the victim's next turn: a timed condition can't wait to
+  begin or end when the combat turn changes, so the defense penalty runs
+  until the victim's turn begins, and the DX and Sense one starts at once.
+  Blindness is
+  `gworld.splash-blinded` for its seconds, with no lines: the attack
+  dialog's sight select applies blindness as for any other. `conditions`
+  lists the ids made. For a victim the user doesn't own they go through the
+  GM's client on behalf of `source`, the `attacker` where left out (see
+  *Effects on a character the user doesn't own*).
+- Acid, poison and the like "have their usual effects": the module applies
+  them itself, beside this.
 
 ## Hiding an item with Holdout
 

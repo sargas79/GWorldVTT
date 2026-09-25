@@ -97,3 +97,52 @@ export function canParryLiquid(): boolean {
   // where a caller will look for it.
   return false;
 }
+
+/** The active defense tried against a splash. */
+export type LiquidDefense = "none" | "dodge" | "block" | "parry";
+
+/** Whether a successful defense of this kind stops a splash (p. 405): anything but a parry. */
+export function liquidDefended(defense: LiquidDefense | string): boolean {
+  return defense !== "none" && defense !== "" && (defense !== "parry" || canParryLiquid());
+}
+
+/**
+ * One thing a splash leaves on its victim for a while (since API 1.155.0),
+ * as a timed condition: its `key`, the victim's own turns it lasts (ended at
+ * the start of the last), the seconds it lasts out of combat, and the line
+ * it puts on the rolls it names -- none for blindness, whose penalties are
+ * the sight rules' own.
+ */
+export interface LiquidEffect {
+  key: "flinchDefense" | "flinchNextTurn" | "blinded";
+  turns: number | null;
+  seconds: number;
+  rolls: string[];
+  value: number;
+}
+
+/** The rolls a flinch costs on the victim's next turn: DX, and the senses. */
+export const FLINCH_NEXT_TURN_ROLLS = ["DX", "vision", "hearing", "tasteSmell", "touch"] as const;
+
+/**
+ * What a splash leaves on its victim (p. 405): a flinch is -2 "to further
+ * defenses that turn" -- until the victim's own turn comes round -- and -2 "to
+ * any DX or Sense roll on his next turn", through the end of it; blindness
+ * lasts its 1d seconds.
+ *
+ * An approximation: a timed condition can't wait to begin, nor end when the
+ * combat turn passes, so the defense penalty lasts until the victim's own turn
+ * begins (not only through the thrower's turn), and the DX and Sense penalty
+ * begins at once rather than at the victim's next turn. Both are gone by the
+ * end of that turn, as the page has it.
+ */
+export function liquidEffects(result: LiquidResult): LiquidEffect[] {
+  if (result.blinded) {
+    return [{ key: "blinded", turns: null, seconds: Math.max(1, result.blindSeconds), rolls: [], value: 0 }];
+  }
+  if (!result.flinched) return [];
+  return [
+    { key: "flinchDefense", turns: 1, seconds: 1, rolls: ["defense"], value: FLINCH_PENALTY },
+    { key: "flinchNextTurn", turns: 2, seconds: 2, rolls: [...FLINCH_NEXT_TURN_ROLLS], value: FLINCH_PENALTY },
+  ];
+}

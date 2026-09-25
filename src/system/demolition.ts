@@ -54,6 +54,13 @@ export interface DetonateOptions {
   actor?: any;
   /** A name for the charge in place of "1 lb of TNT". */
   label?: string;
+  /**
+   * What the charge's damage to the structure is multiplied by, and to the
+   * structure alone (since API 1.155.0): 2 for a charge a module's rule says
+   * does double against what it is set on. The blast card for people is left
+   * as it is. 1 where left out; a figure that isn't above 0 counts as 1.
+   */
+  structureMultiplier?: number;
 }
 
 export interface Detonation {
@@ -62,7 +69,13 @@ export interface Detonation {
   /** The damage the card rolled. */
   basicDamage: number;
   /** What it did to the structure, or null where there was none. */
-  structure: (StructureBlast & { damage: number; dr: number; maxHp: number; held: boolean | null; stands: boolean | null }) | null;
+  structure: (StructureBlast & { damage: number; dr: number; maxHp: number; held: boolean | null; stands: boolean | null; multiplier: number }) | null;
+}
+
+/** A structure multiplier as given (since API 1.155.0): a positive number, else 1. */
+export function structureMultiplierOf(value: unknown): number {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : 1;
 }
 
 const D = (key: string) => game.i18n.localize(`GWORLD.Demolition.${key}`);
@@ -115,9 +128,12 @@ export async function detonateCharge(options: DetonateOptions): Promise<Detonati
   // Packed against it, the structure takes the most the dice could do (p. 415);
   // set down nearby, it takes the collateral share of what was rolled.
   const distance = Math.max(0, Number(options.distanceYards ?? 1) || 0);
-  const damage = placement === "contact"
+  const blastDamage = placement === "contact"
     ? maxRoll(charge.dice)
     : blastAt({ rolledDamage: basicDamage, distanceYards: distance, diceOfDamage: charge.diceOfDamage }).damage;
+  // A module's multiplier against the structure alone (since API 1.155.0).
+  const multiplier = structureMultiplierOf(options.structureMultiplier);
+  const damage = Math.floor(blastDamage * multiplier);
   const dr = Math.max(0, Math.floor(Number(target.dr) || 0));
   const maxHp = Math.max(1, Math.floor(Number(target.hp) || 0));
   const hit = blastAgainstStructure({ damage, dr, hp: maxHp, damageTaken: target.damageTaken, failedDisabling: target.failedDisabling });
@@ -127,6 +143,7 @@ export async function detonateCharge(options: DetonateOptions): Promise<Detonati
     placement === "contact"
       ? DF("AgainstContact", { damage, dr })
       : DF("AgainstNearby", { damage, dr, distance }),
+    ...(multiplier !== 1 ? [DF("StructureMultiplier", { multiplier, damage: blastDamage })] : []),
     DF("Injury", { injury: hit.injury, hp: maxHp, now: hit.hp }),
   ];
   const rolls: any[] = [];
@@ -163,7 +180,7 @@ export async function detonateCharge(options: DetonateOptions): Promise<Detonati
     rolls,
   });
 
-  return { charge, ref, basicDamage, structure: { ...hit, damage, dr, maxHp, held, stands } };
+  return { charge, ref, basicDamage, structure: { ...hit, damage, dr, maxHp, held, stands, multiplier } };
 }
 
 // ── the GM's tool ───────────────────────────────────────────────────────────

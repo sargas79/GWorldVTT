@@ -280,6 +280,8 @@ function secondLine(follow: any): any {
         // Radiation and Surge, which a mode's own line carries (since 1.63.0).
         ...(follow.radiation ? { radiation: true } : {}),
         ...(follow.surge ? { surge: true } : {}),
+        // An area of its own, in yards (since 1.155.0).
+        ...(Number(follow.radius) > 0 ? { radius: Number(follow.radius) } : {}),
         ...(follow.label ? { label: String(follow.label) } : {}),
       }
     : null;

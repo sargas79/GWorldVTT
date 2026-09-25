@@ -63,6 +63,7 @@
   {{#if splash}}
     <div class="gc-mods">
       <span>{{victim}}</span>
+      {{#if liquid}}<span class="gc-mod">{{liquid}}</span>{{/if}}
       <span class="gc-mod">{{localize "GWORLD.Splash.Thrown" acc=accuracy max=maxRange face=faceModifier}}</span>
     </div>
     {{#if triedToParry}}

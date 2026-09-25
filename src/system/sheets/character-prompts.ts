@@ -10,7 +10,7 @@ import { isRuleOn } from "../optional-rules.js";
 import { attackArc } from "../../rules/tactical.js";
 import { type Entanglement } from "../entangling.js";
 import { type Victim } from "../unarmed-techniques.js";
-import { canParryLiquid } from "../../rules/dirty-tricks.js";
+import { liquidDefended } from "../../rules/dirty-tricks.js";
 import { pressureAtDepth } from "../../rules/pressure.js";
 import { type InventionPlan } from "../invention.js";
 import type { DrugKind } from "../../rules/intoxication.js";
@@ -1053,7 +1053,7 @@ export async function promptForSplash(): Promise<{
         return {
           hit: ticked("hit"),
           criticalHit: ticked("critical"),
-          defended: defense !== "none" && (defense !== "parry" || canParryLiquid()),
+          defended: liquidDefended(defense),
           parried: defense === "parry",
         };
       },

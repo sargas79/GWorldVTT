@@ -279,6 +279,8 @@ export interface DerivedAttack {
     /** Carried on a linked line as on a mode (since API 1.63.0). */
     radiation?: boolean;
     surge?: boolean;
+    /** Its own area, in yards from where the attack lands, where it has one (since API 1.155.0). */
+    radius?: number;
   } | null;
   /**
    * A second line of the other kind, where the mode has both a follow-up and
@@ -499,7 +501,7 @@ export interface DerivedAttack {
   noKnockback?: boolean;
   /** A blow whose whole effect is knockback and blunt trauma, with no other injury (since API 1.63.0). */
   kineticOnly?: boolean;
-  /** Surge (Characters p. 105): burning damage that does double to anything electrical, for the modules that read it (since API 1.63.0). */
+  /** Surge (Characters p. 105): an electrical surge that can disable electronics or anything with Electrical (p. 134); since API 1.63.0. */
   surge?: boolean;
   rateOfFire?: number;
   /** A RoF marked "!": the weapon fires only on full auto, a quarter of its RoF at least (Characters p. 270; since API 1.94.0). */
@@ -612,6 +614,7 @@ function linkedRow(linked: any): NonNullable<DerivedAttack["followUp"]> {
     ...(linked.followUp ? { followUp: true } : {}),
     ...(linked.radiation ? { radiation: true } : {}),
     ...(linked.surge ? { surge: true } : {}),
+    ...(Number(linked.radius) > 0 ? { radius: Number(linked.radius) } : {}),
     ...(linked.label ? { label: String(linked.label) } : {}),
   };
 }

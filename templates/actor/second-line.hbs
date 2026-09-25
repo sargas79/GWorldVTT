@@ -11,10 +11,10 @@
         data-damage-type="{{second.damageType}}"
         data-armor-divisor="{{second.armorDivisor}}" data-follow-up="{{#if second.followUp}}1{{/if}}"
         data-half-damage-range="{{atk.halfDamageRange}}"
-        data-area-attack="{{#if atk.areaAttack}}1{{/if}}"
+        data-area-attack="{{#if (or atk.areaAttack second.radius)}}1{{/if}}" data-area-radius="{{second.radius}}"
         data-affliction-label="{{atk.name}} {{#if second.label}}{{second.label}}{{else if second.followUp}}{{localize 'GWORLD.Attack.FollowUp'}}{{else}}{{localize 'GWORLD.Attack.Linked'}}{{/if}}"
         data-tooltip="{{#if second.followUp}}{{localize 'GWORLD.Attack.FollowUpHint'}}{{else}}{{localize 'GWORLD.Attack.LinkedHint'}}{{/if}}"
-        >{{second.afflictionAttribute}}{{second.afflictionModifier}}{{#unless (eq second.armorDivisor 1)}} ({{second.armorDivisor}}){{/unless}} {{localize "GWORLD.Affliction.Short"}}</span>
+        >{{second.afflictionAttribute}}{{second.afflictionModifier}}{{#unless (eq second.armorDivisor 1)}} ({{second.armorDivisor}}){{/unless}} {{localize "GWORLD.Affliction.Short"}}{{#if second.radius}} {{localize "GWORLD.Attack.Radius" yards=second.radius}}{{/if}}</span>
 {{else}}
   <span class="tag rollable" data-action="rollDamage" data-second-line="{{#if second.followUp}}followUp{{else}}linked{{/if}}"
         data-damage-formula="{{second.damage}}" data-damage-type="{{second.damageType}}"
@@ -23,7 +23,7 @@
         data-explosive="{{#if second.explosive}}1{{/if}}" data-fragmentation="{{second.fragmentation}}"
         data-fragmentation-type="{{second.fragmentationType}}" data-fragmentation-divisor="{{second.fragmentationDivisor}}"
         data-blast-placement="{{second.blastPlacement}}"
-        data-radiation="{{#if second.radiation}}1{{/if}}" data-surge="{{#if second.surge}}1{{/if}}"
+        data-radiation="{{#if second.radiation}}1{{/if}}" data-surge="{{#if second.surge}}1{{/if}}" data-area-radius="{{second.radius}}"
         data-tooltip="{{#if second.followUp}}{{localize 'GWORLD.Attack.FollowUpHint'}}{{else}}{{localize 'GWORLD.Attack.LinkedHint'}}{{/if}}"
-        >+{{shownDamage second.damage}} {{second.damageType}}</span>
+        >+{{shownDamage second.damage}} {{second.damageType}}{{#if second.radius}} {{localize "GWORLD.Attack.Radius" yards=second.radius}}{{/if}}</span>
 {{/if}}

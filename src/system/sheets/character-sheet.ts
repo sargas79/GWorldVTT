@@ -56,6 +56,7 @@ import {
 } from "../gunplay.js";
 import { rollInfluence, rollReaction } from "../reactions.js";
 import { monthlyPay } from "../../rules/wealth.js";
+import { withinLinkedArea } from "../../rules/linked-effects.js";
 import { rolledDice } from "../modifying-dice.js";
 import { aimableLocations, locationsOf } from "../../rules/vehicle-combat.js";
 import {
@@ -3136,6 +3137,15 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // An area affliction's centre (since API 1.63.0): this user's latest
     // template on the map, or else the first target.
     const centre = target.dataset.areaAttack === "1" ? areaCentre(targets) : null;
+    // A linked line's own area (Campaigns p. 381; since API 1.155.0): whoever
+    // is targeted beyond it is left out. It is measured only from a template
+    // the user placed; from a target, nobody is left out, and the user is told.
+    const radius = Number(target.dataset.areaRadius) || 0;
+    const measured = radius > 0 && centre?.templated === true;
+    const outside: string[] = [];
+    if (radius > 0 && !measured) {
+      ui.notifications?.info(game.i18n.format("GWORLD.Affliction.RadiusUnmeasured", { yards: radius }));
+    }
 
     // One roll each: an affliction is resisted individually, and two people
     // caught by the same stun gun do not share a roll.
@@ -3149,6 +3159,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
       const yards = yardsBetween(shooter, token);
       const fromCentre = centre ? yardsBetween(centre, token) : null;
+      if (!withinLinkedArea(measured ? fromCentre : null, radius)) {
+        outside.push(String(victim.name ?? ""));
+        continue;
+      }
       const distance = fromCentre === null ? {} : { distance: fromCentre };
       // What the victim's armour was worth against the attack that forced the
       // roll. An affliction is not damage, so none of it is subtracted here.
@@ -3236,6 +3250,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           ...where,
         });
       }
+    }
+    if (outside.length > 0) {
+      ui.notifications?.info(game.i18n.format("GWORLD.Affliction.OutsideRadius", { names: outside.join(", "), yards: radius }));
     }
   }
 
@@ -4009,12 +4026,13 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 /**
  * Where an area attack is centred, as something `yardsBetween` can measure
  * from: the last template this user placed on the scene, or the first target.
+ * `templated` says it was a template (since API 1.155.0).
  */
-function areaCentre(targets: any[]): { center: { x: number; y: number } } | null {
+function areaCentre(targets: any[]): { center: { x: number; y: number }; templated?: true } | null {
   const templates: any[] = (globalThis as any).canvas?.templates?.placeables ?? [];
   const mine = templates.filter((t) => t?.document?.author?.id === game.user?.id || t?.document?.user?.id === game.user?.id);
   const last = mine[mine.length - 1]?.document;
-  if (last && Number.isFinite(last.x) && Number.isFinite(last.y)) return { center: { x: last.x, y: last.y } };
+  if (last && Number.isFinite(last.x) && Number.isFinite(last.y)) return { center: { x: last.x, y: last.y }, templated: true };
   const first = targets[0];
   return first?.center ? { center: first.center } : null;
 }

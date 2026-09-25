@@ -32,7 +32,7 @@ import { holdoutSizes, rollHoldout } from "./holdout.js";
 import { incompatibleModules, satisfiesApiRange } from "./api-version.js";
 import { combatApi } from "./combat-extensions.js";
 import { clearZenShot, pendingZenShot, registerZenSkill, rollZenSkill, zenSkillsOf } from "./zen.js";
-import { loadInstantly, refundShots } from "./ammunition.js";
+import { loadInstantly, refundShots, spendModeShots } from "./ammunition.js";
 import { clearMalfunction, malfunctionOf, setMalfunction } from "./malfunctions.js";
 import { knockWeaponAway, setWeaponUnready, type HeldWeaponOptions, type KnockedAway, type UnreadyChanged } from "./held-weapons.js";
 import { freeStuckWeapon, letGoOfStuckWeapon, setStuckWeapon, stuckWeaponOf } from "./picks.js";
@@ -56,7 +56,7 @@ import { rollFall } from "./falling.js";
 import { restoreFatigue, spendFatigueFor } from "./fatigue.js";
 import { changeTrait, type TraitChanged } from "./trait-change.js";
 import { stopTowing, tow } from "./towing.js";
-import { cripple, crippledParts, healCrippled, settleCrippling, type CrippledDuration, type CrippledPart } from "./crippling.js";
+import { cripple, crippledParts, healCrippled, settleCrippling, treatCrippled, type CrippledDuration, type CrippledPart } from "./crippling.js";
 import type { CripplingDuration } from "../rules/mortal-wounds.js";
 import type { Conveyance } from "../rules/towing.js";
 import { bind, bindingOf, breakFreeFromBinding, unbind, type BindingBroken } from "./entangling.js";
@@ -65,9 +65,10 @@ import { isUndoable, undoDamage, type DamageTransaction, type UndoOutcome } from
 import { carriedAmmunitionFor, loadAmmunition } from "./ammunition.js";
 import { randomLocationWithHooks } from "./combat-extensions.js";
 import {
-  fragileCatchesFire, fragileExplodes, fragileKindsOf, irradiate, rollBrittleLimb, shootAtVehicle, controlVehicle, type ShockOptions, type ShockOutcome,
+  fragileCatchesFire, fragileExplodes, fragileKindsOf, rollBrittleLimb, shootAtVehicle, controlVehicle, type IrradiateOptions, type ShockOptions, type ShockOutcome,
 } from "./hazards.js";
 import { detonateCharge } from "./demolition.js";
+import { splashInTheFace, type SplashOptions, type SplashOutcome } from "./gunplay.js";
 import { addAreaFor, relayEffect, removeAreaFor } from "./gm-relay.js";
 import { equipmentUseLines, familiarWith, setFamiliar } from "./tech-level.js";
 import { listAreas, tokensInArea } from "./modifier-areas.js";
@@ -108,7 +109,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.154.0";
+export const API_VERSION = "1.155.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -328,6 +329,17 @@ const actors = {
   /** The parts crippled now, healed ones left out (since 1.114.0). */
   crippled(actor: any): CrippledPart[] {
     return crippledParts(actor);
+  },
+
+  /**
+   * Puts a crippled part in a physician's care (p. 422; since 1.155.0), by id
+   * or location: `treatedAtTl` the medical TL, null to take it off. A lasting
+   * crippling heals after its 1d months less the relief (never under one),
+   * from when it was crippled; an undecided one keeps the TL for when it is
+   * settled. Resolves to the part, or null.
+   */
+  treatCrippled(actor: any, which: string, options: { treatedAtTl: number | null }): Promise<CrippledPart | null> {
+    return treatCrippled(actor, which, options);
   },
 
   /** Takes a crippled part off, by id or location (since 1.114.0). False where there was none. */
@@ -581,6 +593,18 @@ const items = {
    */
   refundShots(item: any, modeIndex: number, shots: number): Promise<number | null> {
     return refundShots(item, modeIndex, shots);
+  },
+
+  /**
+   * Takes `shots` off a ranged mode for a module's own procedure (since
+   * 1.155.0), as an attack spends them: never below 0, across a shared
+   * magazine, and nothing where Infinite Ammunition keeps the count. Fires
+   * `gworld.afterShots` with `kind: "module"` and `reason` for the shots
+   * actually fired, and not where none were. Returns the new count, or null
+   * where the mode keeps no count or the user doesn't own the item.
+   */
+  spendShots(item: any, modeIndex: number, shots: number, options: { reason?: string } = {}): Promise<number | null> {
+    return spendModeShots(item, modeIndex, shots, options);
   },
 
   /**
@@ -867,6 +891,11 @@ const combat = Object.freeze({
   rollZenSkill,
   zenShot: pendingZenShot,
   clearZenShot,
+  // Liquids in the face for a module's weapon (since 1.155.0; Campaigns p. 405).
+  liquidInTheFace: (options: Omit<SplashOptions, "actor"> & { attacker: any }): Promise<SplashOutcome> => {
+    const { attacker, ...rest } = options ?? ({} as Omit<SplashOptions, "actor"> & { attacker: any });
+    return splashInTheFace({ ...rest, actor: attacker ?? null });
+  },
   hooks: Object.freeze({ ...combatApi.hooks, ...PROCEDURE_HOOKS }),
 });
 
@@ -890,7 +919,8 @@ async function rollHitLocation(options: { actor?: any; damageType?: string | nul
  * 1.119.0 `shock` resolves to its `ShockOutcome`, and since 1.127.0 takes a
  * `source` and `tags` its hooks see. Since 1.149.0 `shock` takes a
  * `sourceActor` the user owns, which has the GM's client give the shock to an
- * actor the user doesn't own.
+ * actor the user doesn't own; `irradiate` takes one too since 1.155.0, and
+ * `detonate` a `structureMultiplier`.
  */
 const hazardsApi = Object.freeze({
   /**
@@ -910,7 +940,12 @@ const hazardsApi = Object.freeze({
     const { sourceActor, actor, ...rest } = options ?? ({} as ShockOptions & { sourceActor?: any });
     return relayEffect("shock", actor, sourceActor, { options: rest }, null);
   },
-  irradiate, detonate: detonateCharge, shootAtVehicle,
+  // Since 1.155.0 through the GM's client for a `sourceActor` the user owns, as `shock`.
+  irradiate(options: IrradiateOptions & { sourceActor?: any }): Promise<void> {
+    const { sourceActor, actor, ...rest } = options ?? ({} as IrradiateOptions & { sourceActor?: any });
+    return relayEffect("irradiate", actor, sourceActor, { options: rest }, undefined);
+  },
+  detonate: detonateCharge, shootAtVehicle,
   // A vehicle control roll, with why it is made (since 1.115.0; Campaigns p. 466),
   // and whether it is made from outside the vehicle (since 1.154.0).
   controlVehicle: (options: { actor: any; vehicle: any; modifier?: number; reason?: string; remote?: boolean }) => controlVehicle({ ...options, modifier: Number(options?.modifier) || 0 }),

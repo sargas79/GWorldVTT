@@ -643,10 +643,48 @@ export async function refundShots(item: any, modeIndex: number, shots: number): 
   return after;
 }
 
+/**
+ * Takes shots off a ranged mode for a module's own procedure (since 1.155.0):
+ * a card of rounds fired that no attack roll made. As an attack spends them:
+ * never below 0, across a shared magazine, and nothing where Infinite
+ * Ammunition keeps the count. Fires `gworld.afterShots` with `kind: "module"`
+ * and the `reason` given, for the shots actually fired, and not where none
+ * were. Returns the new count, or null where the mode keeps none or the user
+ * can't change it.
+ */
+export async function spendModeShots(item: any, modeIndex: number, shots: number, options: { reason?: string } = {}): Promise<number | null> {
+  if (!item?.isOwner || !isRuleOn("reloading")) return null;
+  const index = Math.floor(Number(modeIndex));
+  const found = modeOf(item, index);
+  if (!found) return null;
+  const { mode, entry } = found;
+  if (entry.thrown || fullLoad(entry) <= 0) return null;
+  const loaded = Math.max(0, Number(mode.loaded ?? 0) || 0);
+  const count = Math.max(0, Math.floor(Number(shots) || 0));
+  if (count === 0) return loaded;
+  const infinite = hasInfiniteAmmunition((item as { actor?: any }).actor ?? null);
+  const after = shotsAfterFiring({ loaded, fired: count, infinite });
+  if (after !== loaded) {
+    await setLoaded(item, index, after);
+    if (after === 0) ui.notifications?.info(L("Empty", { name: String(item.name) }));
+  }
+  // What was actually fired: all of it under Infinite Ammunition, else no
+  // more than the mode held. An empty mode fired nothing, and says nothing.
+  const fired = infinite ? count : loaded - after;
+  if (fired > 0) {
+    announceShots({
+      actor: (item as { actor?: any }).actor ?? null, item, modeIndex: index,
+      fired, extra: 0, wasted: 0, kind: "module", targets: 0,
+      reason: typeof options?.reason === "string" ? options.reason : "",
+    });
+  }
+  return after;
+}
+
 // ── what an attack spent (since 1.71.0) ─────────────────────────────────────
 
-/** How an attack spent its shots. */
-export type ShotsKind = "single" | "rapidFire" | "spraying" | "suppression";
+/** How an attack spent its shots; `module` for `items.spendShots` (since 1.155.0). */
+export type ShotsKind = "single" | "rapidFire" | "spraying" | "suppression" | "module";
 
 /** What `gworld.afterShots` hands its listeners. */
 export interface AfterShotsContext {
@@ -671,6 +709,8 @@ export interface AfterShotsContext {
    * mode's rounds (since 1.101.0); null for the stored mode's own row.
    */
   derivedMode: string | null;
+  /** Why a module spent them, for `kind: "module"` alone (since 1.155.0). */
+  reason?: string;
 }
 
 /** A spray's attacks, added up as they are made. */
@@ -686,7 +726,7 @@ export interface ShotsTally {
  * not the weapon keeps a count, so heat, fouling or wear can be followed
  * without watching the item. Nothing is said for an attack that spent nothing.
  */
-export function announceShots(options: Omit<AfterShotsContext, "mode" | "shots" | "derivedMode"> & { derivedMode?: string | null }): void {
+export function announceShots(options: Omit<AfterShotsContext, "mode" | "shots" | "derivedMode" | "reason"> & { derivedMode?: string | null; reason?: string }): void {
   const modeIndex = Math.floor(Number(options.modeIndex));
   const mode = options.item?.system?.rangedModes?.[modeIndex];
   if (!options.item || !mode) return;
@@ -700,6 +740,7 @@ export function announceShots(options: Omit<AfterShotsContext, "mode" | "shots" 
     actor: options.actor ?? null, item: options.item, modeIndex, mode,
     shots, fired, extra, wasted, kind: options.kind, targets: count(options.targets),
     derivedMode: options.derivedMode ? String(options.derivedMode) : null,
+    ...(options.kind === "module" ? { reason: String(options.reason ?? "") } : {}),
   } satisfies AfterShotsContext);
 }
 
@@ -732,10 +773,6 @@ export function shotsSourceOf(button: { dataset: Record<string, string | undefin
 }
 
 /**
- * Takes the shells a shot fired off the count. A thrown weapon or one whose
- * column says nothing keeps no count, and is left alone.
- */
-/**
  * Shots the weapon has ready in one of its modes, or null where the mode keeps
  * no count -- a thrown weapon, or one whose table gives no magazine.
  */
@@ -747,6 +784,10 @@ export function shotsReady(item: any, modeIndex: number): number | null {
   return Math.max(0, Number(mode.loaded ?? 0) || 0);
 }
 
+/**
+ * Takes the shells a shot fired off the count. A thrown weapon or one whose
+ * column says nothing keeps no count, and is left alone.
+ */
 export async function spendShots(item: any, modeIndex: number, shellsFired: number): Promise<void> {
   if (!item?.isOwner || !isRuleOn("reloading")) return;
   const found = modeOf(item, modeIndex);
