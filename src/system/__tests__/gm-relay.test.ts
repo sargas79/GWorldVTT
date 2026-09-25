@@ -29,6 +29,7 @@ const doStop = refusing("stopBleeding", undefined, undefined);
 const doApply = refusing("applyCondition", "stunned", null);
 const doRemove = refusing("removeCondition", undefined, undefined);
 const doShock = refusing("shock", outcome, null);
+const doIrradiate = refusing("irradiate", undefined, undefined);
 
 vi.mock("../poison.js", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -42,6 +43,7 @@ vi.mock("../bleeding.js", async (importOriginal) => ({
 vi.mock("../hazards.js", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   shock: vi.fn(({ actor, ...rest }: any) => doShock(actor, rest)),
+  irradiate: vi.fn(({ actor, ...rest }: any) => doIrradiate(actor, rest)),
 }));
 vi.mock("../procedure-extensions.js", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -419,5 +421,40 @@ describe("a player's area on a scene only the GM may write (API 1.150.0)", () =>
       expect(await answerAreaQuery({ action: "remove", sceneUuid: "Scene.far", id: "" }, { user: GM })).toBeNull();
       expect(far.setFlag).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("a player's dose of radiation on an actor only the GM owns (API 1.155.0)", () => {
+  const dose = { rads: 30, protectionFactor: 1, modifier: 0 };
+
+  it("is given through the GM's client, from a source the player owns", async () => {
+    const api = createApi();
+    const foe = actor("Actor.foe");
+    const mine = actor("Actor.mine", ["player"]);
+    documents.set(foe.uuid, foe).set(mine.uuid, mine);
+    const query = connectGm();
+    await api.hazards.irradiate({ actor: foe, ...dose, sourceActor: mine });
+    expect(made).toEqual([{ action: "irradiate", actor: foe, args: dose }]);
+    expect(query).toHaveBeenCalledWith(EFFECT_QUERY, { action: "irradiate", actorUuid: "Actor.foe", sourceUuid: "Actor.mine", args: { options: dose } }, expect.anything());
+  });
+
+  it("is refused without such a source, and made here for the owner as before", async () => {
+    const api = createApi();
+    const foe = actor("Actor.foe");
+    const mine = actor("Actor.mine", ["player"]);
+    const query = connectGm();
+    await api.hazards.irradiate({ actor: foe, ...dose });
+    expect(made).toHaveLength(0);
+    await api.hazards.irradiate({ actor: mine, ...dose });
+    expect(made.map((m) => m.actor)).toEqual([mine]);
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it("isn't made by the GM's client for a dose with no rads", async () => {
+    const foe = actor("Actor.foe");
+    documents.set(foe.uuid, foe);
+    (globals.game as any).user = GM;
+    expect(await answerEffectQuery({ action: "irradiate", actorUuid: "Actor.foe", sourceUuid: "", args: { options: { protectionFactor: 1 } } }, { user: GM })).toBeNull();
+    expect(made).toHaveLength(0);
   });
 });

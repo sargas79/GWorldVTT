@@ -1009,14 +1009,17 @@ async function vehicleFragileLines(options: {
 
 // ── radiation (pp. 435-436) ─────────────────────────────────────────────
 
-/** A dose of radiation, added to what is already carried, and the HT roll it asks for. */
-export async function irradiate(options: {
+/** What `irradiate` is called with (named since API 1.155.0). */
+export interface IrradiateOptions {
   actor: any;
   rads: number;
   /** The shielding's Protection Factor, 1 for none. */
   protectionFactor: number;
   modifier: number;
-}): Promise<void> {
+}
+
+/** A dose of radiation, added to what is already carried, and the HT roll it asks for. */
+export async function irradiate(options: IrradiateOptions): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor)) return;
 

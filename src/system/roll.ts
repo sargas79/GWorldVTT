@@ -1317,6 +1317,12 @@ export interface DamageRollOptions {
   /** Surge (Characters p. 105): burning damage that does double to anything electrical, for the modules that read it (since API 1.63.0). */
   surge?: boolean;
   /**
+   * A linked line's own area, in yards from where the attack landed (since
+   * API 1.155.0): the card says everyone that near takes it. 0 or left out
+   * for none.
+   */
+  areaRadius?: number;
+  /**
    * A tight-beam burn (Campaigns p. 399; since API 1.97.0): x2 at the vitals,
    * and a tenth of its damage toward setting clothes alight. Travels on the card.
    */
@@ -1485,6 +1491,8 @@ export async function rollDamage(options: DamageRollOptions): Promise<number> {
     // "if an explosion does 6dx2 damage, everyone within 24 yards is
     // vulnerable" -- twelve dice, not six. The multiplier counts.
     blastRadius: explosive ? blastRadius(blastDice) : 0,
+    // A linked line's own area (since API 1.155.0).
+    areaRadius: Number(options.areaRadius) > 0 ? Number(options.areaRadius) : 0,
     // "In cinematic combat, explosions do no direct damage! Ignore
     // fragmentation, too" (p. 417) -- so a cinematic grenade throws none, and
     // the card does not offer a radius for fragments nobody will roll.
@@ -4640,6 +4648,7 @@ export async function handleDamageAction(
     ...(target.dataset.noKnockback === "1" ? { noKnockback: true } : {}),
     ...(target.dataset.kineticOnly === "1" ? { kineticOnly: true } : {}),
     ...(target.dataset.surge === "1" ? { surge: true } : {}),
+    ...(Number(target.dataset.areaRadius) > 0 ? { areaRadius: Number(target.dataset.areaRadius) } : {}),
     ...(target.dataset.tightBeam === "1" ? { tightBeam: true } : {}),
     ...(target.dataset.pick === "1" ? { pick: true } : {}),
     ...(item ? { item } : {}),

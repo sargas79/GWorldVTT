@@ -21,7 +21,7 @@ import { SYSTEM_ID } from "./constants.js";
 import { conditionLabel, setCondition } from "./conditions.js";
 import { stopBleeding } from "./bleeding.js";
 import { advancePoison, dosePoison } from "./poison.js";
-import { shock, type ShockOptions } from "./hazards.js";
+import { irradiate, shock, type IrradiateOptions, type ShockOptions } from "./hazards.js";
 import { applyCondition, removeCondition, type ConditionApplication } from "./procedure-extensions.js";
 import { addArea, removeArea } from "./modifier-areas.js";
 import type { Poison } from "../rules/poison.js";
@@ -40,6 +40,8 @@ export interface EffectArguments {
   applyCondition: { application: ConditionApplication };
   removeCondition: { id: string };
   shock: { options: Omit<ShockOptions, "actor"> };
+  /** A dose of radiation (since API 1.155.0). */
+  irradiate: { options: Omit<IrradiateOptions, "actor"> };
 }
 
 export type EffectAction = keyof EffectArguments;
@@ -61,6 +63,7 @@ const HANDLERS: { [A in EffectAction]: (actor: any, args: EffectArguments[A]) =>
     applyCondition(actor, args.application, { setSystemCondition: setCondition, systemConditionLabel: conditionLabel }),
   removeCondition: (actor, args) => removeCondition(actor, String(args.id ?? ""), { setSystemCondition: setCondition }),
   shock: (actor, args) => shock({ ...args.options, actor }),
+  irradiate: (actor, args) => irradiate({ ...args.options, actor }),
 };
 
 /** Whether the arguments are the right shape for the effect: checked on the GM's side. */
@@ -76,6 +79,8 @@ function wellFormed(action: EffectAction, args: any): boolean {
       return !!args.application && typeof args.application === "object";
     case "shock":
       return !!args.options && typeof args.options === "object";
+    case "irradiate":
+      return !!args.options && typeof args.options === "object" && Number.isFinite(Number(args.options.rads));
     default:
       return true;
   }

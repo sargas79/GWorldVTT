@@ -317,6 +317,22 @@ describe("an item's attack rows (#270)", () => {
     expect(rows[1]!.row.followUpAlso).toBeNull();
   });
 
+  it("keeps a linked line's own radius, and drops one that isn't above 0 (since 1.155.0)", async () => {
+    const api = await load();
+    const rows = entries() as Array<{ row: any }>;
+    Object.assign(rows[1]!.row, {
+      followUp: { damage: "6dx2", damageType: "cr", explosive: true },
+      followUpAlso: { damage: "HT-5", damageType: "cr", explosive: false, affliction: true, afflictionAttribute: "HT", afflictionModifier: -5, radius: 8 },
+    });
+    globals.Hooks = { callAll: () => {} };
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: rows as never, ...helpers } as never);
+    expect(rows[1]!.row.followUpAlso).toMatchObject({ affliction: true, radius: 8 });
+    expect(rows[1]!.row.followUp).not.toHaveProperty("radius");
+    rows[1]!.row.followUpAlso = { damage: "HT-5", damageType: "cr", radius: -2 };
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: rows as never, ...helpers } as never);
+    expect(rows[1]!.row.followUpAlso).not.toHaveProperty("radius");
+  });
+
   it("lets a listener change a row's reach, Parry and hands (since 1.21.0), kept to their shapes", async () => {
     const api = await load();
     const rows = entries();

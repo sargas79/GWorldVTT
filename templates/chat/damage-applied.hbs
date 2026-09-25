@@ -93,6 +93,7 @@
           {{#if r.crippled}}<span class="gc-warn">{{localize "GWORLD.Chat.Crippled"}}</span>{{/if}}
           {{#if r.injuryCapNote}}<span class="gc-mod">{{r.injuryCapNote}}</span>{{/if}}
           {{#if r.vulnerabilityNote}}<span class="gc-mod">{{r.vulnerabilityNote}}</span>{{/if}}
+          {{#if r.surgeNote}}<span class="{{#if r.shortCircuit}}gc-warn{{else}}gc-mod{{/if}}">{{r.surgeNote}}</span>{{/if}}
           {{#if r.majorWound}}
             <span class="gc-warn">
               {{localize "GWORLD.Chat.MajorWound"}} {{r.knockdownModifier}}

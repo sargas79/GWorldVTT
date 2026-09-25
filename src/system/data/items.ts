@@ -556,6 +556,12 @@ function secondLineField() {
       /** Radiation and Surge on the second line, as on a mode (since API 1.63.0). */
       radiation: new fields.BooleanField({ initial: false }),
       surge: new fields.BooleanField({ initial: false }),
+      /**
+       * An area of its own, in yards from where the attack lands (since API
+       * 1.155.0): a flash or a stun that reaches everyone that near, where
+       * the blast or the shot itself doesn't. 0 for none.
+       */
+      radius: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       /** What the book calls it, where it calls it anything. */
       label: new fields.StringField({ required: true, blank: true, initial: "" }),
     },
@@ -613,9 +619,9 @@ function meleeModeField() {
      */
     damageSpecial: new fields.BooleanField({ initial: false }),
     /**
-     * Burning damage with the Surge modifier, marked "sur" (Characters
-     * p. 105): a blaster's shot, which does double damage to anything that
-     * runs on electricity.
+     * The Surge modifier, marked "sur" (Characters p. 105): an electrical
+     * surge that can disable electronics or anything with the Electrical
+     * disadvantage (p. 134).
      */
     surge: new fields.BooleanField({ initial: false }),
     /**
@@ -838,9 +844,9 @@ function rangedModeField() {
      */
     damageSpecial: new fields.BooleanField({ initial: false }),
     /**
-     * Burning damage with the Surge modifier, marked "sur" (Characters
-     * p. 105): a blaster's shot, which does double damage to anything that
-     * runs on electricity.
+     * The Surge modifier, marked "sur" (Characters p. 105): an electrical
+     * surge that can disable electronics or anything with the Electrical
+     * disadvantage (p. 134).
      */
     surge: new fields.BooleanField({ initial: false }),
     /**

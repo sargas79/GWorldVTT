@@ -49,6 +49,11 @@
     <div class="gc-mods"><span class="gc-mod">{{localize "GWORLD.LargeArea.Label"}}</span></div>
   {{/if}}
 
+  {{#if areaRadius}}
+    {{!-- A linked line's own area (Campaigns p. 381): everyone that near takes it. --}}
+    <div class="gc-mods"><span>{{localize "GWORLD.Chat.AreaRadius" yards=areaRadius}}</span></div>
+  {{/if}}
+
   {{#if explosive}}
     <div class="gc-mods">
       <span>{{localize "GWORLD.Chat.Blast" yards=blastRadius}}</span>

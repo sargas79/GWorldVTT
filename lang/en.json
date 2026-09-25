@@ -299,7 +299,8 @@
         "HeartAttackClock": "Drops to -FP, and dies in {minutes} minutes unless resuscitated",
         "HeartAttackSurvives": "If survived: {hp} HP"
       },
-      "PastHalfDamage": "Past 1/2D"
+      "PastHalfDamage": "Past 1/2D",
+      "OutsideRadius": "Beyond its {yards} yards, and left out: {names}"
     },
     "Slam": {
       "Action": "Slam",
@@ -1880,7 +1881,12 @@
       "DefenseDodge": "A dodge that worked",
       "DefenseBlock": "A block that worked",
       "DefenseParry": "A parry",
-      "ParryUseless": "A parry is no use against a liquid"
+      "ParryUseless": "A parry is no use against a liquid",
+      "Effect": {
+        "flinchDefense": "Flinched: defenses",
+        "flinchNextTurn": "Flinched: DX and Sense",
+        "blinded": "Blinded by a splash"
+      }
     },
     "Reaction": {
       "Action": "Reaction",
@@ -2017,6 +2023,11 @@
       "InjuryCapped": "Capped at {cap}: {lost} not taken",
       "InjuryCappedWhy": "Capped at {cap} ({reason}): {lost} not taken",
       "Vulnerable": "Vulnerability ×{multiplier} ({label})",
+      "Surge": {
+        "shortCircuit": "Surge: short-circuited, unconscious (Electrical, Characters p. 134)",
+        "gmDecides": "Surge: what it disables is the GM's call (Electrical, Characters p. 134)"
+      },
+      "AreaRadius": "Everyone within {yards} yards of where it landed",
       "MajorWound": "Major wound — HT roll to avoid knockdown and stunning",
       "ConsciousnessRoll": "HT roll to stay conscious, at",
       "DeathCheck": "HT roll to avoid death",
@@ -3662,6 +3673,7 @@
       "FollowUpHint": "A follow-up attack (Characters p. 106): it lands only if the attack carrying it hits, and DR has no effect on it once that attack gets through.",
       "Linked": "(linked)",
       "LinkedHint": "A linked attack (Characters p. 106): it lands with this one on the same attack roll, and is rolled separately against DR.",
+      "Radius": "({yards} yd)",
       "SkillCap": "Effective skill held to {cap}",
       "PostureLine": "Posture ({posture})",
       "TargetPostureLine": "Target's posture ({posture})"
@@ -4949,6 +4961,7 @@
       "DamageTaken": "Damage it has taken already",
       "Structure": "Structure",
       "NoCharge": "A charge needs a weight and an explosive (or a REF above 0).",
+      "StructureMultiplier": "×{multiplier} against the structure (from {damage})",
       "OfRef": "explosive at REF {ref}",
       "ChargeLabel": "{weight} lb of {explosive} ({notation})",
       "AgainstContact": "Contact: {damage} damage, the most the dice could do, against DR {dr}",

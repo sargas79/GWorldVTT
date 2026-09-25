@@ -56,6 +56,7 @@ import {
 } from "../gunplay.js";
 import { rollInfluence, rollReaction } from "../reactions.js";
 import { monthlyPay } from "../../rules/wealth.js";
+import { withinLinkedArea } from "../../rules/linked-effects.js";
 import { rolledDice } from "../modifying-dice.js";
 import { aimableLocations, locationsOf } from "../../rules/vehicle-combat.js";
 import {
@@ -3115,6 +3116,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     // An area affliction's centre (since API 1.63.0): this user's latest
     // template on the map, or else the first target.
     const centre = target.dataset.areaAttack === "1" ? areaCentre(targets) : null;
+    // A linked line's own area (Campaigns p. 381; since API 1.155.0): whoever
+    // is targeted beyond it is left out.
+    const radius = Number(target.dataset.areaRadius) || 0;
+    const outside: string[] = [];
 
     // One roll each: an affliction is resisted individually, and two people
     // caught by the same stun gun do not share a roll.
@@ -3128,6 +3133,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
       const yards = yardsBetween(shooter, token);
       const fromCentre = centre ? yardsBetween(centre, token) : null;
+      if (!withinLinkedArea(fromCentre, radius)) {
+        outside.push(String(victim.name ?? ""));
+        continue;
+      }
       const distance = fromCentre === null ? {} : { distance: fromCentre };
       // What the victim's armour was worth against the attack that forced the
       // roll. An affliction is not damage, so none of it is subtracted here.
@@ -3215,6 +3224,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           ...where,
         });
       }
+    }
+    if (outside.length > 0) {
+      ui.notifications?.info(game.i18n.format("GWORLD.Affliction.OutsideRadius", { names: outside.join(", "), yards: radius }));
     }
   }
 

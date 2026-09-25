@@ -19,7 +19,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { HIT_LOCATIONS, type HitLocation } from "../rules/hit-locations.js";
-import { cripplingMonths, type CripplingDuration } from "../rules/mortal-wounds.js";
+import { cripplingMonths, cripplingRelief, type CripplingDuration } from "../rules/mortal-wounds.js";
 import { registeredHitLocation } from "./combat-extensions.js";
 
 const CRIPPLED_FLAG = "crippled";
@@ -55,6 +55,13 @@ export interface CrippledPart {
    */
   months: number | null;
   healsAt: number | null;
+  /**
+   * The medical TL of the physician treating it, where one is (since 1.155.0):
+   * a lasting crippling heals that much sooner (p. 422).
+   */
+  treatedAtTl?: number | null;
+  /** The 1d rolled for a lasting crippling's months, before any relief (since 1.155.0). */
+  roll?: number;
 }
 
 /** How long a crippling is to last, as a caller gives it. */
@@ -65,6 +72,8 @@ export interface CripplingLength {
   treatedAtTl?: number | null;
   /** For temporary crippling with no injury behind it: the seconds it lasts. */
   seconds?: number;
+  /** For lasting crippling given its `months`: the 1d they came from, kept for a later treatment (since 1.155.0). */
+  roll?: number;
 }
 
 function worldTime(): number {
@@ -122,17 +131,20 @@ async function lengthOf(
   injury: boolean,
   since: number,
   length: CripplingLength,
-): Promise<{ months: number | null; healsAt: number | null }> {
+): Promise<{ months: number | null; healsAt: number | null; roll?: number }> {
   if (duration === "lasting") {
     let months: number;
+    let roll: number | undefined;
     if (typeof length.months === "number" && Number.isFinite(length.months)) {
       months = Math.max(1, Math.round(length.months));
+      if (typeof length.roll === "number" && Number.isFinite(length.roll)) roll = Math.round(length.roll);
     } else {
       const die = new Roll("1d6");
       await die.evaluate();
-      months = cripplingMonths({ roll: die.total, treatedAtTl: length.treatedAtTl ?? null });
+      roll = Number(die.total);
+      months = cripplingMonths({ roll, treatedAtTl: length.treatedAtTl ?? null });
     }
-    return { months, healsAt: since + months * SECONDS_PER_MONTH };
+    return { months, healsAt: since + months * SECONDS_PER_MONTH, ...(roll !== undefined ? { roll } : {}) };
   }
   if (duration === "temporary" && !injury && typeof length.seconds === "number" && Number.isFinite(length.seconds)) {
     return { months: null, healsAt: since + Math.max(0, length.seconds) };
@@ -166,6 +178,7 @@ export async function cripple(actor: any, location: string, options: CripplingLe
     injury,
     label: String(options.label ?? ""),
     since,
+    ...treatment(options.treatedAtTl),
     ...(await lengthOf(duration, injury, since, options)),
   };
   await actor.setFlag(SYSTEM_ID, CRIPPLED_FLAG, [...crippledParts(actor), part]);
@@ -187,14 +200,64 @@ export async function settleCrippling(actor: any, which: string, options: Crippl
   const index = parts.findIndex((part) => part.duration === "undecided" && (part.id === which || part.location === which));
   const part = parts[index];
   if (!part) return null;
+  // A physician recorded on the part before it was settled treats it still (since 1.155.0).
+  const treatedAtTl = options.treatedAtTl ?? part.treatedAtTl ?? null;
   const settled: CrippledPart = {
     ...part,
     duration: options.duration,
-    ...(await lengthOf(options.duration, part.injury, part.since, options)),
+    ...treatment(treatedAtTl),
+    ...(await lengthOf(options.duration, part.injury, part.since, { ...options, treatedAtTl })),
   };
   parts[index] = settled;
   await actor.setFlag(SYSTEM_ID, CRIPPLED_FLAG, parts);
   return settled;
+}
+
+/** A treating TL as kept on a part: a whole number 0 or more, or none. */
+function treatment(treatedAtTl: unknown): { treatedAtTl?: number } {
+  const tl = Number(treatedAtTl);
+  return treatedAtTl !== null && treatedAtTl !== undefined && Number.isFinite(tl) && tl >= 0 ? { treatedAtTl: Math.floor(tl) } : {};
+}
+
+/**
+ * The months a lasting crippling takes once a physician at this medical TL
+ * treats it (p. 422; since 1.155.0): its 1d again, less the new relief, never
+ * under a month. A part whose die wasn't kept is read back from its months
+ * and the relief it had.
+ */
+export function treatedMonths(part: Pick<CrippledPart, "months" | "roll" | "treatedAtTl">, treatedAtTl: number | null): number | null {
+  if (part.months === null) return null;
+  const roll = typeof part.roll === "number" ? part.roll : part.months + cripplingRelief(part.treatedAtTl ?? null);
+  return cripplingMonths({ roll, treatedAtTl });
+}
+
+/**
+ * Puts a crippled part in a physician's care (p. 422; since 1.155.0), by its
+ * id or its location: `treatedAtTl` is the medical TL (null takes it off). A
+ * lasting crippling then heals after its 1d months less the relief, counted
+ * from when it was crippled; an undecided one keeps the TL for when it is
+ * settled; a temporary or permanent one only records it. Resolves to the
+ * part, or null for a user who can't change the actor or no part there.
+ */
+export async function treatCrippled(actor: any, which: string, options: { treatedAtTl: number | null }): Promise<CrippledPart | null> {
+  if (!actor?.isOwner) return null;
+  const parts = crippledParts(actor);
+  const index = parts.findIndex((part) => part.id === which || part.location === which);
+  const part = parts[index];
+  if (!part) return null;
+  const kept = treatment(options?.treatedAtTl);
+  const treated: CrippledPart = { ...part, ...kept };
+  if (kept.treatedAtTl === undefined) delete treated.treatedAtTl;
+  if (part.duration === "lasting") {
+    const months = treatedMonths(part, kept.treatedAtTl ?? null);
+    if (months !== null) {
+      treated.months = months;
+      treated.healsAt = part.since + months * SECONDS_PER_MONTH;
+    }
+  }
+  parts[index] = treated;
+  await actor.setFlag(SYSTEM_ID, CRIPPLED_FLAG, parts);
+  return treated;
 }
 
 /** Takes a crippled part off, by its id or its location. False where there was none. */
