@@ -152,7 +152,7 @@ describe("a player's effect on an actor only the GM owns (API 1.149.0)", () => {
     documents.set(foe.uuid, foe).set(mine.uuid, mine);
     const query = connectGm();
     expect(await api.actors.applyCondition(foe, { key: "stunned" }, { source: { documentName: "Token", actor: mine } })).toBe("stunned");
-    expect(query.mock.calls[0][1]).toMatchObject({ sourceUuid: "Actor.mine" });
+    expect(query.mock.calls[0]?.[1]).toMatchObject({ sourceUuid: "Actor.mine" });
   });
 
   it("is refused without a source the player owns, and the GM is never asked", async () => {
