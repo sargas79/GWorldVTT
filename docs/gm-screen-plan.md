@@ -2,6 +2,13 @@
 
 **Status: proposed, awaiting approval.** Nothing below is implemented.
 
+Decisions taken with the user (2026-09-25):
+
+1. "Quick Reaction" is the Basic Set Reaction Table (p. 560).
+2. Players get a read-only view of the screen.
+3. Rolling from the screen is in scope, not a later addition.
+4. All of it ships as one PR.
+
 Written against `claude/gm-screen-plan-hgw9z3` at v1.51.0.
 
 ## Context
@@ -56,7 +63,7 @@ Check ceiling (`FRIGHT_CHECK_CEILING`), the Rule of 16 is on p. 349 and the
 Rule of 20 on p. 173.
 
 "Quick Reaction" (Tab 8) is read here as the Reaction Table (p. 560,
-`REACTION_TABLE`). This needs confirming; see *Open questions*.
+`REACTION_TABLE`), as confirmed.
 
 ## The window
 
@@ -73,9 +80,9 @@ Rule of 20 on p. 173.
 - **Sections collapse** on a click on their heading. Collapsed state is kept per
   user, in a client setting.
 - **Where it opens:**
-  - A GM tool button in the token controls. The system adds its own tool to the
-    `gmTools` list in `sheet-extensions.ts` that modules use, so it is gated to
-    the GM in the same way.
+  - A button in the token controls, shown to every user (the modules' GM
+    tools in `sheet-extensions.ts` stay GM-only; this one is the system's own
+    and added beside them, not through that list).
   - A keybinding, `gworld.gmScreen`, unbound by default.
   - `game.gworld.api.gmScreen.open(tab?)` for macros.
 - **Layout:** each tab is a responsive multi-column grid of cards, one table or
@@ -206,7 +213,7 @@ belongs to, so the automation can use it later too.
 | Fright Checks | B360 | `FRIGHT_CHECK_TABLE` |
 | Awe and Confusion | — | Module-registered (see *What the system does not ship*) |
 | Falling and Collisions | B430-431 | `fallingVelocity`, `terminalVelocity`, `fallingDamage`, `collisionDamage`, `RESTRAINT_DR` |
-| Quick Reaction | B560 | `REACTION_TABLE`, pending confirmation |
+| Quick Reaction | B560 | `REACTION_TABLE` |
 
 ## Add-on API: `game.gworld.api.gmScreen` (API minor bump)
 
@@ -234,15 +241,51 @@ gmScreen.registerTab({ module, key, label, icon? }): string | null
 - Documented in a new `docs/api.md` section, *The GM Screen*. The types come
   out through `tools/build-api-types.mjs`.
 
+## The player view
+
+- Players open the same window, from the same button, keybinding and API call.
+  `readOnly` is true for anyone but a GM, as on the Rules page
+  (`apps/rules-settings.ts`), and a caller may pass it explicitly.
+- It is read-only by nature, since the screen edits nothing; what differs for a
+  player:
+  - A world setting, *Players may open the GM Screen* (on by default), lets the
+    GM withdraw it. With it off the button is hidden for players and `open`
+    refuses with a notice.
+  - A world setting, *Tabs hidden from players* (none by default), chosen
+    from a list on the Rules page's settings menu, hides whole tabs.
+  - Reference links to journal pages show only where the player may see the
+    page (`testUserPermission(user, "OBSERVER")`).
+  - A module section may set `gmOnly: true` in its registration.
+- The window re-renders for open players when either setting changes, as
+  `settings.ts` already does for the read-only Rules page.
+
+## Rolling from the screen
+
+- A 3d button on the heading of the tables that are rolled on: Critical Hit,
+  Critical Head Blow, Critical Miss, Unarmed Critical Miss, Hit Location
+  (3d, and the 1d side roll for hands and feet), Fright Check (3d plus the
+  margin of failure, asked for in a small prompt, through
+  `frightCheckTotal`/`frightCheckResult`), and Reaction (3d plus a modifier,
+  through `reactionFor`).
+- The roll is a Foundry `Roll`, so Dice So Nice and the roll modes work. It is
+  posted as a short chat card (`templates/chat/gm-screen-roll.hbs`): the
+  table, the roll, and the row it lands on, in the same words as the screen.
+- **Who sees it:** the card follows the user's current roll mode. A GM's
+  default is whisper to GM, so the GM's rolls stay behind the screen unless
+  they choose otherwise; a player's roll goes out however their roll mode says.
+- The matching row is highlighted on the roller's open screen, and the tab
+  and section scroll into view.
+- Each rollable table's builder exposes `rowFor(total)`, the same lookup the
+  automation uses (`criticalEntry`, `randomHitLocation`, `frightCheckResult`,
+  `reactionFor`), so the roll and the highlighted row can't disagree.
+- A module's registered table may be rollable too: `registerTable` takes an
+  optional `roll: { formula, rowFor(total) }`.
+- `gmScreen.roll(sectionId, options?)` on the API, for macros.
+
 ## Nice-to-haves
 
-Not in the first cut unless you want them:
+Not in this PR:
 
-- **Rolling from the screen.** A 3d button on the critical, hit-location,
-  Fright Check and reaction tables rolls, highlights the matching row, and
-  whispers the result to the GM through the existing roll-card path.
-- **Player view.** The same window opened read-only for players, with a GM
-  setting to hide chosen tabs, like the Rules page's read-only mode.
 - **Pinning** sections to a "Favourites" strip at the top.
 
 ## Tests
@@ -254,32 +297,32 @@ Not in the first cut unless you want them:
 - `gm-screen-view.test.ts`, modelled on `rules-settings-view.test.ts`: tabs
   render, search filters and counts, collapse is kept, and a registered module
   table and hit location appear with their badge.
+- Roll tests: for each rollable table, every total 3-18 lands on the row the
+  automation's lookup gives; the card's whisper follows the roll mode.
+- Player-view tests: a player with the setting off is refused; hidden tabs and
+  `gmOnly` sections are left out; reference links need observer permission.
 - API tests: validation and refusals for `registerTable`/`registerTab`.
 - `npm run lint` (with book-neutral), `npm run typecheck` and `npm test` green
-  on every PR.
+  before the PR is opened.
 
 ## Order of work
 
-Four PRs, each usable on its own:
+One PR, built in this order, with each step's tests passing before the next:
 
-1. **Frame + Tabs 1 and 3.** The app, tabs, search, collapse, the GM tool
-   button, the keybinding, `gmScreen.open`, the generic partials and CSS, and
-   the critical, thrown and Rule-of tables. New data: attribute and skill level
-   bands, cover DR, and the melee and defense modifier lists.
-2. **Tabs 2 and 4.** The expanded hit locations (with registered locations),
+1. **Frame.** The app, tabs, search, collapse, the token-control button, the
+   keybinding, `gmScreen.open`, the generic partials and CSS, the player
+   view and its two settings.
+2. **Tabs 1 and 3.** The critical, thrown and Rule-of tables. New data:
+   attribute and skill level bands, cover DR, and the melee and defense
+   modifier lists.
+3. **Tabs 2 and 4.** The expanded hit locations (with registered locations),
    wounds, ranged modifiers, size and speed/range, defenses and recovery.
-3. **Tabs 5 and 6.** Maneuvers with extra effort, posture, skill modifiers,
+4. **Tabs 5 and 6.** Maneuvers with extra effort, posture, skill modifiers,
    the damage table, the combat specials and the vision SVG.
-4. **Tabs 7 and 8 + the add-on API.** Afflictions, fright, falling and
-   reaction; `registerTable`/`registerRuleBlock`/`registerTab`; the
-   `docs/api.md` section; the API version bump.
+5. **Tabs 7 and 8.** Afflictions, fright, falling and reaction.
+6. **Rolling.** The roll buttons, the chat card, the row highlight,
+   `gmScreen.roll`.
+7. **Add-on API.** `registerTable`/`registerRuleBlock`/`registerTab`, the
+   `docs/api.md` section, the API minor version bump.
 
-After each: `graphify update .`.
-
-## Open questions
-
-1. Is "Quick Reaction" the Basic Set Reaction Table (p. 560), or something
-   else?
-2. Should players get a read-only view, or is the screen for the GM only?
-3. Should rolling from the screen go in the first cut, or later?
-4. Are the four PRs the right split, or should it be one PR?
+Then `graphify update .`, and the system's version bump.
