@@ -1412,6 +1412,10 @@ export async function rollDamage(options: DamageRollOptions): Promise<number | n
     // 1.152.0): its mode's flag, which a listener may set for this blow
     // alone -- a round that burns only at close range, say.
     incendiary: options.incendiary === true,
+    // Whether this roll is halved for 1/2D (Characters p. 269; since API
+    // 1.156.0): as the attack left it, which a listener may set for this
+    // roll alone -- a hit with a range of its own, say.
+    halfDamage: options.halfDamage === true,
     // Which hit of the attack this is (since API 1.154.0), `{ index, first,
     // hits }`, or null for a roll no attack went before. Read-only.
     hit: hit ? { ...hit } : null,
@@ -1430,6 +1434,8 @@ export async function rollDamage(options: DamageRollOptions): Promise<number | n
   }
   // Only a true or false counts; anything else leaves the mode's own flag.
   const incendiary = typeof hookedDamage.incendiary === "boolean" ? hookedDamage.incendiary : options.incendiary === true;
+  // The same for 1/2D.
+  const halfDamage = typeof hookedDamage.halfDamage === "boolean" ? hookedDamage.halfDamage : options.halfDamage === true;
   const replaced = typeof hookedDamage.formula === "string" && hookedDamage.formula !== options.formula && parseDiceAdds(hookedDamage.formula)
     ? hookedDamage.formula
     : null;
@@ -1486,7 +1492,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number | n
   // damage drift from the rules if it ever changes.
   const full = applyDamageFloor(roll.total * mass, damageType);
   // "Damaging attacks on targets at or beyond 1/2D inflict half damage."
-  const basicDamage = options.halfDamage ? halveDamage(full, damageType) : full;
+  const basicDamage = halfDamage ? halveDamage(full, damageType) : full;
   // Each die as it came up, and the adds and multipliers that took them to
   // the total, so the card reads as the table would add it up.
   const dice = damageDice({ roll, rolled, mass });
@@ -1510,7 +1516,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number | n
     modifiers: modifiers.filter((m) => m.value !== 0),
     basicDamage,
     dice: damageDiceRow(dice, basicDamage, damageType),
-    halvedFrom: options.halfDamage ? full : null,
+    halvedFrom: halfDamage ? full : null,
     massMultiplier: mass > 1 ? mass : null,
     woundingModifier: undefended.woundingModifier,
     injuryIfUnarmored: undefended.injury,

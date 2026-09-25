@@ -130,6 +130,14 @@ export interface IncomingDamage {
    * for nothing.
    */
   ignoresDr?: boolean;
+  /**
+   * Incendiary (Characters p. 104; since API 1.156.0 on the blow as applied):
+   * its flame can set the victim's clothes alight (Campaigns pp. 433-434). It
+   * comes from the card; a `gworld.injury` listener may set it, or a
+   * `gworld.afterDamage` listener, which knows the DR the blow met and what
+   * got through, and applying the blow goes by what they leave.
+   */
+  incendiary?: boolean;
   /** Double Knockback (Characters p. 104): the shove is twice as far. */
   doubleKnockback?: boolean;
   /** An attack that shoves nobody, whatever its damage type. */
@@ -313,6 +321,12 @@ export interface AppliedDamage {
    * HP!"
    */
   collapsed: boolean;
+  /**
+   * Whether the blow was incendiary once the `gworld.injury` and
+   * `gworld.afterDamage` listeners had their say (since API 1.156.0), which
+   * is what sets the victim alight. Absent on a result only worked out.
+   */
+  incendiary?: boolean;
 }
 
 /**
@@ -1106,7 +1120,7 @@ export async function applyDamageToActor(
     callCombatHook(COMBAT_HOOKS.afterDamage, { actor, item, mode, damage: incoming, result: resolved });
     // Armour is worn down even by a blow that did no injury, so the pool it
     // never touched is recorded as unchanged rather than as a loss.
-    return { ...resolved, transaction: { ...transaction, from: resolved.current } };
+    return { ...resolved, incendiary: incoming.incendiary === true, transaction: { ...transaction, from: resolved.current } };
   }
 
   const path = resolved.costsFatigue ? "system.fp.value" : "system.hp.value";
@@ -1120,9 +1134,12 @@ export async function applyDamageToActor(
     };
   }
   await loseAim(actor, "injured");
-  // And what it did, for a module with something that follows from it.
+  // And what it did, for a module with something that follows from it. Only
+  // here are the DR it met and what got through known, so a listener may
+  // make the blow incendiary here, or take the flame off (since API 1.156.0):
+  // one that burns only through rigid armour, say.
   callCombatHook(COMBAT_HOOKS.afterDamage, { actor, item, mode, damage: incoming, result: resolved });
-  return { ...resolved, transaction };
+  return { ...resolved, incendiary: incoming.incendiary === true, transaction };
 }
 
 /**

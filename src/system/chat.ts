@@ -498,6 +498,8 @@ async function applyFromCard(options: {
     ...(flag.drMultiplier && flag.drMultiplier > 1 ? { drMultiplier: flag.drMultiplier } : {}),
     ...(flag.material ? { material: flag.material } : {}),
     ...(flag.ignoresDr ? { ignoresDr: true } : {}),
+    // What the listeners on the blow may change once its DR is known (since API 1.156.0).
+    ...(flag.incendiary ? { incendiary: true } : {}),
     ...(flag.doubleKnockback ? { doubleKnockback: true } : {}),
     ...(flag.noKnockback ? { noKnockback: true } : {}),
     ...(flag.kineticOnly ? { kineticOnly: true } : {}),
@@ -609,7 +611,7 @@ async function applyFromCard(options: {
       // effect that can ignite volatile material", and Campaigns p. 433 counts
       // incendiary damage with burning for what it takes to set things alight.
       // The clothes are the volatile material a victim is wearing.
-      if (flag.incendiary) {
+      if (result.incendiary) {
         // A tight-beam burn counts a tenth of its damage (p. 434).
         await catchFire({ actor, basicBurningDamage: incoming.basicDamage, tightBeam: incoming.tightBeam === true });
       }
@@ -622,7 +624,7 @@ async function applyFromCard(options: {
           kinds: fragile,
           injury: result.injury,
           majorWound: result.consequences.majorWound === true,
-          burningOrExplosive: incoming.type === "burn" || flag.explosive === true || flag.incendiary === true,
+          burningOrExplosive: incoming.type === "burn" || flag.explosive === true || result.incendiary === true,
           vitals: result.hitLocation === "vitals",
         });
         const who = { uuid: String(actor.uuid ?? ""), name: String(actor.name ?? "") };
