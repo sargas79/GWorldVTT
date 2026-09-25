@@ -8,6 +8,8 @@ Decisions taken with the user (2026-09-25):
 2. Players get a read-only view of the screen.
 3. Rolling from the screen is in scope, not a later addition.
 4. All of it ships as one PR.
+5. The screen must show the book's prose. It comes from the content module
+   (see *The prose*); the system ships only figures and summaries.
 
 Written against `claude/gm-screen-plan-hgw9z3` at v1.51.0.
 
@@ -30,11 +32,16 @@ Principles:
    `speedRangeModifier`, the hit locations from `HIT_LOCATIONS` and
    `woundingModifierAt`. If the automation changes, the screen changes with it,
    and a test pins each builder to the rule it reads.
-2. **Mechanics, not the book's prose.** Rows give the figures and a short
-   effect written in our own words, as the critical cards do now
-   (`GWORLD.Critical.*`). Each table cites its Basic Set page. Where a content
-   module has a journal page with the book's text, the screen links to it, as
-   the Rules page already does (`src/system/rule-references.ts`).
+2. **The book's prose, from the content module.** The screen shows each
+   section's prose as the book gives it (decided 2026-09-25). The system can't
+   ship the book's text, so the prose comes from the content module the GM
+   installs from their own copy. It is a journal compendium, one page per
+   section, which the system renders inline in the section's card (see *The
+   prose* below), the same way `src/system/rule-references.ts` finds a rule's
+   page today. The system itself ships the figures, taken from the rules code,
+   and a short summary in our own words (as the critical cards do now,
+   `GWORLD.Critical.*`). The summary shows only where no content module
+   provides the prose.
 3. **Book-neutral.** The system ships the Basic Set's tables only. Other books'
    tables come from add-on modules through a new `game.gworld.api.gmScreen`,
    and `tools/check-book-neutral.mjs` must keep passing with no new exceptions.
@@ -241,6 +248,31 @@ gmScreen.registerTab({ module, key, label, icon? }): string | null
 - Documented in a new `docs/api.md` section, *The GM Screen*. The types come
   out through `tools/build-api-types.mjs`.
 
+## The prose
+
+- **Where it lives.** Each section's prose is a `JournalEntryPage` (text) in
+  a content module's journal compendium, flagged
+  `flags.<module>.gmScreen = "<sectionId>"`. It is found the flag-only way
+  `rule-references.ts` finds rule pages, knowing no module's id. A page may
+  name several sections (an array) where one passage covers them. The
+  section ids are listed in `docs/api.md`, so the content module knows what
+  to flag.
+- **How it shows.** The card shows the table's figures, then the prose under
+  them, run through `TextEditor.enrichHTML`, so the page's links, rolls
+  (`[[/r 3d6]]`) and formatting work. Long passages fold behind a "Read
+  more" toggle whose state is kept with the section's collapse state. Search
+  covers the prose too.
+- **Where there's no prose.** Where no module flags a section, the card shows
+  the system's own summary and a muted "Install a content module for the
+  full text" line (hidden for players).
+- **Loading.** The compendium indexes are read once when the window opens,
+  as `ruleReferencePages()` does, and each page is loaded when its tab is
+  first shown, so opening the window stays fast.
+- **Players.** A player sees a page's prose only where they may observe it
+  (`testUserPermission(user, "OBSERVER")`); otherwise the summary shows.
+- **Add-on books.** A module's `registerTable`/`registerRuleBlock` takes an
+  optional `prose` (HTML string or a journal page uuid) in the same way.
+
 ## The player view
 
 - Players open the same window, from the same button, keybinding and API call.
@@ -301,6 +333,9 @@ Not in this PR:
   automation's lookup gives; the card's whisper follows the roll mode.
 - Player-view tests: a player with the setting off is refused; hidden tabs and
   `gmOnly` sections are left out; reference links need observer permission.
+- Prose tests: a flagged page renders in its section (and in each section of
+  an array flag); the summary and hint show without one; a player without
+  observer permission gets the summary; search matches prose text.
 - API tests: validation and refusals for `registerTable`/`registerTab`.
 - `npm run lint` (with book-neutral), `npm run typecheck` and `npm test` green
   before the PR is opened.
@@ -322,7 +357,10 @@ One PR, built in this order, with each step's tests passing before the next:
 5. **Tabs 7 and 8.** Afflictions, fright, falling and reaction.
 6. **Rolling.** The roll buttons, the chat card, the row highlight,
    `gmScreen.roll`.
-7. **Add-on API.** `registerTable`/`registerRuleBlock`/`registerTab`, the
+7. **Prose.** Finding flagged pages, inline enriched rendering, Read more,
+   searching the prose, the summary where none is provided, section ids in
+   `docs/api.md`.
+8. **Add-on API.** `registerTable`/`registerRuleBlock`/`registerTab`, the
    `docs/api.md` section, the API minor version bump.
 
 Then `graphify update .`, and the system's version bump.
