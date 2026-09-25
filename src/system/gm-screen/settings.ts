@@ -30,7 +30,7 @@ export function hiddenTabs(): string[] {
 }
 
 export function lastTab(): string {
-  return String(read(GM_SCREEN_TAB, "tables") || "tables");
+  return String(read(GM_SCREEN_TAB, "criticals") || "criticals");
 }
 
 export function collapsedSections(): Record<string, boolean> {

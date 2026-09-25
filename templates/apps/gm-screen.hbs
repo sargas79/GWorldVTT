@@ -99,7 +99,7 @@
   <div class="gs-bar">
     <nav class="gs-tabs" role="tablist" aria-label="{{localize 'GWORLD.GmScreen.TabsMenu'}}">
       {{#each tabs as |tab|}}
-        <button type="button" class="gs-tab{{#if tab.active}} active{{/if}}" role="tab" data-action="tab" data-tab-button="{{tab.id}}"
+        <button type="button" class="gs-tab{{#if tab.active}} active{{/if}}" role="tab" data-action="showTab" data-tab-button="{{tab.id}}"
                 aria-selected="{{#if tab.active}}true{{else}}false{{/if}}" data-tooltip="{{tab.hint}}">
           {{tab.label}}{{#if tab.source}}<span class="gs-badge">{{tab.source}}</span>{{/if}}<span class="gs-count" hidden></span>
         </button>
@@ -112,7 +112,7 @@
     </button>
     <div class="gs-menu-pop" role="menu" aria-label="{{localize 'GWORLD.GmScreen.TabsMenu'}}" hidden>
       {{#each tabs as |tab|}}
-        <button type="button" class="gs-menu-item{{#if tab.active}} active{{/if}}" role="menuitemradio" data-action="tab" data-tab-button="{{tab.id}}"
+        <button type="button" class="gs-menu-item{{#if tab.active}} active{{/if}}" role="menuitemradio" data-action="showTab" data-tab-button="{{tab.id}}"
                 aria-checked="{{#if tab.active}}true{{else}}false{{/if}}">
           <i class="{{tab.icon}}" inert></i>
           <span><span class="gs-menu-name">{{tab.label}}<span class="gs-count" hidden></span></span><span class="gs-menu-hint">{{tab.hint}}</span></span>
@@ -127,6 +127,17 @@
       <span class="gs-search-count" aria-live="polite"></span>
       <button type="button" class="gs-search-clear" data-action="clearSearch" aria-label="{{localize 'GWORLD.GmScreen.ClearSearch'}}" hidden><i class="fa-solid fa-xmark" inert></i></button>
     </label>
+
+    {{!-- A plain 3d6 for whatever the GM needs rolled that no table covers. --}}
+    {{#if isGM}}
+      <div class="gs-generic">
+        <span class="gs-last gs-generic-last" hidden>{{localize "GWORLD.GmScreen.Last"}} <b></b></span>
+        <button type="button" class="gs-dice" data-action="rollGeneric"
+                data-tooltip="{{localize 'GWORLD.GmScreen.GenericRollHint'}}" aria-label="{{localize 'GWORLD.GmScreen.GenericRollHint'}}">
+          <i class="fa-solid fa-dice" inert></i>{{localize "GWORLD.GmScreen.Dice.plain"}}6
+        </button>
+      </div>
+    {{/if}}
   </div>
 
   <div class="gs-body">

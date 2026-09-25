@@ -58,9 +58,11 @@
   display: flex;
   align-items: stretch;
   gap: 2px;
+  /* The strip takes the room the search and the dice leave, and scrolls if that is too little. */
+  flex: 1 1 0;
   min-width: 0;
   overflow-x: auto;
-  scrollbar-width: none;
+  scrollbar-width: thin;
 }
 
 .gworld-gm-screen .gs-tab {
@@ -216,14 +218,14 @@
   color: var(--gs-frame-muted);
 }
 
-
 .gworld-gm-screen .gs-search {
   margin-left: auto;
   align-self: center;
   display: flex;
   align-items: center;
   gap: 7px;
-  width: 270px;
+  flex: 0 0 240px;
+  width: 240px;
   min-width: 0;
   height: 30px;
   padding: 0 4px 0 10px;
@@ -251,6 +253,18 @@
   font-size: 14px;
   box-shadow: none;
   outline: none;
+}
+
+.gworld-gm-screen .gs-generic {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.gworld-gm-screen .gs-generic .gs-dice {
+  height: 30px;
 }
 
 .gworld-gm-screen .gs-search-count {
@@ -873,9 +887,9 @@
   text-overflow: ellipsis;
 }
 
-/* ── a narrow window: the tabs in a menu, the cards in one column ────────── */
+/* ── a narrow window: the tabs in a menu; narrower still, one column of cards ── */
 
-@container gs (max-width: 640px) {
+@container gs (max-width: 860px) {
   .gworld-gm-screen .gs-bar {
     min-height: 48px;
   }
@@ -893,6 +907,9 @@
   .gworld-gm-screen .gs-search-count {
     display: none;
   }
+}
+
+@container gs (max-width: 640px) {
   .gworld-gm-screen .gs-grid {
     columns: 1;
   }

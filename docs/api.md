@@ -3633,7 +3633,7 @@ that are world settings rather than anything on an actor:
 
 ## The GM Screen
 
-Since 1.157.0 the system has a GM Screen: the Basic Set's tables in eight tabs,
+Since 1.157.0 the system has a GM Screen: the Basic Set's tables in nine tabs (eight before 1.158.0),
 opened from a button in the token controls, an unbound keybinding, or
 `game.gworld.api.gmScreen.open()`. Every figure on it is read from the rules
 the automation uses. Players open the same window read-only, unless the GM
@@ -3656,7 +3656,8 @@ The ids, tab by tab (parts in brackets):
 
 | Tab | Ids |
 |---|---|
-| Tables | `criticalHit`, `criticalHeadBlow`, `criticalMiss`, `unarmedCriticalMiss`, `attributeSkillLevels` (`attributeLevels`, `successChances`), `thrownDamage`, `throwingDistance`, `coverDr` (`coverShots`, `coverWalls`) |
+| Criticals | `criticalHit`, `criticalHeadBlow`, `criticalMiss`, `unarmedCriticalMiss` |
+| Tables | `attributeSkillLevels` (`attributeLevels`, `successChances`), `thrownDamage`, `throwingDistance`, `coverDr` (`coverShots`, `coverWalls`) |
 | Wounds | `hitLocations`, `shock`, `knockback`, `majorWound`, `knockdownStunning`, `effectsOfStun`, `cripplingInjury`, `mortalWounds`, `bleeding` |
 | Melee | `meleeAttackModifiers`, `activeDefenseModifiers`, `lostHitPoints`, `lostFatiguePoints`, `criticals`, `rulesOf` (`ruleOf14`, `ruleOf16`, `ruleOf20`) |
 | Ranged | `rangedAttackModifiers`, `sizeSpeedRange`, `dodgeBlockParry`, `woundingModifiers`, `firstAid`, `naturalRecovery`, `unconsciousness` |
@@ -3684,7 +3685,7 @@ module's title. For anything else:
 - **`gmScreen.registerTab({ module, key, label, icon? })`** adds a tab after
   the system's; its id is `<module>.<key>`, for `tab` above.
 
-Placing: `tab` is a tab's id (`tables`, `wounds`, `melee`, `ranged`,
+Placing: `tab` is a tab's id (`criticals` since 1.158.0, `tables`, `wounds`, `melee`, `ranged`,
 `maneuvers`, `combat`, `afflictions`, `checks`, or a registered tab), and
 `after` the id of the section it follows; left out, or naming nothing on the
 tab, it goes at the end. `slot` fills one of the places the Basic Set leaves

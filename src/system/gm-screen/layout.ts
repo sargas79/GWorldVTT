@@ -1,5 +1,5 @@
 /**
- * The GM Screen's eight tabs and the Basic Set sections on each, in the order
+ * The GM Screen's nine tabs and the Basic Set sections on each, in the order
  * the screen shows them.
  */
 
@@ -23,6 +23,7 @@ const tab = (id: string, icon: string): GmTabDef => ({
 });
 
 export const GM_SCREEN_TABS: readonly GmTabDef[] = [
+  tab("criticals", "fa-solid fa-burst"),
   tab("tables", "fa-solid fa-table-list"),
   tab("wounds", "fa-solid fa-person"),
   tab("melee", "fa-solid fa-khanda"),

@@ -1,5 +1,5 @@
 /**
- * The GM Screen: the Basic Set's tables in eight tabs, the book's text beside
+ * The GM Screen: the Basic Set's tables in nine tabs, the book's text beside
  * them where a content module gives it, and a roll button on the tables that
  * are rolled on.
  *
@@ -49,9 +49,12 @@ export class GmScreen extends HandlebarsApplicationMixin(ApplicationV2) {
     position: { width: 1100, height: 750 },
     window: { title: "GWORLD.GmScreen.Title", icon: "fa-solid fa-table-columns", resizable: true },
     actions: {
-      tab: GmScreen.#onTab,
+      // Not "tab": ApplicationV2 keeps that action for its own tab groups,
+      // which these buttons aren't part of.
+      showTab: GmScreen.#onTab,
       collapse: GmScreen.#onCollapse,
       roll: GmScreen.#onRoll,
+      rollGeneric: GmScreen.#onRollGeneric,
       clearSearch: GmScreen.#onClearSearch,
       toggleMenu: GmScreen.#onToggleMenu,
       toggleRows: GmScreen.#onToggleRows,
@@ -128,7 +131,8 @@ export class GmScreen extends HandlebarsApplicationMixin(ApplicationV2) {
   override async _prepareContext(): Promise<Record<string, unknown>> {
     const context = foundryContext();
     this.#tabs = assembleScreen(context, { isGM: !this.readOnly, hiddenTabs: hiddenTabs() });
-    if (!this.#tabs.some((tab) => tab.id === this.#tab)) this.#tab = this.#tabs[0]?.id ?? "tables";
+    if (!this.#tabs.some((tab) => tab.id === this.#tab))
+      this.#tab = this.#tabs[0]?.id ?? "criticals";
     return screenView(this.#tabs, {
       t: context.t,
       active: this.#tab,
@@ -234,6 +238,27 @@ export class GmScreen extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   // ── rolling ───────────────────────────────────────────────────────────────
+
+  /** A plain 3d6, for whatever the GM needs rolled: posted as the GM's roll mode says, the total kept beside the button. */
+  static async #onRollGeneric(this: GmScreen, _event: Event, target: HTMLElement): Promise<void> {
+    target.setAttribute("disabled", "");
+    try {
+      const roll = new Roll("3d6");
+      await roll.evaluate();
+      await (roll as any).toMessage({
+        speaker: ChatMessage.implementation.getSpeaker(),
+        flavor: game.i18n.localize(`${K}.GenericRoll`),
+      });
+      const chip = this.element.querySelector<HTMLElement>(".gs-generic-last");
+      const value = chip?.querySelector("b");
+      if (chip && value) {
+        value.textContent = String(roll.total);
+        chip.removeAttribute("hidden");
+      }
+    } finally {
+      target.removeAttribute("disabled");
+    }
+  }
 
   static async #onRoll(this: GmScreen, _event: Event, target: HTMLElement): Promise<void> {
     const id = target.closest<HTMLElement>(".gs-card")?.dataset.section;

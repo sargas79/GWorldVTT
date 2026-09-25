@@ -86,7 +86,7 @@ export function registerGmScreen(): void {
     scope: "client",
     config: false,
     type: String,
-    default: "tables",
+    default: "criticals",
   });
   game.settings.register(SYSTEM_ID, GM_SCREEN_COLLAPSED, {
     scope: "client",

@@ -193,7 +193,7 @@ describe("a module's tables and tabs", () => {
       .assembleScreen(englishContext(), { isGM: true })
       .find((t) => t.id === "tables")!;
     expect(tables.sections.some((s) => s.id === "test-addon.broken")).toBe(false);
-    expect(tables.sections.some((s) => s.id === "criticalHit")).toBe(true);
+    expect(tables.sections.some((s) => s.id === "coverDr")).toBe(true);
   });
 });
 
