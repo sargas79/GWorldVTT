@@ -40,12 +40,10 @@ import { beginGrapple, endGrapple, grappleOf, grapplesOf, updateGrapple } from "
 import { dataApi } from "./data-extensions.js";
 import { chatApi, sheetsApi } from "./sheet-extensions.js";
 import { magicApi, pointsApi } from "./roll-extensions.js";
-import { conditionLabel, setCondition } from "./conditions.js";
 import { migrationApi } from "./migration.js";
 import { takeInjury, wearDr, type DrWorn, type InjuryTaken } from "./damage.js";
 import { equipmentFailure, type EquipmentFailureResult } from "./repairs.js";
-import { stopBleeding } from "./bleeding.js";
-import { activePoisons, advancePoison, clearPoison, dosePoison, treatIllness, treatPoison, type ActivePoison } from "./poison.js";
+import { activePoisons, clearPoison, treatIllness, treatPoison, type ActivePoison } from "./poison.js";
 import { attendPatient, giveFirstAid, operate, resuscitate } from "./recovery.js";
 import { rollCripplingDuration, rollMortalWound } from "./dying.js";
 import type { Poison, Treatment } from "../rules/poison.js";
@@ -66,9 +64,10 @@ import { isUndoable, undoDamage, type DamageTransaction, type UndoOutcome } from
 import { carriedAmmunitionFor, loadAmmunition } from "./ammunition.js";
 import { randomLocationWithHooks } from "./combat-extensions.js";
 import {
-  fragileCatchesFire, fragileExplodes, fragileKindsOf, irradiate, rollBrittleLimb, shock, shootAtVehicle, controlVehicle,
+  fragileCatchesFire, fragileExplodes, fragileKindsOf, irradiate, rollBrittleLimb, shootAtVehicle, controlVehicle, type ShockOptions, type ShockOutcome,
 } from "./hazards.js";
 import { detonateCharge } from "./demolition.js";
+import { relayEffect } from "./gm-relay.js";
 import { equipmentUseLines, familiarWith, setFamiliar } from "./tech-level.js";
 import { addArea, listAreas, removeArea, tokensInArea } from "./modifier-areas.js";
 import { darknessAt, litForOf, registerLightLevel, registerLitFor, setLitFor } from "./darkness.js";
@@ -77,7 +76,6 @@ import { spendUnspentPoints } from "./bonus-points.js";
 import {
   PROCEDURE_HOOKS,
   activeConditions,
-  applyCondition,
   attackSequenceFor,
   recoveryHold,
   registerContestResolver,
@@ -85,7 +83,6 @@ import {
   registerInfluenceSkill,
   registerGrappleAction,
   registerManeuverOption,
-  removeCondition,
   type ConditionApplication,
 } from "./procedure-extensions.js";
 import { rollQuickContest, rollRegularContest } from "./contest.js";
@@ -110,7 +107,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.147.0";
+export const API_VERSION = "1.149.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -163,10 +160,12 @@ const actors = {
   /**
    * Applies a condition (since 1.5.0): a module's own, or one of the system's
    * token conditions by its id, with modifiers on rolls and a duration.
-   * Returns its id, or null where it couldn't be applied.
+   * Returns its id, or null where it couldn't be applied. Since 1.149.0 a
+   * `source` the user owns -- the actor the condition comes from -- has it
+   * applied through the GM's client to an actor the user doesn't own.
    */
-  applyCondition(actor: any, application: ConditionApplication): Promise<string | null> {
-    return applyCondition(actor, application, { setSystemCondition: setCondition, systemConditionLabel: conditionLabel });
+  applyCondition(actor: any, application: ConditionApplication, options: { source?: any } = {}): Promise<string | null> {
+    return relayEffect("applyCondition", actor, options?.source, { application }, null);
   },
 
   /**
@@ -179,9 +178,12 @@ const actors = {
     return recoveryHold(actor, id);
   },
 
-  /** Removes a condition by the id `applyCondition` returned (since 1.5.0). */
-  removeCondition(actor: any, id: string): Promise<void> {
-    return removeCondition(actor, id, { setSystemCondition: setCondition });
+  /**
+   * Removes a condition by the id `applyCondition` returned (since 1.5.0),
+   * through the GM's client for a `source` the user owns (since 1.149.0).
+   */
+  removeCondition(actor: any, id: string, options: { source?: any } = {}): Promise<void> {
+    return relayEffect("removeCondition", actor, options?.source, { id }, undefined) as Promise<void>;
   },
 
   /** The timed conditions on an actor (since 1.5.0). */
@@ -348,18 +350,24 @@ const actors = {
     return breakFreeFromBinding(actor);
   },
 
-  /** Ends an actor's bleeding and clears the condition (since 1.36.0), for a user who owns it. */
-  stopBleeding(actor: any): Promise<void> {
-    return stopBleeding(actor);
+  /**
+   * Ends an actor's bleeding and clears the condition (since 1.36.0), for a
+   * user who owns it, or since 1.149.0 through the GM's client for one who
+   * owns the `source`: the actor binding the wound.
+   */
+  stopBleeding(actor: any, options: { source?: any } = {}): Promise<void> {
+    return relayEffect("stopBleeding", actor, options?.source, {}, undefined) as Promise<void>;
   },
 
   /**
    * Writes a dose onto a character (Campaigns pp. 437-438, since 1.57.0), as the sheet's
    * Poison button does: a registered poison from `data.registerPoison` or one built on the
-   * spot. `doublings` is the dose: 1 double, -1 half. Null for a user who doesn't own it.
+   * spot. `doublings` is the dose: 1 double, -1 half. Null for a user who doesn't own it,
+   * unless since 1.149.0 they own the `source`, the actor the dose comes from: then the
+   * GM's client doses it.
    */
-  dosePoison(actor: any, poison: Poison, options: { doublings?: number } = {}): Promise<ActivePoison | null> {
-    return dosePoison({ actor, poison, doublings: options.doublings ?? 0 });
+  dosePoison(actor: any, poison: Poison, options: { doublings?: number; source?: any } = {}): Promise<ActivePoison | null> {
+    return relayEffect("dosePoison", actor, options?.source, { poison, doublings: options?.doublings ?? 0 }, null);
   },
 
   /** The doses at work on a character (since 1.57.0). Read-only copies. */
@@ -369,10 +377,11 @@ const actors = {
 
   /**
    * Runs one cycle of a dose (since 1.57.0): the HT roll, the damage, the card, and
-   * `gworld.poisonCycle`. Returns the HP and FP it cost.
+   * `gworld.poisonCycle`. Returns the HP and FP it cost. Since 1.149.0, through the
+   * GM's client for a user who owns the `source` but not the character.
    */
-  advancePoison(actor: any, id: string): Promise<number> {
-    return advancePoison({ actor, id });
+  advancePoison(actor: any, id: string, options: { source?: any } = {}): Promise<number> {
+    return relayEffect("advancePoison", actor, options?.source, { id }, 0);
   },
 
   /**
@@ -865,7 +874,9 @@ async function rollHitLocation(options: { actor?: any; damageType?: string | nul
  * radiation, as the GM tool runs them, from 1.74.0 a demolition charge, and
  * from 1.79.0 a shot at a vehicle, and from 1.93.0 what Fragile does. Since
  * 1.119.0 `shock` resolves to its `ShockOutcome`, and since 1.127.0 takes a
- * `source` and `tags` its hooks see.
+ * `source` and `tags` its hooks see. Since 1.149.0 `shock` takes a
+ * `sourceActor` the user owns, which has the GM's client give the shock to an
+ * actor the user doesn't own.
  */
 const hazardsApi = Object.freeze({
   /**
@@ -881,7 +892,11 @@ const hazardsApi = Object.freeze({
       controlled: o.controlled === true, ...(Array.isArray(o.modifiers) ? { modifiers: o.modifiers } : {}),
     });
   },
-  shock, irradiate, detonate: detonateCharge, shootAtVehicle,
+  shock(options: ShockOptions & { sourceActor?: any }): Promise<ShockOutcome | null> {
+    const { sourceActor, actor, ...rest } = options ?? ({} as ShockOptions & { sourceActor?: any });
+    return relayEffect("shock", actor, sourceActor, { options: rest }, null);
+  },
+  irradiate, detonate: detonateCharge, shootAtVehicle,
   // A vehicle control roll, with why it is made (since 1.115.0; Campaigns p. 466).
   controlVehicle: (options: { actor: any; vehicle: any; modifier?: number; reason?: string }) => controlVehicle({ ...options, modifier: Number(options?.modifier) || 0 }),
   fragileKinds: fragileKindsOf, fragileCatchesFire, fragileExplodes, brittleLimb: rollBrittleLimb,

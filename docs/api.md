@@ -103,7 +103,7 @@ Contents:
 | `rules` | The Basic Set's pure rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer includes the rule group removed in system 1.5.0. Since 1.17.0 it includes every rules module, including attack options (slams, evading), explosions, the tactical rules and shield damage. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
 | `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. `normalizeDamage(formula)` (since 1.125.0) gives a damage formula as the table rolls it; see [Modifying dice + adds](#modifying-dice--adds). |
-| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0), and `bind(actor, options)`, `unbind(actor)`, `binding(actor)` and `breakFree(actor)` (since 1.107.0; see *Binding*), and `spendFatigue(actor, fp, options)` (since 1.109.0; see *Medical hooks*), and `changeTrait(actor, options)` (since 1.112.0; `operate` also resolves to its outcome since then; it adds and removes traits since 1.124.0), and `tow(actor, options)` and `stopTowing(actor)` (since 1.113.0; see *Towing and the wheelchair*), and `cripple(actor, location, options)`, `crippled(actor)` and `healCrippled(actor, which)` (since 1.114.0; see *Crippled parts*), and `vehicleAboard(actor)` (since 1.141.0; see *The vehicle a character is aboard*). and `addPendingModifier(actor, request)`, `pendingModifiers(actor)` and `removePendingModifier(actor, id)` (since 1.132.0; see *A bonus held for a later roll*). and `settleCrippling(actor, which, options)` (since 1.129.0; see *Crippled parts*). |
+| `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0; `dosePoison`, `advancePoison`, `stopBleeding`, `applyCondition` and `removeCondition` take a `source` since 1.149.0, see *Effects on a character the user doesn't own*), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0), and `bind(actor, options)`, `unbind(actor)`, `binding(actor)` and `breakFree(actor)` (since 1.107.0; see *Binding*), and `spendFatigue(actor, fp, options)` (since 1.109.0; see *Medical hooks*), and `changeTrait(actor, options)` (since 1.112.0; `operate` also resolves to its outcome since then; it adds and removes traits since 1.124.0), and `tow(actor, options)` and `stopTowing(actor)` (since 1.113.0; see *Towing and the wheelchair*), and `cripple(actor, location, options)`, `crippled(actor)` and `healCrippled(actor, which)` (since 1.114.0; see *Crippled parts*), and `vehicleAboard(actor)` (since 1.141.0; see *The vehicle a character is aboard*). and `addPendingModifier(actor, request)`, `pendingModifiers(actor)` and `removePendingModifier(actor, id)` (since 1.132.0; see *A bonus held for a later roll*). and `settleCrippling(actor, which, options)` (since 1.129.0; see *Crippled parts*). |
 | `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. `stuck(item)`, `setStuck(item, stuck)`, `freeStuck(actor, item)` and `letGoOfStuck(actor, item)` (since 1.105.0) read, set and end a weapon's being stuck in a foe (see *A weapon stuck in a foe*). `equipmentFailure({ actor?, item, modifier?, label?, apply? })` (since 1.118.0) rolls an equipment failure roll for a thing (see *Equipment failure rolls*). `setUnready(item, unready, { reason?, attacker?, contest? })` and `knockAway(item, { reason?, attacker?, contest? })` (since 1.136.0) leave a weapon unready or knock it out of its holder's hands, through the GM's client where the user doesn't own it: for a GM, or since 1.143.0 on behalf of an `attacker` the user owns with the `contest` card of the disarm they won (see *Disarms*). `applyDamage({ item, damage, type, armorDivisor?, label? })` (since 1.126.0) puts a blow on a thing that keeps hit points (see *Damage to things*). `changeQuantity(item, delta, { reason? })` (since 1.123.0) adds `delta` to a stack of an item, or takes it off with a negative one, for a module that makes, finds or uses up consumables: rounds put in a box, supplies spent. A fraction is dropped toward none. The quantity never goes below 0, and an emptied stack stays on the actor. Weight and cost are kept per unit, so the carried weight and the stack's worth follow with nothing else to change. It resolves to `{ from, to, reason }` -- the quantity before and after, `reason` as given, for the module's own card -- or null for an item that keeps no quantity, a user who doesn't own it, or a delta that isn't a number. |
 | `combat` | Combat extension points (since 1.1.0). |
 | `data` | Data extension points (since 1.2.0). |
@@ -114,6 +114,36 @@ Contents:
 
 Since 1.5.0, `combat`, `roll` and `actors` also carry the procedure extension
 points described under [Inside the system's own procedures](#inside-the-systems-own-procedures).
+
+**Effects on a character the user doesn't own** (since 1.149.0). Only an
+actor's owner can change it, and a player's gas, cautery or shock often lands
+on a token the player doesn't own. These calls take the actor the effect comes
+from, and where the user owns that actor but not the target, the active GM's
+client makes the change, through a Foundry user query:
+
+| Call | The source option |
+|---|---|
+| `actors.dosePoison(actor, poison, { doublings?, source? })` | `source` |
+| `actors.advancePoison(actor, id, { source? })` | `source` |
+| `actors.stopBleeding(actor, { source? })` | `source` |
+| `actors.applyCondition(actor, application, { source? })` | `source` |
+| `actors.removeCondition(actor, id, { source? })` | `source` |
+| `hazards.shock({ actor, ..., sourceActor? })` | `sourceActor` (its `source` is already the text name the hooks see) |
+
+- The source is an actor the user owns, or a token whose actor they own.
+- A GM caller, and the target's owner, act on their own client as before, and
+  need no source.
+- The GM's client checks who sent the request -- Foundry names the sender from
+  their own connection, never from the payload -- and makes the change for a GM,
+  the target's owner, or the owner of the source named. Anyone else gets the
+  refusal each call always returned.
+- The results are the same as on the caller's own client: `ActivePoison` or
+  null, the HP and FP a cycle cost (0 when refused), the condition's id or null,
+  the `ShockOutcome` or null. With no GM connected the call returns what a
+  refusal returns and the user is told.
+- The effect runs on the GM's client: its chat card is posted from there, and
+  the hooks it fires (`gworld.poisonCycle`, the shock hooks) fire there, not on
+  the caller's.
 
 Lifecycle, in order:
 
@@ -1928,7 +1958,10 @@ Two fields a module may read (since 1.62.0):
   null where nothing was done), and two hooks reach inside it: see *Shock
   hooks* below. Since 1.127.0 it also takes `source` (text) and `tags` (a
   list of strings), which the hooks and the outcome carry, so a listener can
-  tell its own shock from another module's. `hazards.irradiate({ actor, rads,
+  tell its own shock from another module's. Since 1.149.0 it also takes
+  `sourceActor`, the actor the shock comes from: where the user owns it but not
+  the victim, the GM's client gives the shock (see *Effects on a character the
+  user doesn't own*). `hazards.irradiate({ actor, rads,
   protectionFactor, modifier })` adds a dose of radiation (p. 435). Before a
   dose is added, `gworld.radiationDose` fires with `{ actor, rads,
   protectionFactor, sources }`: change `rads`, and push a label to `sources`.
@@ -3003,7 +3036,10 @@ Two fields a module may read (since 1.62.0):
   the actor is (`grapple.holding`), and `run({ actor, foe, grapple })` acts.
 - **Conditions:** `actors.applyCondition(actor, { module?, key, label?, effects?, duration? })`
   applies a module's condition, or one of the system's token conditions when
-  `module` is left out.
+  `module` is left out. Since 1.149.0 a third argument `{ source }` has it
+  applied through the GM's client to an actor the user doesn't own, as does
+  `actors.removeCondition(actor, id, { source })` (see *Effects on a character
+  the user doesn't own*).
   - `effects.modifiers` are `{ label, value, rolls? }`, where `rolls` limits a
     line to kinds or tags of roll.
   - `duration` is `{ turns }` of the actor's own, `{ rounds }` of the combat, or
@@ -3143,7 +3179,10 @@ Two fields a module may read (since 1.62.0):
   dose onto a character as the Poison button does, the delay stretched by size and
   everything moved by the dose; `actors.activePoisons(actor)` lists them,
   `actors.advancePoison(actor, id)` runs a cycle (a gas with no delay can be dosed and
-  rolled at once), and `actors.clearPoison(actor, id)` takes one off.
+  rolled at once), and `actors.clearPoison(actor, id)` takes one off. Since 1.149.0
+  `dosePoison` and `advancePoison` take a `source` option, the actor the dose comes
+  from, to dose a character the user doesn't own through the GM's client (see
+  *Effects on a character the user doesn't own*).
   `gworld.poisonCycle` follows every cycle, the sheet's included, with `{ actor, poison,
   source, resisted, margin, criticalFailure, hpLost, fpLost, hpLostToPoison, symptomsNow,
   effectMinutes, finished }`. `resisted` is null where no roll is allowed, `symptomsNow`
@@ -3213,7 +3252,10 @@ Two fields a module may read (since 1.62.0):
   `actors.firstAid` too. Set `refusal` (text) to stop it, or
   `stopsBleeding: false` so success doesn't stop the patient's bleeding. The roll
   itself adds `gworld.successRollModifiers` lines, tagged `firstAid`, with the
-  patient as `opponent`. `actors.stopBleeding(actor)` ends an actor's bleeding.
+  patient as `opponent`. `actors.stopBleeding(actor)` ends an actor's bleeding;
+  since 1.149.0 `actors.stopBleeding(actor, { source })` does it through the GM's
+  client for a user who owns the `source`, the one binding the wound, but not the
+  patient.
 - **Physician's rounds** (since 1.142.0): `gworld.physicianRounds` gets `{ healer,
   patient, refusal, techLevel, lines }` before a physician's rounds (Campaigns p. 424),
   from the sheet's Attend button and from `actors.attendPatient`, before the

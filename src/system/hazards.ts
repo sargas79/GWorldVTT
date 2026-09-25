@@ -483,11 +483,8 @@ function stringLines(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((line): line is string => typeof line === "string" && line.trim() !== "") : [];
 }
 
-/**
- * A shock, of whichever kind, and the HT roll it calls for. Resolves to what
- * it came to (since API 1.119.0), or null where nothing was done.
- */
-export async function shock(options: {
+/** What `shock` is called with (named since API 1.149.0). */
+export interface ShockOptions {
   actor: any;
   kind: ShockKind;
   /** The GM's modifier: "+2 for a short circuit in a battery-powered gadget down to -3 or -4 for a stun weapon". */
@@ -507,7 +504,13 @@ export async function shock(options: {
   source?: string | null;
   /** Tags for the hooks (since API 1.127.0), so a listener can tell its own shock from another's. */
   tags?: string[];
-}): Promise<ShockOutcome | null> {
+}
+
+/**
+ * A shock, of whichever kind, and the HT roll it calls for. Resolves to what
+ * it came to (since API 1.119.0), or null where nothing was done.
+ */
+export async function shock(options: ShockOptions): Promise<ShockOutcome | null> {
   const { actor } = options;
   if (!mayChange(actor)) return null;
 
