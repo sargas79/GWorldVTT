@@ -130,3 +130,48 @@ export function quickContest(
     marginOfVictory: Math.abs(firstScore - secondScore),
   };
 }
+
+/** The chances a success roll gives, as fractions of 1. */
+export interface SuccessChances {
+  success: number;
+  criticalSuccess: number;
+  criticalFailure: number;
+}
+
+/**
+ * The chance of making a success roll at an effective skill, and of it being
+ * a critical either way, counted over all 216 ways three dice can fall and
+ * read through {@link resolveSuccess} -- so the figures are the ones the
+ * rolls themselves use, 3 and 4 always succeeding and 17 and 18 always failing.
+ */
+export function successChances(effectiveSkill: number): SuccessChances {
+  let success = 0;
+  let criticalSuccess = 0;
+  let criticalFailure = 0;
+  for (let a = 1; a <= 6; a += 1) {
+    for (let b = 1; b <= 6; b += 1) {
+      for (let c = 1; c <= 6; c += 1) {
+        const result = resolveSuccess(a + b + c, effectiveSkill);
+        if (result.success) success += 1;
+        if (result.criticalSuccess) criticalSuccess += 1;
+        if (result.criticalFailure) criticalFailure += 1;
+      }
+    }
+  }
+  return { success: success / 216, criticalSuccess: criticalSuccess / 216, criticalFailure: criticalFailure / 216 };
+}
+
+/**
+ * The rolls that are critical at an effective skill (p. 348), as the lowest
+ * roll that is a critical failure and the highest that is a critical success.
+ */
+export function criticalRange(effectiveSkill: number): { successUpTo: number; failureFrom: number } {
+  let successUpTo = 2;
+  for (let roll = 3; roll <= 18; roll += 1) if (isCriticalSuccess(roll, effectiveSkill)) successUpTo = roll;
+  let failureFrom = 19;
+  for (let roll = 18; roll >= 3; roll -= 1) {
+    if (isCriticalFailure(roll, effectiveSkill) && !isCriticalSuccess(roll, effectiveSkill)) failureFrom = roll;
+    else break;
+  }
+  return { successUpTo, failureFrom };
+}

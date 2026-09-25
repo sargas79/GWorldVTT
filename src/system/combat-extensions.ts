@@ -972,6 +972,22 @@ export function moduleDefensesFor(defender: any, attack: string): Array<ModuleDe
   return out;
 }
 
+/** An extra-effort option as a reference lists it. */
+export interface RegisteredExtraEffort {
+  key: string;
+  module: string;
+  label: string;
+  kind: "offense" | "defense";
+  fp: number;
+}
+
+const extraEfforts: RegisteredExtraEffort[] = [];
+
+/** Every registered extra-effort option, in the order registered, for a reference such as the GM Screen. */
+export function registeredExtraEfforts(): RegisteredExtraEffort[] {
+  return extraEfforts.map((effort) => ({ ...effort }));
+}
+
 /** Registers an extra-effort option: an attack or defense option that costs FP. Returns its key, or null. */
 export function registerExtraEffort(registration: ExtraEffortRegistration): string | null {
   const r = registration ?? ({} as ExtraEffortRegistration);
@@ -984,6 +1000,7 @@ export function registerExtraEffort(registration: ExtraEffortRegistration): stri
   const key = `${r.module}.${r.key}`;
   if (attackOptions.has(key) || defenseOptions.has(key)) return refuse(what, "that key is already registered");
   const available = typeof r.available === "function" ? r.available : () => true;
+  extraEfforts.push({ key, module: r.module, label: r.label.trim(), kind: r.kind, fp: r.fp });
   const refusal = typeof r.refuse === "function" ? r.refuse : () => null;
   const label = `${r.label.trim()} (${r.fp} FP)`;
   if (r.kind === "offense") {
@@ -1548,6 +1565,11 @@ export function registeredLocationAllowsArc(addonLocation: string | null | undef
 
 export function registeredHitLocation(key: string): AddonHitLocation | undefined {
   return hitLocations.get(key);
+}
+
+/** Every registered hit location, in the order registered, for a reference such as the GM Screen. */
+export function registeredHitLocations(): AddonHitLocation[] {
+  return [...hitLocations.values()];
 }
 
 /** The registered locations offered for this attack. */

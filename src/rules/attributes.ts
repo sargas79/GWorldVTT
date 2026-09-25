@@ -130,3 +130,34 @@ export function secondaryCharacteristics(
     basicMove: Math.max(0, basicMove(speed) + (bonuses.basicMove ?? 0)),
   };
 }
+
+/** What an attribute score says about somebody (GURPS Basic Set: Characters p. 14). */
+export type AttributeLevel =
+  | "crippling"
+  | "poor"
+  | "belowAverage"
+  | "average"
+  | "aboveAverage"
+  | "exceptional"
+  | "amazing";
+
+/**
+ * The words the book puts to a score (Characters p. 14), as the highest score
+ * each covers, the last open-ended: 6 or less crippling, 7 poor, 8-9 below
+ * average, 10 average, 11-12 above average, 13-14 exceptional, 15+ amazing.
+ */
+export const ATTRIBUTE_LEVELS: ReadonlyArray<{ level: AttributeLevel; upTo: number | null }> = [
+  { level: "crippling", upTo: 6 },
+  { level: "poor", upTo: 7 },
+  { level: "belowAverage", upTo: 9 },
+  { level: "average", upTo: 10 },
+  { level: "aboveAverage", upTo: 12 },
+  { level: "exceptional", upTo: 14 },
+  { level: "amazing", upTo: null },
+];
+
+/** The level a score reads as. */
+export function attributeLevel(score: number): AttributeLevel {
+  const whole = Math.floor(score);
+  return ATTRIBUTE_LEVELS.find((row) => row.upTo === null || whole <= row.upTo)!.level;
+}
