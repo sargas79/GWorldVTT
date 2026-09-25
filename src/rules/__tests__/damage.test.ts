@@ -7,6 +7,7 @@ import {
   computeInjury,
   effectiveStrengthForWeapon,
   halveDamage,
+  injuryAtLocation,
   swingDamage,
   tabulatedDamage,
   thrustDamage,
@@ -183,5 +184,36 @@ describe("the penetration and wounding pipeline (GURPS Lite p. 29)", () => {
     expect(computeInjury({ basicDamage: 10, dr: 4, type: "cr", armorDivisor: 0 }).effectiveDr).toBe(
       4,
     );
+  });
+});
+
+/** Injury at a hit location outside a blow (Campaigns pp. 398-399, 420-421; sargas79/GWorldVTT#808). */
+describe("injuryAtLocation", () => {
+  it("keeps no more than cripples a limb, and cripples it", () => {
+    // A 10 HP man's arm is crippled by 6 (over HP/2), and the rest is lost.
+    expect(injuryAtLocation({ amount: 9, location: "arm", maxHp: 10 })).toEqual({
+      injury: 6, woundingModifier: null, excessLost: 3, crippled: true, costsFatigue: false,
+    });
+    expect(injuryAtLocation({ amount: 5, location: "arm", maxHp: 10 }).crippled).toBe(false);
+  });
+
+  it("multiplies damage past DR by the location's wounding modifier, the skull's bone not taken off again", () => {
+    expect(injuryAtLocation({ amount: 3, location: "neck", type: "cut", maxHp: 10 })).toMatchObject({ injury: 6, woundingModifier: 2 });
+    expect(injuryAtLocation({ amount: 2, location: "skull", type: "burn", maxHp: 10 })).toMatchObject({ injury: 8, woundingModifier: 4 });
+    // An impaling wound to a hand cripples it on over HP/3 at x1.
+    expect(injuryAtLocation({ amount: 5, location: "hand", type: "imp", maxHp: 12 })).toMatchObject({
+      injury: 5, woundingModifier: 1, excessLost: 0, crippled: true,
+    });
+  });
+
+  it("leaves the torso's injury alone", () => {
+    expect(injuryAtLocation({ amount: 20, location: "torso", maxHp: 10 })).toMatchObject({ injury: 20, crippled: false });
+  });
+
+  it("takes a registered location's own threshold", () => {
+    expect(injuryAtLocation({ amount: 4, location: "arm", maxHp: 10, cripplingThreshold: 2.5 })).toMatchObject({
+      injury: 3, excessLost: 1, crippled: true,
+    });
+    expect(injuryAtLocation({ amount: 9, location: "arm", maxHp: 10, cripplingThreshold: null })).toMatchObject({ injury: 9, crippled: false });
   });
 });

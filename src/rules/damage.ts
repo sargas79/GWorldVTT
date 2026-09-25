@@ -253,6 +253,12 @@ export interface InjuryInput {
    * out, the location decides.
    */
   cripplingThreshold?: number | null;
+  /**
+   * True where `basicDamage` is already what got past DR, the location's own
+   * (the skull's bone) included, so nothing more comes off it (since API
+   * 1.148.0).
+   */
+  ignoreLocationDr?: boolean;
 }
 
 export interface InjuryResult {
@@ -297,6 +303,7 @@ export function computeInjury({
   vulnerability = 1,
   woundingOverride,
   cripplingThreshold,
+  ignoreLocationDr = false,
 }: InjuryInput): InjuryResult {
   const divisor = armorDivisor > 0 ? armorDivisor : 1;
 
@@ -313,7 +320,7 @@ export function computeInjury({
 
   // The skull's extra DR is natural armor, so the divisor applies to it too —
   // and toxic damage is exempt from it, as it is from the skull multiplier.
-  const locationDr = location ? locationDrAgainst(location, type) : 0;
+  const locationDr = location && !ignoreLocationDr ? locationDrAgainst(location, type) : 0;
   const effectiveDr = criticalDr(Math.floor((Math.max(0, dr) + locationDr) / divisor), critical);
   const penetrating = Math.max(0, basicDamage - effectiveDr);
   // A machine or a stone takes piercing and impaling as its substance allows,
@@ -378,4 +385,81 @@ export function capInjury(injury: number, cap: number | null | undefined): { inj
   const limit = Math.max(0, Math.floor(Number(cap)));
   const kept = Math.min(whole, limit);
   return { injury: kept, lost: whole - kept };
+}
+
+/** Injury taken at a hit location outside a blow's pipeline. */
+export interface LocatedInjuryInput {
+  /**
+   * With `type`, damage that already got past DR; without it, injury. A
+   * whole number above zero.
+   */
+  amount: number;
+  location: HitLocation;
+  /** Given, the location's wounding modifier for it multiplies `amount`. */
+  type?: DamageType;
+  maxHp: number;
+  limbs?: LimbCounts;
+  tolerance?: InjuryTolerance;
+  /** A registered location's wounding modifier, in place of its parent's. */
+  woundingOverride?: number;
+  /** A registered location's crippling threshold, in place of its parent's; null for none. */
+  cripplingThreshold?: number | null;
+}
+
+export interface LocatedInjuryResult {
+  /** HP (or FP, where the type costs fatigue) actually lost. */
+  injury: number;
+  /** The wounding modifier applied, or null where `amount` was injury already. */
+  woundingModifier: number | null;
+  /** Injury lost past what cripples a limb or extremity (Campaigns p. 421). */
+  excessLost: number;
+  crippled: boolean;
+  costsFatigue: boolean;
+}
+
+/**
+ * Injury at a hit location that no blow's pipeline worked out -- a burn that
+ * goes on second by second, a module's effect (since API 1.148.0).
+ *
+ * Given a damage type, `amount` is damage past DR, and the location's wounding
+ * modifier for that type multiplies it (Campaigns pp. 398-399): nothing more
+ * comes off for the location's own DR. Without one, `amount` is injury as it
+ * stands. Either way a limb or extremity keeps no more than cripples it, the
+ * excess lost, and a wound over the threshold cripples the part it struck
+ * (Campaigns pp. 420-421).
+ */
+export function injuryAtLocation(input: LocatedInjuryInput): LocatedInjuryResult {
+  const amount = Math.max(0, Math.floor(Number(input.amount) || 0));
+  if (input.type) {
+    const result = computeInjury({
+      basicDamage: amount,
+      dr: 0,
+      type: input.type,
+      hitLocation: input.location,
+      maxHp: input.maxHp,
+      ...(input.limbs ? { limbs: input.limbs } : {}),
+      ...(input.tolerance ? { tolerance: input.tolerance } : {}),
+      ...(input.woundingOverride !== undefined ? { woundingOverride: input.woundingOverride } : {}),
+      ...(input.cripplingThreshold !== undefined ? { cripplingThreshold: input.cripplingThreshold } : {}),
+      ignoreLocationDr: true,
+    });
+    return {
+      injury: result.injury,
+      woundingModifier: result.woundingModifier,
+      excessLost: result.excessLost,
+      crippled: result.crippled,
+      costsFatigue: result.costsFatigue,
+    };
+  }
+  // Injury as given: only the part's threshold is left to apply.
+  if (input.cripplingThreshold !== undefined) {
+    const threshold = input.cripplingThreshold;
+    if (threshold === null || amount <= threshold) {
+      return { injury: amount, woundingModifier: null, excessLost: 0, crippled: false, costsFatigue: false };
+    }
+    const capped = Math.floor(threshold) + 1;
+    return { injury: capped, woundingModifier: null, excessLost: amount - capped, crippled: true, costsFatigue: false };
+  }
+  const crippling = applyCrippling(amount, input.location, input.maxHp, input.limbs ?? {});
+  return { ...crippling, woundingModifier: null, costsFatigue: false };
 }

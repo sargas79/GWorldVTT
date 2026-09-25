@@ -7,6 +7,8 @@ const globals = globalThis as Record<string, unknown>;
 afterEach(() => {
   delete globals.Hooks;
   delete globals.fromUuidSync;
+  delete globals.foundry;
+  delete globals.game;
   vi.restoreAllMocks();
 });
 
@@ -27,6 +29,9 @@ function character(hp = 10, maxHp = 10) {
       aim: { turns: 0 },
       derived: { status: "ok" },
     },
+    flags: {} as Record<string, unknown>,
+    getFlag: (_scope: string, key: string) => actor.flags[key],
+    setFlag: vi.fn(async (_scope: string, key: string, value: unknown) => { actor.flags[key] = value; }),
     update: vi.fn(async (changes: Record<string, number>) => {
       for (const [path, value] of Object.entries(changes)) {
         const [, pool] = path.split(".");
@@ -496,5 +501,48 @@ describe("attack options kept on a flag (since 1.108.0)", () => {
     expect(attackOptionsFromEntries(entries)).toEqual({ "my-module.around": true, "my-module.level": 2 });
     expect(attackOptionsFromEntries({ my: { nested: true } })).toEqual({});
     expect(attackOptionsFromEntries([["", 1], "junk"])).toEqual({});
+  });
+});
+
+/** Injury taken at a hit location (Campaigns pp. 398-399, 420-421; sargas79/GWorldVTT#808). */
+describe("takeInjury at a location", () => {
+  function foundry() {
+    globals.foundry = { utils: { randomID: () => "part1" } };
+    globals.game = { time: { worldTime: 500 }, i18n: { localize: (key: string) => key } };
+  }
+
+  it("cripples a limb, keeps no more injury than cripples it, and records the part", async () => {
+    foundry();
+    const target = character();
+    const taken = await takeInjury(target, { amount: 9, label: "Burn", location: "arm" });
+    expect(taken).toMatchObject({
+      pool: "hp", from: 10, to: 4, label: "Burn",
+      located: { location: "arm", woundingModifier: null, excessLost: 3, crippled: true },
+    });
+    expect(target.system.hp.value).toBe(4);
+    expect(taken?.located?.part).toMatchObject({ id: "part1", location: "arm", duration: "undecided", injury: true, label: "Burn", since: 500 });
+    expect(target.flags.crippled).toEqual([taken?.located?.part]);
+  });
+
+  it("multiplies damage past DR by the location's wounding modifier", async () => {
+    foundry();
+    const target = character(12, 12);
+    const taken = await takeInjury(target, { amount: 3, location: "neck", damageType: "cut" });
+    expect(taken).toMatchObject({ from: 12, to: 6, located: { woundingModifier: 2, crippled: false, part: null } });
+    expect(target.setFlag).not.toHaveBeenCalled();
+  });
+
+  it("is unchanged without a location: the whole amount, and no part recorded", async () => {
+    const target = character();
+    expect(await takeInjury(target, { amount: 9, label: "Burn" })).toEqual({ pool: "hp", from: 10, to: 1, label: "Burn" });
+    expect(target.setFlag).not.toHaveBeenCalled();
+  });
+
+  it("takes fatigue with no location, and refuses a location or damage type it doesn't know", async () => {
+    const target = character();
+    expect(await takeInjury(target, { amount: 2, fatigue: true, location: "arm" })).toEqual({ pool: "fp", from: 10, to: 8, label: "" });
+    expect(await takeInjury(target, { amount: 2, location: "tail" })).toBeNull();
+    expect(await takeInjury(target, { amount: 2, location: "arm", damageType: "zap" as never })).toBeNull();
+    expect(target.system.hp.value).toBe(10);
   });
 });

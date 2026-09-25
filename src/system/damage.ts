@@ -27,8 +27,8 @@ import {
   type CriticalEntry,
   type CriticalTable,
 } from "../rules/criticals.js";
-import { capInjury, computeInjury } from "../rules/damage.js";
-import { locationDrAgainst, type HitLocation } from "../rules/hit-locations.js";
+import { WOUNDING_MODIFIERS, capInjury, computeInjury, injuryAtLocation } from "../rules/damage.js";
+import { HIT_LOCATIONS, locationDrAgainst, type HitLocation } from "../rules/hit-locations.js";
 import { blastPlacementOf, INTERNAL_BLAST_WOUNDING, type BlastPlacement } from "../rules/explosions.js";
 import { LARGE_AREA_LOCATIONS, largeAreaDr, largeAreaSingleLocation, type LargeAreaDr } from "../rules/large-area.js";
 import { applyInjury, type InjuryConsequences } from "../rules/injury.js";
@@ -53,7 +53,8 @@ import {
   cannonFodderCollapses, cinematicExplosionInjury, knockbackStunPenalty,
 } from "../rules/cinematic.js";
 import { isCannonFodder } from "./cinematic.js";
-import { COMBAT_HOOKS, callCombatHook, locationOverrides, type ArmorDrLine } from "./combat-extensions.js";
+import { COMBAT_HOOKS, callCombatHook, locationOverrides, registeredHitLocation, type ArmorDrLine } from "./combat-extensions.js";
+import { cripple, crippleableLocation, crippledPartName, type CrippledPart } from "./crippling.js";
 import { piecesAt, protectsAgainst } from "../rules/layered-armor.js";
 
 /** A critical hit, already rolled for on one of the tables. */
@@ -1215,29 +1216,126 @@ export interface InjuryTaken {
   from: number;
   to: number;
   label: string;
+  /**
+   * Where it was taken at, when a location was given (since API 1.148.0):
+   * the location, the wounding modifier applied (null where `amount` was
+   * injury already), the injury lost past what cripples a limb or extremity,
+   * whether the part was crippled, and the crippled part recorded for it.
+   */
+  located?: {
+    location: string;
+    woundingModifier: number | null;
+    excessLost: number;
+    crippled: boolean;
+    part: CrippledPart | null;
+  };
+}
+
+/** How `takeInjury` is asked for injury. */
+export interface TakeInjuryOptions {
+  amount: number;
+  fatigue?: boolean;
+  label?: string;
+  /**
+   * A hit location (since API 1.148.0): a Basic Set key (`arm`, `skull`, ...)
+   * or a registered location's `<module>.<key>`.
+   */
+  location?: string;
+  /**
+   * With `location`, the kind of damage (since API 1.148.0): `amount` is then
+   * damage past DR, and the location's wounding modifier multiplies it.
+   */
+  damageType?: DamageType;
+}
+
+/** The Basic Set location a key stands for, and the registered one where it is one. */
+function locationFor(key: string): { hitLocation: HitLocation; registered: string | null } | null {
+  if (HIT_LOCATIONS[key as HitLocation]) return { hitLocation: key as HitLocation, registered: null };
+  const added = registeredHitLocation(key);
+  return added ? { hitLocation: added.parent, registered: key } : null;
 }
 
 /**
- * Takes a figure of injury, or of fatigue, straight off an actor: no DR, no
- * wounding modifier, no card. What follows from the new total follows as it
- * would from a blow -- the health conditions are brought into step, and an
- * injury spoils an aim (p. 364).
+ * Takes a figure of injury, or of fatigue, straight off an actor: no DR and
+ * no card. What follows from the new total follows as it would from a blow --
+ * the health conditions are brought into step, and an injury spoils an aim
+ * (p. 364).
  *
- * Returns null when this user may not change the actor, or the amount isn't a
- * positive number.
+ * Given a `location` (since API 1.148.0), it is taken there as the damage card
+ * would take it (Campaigns pp. 398-399, 420-421): with a `damageType`, the
+ * location's wounding modifier multiplies `amount`; a limb or extremity keeps
+ * no more than cripples it; and a part crippled is recorded, its duration
+ * undecided until the HT roll after the fight (p. 422). Fatigue takes no
+ * location.
+ *
+ * Returns null when this user may not change the actor, the amount isn't a
+ * positive number, or the location or damage type isn't one the system knows.
  */
-export async function takeInjury(
-  actor: any,
-  options: { amount: number; fatigue?: boolean; label?: string },
-): Promise<InjuryTaken | null> {
+export async function takeInjury(actor: any, options: TakeInjuryOptions): Promise<InjuryTaken | null> {
   const amount = Math.floor(Number(options?.amount));
   if (!actor?.isOwner || !(amount > 0)) return null;
+  const label = String(options.label ?? "");
 
-  const pool = options.fatigue ? "fp" : "hp";
+  const wanted = options.location !== undefined && options.location !== null && options.location !== "" && !options.fatigue;
+  if (!wanted) {
+    const pool = options.fatigue ? "fp" : "hp";
+    const from = Number(actor.system?.[pool]?.value) || 0;
+    const to = from - amount;
+    await actor.update({ [`system.${pool}.value`]: to });
+    if (pool === "hp") await loseAim(actor, "injured");
+    await syncHealthConditions(actor);
+    return { pool, from, to, label };
+  }
+
+  const key = String(options.location);
+  const place = locationFor(key);
+  const type = options.damageType;
+  if (!place || (type !== undefined && WOUNDING_MODIFIERS[type] === undefined)) return null;
+
+  const maxHp = Number(actor.system?.hp?.max) || 0;
+  const traits = traitsOf(actor);
+  // A registered location changes the wounding modifier and the threshold
+  // where it says so, and takes the rest from its parent.
+  const added = place.registered ? registeredHitLocation(place.registered) : undefined;
+  const overrides = place.registered && type ? locationOverrides(place.registered, type, maxHp) : null;
+  const threshold = overrides
+    ? overrides.cripplingThreshold
+    : added && added.cripplingDivisor !== undefined
+      ? (added.cripplingDivisor === null ? null : maxHp / added.cripplingDivisor)
+      : undefined;
+  const result = injuryAtLocation({
+    amount,
+    location: place.hitLocation,
+    ...(type ? { type } : {}),
+    maxHp,
+    limbs: { arms: 2 + traits.extraArms, legs: 2 + traits.extraLegs },
+    ...(hasInjuryTolerance(traits.injuryTolerance) ? { tolerance: traits.injuryTolerance } : {}),
+    ...(overrides && overrides.woundingModifier !== null ? { woundingOverride: overrides.woundingModifier } : {}),
+    ...(threshold !== undefined ? { cripplingThreshold: threshold } : {}),
+  });
+
+  const pool = result.costsFatigue ? "fp" : "hp";
   const from = Number(actor.system?.[pool]?.value) || 0;
-  const to = from - amount;
+  const to = from - result.injury;
   await actor.update({ [`system.${pool}.value`]: to });
   if (pool === "hp") await loseAim(actor, "injured");
   await syncHealthConditions(actor);
-  return { pool, from, to, label: String(options.label ?? "") };
+  // The part crippled goes on the sheet, as one a module records does, to be
+  // settled by the HT roll.
+  const part = result.crippled && crippleableLocation(key)
+    ? await cripple(actor, key, { label: label || crippledPartName(key) })
+    : null;
+  return {
+    pool,
+    from,
+    to,
+    label,
+    located: {
+      location: key,
+      woundingModifier: result.woundingModifier,
+      excessLost: result.excessLost,
+      crippled: result.crippled,
+      part,
+    },
+  };
 }
