@@ -2053,8 +2053,16 @@ Two fields a module may read (since 1.62.0):
   slows the learning -- training aids, a trait, a campaign's rule -- is the
   GM's call. Before the sheet's Study tool turns the hours into points,
   `gworld.studyModifiers` (`combat.hooks.studyModifiers`) is called with
-  `{ actor, skill, method, hours, multiplier, lines }`:
-  - `skill` is the skill item studied, `method` one of `education`,
+  `{ actor, skill, studied, method, hours, multiplier, lines }`:
+  - `studied` (since 1.146.0) says what is studied, frozen:
+    `{ kind, item, attribute, name }`. `kind` is `skill`, `attribute` or
+    `trait`; `item` is the skill or trait item (null for an attribute);
+    `attribute` is the attribute's key for an attribute (`ST`, `DX`, `IQ`,
+    `HT`, `hp`, `will`, `per`, `fp`, `basicSpeed`, `basicMove`) and null
+    otherwise; `name` is what the card calls it.
+  - `skill` is the skill item studied, and null (since 1.146.0) when the
+    study is of an attribute or a trait, so a listener meant for skills
+    checks it, or `studied.kind`, first. `method` is one of `education`,
     `intensive`, `selfTeaching` or `onTheJob`, and `hours` the hours spent.
     These are to read.
   - `multiplier` (1) is the share of `hours` that counts toward a point at
@@ -2067,6 +2075,34 @@ Two fields a module may read (since 1.62.0):
   The counted hours (`hours` times `multiplier`, to the hundredth) go on top
   of those banked on the skill, as before. When the multiplier isn't 1 the
   card says what the hours counted as, then shows the listeners' lines.
+
+  Since 1.146.0 the Study tool also offers two more kinds of subject:
+  - **Learnable advantages** (Characters p. 294): a trait whose
+    `system.learnable` is true (a new field, false by default), that is an
+    advantage or perk bought by the level, with a level still to go. The
+    Basic Set compendium flags the ones p. 294 names (Combat Reflexes, Fit,
+    Enhanced Dodge, G-Experience, the psionic Talents and so on); a module
+    flags its own book's traits the same way, `learnable: true` in its pack
+    data, and a GM can tick "Can be learned through study" on any trait's
+    sheet. Traits already in a world when it first loads under 1.146.0
+    are flagged once by the system's own migration step
+    (`learnable-traits`), matched to the Basic Set's list by name or base
+    name ("Enhanced Dodge 2", "Weapon Master (Broadsword)"). Wealth, Magery, Status and other traits that aren't flagged are
+    never offered.
+  - **Attributes and secondary characteristics**, only where the GM has
+    switched on the `studyAttributes` optional rule (off by default). It is
+    a GM's option, not a book rule: the book raises attributes with earned
+    points (p. 290), and study reaches skills, spells, techniques and some
+    advantages (p. 292).
+
+  These move only by the whole level: the counted hours bank until they pay
+  for the next level at 200 hours of learning a point (10 points for a level
+  of HT, 5 for +0.25 Basic Speed, the change in the trait's cost for a
+  trait's next level). A step that costs 0 points or less -- two levels a
+  cost table prices the same -- stops study there, and the hours stay
+  banked. Hours short of a level bank on the character
+  (`system.studyHours.<key>`) or on the trait (`system.studyHours`), and the
+  level's points go onto the ledger as an award, as a skill's do.
 - **Fragile** (since 1.93.0; Characters pp. 136-137): the disadvantage's
   five kinds now do what the book says. A character's are
   `traitEffects.fragile`, a list of `"brittle"`, `"combustible"`,

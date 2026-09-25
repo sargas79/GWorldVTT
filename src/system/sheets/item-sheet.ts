@@ -307,6 +307,8 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       context.levelName = item.system.levelName;
       context.netModifier = item.system.netModifier;
       context.hasModifiers = (item.system.modifiers ?? []).length > 0;
+      // Whether study can reach the trait (p. 294) is the GM's to say.
+      context.mayFlagLearnable = context.editable && game.user?.isGM === true;
     }
 
     // A template is a list of things and a set of choices to make between

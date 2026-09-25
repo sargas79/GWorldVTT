@@ -634,6 +634,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     hp: number; will: number; per: number; fp: number;
     basicSpeed: number; basicMove: number;
   };
+  declare studyHours: Record<"ST" | "DX" | "IQ" | "HT" | "hp" | "will" | "per" | "fp" | "basicSpeed" | "basicMove", number>;
   declare hp: { value: number; max: number };
   declare fp: { value: number; max: number };
   declare mounted: boolean;
@@ -761,6 +762,25 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           required: true, nullable: false, initial: 0, step: BASIC_SPEED_STEP,
         }),
         basicMove: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
+      }),
+
+      /**
+       * Hours of study banked toward the next level of each attribute and
+       * secondary characteristic, for a table that lets study raise them.
+       * That is a GM's option (`studyAttributes`), not a book rule: the book
+       * raises them with earned points (Characters p. 290).
+       */
+      studyHours: new fields.SchemaField({
+        ST: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        DX: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        IQ: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        HT: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        hp: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        will: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        per: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        fp: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        basicSpeed: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+        basicMove: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       }),
 
       hp: poolField(),

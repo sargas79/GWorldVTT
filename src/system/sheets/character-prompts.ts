@@ -1164,17 +1164,39 @@ export async function promptForReaction(sources: ReactionSource[]): Promise<{
   return result && typeof result === "object" ? (result as never) : null;
 }
 
-/** Asks what was studied, for how long, and how (Characters p. 292). */
-export async function promptForStudy(
-  skills: Array<{ id: string; name: string; banked: number }>,
-): Promise<{ skillId: string; hours: number; method: StudyMethod } | null> {
+/** One thing the Study tool offers: its id, its name, and the hours banked on it. */
+export interface StudySubject {
+  id: string;
+  name: string;
+  banked: number;
+}
+
+/**
+ * Asks what was studied, for how long, and how (Characters pp. 292, 294): a
+ * skill, an attribute or secondary characteristic, or an advantage learned
+ * as if it were a skill. Each is offered as `kind:id`, and the answer says
+ * which kind it was.
+ */
+export async function promptForStudy(subjects: {
+  skills: StudySubject[];
+  attributes?: StudySubject[];
+  traits?: StudySubject[];
+}): Promise<{ kind: "skill" | "attribute" | "trait"; id: string; hours: number; method: StudyMethod } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Life.${key}`);
-  const options = skills
-    .map(
-      (skill) =>
-        `<option value="${skill.id}">${skill.name}${skill.banked ? ` (${game.i18n.format("GWORLD.Life.BankedShort", { hours: skill.banked })})` : ""}</option>`,
-    )
-    .join("");
+  const esc = (text: string) => foundry.utils.escapeHTML(String(text ?? ""));
+  const group = (kind: string, label: string, list: StudySubject[] = []) =>
+    list.length === 0
+      ? ""
+      : `<optgroup label="${esc(label)}">${list
+          .map(
+            (subject) =>
+              `<option value="${kind}:${esc(subject.id)}">${esc(subject.name)}${subject.banked ? ` (${game.i18n.format("GWORLD.Life.BankedShort", { hours: subject.banked })})` : ""}</option>`,
+          )
+          .join("")}</optgroup>`;
+  const options =
+    group("skill", L("Skills"), subjects.skills) +
+    group("attribute", L("Attributes"), subjects.attributes) +
+    group("trait", L("Traits"), subjects.traits);
   const methods = (["education", "intensive", "selfTeaching", "onTheJob"] as const)
     .map((m) => `<option value="${m}">${L(`Method.${m}`)}</option>`)
     .join("");
@@ -1183,7 +1205,7 @@ export async function promptForStudy(
     window: { title: L("Study") },
     content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <span>${L("Skill")}</span>
+        <span>${L("Subject")}</span>
         <select name="skill" style="width:200px">${options}</select>
       </label>
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
@@ -1200,8 +1222,10 @@ export async function promptForStudy(
       label: L("Study"),
       callback: (_event: Event, button: HTMLElement) => {
         const form = button.closest<HTMLElement>(".application");
+        const [kind = "", ...id] = (form?.querySelector<HTMLSelectElement>('select[name="skill"]')?.value ?? "").split(":");
         return {
-          skillId: form?.querySelector<HTMLSelectElement>('select[name="skill"]')?.value ?? "",
+          kind,
+          id: id.join(":"),
           hours: Number(form?.querySelector<HTMLInputElement>('input[name="hours"]')?.value ?? 0) || 0,
           method: (form?.querySelector<HTMLSelectElement>('select[name="method"]')?.value ?? "education") as StudyMethod,
         };
@@ -1210,7 +1234,7 @@ export async function promptForStudy(
     rejectClose: false,
   });
 
-  return result && typeof result === "object" && (result as { skillId: string }).skillId
+  return result && typeof result === "object" && (result as { id: string }).id
     ? (result as never)
     : null;
 }
