@@ -111,11 +111,31 @@ export function spendFatigue(options: {
 export const BATTLE_FATIGUE_AFTER_SECONDS = 10;
 
 /**
- * What a battle costs in fatigue: "After any battle that lasts longer than
- * 10 seconds, lose 1 FP." A skirmish over in a few turns costs nothing; a
- * fight that ran on costs a point, however long it ran, with extra effort
+ * What a battle costs in fatigue: any battle that lasts more than 10 seconds
+ * costs 1 FP with no encumbrance, and a point more for each level of it, up
+ * to 5 FP at Extra-Heavy. A skirmish over in a few turns costs nothing; a
+ * fight that ran on costs the same however long it ran, with extra effort
  * charged separately as it is spent.
  */
-export function battleFatigueCost(seconds: number): number {
-  return seconds > BATTLE_FATIGUE_AFTER_SECONDS ? 1 : 0;
+export function battleFatigueCost(seconds: number, encumbranceLevel = 0): number {
+  if (!(seconds > BATTLE_FATIGUE_AFTER_SECONDS)) return 0;
+  const level = Math.max(0, Math.min(4, Math.floor(Number(encumbranceLevel) || 0)));
+  return 1 + level;
+}
+
+/**
+ * The extra fatigue of a hot day (p. 426): "If the day is hot, add 1 FP" to
+ * a battle's cost, and to each hour's march. Anyone in plate armour or an
+ * overcoat pays 2 rather than 1, and full-coverage armour at TL9+ is
+ * climate-controlled and pays nothing -- what somebody wears is left to the
+ * `gworld.fatigueCost` listeners, who find this as the `hotDay` part.
+ */
+export const HOT_DAY_FATIGUE = 1;
+
+/**
+ * What a hot day adds to a battle: nothing unless the battle cost anything
+ * at all -- a skirmish over within ten seconds is free, hot or not.
+ */
+export function hotDayBattleFatigue(seconds: number, hot: boolean): number {
+  return hot && battleFatigueCost(seconds) > 0 ? HOT_DAY_FATIGUE : 0;
 }

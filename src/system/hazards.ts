@@ -27,9 +27,10 @@ import {
   catchingFire, FIRE_DAMAGE, ignites, prolongedContactTarget, type FireExposure, type Flammability,
 } from "../rules/fire.js";
 import { dailyMiles, marchingFatiguePerHour, type Terrain, type TravelWeather } from "../rules/hiking.js";
+import { HOT_DAY_FATIGUE } from "../rules/fatigue.js";
 import { randomHitLocation, type HitLocation } from "../rules/hit-locations.js";
 import { callCombatHook, COMBAT_HOOKS, randomLocationWithHooks, type VehicleDrLine } from "./combat-extensions.js";
-import { PROCEDURE_HOOKS, applyCondition, procedureRoll } from "./procedure-extensions.js";
+import { PROCEDURE_HOOKS, applyCondition, procedureRoll, type FatigueCostPart } from "./procedure-extensions.js";
 import { postRefusal } from "./roll.js";
 import { equipmentUseLines } from "./tech-level.js";
 import { applyInjury } from "../rules/injury.js";
@@ -268,7 +269,12 @@ export async function hike(options: {
     hot,
   });
   const hours = Math.max(0, Math.floor(options.hours));
-  const pools = await applyFatigue(actor, perHour * hours, { reason: "hiking", details: { hours, hot, temperatureF: day.temperatureF } });
+  // The hot day's point an hour is its own part, keyed as a battle's is, for
+  // the `gworld.fatigueCost` listeners to change (since API 1.147.0).
+  const heat = hot ? HOT_DAY_FATIGUE * hours : 0;
+  const parts: FatigueCostPart[] = [{ key: "hiking", label: H("MarchPart"), fp: perHour * hours - heat }];
+  if (heat > 0) parts.push({ key: "hotDay", label: game.i18n.localize("GWORLD.BattleFatigue.PartHotDay"), fp: heat });
+  const pools = await applyFatigue(actor, perHour * hours, { reason: "hiking", details: { hours, hot, temperatureF: day.temperatureF }, parts });
 
   const lines = [
     F("Miles", { miles, terrain: H(`Terrain.${options.terrain}`), weather: H(`Weather.${options.weather}`) }),

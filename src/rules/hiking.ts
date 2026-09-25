@@ -8,6 +8,8 @@
  * What it costs is the fatigue of a battle, "per hour of road travel".
  */
 
+import { HOT_DAY_FATIGUE } from "./fatigue.js";
+
 export type Terrain = "veryBad" | "bad" | "average" | "good";
 
 /** What the ground does to the day's mileage (p. 351). */
@@ -58,5 +60,5 @@ export function dailyMiles(options: {
  * encumbrance -- 1 FP at none, one more a level -- "and 1 FP on a hot day".
  */
 export function marchingFatiguePerHour(options: { encumbranceLevel: number; hot?: boolean }): number {
-  return 1 + Math.max(0, Math.min(4, Math.floor(options.encumbranceLevel))) + (options.hot ? 1 : 0);
+  return 1 + Math.max(0, Math.min(4, Math.floor(options.encumbranceLevel))) + (options.hot ? HOT_DAY_FATIGUE : 0);
 }

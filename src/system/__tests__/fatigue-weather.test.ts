@@ -5,8 +5,11 @@ import { chargeBattleFatigue } from "../battle-fatigue.js";
 import { rollExtraEffort, spendFatigue } from "../extra-effort.js";
 import { spendFatigueFor } from "../fatigue.js";
 import { hike } from "../hazards.js";
-import { PROCEDURE_HOOKS } from "../procedure-extensions.js";
+import { PROCEDURE_HOOKS, afterSuccessRoll } from "../procedure-extensions.js";
 import { TEMPERATURE_KEY, currentTemperature, dayWeather, parseTemperature, setTemperature } from "../weather.js";
+import { OPTIONAL_RULES_KEY } from "../optional-rules.js";
+import { battleFatigueCost, hotDayBattleFatigue } from "../../rules/fatigue.js";
+import { combatsFoughtIn, noteFought } from "../combat-participation.js";
 
 const globals = globalThis as Record<string, unknown>;
 
@@ -15,8 +18,15 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** A character the fatigue procedures read and write. */
-function character(name: string, options: { fp?: number; hp?: number; veryFit?: boolean; heatToleranceF?: number } = {}) {
+/** Where an actor's combat-long state keeps the combats they made an attack or defense roll in. */
+const FOUGHT_FLAG = "combatState.gworld.foughtIn";
+
+/**
+ * A character the fatigue procedures read and write. They have fought in
+ * combat `C1` unless `fought` says otherwise.
+ */
+function character(name: string, options: { fp?: number; hp?: number; veryFit?: boolean; heatToleranceF?: number; encumbrance?: number; fought?: string[] } = {}) {
+  const flags: Record<string, unknown> = { [FOUGHT_FLAG]: { value: options.fought ?? ["C1"], lifetime: "combat" } };
   return {
     name,
     uuid: `Actor.${name}`,
@@ -29,7 +39,7 @@ function character(name: string, options: { fp?: number; hp?: number; veryFit?: 
         attributes: { HT: 10, DX: 10, IQ: 10 },
         will: 10,
         move: 5,
-        encumbrance: { level: 0 },
+        encumbrance: { level: options.encumbrance ?? 0 },
         traitEffects: {
           fatigueLossHalved: options.veryFit === true,
           temperatureTolerance: { coldF: 0, heatF: options.heatToleranceF ?? 0 },
@@ -39,6 +49,9 @@ function character(name: string, options: { fp?: number; hp?: number; veryFit?: 
     items: [],
     statuses: new Set<string>(),
     effects: [],
+    getFlag: (_scope: string, key: string) => flags[key],
+    setFlag: async (_scope: string, key: string, value: unknown) => { flags[key] = value; },
+    unsetFlag: async (_scope: string, key: string) => { delete flags[key]; },
     update: async function (this: any, data: Record<string, unknown>) {
       if (typeof data["system.hp.value"] === "number") this.system.hp.value = data["system.hp.value"];
       if (typeof data["system.fp.value"] === "number") this.system.fp.value = data["system.fp.value"];
@@ -50,8 +63,8 @@ function character(name: string, options: { fp?: number; hp?: number; veryFit?: 
 type Heard = { event: string; context: any };
 
 /** Foundry, as far as fatigue reaches: world settings, dice that come up as given, and every hook heard. */
-function foundryWith(options: { temperature?: unknown; isGM?: boolean; faces?: number[]; listener?: (event: string, context: any) => void } = {}) {
-  const settings: Record<string, unknown> = { [`gworld.${TEMPERATURE_KEY}`]: options.temperature ?? "" };
+function foundryWith(options: { temperature?: unknown; isGM?: boolean; faces?: number[]; listener?: (event: string, context: any) => void; rules?: Record<string, boolean> } = {}) {
+  const settings: Record<string, unknown> = { [`gworld.${TEMPERATURE_KEY}`]: options.temperature ?? "", [`gworld.${OPTIONAL_RULES_KEY}`]: options.rules ?? {} };
   const heard: Heard[] = [];
   const cards: any[] = [];
   globals.ChatMessage = {
@@ -153,7 +166,7 @@ describe("the day's temperature reaches the fatigue it costs", () => {
     const { heard } = foundryWith({ temperature: "95" });
     const knight = character("Knight");
     const nomad = character("Nomad", { heatToleranceF: 20 });
-    await chargeBattleFatigue({ round: 30, combatants: [{ actor: knight }, { actor: nomad }] });
+    await chargeBattleFatigue({ id: "C1", round: 30, combatants: [{ actor: knight }, { actor: nomad }] });
     const costs = heardOf(heard, PROCEDURE_HOOKS.fatigueCost);
     expect(costs[0]).toMatchObject({ reason: "battle", details: { seconds: 30, strained: false, temperatureF: 95, hot: true } });
     expect(costs[1]).toMatchObject({ reason: "battle", details: { temperatureF: 95, hot: false } });
@@ -161,7 +174,7 @@ describe("the day's temperature reaches the fatigue it costs", () => {
 
   it("tells them none is set", async () => {
     const { heard } = foundryWith();
-    await chargeBattleFatigue({ round: 30, combatants: [{ actor: character("Knight") }] });
+    await chargeBattleFatigue({ id: "C1", round: 30, combatants: [{ actor: character("Knight") }] });
     expect(heardOf(heard, PROCEDURE_HOOKS.fatigueCost)[0].details).toMatchObject({ temperatureF: null, hot: false });
   });
 
@@ -179,6 +192,201 @@ describe("the day's temperature reaches the fatigue it costs", () => {
     await hike({ actor: shaded, hours: 2, terrain: "average", weather: "fair", hot: false, modifier: 0 });
     expect(shaded.system.fp.value).toBe(18);
     expect(heardOf(heard, PROCEDURE_HOOKS.fatigueCost)[1].details).toMatchObject({ hot: false, temperatureF: 92 });
+  });
+});
+
+/** A hot day's battle costs a point more (Campaigns p. 426; sargas79/GWorldVTT#803). */
+describe("a battle on a hot day", () => {
+  it("adds a point to a battle that cost anything, and only then", () => {
+    expect(hotDayBattleFatigue(30, true)).toBe(1);
+    expect(hotDayBattleFatigue(30, false)).toBe(0);
+    expect(hotDayBattleFatigue(10, true)).toBe(0);
+  });
+
+  it("charges each fighter the day is hot for, as a keyed part the listeners see", async () => {
+    const { heard, cards } = foundryWith({ temperature: "95" });
+    const knight = character("Knight");
+    const nomad = character("Nomad", { heatToleranceF: 20 });
+    await chargeBattleFatigue({ id: "C1", round: 30, combatants: [{ actor: knight }, { actor: nomad }] });
+    expect(knight.system.fp.value).toBe(8);
+    expect(nomad.system.fp.value).toBe(9);
+    const costs = heardOf(heard, PROCEDURE_HOOKS.fatigueCost);
+    expect(costs[0]).toMatchObject({
+      fp: 2,
+      parts: [{ key: "battle", label: "GWORLD.BattleFatigue.PartBattle", fp: 1 }, { key: "hotDay", label: "GWORLD.BattleFatigue.PartHotDay", fp: 1 }],
+    });
+    expect(costs[1]).toMatchObject({ fp: 1, parts: [{ key: "battle", fp: 1 }] });
+    // The card names who paid for the heat, and nobody else.
+    const card = String(cards[0]?.content);
+    expect(card).toContain("GWORLD.BattleFatigue.HotDay");
+    expect(card.match(/HotDay:[^,]*Knight/g)).toHaveLength(1);
+    expect(card).not.toMatch(/HotDay:[^,]*Nomad/);
+  });
+
+  it("charges nothing for the heat on a mild day, a short fight, or with the heat rules off", async () => {
+    foundryWith({ temperature: "70" });
+    const mild = character("Mild");
+    await chargeBattleFatigue({ id: "C1", round: 30, combatants: [{ actor: mild }] });
+    expect(mild.system.fp.value).toBe(9);
+
+    foundryWith({ temperature: "100" });
+    const brief = character("Brief");
+    await chargeBattleFatigue({ id: "C1", round: 8, combatants: [{ actor: brief }] });
+    expect(brief.system.fp.value).toBe(10);
+
+    const { heard } = foundryWith({ temperature: "100", rules: { exposure: false } });
+    const unruled = character("Unruled");
+    await chargeBattleFatigue({ id: "C1", round: 30, combatants: [{ actor: unruled }] });
+    expect(unruled.system.fp.value).toBe(9);
+    expect(heardOf(heard, PROCEDURE_HOOKS.fatigueCost)[0].parts.map((p: any) => p.key)).toEqual(["battle"]);
+  });
+
+  it("lets a listener raise the hot day's part for heavy armour, or take it away", async () => {
+    foundryWith({
+      temperature: "100",
+      listener: (event, context) => {
+        if (event !== PROCEDURE_HOOKS.fatigueCost) return;
+        const heat = context.parts.find((p: any) => p.key === "hotDay");
+        if (context.actor.name === "Plated") heat.fp = 2;
+        if (context.actor.name === "Cooled") context.parts.splice(context.parts.indexOf(heat), 1);
+        if (context.actor.name === "Laden") context.parts.push({ key: "mine", label: "Pack", fp: 1 });
+      },
+    });
+    const plated = character("Plated");
+    const cooled = character("Cooled");
+    const laden = character("Laden");
+    await chargeBattleFatigue({ id: "C1", round: 30, combatants: [{ actor: plated }, { actor: cooled }, { actor: laden }] });
+    expect(plated.system.fp.value).toBe(7);
+    expect(cooled.system.fp.value).toBe(9);
+    expect(laden.system.fp.value).toBe(7);
+  });
+
+  it("keeps `fp` the whole cost for a later listener after an earlier one edits a part", async () => {
+    foundryWith({
+      temperature: "100",
+      listener: (event, context) => {
+        if (event !== PROCEDURE_HOOKS.fatigueCost) return;
+        context.parts.find((p: any) => p.key === "hotDay").fp = 2;
+        expect(context.fp).toBe(3);
+        context.fp *= 3;
+      },
+    });
+    const knight = character("Knight", { fp: 20 });
+    knight.system.fp.max = 20;
+    await chargeBattleFatigue({ id: "C1", round: 30, combatants: [{ actor: knight }] });
+    // 3 x (battle 1 + hot day 2).
+    expect(knight.system.fp.value).toBe(11);
+  });
+
+  it("charges nothing where a later listener sets `fp` to 0 after a part edit", async () => {
+    const { heard } = foundryWith({
+      temperature: "100",
+      listener: (event, context) => {
+        if (event !== PROCEDURE_HOOKS.fatigueCost) return;
+        context.parts.find((p: any) => p.key === "hotDay").fp = 2;
+        context.fp = 0;
+      },
+    });
+    const knight = character("Knight");
+    await chargeBattleFatigue({ id: "C1", round: 30, combatants: [{ actor: knight }] });
+    expect(knight.system.fp.value).toBe(10);
+    expect(heardOf(heard, PROCEDURE_HOOKS.afterFatigue)).toHaveLength(0);
+  });
+
+  it("records what each fighter paid on the card", async () => {
+    const { cards } = foundryWith({ temperature: "100" });
+    const laden = character("Laden", { encumbrance: 1 });
+    await chargeBattleFatigue({ id: "C1", round: 30, combatants: [{ actor: laden }] });
+    expect(cards[0]?.flags?.gworld?.battleFatigue).toEqual({ rounds: 30, paid: [{ uuid: "Actor.Laden", fp: 3 }] });
+  });
+
+  it("keys a march's hot day the same way", async () => {
+    const { heard } = foundryWith({
+      temperature: "92",
+      listener: (event, context) => {
+        if (event === PROCEDURE_HOOKS.fatigueCost) context.parts.find((p: any) => p.key === "hotDay").fp += 2;
+      },
+    });
+    const walker = character("Walker", { fp: 20 });
+    walker.system.fp.max = 20;
+    await hike({ actor: walker, hours: 2, terrain: "average", weather: "fair", modifier: 0 });
+    // Heard as the listener left it: the heat's 2 made 4, and `fp` with it.
+    expect(heardOf(heard, PROCEDURE_HOOKS.fatigueCost)[0]).toMatchObject({
+      fp: 6,
+      parts: [{ key: "hiking", label: "GWORLD.Hazard.MarchPart", fp: 2 }, { key: "hotDay", fp: 4 }],
+    });
+    // 4 asked, and the listener made the heat's 2 into 4: 6 FP.
+    expect(walker.system.fp.value).toBe(14);
+  });
+});
+
+/** A battle's cost by encumbrance, and who pays it (Campaigns p. 426). */
+describe("a battle's fatigue by encumbrance, for those who fought", () => {
+  it("costs 1 FP with no encumbrance and one more a level, to 5 at Extra-Heavy", () => {
+    expect(battleFatigueCost(30)).toBe(1);
+    expect(battleFatigueCost(30, 1)).toBe(2);
+    expect(battleFatigueCost(30, 4)).toBe(5);
+    expect(battleFatigueCost(30, 9)).toBe(5);
+    expect(battleFatigueCost(10, 4)).toBe(0);
+  });
+
+  it("charges each fighter by their encumbrance at the end, in the `battle` part", async () => {
+    const { heard, cards } = foundryWith({ temperature: "95" });
+    const laden = character("Laden", { encumbrance: 2 });
+    await chargeBattleFatigue({ id: "C1", round: 30, combatants: [{ actor: laden }] });
+    // 3 for Medium encumbrance, 1 for the heat.
+    expect(laden.system.fp.value).toBe(6);
+    expect(heardOf(heard, PROCEDURE_HOOKS.fatigueCost)[0]).toMatchObject({ fp: 4, parts: [{ key: "battle", fp: 3 }, { key: "hotDay", fp: 1 }] });
+    expect(String(cards[0]?.content)).toContain("GWORLD.BattleFatigue.Paid");
+  });
+
+  it("exempts whoever made no attack or defense roll in this combat, and the card says so", async () => {
+    const { heard, cards } = foundryWith();
+    const fighter = character("Fighter");
+    const bystander = character("Bystander", { fought: [] });
+    const elsewhere = character("Elsewhere", { fought: ["C2"] });
+    await chargeBattleFatigue({ id: "C1", round: 30, combatants: [{ actor: fighter }, { actor: bystander }, { actor: elsewhere }] });
+    expect([fighter, bystander, elsewhere].map((a) => a.system.fp.value)).toEqual([9, 10, 10]);
+    expect(heardOf(heard, PROCEDURE_HOOKS.fatigueCost)).toHaveLength(1);
+    const card = String(cards[0]?.content);
+    expect(card).toMatch(/BattleFatigue\.Exempt:[^<]*Bystander, Elsewhere/);
+  });
+
+  it("charges everyone where nobody in the combat carries a mark, as a table rolling its own dice leaves none", async () => {
+    const { cards } = foundryWith();
+    const first = character("First", { fought: [] });
+    const second = character("Second", { fought: ["C2"] });
+    await chargeBattleFatigue({ id: "C1", round: 30, combatants: [{ actor: first }, { actor: second }] });
+    expect([first, second].map((a) => a.system.fp.value)).toEqual([9, 9]);
+    expect(String(cards[0]?.content)).not.toContain("BattleFatigue.Exempt");
+  });
+
+  it("marks an attack or defense roller as having fought in the started combats they are in", async () => {
+    foundryWith();
+    const actor = character("Duelist", { fought: [] });
+    const other = character("Other", { fought: [] });
+    (globals.game as any).combats = [
+      { id: "C1", started: true, combatants: [{ actor }] },
+      { id: "C2", started: false, combatants: [{ actor }] },
+      { id: "C3", started: true, combatants: [{ actor: other }] },
+    ];
+    afterSuccessRoll({ actor, label: "Skill", kind: "skill", skill: "", tags: [], outcome: {} });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(combatsFoughtIn(actor)).toEqual([]);
+    afterSuccessRoll({ actor, label: "Parry", kind: "defense", skill: "", tags: ["parry"], outcome: {} });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(combatsFoughtIn(actor)).toEqual(["C1"]);
+    await noteFought(actor);
+    expect(combatsFoughtIn(actor)).toEqual(["C1"]);
+    expect(combatsFoughtIn(other)).toEqual([]);
+  });
+
+  it("marks nobody with battle fatigue switched off", async () => {
+    foundryWith({ rules: { battleFatigue: false } });
+    const actor = character("Duelist", { fought: [] });
+    (globals.game as any).combats = [{ id: "C1", started: true, combatants: [{ actor }] }];
+    await noteFought(actor);
+    expect(combatsFoughtIn(actor)).toEqual([]);
   });
 });
 
@@ -204,6 +412,7 @@ describe("gworld.afterFatigue (since 1.138.0)", () => {
       fp: spent!.fp,
       hp: spent!.hp,
       sources: ["Heavy pack"],
+      parts: [],
     });
     expect(after[0].fpLost).toBe(4);
     expect(after[0].hpLost).toBe(3);
@@ -238,13 +447,14 @@ describe("gworld.afterFatigue (since 1.138.0)", () => {
 
   it("fires for a battle with the day's weather in its details", async () => {
     const { heard } = foundryWith({ temperature: "100" });
-    await chargeBattleFatigue({ round: 30, combatants: [{ actor: character("Knight") }] });
+    await chargeBattleFatigue({ id: "C1", round: 30, combatants: [{ actor: character("Knight") }] });
     expect(heardOf(heard, PROCEDURE_HOOKS.afterFatigue)[0]).toMatchObject({
       reason: "battle",
       details: { seconds: 30, temperatureF: 100, hot: true },
-      fpLost: 1,
+      fpLost: 2,
       hpLost: 0,
-      fp: { previous: 10, now: 9, max: 10 },
+      fp: { previous: 10, now: 8, max: 10 },
+      parts: [{ key: "battle", fp: 1 }, { key: "hotDay", fp: 1 }],
     });
   });
 
