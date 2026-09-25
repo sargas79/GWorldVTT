@@ -160,7 +160,7 @@ describe("fatigue costs", () => {
     foundryWith([4], (event, context) => {
       if (event === PROCEDURE_HOOKS.fatigueCost) context.fp -= 5;
     });
-    expect(fatigueCost({ actor: character("A"), fp: 2, reason: "hiking", exertion: true })).toEqual({ fp: 0, sources: [] });
+    expect(fatigueCost({ actor: character("A"), fp: 2, reason: "hiking", exertion: true })).toEqual({ fp: 0, sources: [], parts: [] });
   });
 
   it("weigh extra effort's changed price against the FP left", async () => {

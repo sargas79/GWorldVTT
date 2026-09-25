@@ -176,12 +176,14 @@ export const PROCEDURE_HOOKS = Object.freeze({
   explosionFalloff: "gworld.explosionFalloff",
   /**
    * Before the system charges fatigue (since 1.76.0): `{ actor, fp, reason, exertion,
-   * details, sources }`. `fp` is mutable; push a label to `sources` to say why it changed.
+   * details, sources, parts }`. `fp` is mutable; push a label to `sources` to say why it
+   * changed. `parts` (since 1.147.0) are the keyed pieces of the cost, mutable too.
    */
   fatigueCost: "gworld.fatigueCost",
   /**
    * Once fatigue has been charged (since 1.138.0): `{ actor, reason, details, exertion,
-   * fpLost, hpLost, fp, hp, sources }`, after Very Fit and the fatigue chart. Read-only.
+   * fpLost, hpLost, fp, hp, sources, parts }`, after Very Fit and the fatigue chart
+   * (`parts` since 1.147.0). Read-only.
    */
   afterFatigue: "gworld.afterFatigue",
   /**
@@ -658,27 +660,59 @@ export interface FatigueCostContext {
   details: Record<string, unknown>;
   /** Labels a listener pushes to say why the cost changed. */
   sources: string[];
+  /**
+   * The pieces the cost is made of, where the caller itemizes it (since
+   * 1.147.0): a battle's `battle`, `strained` and `hotDay`, a march's
+   * `hiking` and `hotDay`; empty elsewhere. `fp` starts as their sum. A
+   * listener may change a part's `fp`, take a part out or push its own, and
+   * the cost moves by what that did to their sum -- on top of anything it
+   * did to `fp` directly.
+   */
+  parts: FatigueCostPart[];
 }
+
+/** One keyed piece of a fatigue cost (since 1.147.0). */
+export interface FatigueCostPart {
+  /** What it is, for a listener to find it by: `battle`, `strained`, `hotDay`, `hiking`. */
+  key: string;
+  label: string;
+  fp: number;
+}
+
+function isPart(part: unknown): part is FatigueCostPart {
+  const p = part as FatigueCostPart;
+  return typeof p?.key === "string" && typeof p?.label === "string" && typeof p?.fp === "number" && Number.isFinite(p.fp);
+}
+
+const sumOfParts = (parts: readonly FatigueCostPart[]): number => parts.reduce((sum, part) => sum + part.fp, 0);
 
 /**
  * The fatigue an action costs once the `gworld.fatigueCost` listeners have
  * had their say: a module's heat surcharge on exertion (Campaigns p. 434), or
- * a hot day's extra point for a battle (p. 426), read off the day's
- * temperature the battle's `details` carry.
+ * armour that makes a hot day's battle dearer (p. 426). Where the caller
+ * gives `parts`, `fp` is their sum, and what the listeners do to the parts
+ * moves the cost as much as what they do to `fp` (since API 1.147.0).
  */
-export function fatigueCost(options: Omit<FatigueCostContext, "sources" | "details"> & { details?: Record<string, unknown> }): { fp: number; sources: string[] } {
+export function fatigueCost(
+  options: Omit<FatigueCostContext, "sources" | "details" | "parts" | "fp"> & { fp?: number; details?: Record<string, unknown>; parts?: FatigueCostPart[] },
+): { fp: number; sources: string[]; parts: FatigueCostPart[] } {
+  const given = (options.parts ?? []).filter(isPart).map((part) => ({ ...part }));
+  const asked = options.fp ?? sumOfParts(given);
   const ctx = callCombatHook<FatigueCostContext>(PROCEDURE_HOOKS.fatigueCost, {
     actor: options.actor,
-    fp: options.fp,
+    fp: asked,
     reason: options.reason,
     exertion: options.exertion,
     details: { ...(options.details ?? {}) },
     sources: [],
+    parts: given.map((part) => ({ ...part })),
   });
-  const fp = Number(ctx.fp);
+  const parts = (Array.isArray(ctx.parts) ? ctx.parts : []).filter(isPart).map((part) => ({ key: part.key, label: part.label, fp: part.fp }));
+  const fp = Number(ctx.fp) + sumOfParts(parts) - sumOfParts(given);
   return {
-    fp: Number.isFinite(fp) ? Math.max(0, Math.round(fp)) : options.fp,
+    fp: Number.isFinite(fp) ? Math.max(0, Math.round(fp)) : asked,
     sources: (Array.isArray(ctx.sources) ? ctx.sources : []).filter((s): s is string => typeof s === "string" && s !== ""),
+    parts,
   };
 }
 
@@ -698,6 +732,8 @@ export interface AfterFatigueContext {
   hp: Readonly<{ previous: number; now: number; max: number }>;
   /** What the `gworld.fatigueCost` listeners said changed the cost. */
   sources: readonly string[];
+  /** The keyed pieces of the cost as the listeners left them (since 1.147.0); empty where none were given. */
+  parts?: readonly FatigueCostPart[];
 }
 
 /**
@@ -712,6 +748,7 @@ export function afterFatigue(context: AfterFatigueContext): void {
     fp: Object.freeze({ ...context.fp }),
     hp: Object.freeze({ ...context.hp }),
     sources: Object.freeze([...context.sources]),
+    parts: Object.freeze((context.parts ?? []).map((part) => Object.freeze({ ...part }))),
   }));
 }
 

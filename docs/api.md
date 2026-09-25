@@ -2028,25 +2028,47 @@ Two fields a module may read (since 1.62.0):
     the actor's Temperature Tolerance on the hot side where there is one.
   - *Battle and hiking* pass it to `gworld.fatigueCost` and
     `gworld.afterFatigue`: `details.temperatureF` (null where none is set)
-    and `details.hot`, for the one paying. A battle's `hot` is only told:
-    the extra point for a hot day's battle (p. 426) is still a listener's to
-    add, now off the day's figure. The sheet's hiking dialog starts with "A
-    hot day" ticked where the day is hot for the marcher, and the GM can
-    untick it; `hot` is what was charged either way.
+    and `details.hot`, for the one paying. Before 1.147.0 a battle's `hot`
+    was only told; since then the system charges it (see *A battle on a hot
+    day*). The sheet's hiking dialog starts with "A hot day" ticked where the
+    day is hot for the marcher, and the GM can untick it; `hot` is what was
+    charged either way.
   - *After fatigue*: `gworld.afterFatigue` fires once the FP has been
     charged, after the `gworld.fatigueCost` listeners, Very Fit's halving
     and the fatigue chart, with `{ actor, reason, details, exertion, fpLost,
-    hpLost, fp, hp, sources }`. `reason`, `details` and `exertion` are what
+    hpLost, fp, hp, sources, parts }`. `reason`, `details` and `exertion` are what
     `gworld.fatigueCost` was told; `fpLost` and `hpLost` are what it came
     to, `hpLost` above 0 where it went past 0 FP; `fp` and `hp` are `{
     previous, now, max }`; `sources` is what the `gworld.fatigueCost`
-    listeners pushed. It is read-only: the context and its objects are
+    listeners pushed, and since 1.147.0 `parts` the cost's keyed pieces as
+    they left them (empty where the cost wasn't itemized; before Very Fit
+    and the chart). It is read-only: the context and its objects are
     frozen. It fires wherever `gworld.fatigueCost` does and the cost after
     the listeners is above 0 -- every system charge, `actors.spendFatigue`,
     and extra effort (whose Will roll pays outside the chart, and on a
     critical failure the same again in HP, which is `hpLost`). It doesn't
     fire where a listener brought the cost to 0, or for
     `actors.applyInjury({ fatigue: true })`, which takes FP as given.
+- **A battle on a hot day** (since 1.147.0; Campaigns p. 426). "If the day
+  is hot", a battle that costs fatigue costs 1 FP more. The system charges
+  it when a combat ends to each fighter the day's temperature is hot for
+  (`world.weather(actor).hot`), with the *Battle fatigue* and *Heat, cold,
+  hunger and thirst* optional rules both on; the card names who paid it.
+  - *Keyed parts.* `gworld.fatigueCost` gets `parts`, the cost's pieces as
+    `{ key, label, fp }`, and `fp` starts as their sum. A battle's are
+    `battle` (1), `strained` (1, a weapon above the wielder's ST) and
+    `hotDay` (1); a march's are `hiking` (its hours by encumbrance) and
+    `hotDay` (1 an hour). Change a part's `fp`, take a part out or push one
+    of your own: the cost moves by what that did to the parts' sum, on top
+    of any change to `fp` itself. `parts` is empty for every other reason.
+  - *What is left to modules.* The book charges 2 FP rather than 1 for
+    anyone in plate armour, an overcoat and the like, and nothing for
+    full-coverage armour at TL9+, which is climate-controlled. The system
+    doesn't know which armour is which, so it charges 1 to everyone the day
+    is hot for. A module that charged its own heat cost for armour on a
+    battle or a march should now change the `hotDay` part -- raise it to 2,
+    or take it out -- rather than add a point of its own, which would charge
+    the heat twice.
 - **Study time** (since 1.133.0; Characters pp. 292-293): how many hours of
   the clock a stretch of study counts for is set by its method (instruction,
   intensive training, self-teaching, work), and anything else that speeds or
@@ -2342,8 +2364,10 @@ Two fields a module may read (since 1.62.0):
     card lists the lines.
   - *Fatigue costs.* `gworld.fatigueCost` fires wherever the system charges
     FP, before the fatigue chart and Very Fit's halving, with
-    `{ actor, fp, reason, exertion, details, sources }`. Set `fp` (rounded,
-    never below 0) and push a label to `sources`. `reason` is `battle` (the
+    `{ actor, fp, reason, exertion, details, sources, parts }`. Set `fp` (rounded,
+    never below 0) and push a label to `sources`; since 1.147.0 `parts` are
+    the cost's keyed pieces for a battle and a march (see *A battle on a hot
+    day*). `reason` is `battle` (the
     end of a fight, p. 426; `details.seconds`, `details.strained`, and since
     1.138.0 `temperatureF` and `hot`), `hiking` (`hours`, `hot`, and since
     1.138.0 `temperatureF`), `missedSleep`, `exposure` (`heat`, `temperatureF`,
@@ -2353,8 +2377,10 @@ Two fields a module may read (since 1.62.0):
     (`poison`, `illness`), `spell` (`maintain` for upkeep), `heldSpell`,
     `enchanting` and `drug`. `exertion` is false for spells, held spells,
     enchanting and a drug's crash. This is where a module charges the heat's
-    surcharge on exertion and dehydration (p. 434) or a hot day's extra point
-    for a battle (p. 426). Before 1.138.0 the system didn't know the day's
+    surcharge on exertion and dehydration (p. 434). Before 1.147.0 it was
+    also where a module charged a hot day's extra point for a battle (p.
+    426); the system charges that now, as the `hotDay` part, which a module
+    changes rather than adds to. Before 1.138.0 the system didn't know the day's
     temperature; since then a battle's and a march's `details` carry it (see
     *The day's temperature, and after fatigue*).
     Battle fatigue now goes through the fatigue chart like other exertion

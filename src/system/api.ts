@@ -110,7 +110,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.145.0";
+export const API_VERSION = "1.147.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -234,7 +234,8 @@ const actors = {
    * and `details`), Very Fit's halving where it is exertion (the default),
    * and the fatigue chart, injury past 0 FP and all, then since 1.138.0
    * `gworld.afterFatigue` with what it came to. Resolves to `{ fpLost,
-   * hpLost, sources, fp, hp, status }`, or null for a user who can't change
+   * hpLost, sources, parts, fp, hp, status }` (`parts` since 1.147.0, empty
+   * here: the cost is not itemized), or null for a user who can't change
    * the actor or an amount that isn't a positive number.
    */
   spendFatigue(actor: any, fp: number, options: { reason?: string; details?: Record<string, unknown>; exertion?: boolean } = {}) {

@@ -729,7 +729,7 @@
         },
         "battleFatigue": {
           "Name": "Battle fatigue",
-          "Hint": "A fight that runs past ten seconds costs everyone in it a point of fatigue when the tracker closes."
+          "Hint": "A fight that runs past ten seconds costs everyone in it a point of fatigue when the tracker closes, and a point more on a hot day while heat and cold are in play."
         },
         "trampling": {
           "Name": "Trampling",
@@ -2932,6 +2932,7 @@
       "HikingMissed": "Hiking roll missed",
       "Miles": "{miles} miles for a full day over {terrain}, {weather}",
       "MarchCost": "{hours} hours at {perHour} FP an hour: {fp} FP",
+      "MarchPart": "Marching",
       "Collision": "Struck",
       "CollisionHint": "Something moving hits you: (its HP × velocity)/100 dice of crushing damage (Campaigns pp. 430-432)",
       "ObjectHp": "HP of what struck",
@@ -3708,7 +3709,11 @@
       "Seconds": "{seconds} seconds of fighting",
       "Charged": "{fp} FP from {names}",
       "Strained": "{name} (+1 for a weapon above their ST)",
-      "Changed": "{name} ({fp} FP: {sources})"
+      "HotDay": "{name} (+{fp} for a hot day)",
+      "Changed": "{name} ({fp} FP: {sources})",
+      "PartBattle": "Battle",
+      "PartStrained": "Weapon above ST",
+      "PartHotDay": "A hot day"
     },
     "Modifier": {
       "Browse": "Browse the book's",

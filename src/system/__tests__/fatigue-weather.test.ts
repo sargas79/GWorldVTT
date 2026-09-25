@@ -7,6 +7,8 @@ import { spendFatigueFor } from "../fatigue.js";
 import { hike } from "../hazards.js";
 import { PROCEDURE_HOOKS } from "../procedure-extensions.js";
 import { TEMPERATURE_KEY, currentTemperature, dayWeather, parseTemperature, setTemperature } from "../weather.js";
+import { OPTIONAL_RULES_KEY } from "../optional-rules.js";
+import { hotDayBattleFatigue } from "../../rules/fatigue.js";
 
 const globals = globalThis as Record<string, unknown>;
 
@@ -50,8 +52,8 @@ function character(name: string, options: { fp?: number; hp?: number; veryFit?: 
 type Heard = { event: string; context: any };
 
 /** Foundry, as far as fatigue reaches: world settings, dice that come up as given, and every hook heard. */
-function foundryWith(options: { temperature?: unknown; isGM?: boolean; faces?: number[]; listener?: (event: string, context: any) => void } = {}) {
-  const settings: Record<string, unknown> = { [`gworld.${TEMPERATURE_KEY}`]: options.temperature ?? "" };
+function foundryWith(options: { temperature?: unknown; isGM?: boolean; faces?: number[]; listener?: (event: string, context: any) => void; rules?: Record<string, boolean> } = {}) {
+  const settings: Record<string, unknown> = { [`gworld.${TEMPERATURE_KEY}`]: options.temperature ?? "", [`gworld.${OPTIONAL_RULES_KEY}`]: options.rules ?? {} };
   const heard: Heard[] = [];
   const cards: any[] = [];
   globals.ChatMessage = {
@@ -182,6 +184,92 @@ describe("the day's temperature reaches the fatigue it costs", () => {
   });
 });
 
+/** A hot day's battle costs a point more (Campaigns p. 426; sargas79/GWorldVTT#803). */
+describe("a battle on a hot day", () => {
+  it("adds a point to a battle that cost anything, and only then", () => {
+    expect(hotDayBattleFatigue(30, true)).toBe(1);
+    expect(hotDayBattleFatigue(30, false)).toBe(0);
+    expect(hotDayBattleFatigue(10, true)).toBe(0);
+  });
+
+  it("charges each fighter the day is hot for, as a keyed part the listeners see", async () => {
+    const { heard, cards } = foundryWith({ temperature: "95" });
+    const knight = character("Knight");
+    const nomad = character("Nomad", { heatToleranceF: 20 });
+    await chargeBattleFatigue({ round: 30, combatants: [{ actor: knight }, { actor: nomad }] });
+    expect(knight.system.fp.value).toBe(8);
+    expect(nomad.system.fp.value).toBe(9);
+    const costs = heardOf(heard, PROCEDURE_HOOKS.fatigueCost);
+    expect(costs[0]).toMatchObject({
+      fp: 2,
+      parts: [{ key: "battle", label: "GWORLD.BattleFatigue.PartBattle", fp: 1 }, { key: "hotDay", label: "GWORLD.BattleFatigue.PartHotDay", fp: 1 }],
+    });
+    expect(costs[1]).toMatchObject({ fp: 1, parts: [{ key: "battle", fp: 1 }] });
+    // The card names who paid for the heat, and nobody else.
+    const card = String(cards[0]?.content);
+    expect(card).toContain("GWORLD.BattleFatigue.HotDay");
+    expect(card.match(/HotDay:[^,]*Knight/g)).toHaveLength(1);
+    expect(card).not.toMatch(/HotDay:[^,]*Nomad/);
+  });
+
+  it("charges nothing for the heat on a mild day, a short fight, or with the heat rules off", async () => {
+    foundryWith({ temperature: "70" });
+    const mild = character("Mild");
+    await chargeBattleFatigue({ round: 30, combatants: [{ actor: mild }] });
+    expect(mild.system.fp.value).toBe(9);
+
+    foundryWith({ temperature: "100" });
+    const brief = character("Brief");
+    await chargeBattleFatigue({ round: 8, combatants: [{ actor: brief }] });
+    expect(brief.system.fp.value).toBe(10);
+
+    const { heard } = foundryWith({ temperature: "100", rules: { exposure: false } });
+    const unruled = character("Unruled");
+    await chargeBattleFatigue({ round: 30, combatants: [{ actor: unruled }] });
+    expect(unruled.system.fp.value).toBe(9);
+    expect(heardOf(heard, PROCEDURE_HOOKS.fatigueCost)[0].parts.map((p: any) => p.key)).toEqual(["battle"]);
+  });
+
+  it("lets a listener raise the hot day's part for heavy armour, or take it away", async () => {
+    foundryWith({
+      temperature: "100",
+      listener: (event, context) => {
+        if (event !== PROCEDURE_HOOKS.fatigueCost) return;
+        const heat = context.parts.find((p: any) => p.key === "hotDay");
+        if (context.actor.name === "Plated") heat.fp = 2;
+        if (context.actor.name === "Cooled") context.parts.splice(context.parts.indexOf(heat), 1);
+        if (context.actor.name === "Laden") context.parts.push({ key: "mine", label: "Pack", fp: 1 });
+      },
+    });
+    const plated = character("Plated");
+    const cooled = character("Cooled");
+    const laden = character("Laden");
+    await chargeBattleFatigue({ round: 30, combatants: [{ actor: plated }, { actor: cooled }, { actor: laden }] });
+    expect(plated.system.fp.value).toBe(7);
+    expect(cooled.system.fp.value).toBe(9);
+    expect(laden.system.fp.value).toBe(7);
+  });
+
+  it("keys a march's hot day the same way", async () => {
+    const { heard } = foundryWith({
+      temperature: "92",
+      listener: (event, context) => {
+        if (event === PROCEDURE_HOOKS.fatigueCost) context.parts.find((p: any) => p.key === "hotDay").fp += 2;
+      },
+    });
+    const walker = character("Walker", { fp: 20 });
+    walker.system.fp.max = 20;
+    await hike({ actor: walker, hours: 2, terrain: "average", weather: "fair", modifier: 0 });
+    // Heard as the listener left it: the heat's 2 made 4.
+    expect(heardOf(heard, PROCEDURE_HOOKS.fatigueCost)[0]).toMatchObject({
+      fp: 4,
+      parts: [{ key: "hiking", label: "GWORLD.Hazard.MarchPart", fp: 2 }, { key: "hotDay", fp: 4 }],
+    });
+    // 4 asked, and the listener made the heat's 2 into 4: 6 FP.
+    expect(walker.system.fp.value).toBe(14);
+  });
+});
+
 describe("gworld.afterFatigue (since 1.138.0)", () => {
   it("fires once the FP is charged, with what Very Fit and the chart made of it", async () => {
     const { heard } = foundryWith({
@@ -204,6 +292,7 @@ describe("gworld.afterFatigue (since 1.138.0)", () => {
       fp: spent!.fp,
       hp: spent!.hp,
       sources: ["Heavy pack"],
+      parts: [],
     });
     expect(after[0].fpLost).toBe(4);
     expect(after[0].hpLost).toBe(3);
@@ -242,9 +331,10 @@ describe("gworld.afterFatigue (since 1.138.0)", () => {
     expect(heardOf(heard, PROCEDURE_HOOKS.afterFatigue)[0]).toMatchObject({
       reason: "battle",
       details: { seconds: 30, temperatureF: 100, hot: true },
-      fpLost: 1,
+      fpLost: 2,
       hpLost: 0,
-      fp: { previous: 10, now: 9, max: 10 },
+      fp: { previous: 10, now: 8, max: 10 },
+      parts: [{ key: "battle", fp: 1 }, { key: "hotDay", fp: 1 }],
     });
   });
 

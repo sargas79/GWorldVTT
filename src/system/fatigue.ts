@@ -14,7 +14,7 @@
 
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { spendFatigue, type FatigueStatus } from "../rules/fatigue.js";
-import { afterFatigue, fatigueCost } from "./procedure-extensions.js";
+import { afterFatigue, fatigueCost, type FatigueCostPart } from "./procedure-extensions.js";
 
 /** What a loss of fatigue cost, once the chart was applied. */
 export interface FatigueApplied {
@@ -22,6 +22,8 @@ export interface FatigueApplied {
   hpLost: number;
   /** What the `gworld.fatigueCost` listeners said changed the cost (since 1.76.0). */
   sources: string[];
+  /** The keyed pieces of the cost as the listeners left them (since 1.147.0); empty where none were given. */
+  parts: FatigueCostPart[];
   fp: { previous: number; now: number; max: number };
   hp: { previous: number; now: number; max: number };
   status: FatigueStatus;
@@ -52,12 +54,17 @@ export async function applyFatigue(
     /** What else the caller knows, passed to the listeners as `details`. */
     details?: Record<string, unknown>;
     /**
+     * The keyed pieces `lost` is made of, for the listeners to see, change or
+     * add to (since 1.147.0). They should sum to `lost`.
+     */
+    parts?: FatigueCostPart[];
+    /**
      * Where the caller has already asked the `gworld.fatigueCost` listeners
      * (extra effort weighs the cost against the FP left first), what they
      * said: the cost is charged as given, and `reason` still reaches the
      * `gworld.afterFatigue` listeners.
      */
-    costed?: { sources: string[] };
+    costed?: { sources: string[]; parts?: FatigueCostPart[] };
   } = {},
 ): Promise<FatigueApplied> {
   const fp = actor?.system?.fp ?? { value: 0, max: 0 };
@@ -70,10 +77,14 @@ export async function applyFatigue(
   // A module may change what this costs: a surcharge for the heat, gear that
   // spares the wearer (API 1.76.0).
   const costed = options.costed
-    ? { fp: lost, sources: [...options.costed.sources] }
+    ? { fp: lost, sources: [...options.costed.sources], parts: [...(options.costed.parts ?? [])] }
     : options.reason && lost > 0
-    ? fatigueCost({ actor, fp: lost, reason: options.reason, exertion: options.exertion !== false, ...(options.details ? { details: options.details } : {}) })
-    : { fp: lost, sources: [] as string[] };
+    ? fatigueCost({
+      actor, fp: lost, reason: options.reason, exertion: options.exertion !== false,
+      ...(options.details ? { details: options.details } : {}),
+      ...(options.parts ? { parts: options.parts } : {}),
+    })
+    : { fp: lost, sources: [] as string[], parts: [] as FatigueCostPart[] };
 
   const spent = spendFatigue({
     currentFp: fpBefore,
@@ -105,6 +116,7 @@ export async function applyFatigue(
     fpLost: spent.fpLost,
     hpLost: spent.hpLost,
     sources: costed.sources,
+    parts: costed.parts,
     fp: { previous: fpBefore, now: spent.fp, max: fpMax },
     hp: { previous: hpBefore, now: hpBefore - spent.hpLost, max: hpMax },
     status: spent.status,
@@ -124,6 +136,7 @@ export async function applyFatigue(
       fp: applied.fp,
       hp: applied.hp,
       sources: applied.sources,
+      parts: applied.parts,
     });
   }
   return applied;

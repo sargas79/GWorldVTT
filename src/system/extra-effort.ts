@@ -57,7 +57,7 @@ export async function spendFatigue(actor: any, points: number, what: string): Pr
 
   // Charged as given: the listeners were asked above. The reason still goes
   // along, for the `gworld.afterFatigue` listeners (API 1.138.0).
-  await applyFatigue(actor, cost, { reason: "extraEffort", details: { what }, costed: { sources: costed.sources } });
+  await applyFatigue(actor, cost, { reason: "extraEffort", details: { what }, costed: { sources: costed.sources, parts: costed.parts } });
   return true;
 }
 
@@ -115,7 +115,7 @@ export async function rollExtraEffort(options: {
 
   // A critical success is the one outcome that costs nothing at all.
   const costed = outcome.criticalSuccess
-    ? { fp: 0, sources: [] as string[] }
+    ? { fp: 0, sources: [] as string[], parts: [] }
     : fatigueCost({ actor, fp: EXTRA_EFFORT_FP, reason: "extraEffort", exertion: true, details: { percentIncrease } });
   const cost = costed.fp;
   if (cost > 0 && actor?.isOwner) {
@@ -140,6 +140,7 @@ export async function rollExtraEffort(options: {
       fp: { previous: fpBefore, now: fpBefore - cost, max: Number(fp.max) || 0 },
       hp: { previous: hp, now: hp - hpLost, max: Number(actor.system?.hp?.max) || 0 },
       sources: costed.sources,
+      parts: costed.parts,
     });
   }
 
