@@ -9,7 +9,8 @@
  * of robes. Holdout defaults to IQ-5 or Sleight of Hand-3.
  *
  * Finding the thing is a Quick Contest of the searcher's Search against the
- * hider's Holdout, Search defaulting to Perception-5.
+ * hider's Holdout, rolled by the GM in secret (p. 219), Search defaulting to
+ * Perception-5 or Criminology-5.
  */
 
 /** A row of the skill's size table: its key and the modifier it gives. */
@@ -42,8 +43,20 @@ export const HOLDOUT_MOVING_PENALTY = -1;
 /** Holdout's defaults (p. 200): IQ-5, or Sleight of Hand-3. */
 export const HOLDOUT_IQ_DEFAULT = -5;
 export const HOLDOUT_SLEIGHT_OF_HAND_DEFAULT = -3;
-/** Search's default for the contest (p. 200): Perception-5. */
+/** Search's defaults for the contest (p. 219): Perception-5, or Criminology-5. */
 export const SEARCH_PERCEPTION_DEFAULT = -5;
+export const SEARCH_CRIMINOLOGY_DEFAULT = -5;
+
+/** What a character wears is worth from -7 (nothing at all) to +5 (p. 200). */
+export const HOLDOUT_CLOTHING_MIN = -7;
+export const HOLDOUT_CLOTHING_MAX = 5;
+
+/** The clothing modifier, held to the page's range; 0 for anything not a number. */
+export function holdoutClothingModifier(clothing: unknown): number {
+  const n = Math.trunc(Number(clothing));
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(HOLDOUT_CLOTHING_MIN, Math.min(HOLDOUT_CLOTHING_MAX, n));
+}
 
 /**
  * The size modifier for a thing: a row's key, or a modifier given as a
@@ -83,10 +96,14 @@ export function holdoutLevel(options: { holdout: number | null; iq: number; slei
   return candidates.reduce((best, next) => (next.level > best.level ? next : best));
 }
 
-/** What the searcher rolls: Search where it is better, else Perception-5. */
-export function searchLevel(options: { search: number | null; per: number }): { level: number; from: "Search" | "Per" } {
-  const fallback = options.per + SEARCH_PERCEPTION_DEFAULT;
-  return options.search !== null && options.search >= fallback
-    ? { level: options.search, from: "Search" }
-    : { level: fallback, from: "Per" };
+/** What the searcher rolls: the best of Search, Perception-5 and Criminology-5 (p. 219). */
+export function searchLevel(options: { search: number | null; per: number; criminology?: number | null }): { level: number; from: "Search" | "Per" | "Criminology" } {
+  const candidates: Array<{ level: number; from: "Search" | "Per" | "Criminology" }> = [
+    { level: options.per + SEARCH_PERCEPTION_DEFAULT, from: "Per" },
+  ];
+  if (options.criminology !== undefined && options.criminology !== null) {
+    candidates.push({ level: options.criminology + SEARCH_CRIMINOLOGY_DEFAULT, from: "Criminology" });
+  }
+  if (options.search !== null) candidates.unshift({ level: options.search, from: "Search" });
+  return candidates.reduce((best, next) => (next.level > best.level ? next : best));
 }

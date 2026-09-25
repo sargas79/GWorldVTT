@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { HOLDOUT_SIZES, holdoutLevel, holdoutMovingModifier, holdoutSizeModifier, searchLevel } from "../holdout.js";
+import { HOLDOUT_SIZES, holdoutClothingModifier, holdoutLevel, holdoutMovingModifier, holdoutSizeModifier, searchLevel } from "../holdout.js";
 
 /** Holdout (Characters p. 200). */
 describe("Holdout's size table", () => {
@@ -44,5 +44,22 @@ describe("what Holdout and Search are rolled at", () => {
     expect(searchLevel({ search: 12, per: 12 })).toEqual({ level: 12, from: "Search" });
     expect(searchLevel({ search: null, per: 12 })).toEqual({ level: 7, from: "Per" });
     expect(searchLevel({ search: 5, per: 12 })).toEqual({ level: 7, from: "Per" });
+  });
+
+  it("takes Criminology-5 where it is the best of the three (p. 219)", () => {
+    expect(searchLevel({ search: null, per: 10, criminology: 14 })).toEqual({ level: 9, from: "Criminology" });
+    expect(searchLevel({ search: 8, per: 10, criminology: 14 })).toEqual({ level: 9, from: "Criminology" });
+    expect(searchLevel({ search: 12, per: 10, criminology: 14 })).toEqual({ level: 12, from: "Search" });
+    expect(searchLevel({ search: null, per: 12, criminology: 11 })).toEqual({ level: 7, from: "Per" });
+  });
+});
+
+describe("what the character wears", () => {
+  it("is held to -7..+5 (p. 200)", () => {
+    expect(holdoutClothingModifier(3)).toBe(3);
+    expect(holdoutClothingModifier(9)).toBe(5);
+    expect(holdoutClothingModifier(-10)).toBe(-7);
+    expect(holdoutClothingModifier("x")).toBe(0);
+    expect(holdoutClothingModifier(undefined)).toBe(0);
   });
 });

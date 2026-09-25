@@ -113,9 +113,19 @@ describe("rolling Holdout to hide an item", () => {
     const { contexts } = foundryWith();
     await rollHoldout(character("Spy", { Holdout: 12 }), { ...derringer, flags: { gworld: { holdoutSize: -3 } } });
     expect(contexts[0].modifiers).toEqual([{ label: "GWORLD.Holdout.Size", value: -3, key: "holdoutSize" }]);
+    // A blank size reads the flag too.
+    await rollHoldout(character("Spy", { Holdout: 12 }), { ...derringer, flags: { gworld: { holdoutSize: "handgun" } } }, { size: " " });
+    expect(contexts[1].modifiers).toEqual([{ label: "GWORLD.Holdout.Size", value: -2, key: "holdoutSize" }]);
+    expect((globals.ui as any).notifications.warn).not.toHaveBeenCalled();
     expect(await rollHoldout(character("Spy", { Holdout: 12 }), derringer)).toBeNull();
     expect((globals.ui as any).notifications.warn).toHaveBeenCalled();
-    expect(contexts).toHaveLength(1);
+    expect(contexts).toHaveLength(2);
+  });
+
+  it("holds clothing to -7..+5", async () => {
+    const { contexts } = foundryWith();
+    await rollHoldout(character("Spy", { Holdout: 12 }), derringer, { size: 0, clothing: 12 });
+    expect(contexts[0].modifiers).toEqual([{ label: "GWORLD.Holdout.Clothing", value: 5, key: "clothing" }]);
   });
 });
 
@@ -138,6 +148,29 @@ describe("a searcher's Quick Contest of Search against Holdout", () => {
     const result = await rollHoldout(character("Spy", { Holdout: 13 }), derringer, { size: -1, searcher: character("Guard") });
     expect(contexts[1].base).toBe(7);
     expect(result).toMatchObject({ hidden: false, outcome: "second" });
+  });
+
+  it("rolls the searcher at Criminology-5 where that is their best", async () => {
+    const { contexts } = foundryWith(() => {}, [3, 3, 4, 3, 3, 4]);
+    await rollHoldout(character("Spy", { Holdout: 13 }), derringer, { size: 0, searcher: character("Detective", { Criminology: 15 }) });
+    expect(contexts[1]).toMatchObject({ skill: "Search", base: 10 });
+  });
+
+  it("goes to the GM alone unless the caller says who sees it (p. 219)", async () => {
+    const { cards } = foundryWith(() => {}, [3, 3, 4]);
+    const spy = character("Spy", { Holdout: 13 });
+    await rollHoldout(spy, derringer, { size: 0, searcher: character("Guard") });
+    await rollHoldout(spy, derringer, { size: 0, searcher: character("Guard"), rollMode: "public" });
+    await rollHoldout(spy, derringer, { size: 0, searcher: character("Guard"), secret: false });
+    await rollHoldout(spy, derringer, { size: 0 });
+    expect(cards.map((c) => c.options)).toEqual([{ messageMode: "blind" }, { messageMode: "public" }, {}, {}]);
+  });
+
+  it("names the hider's default on the card, and keeps the hook's skill Holdout", async () => {
+    const { contexts, cards } = foundryWith(() => {}, [3, 3, 4]);
+    await rollHoldout(character("Novice"), derringer, { size: 0, searcher: character("Guard") });
+    expect(contexts[0].skill).toBe("Holdout");
+    expect(JSON.parse(cards[0].data.content).label).toBe('GWORLD.Holdout.SearchLabelDefault:{"item":"Derringer","from":"IQ-5"}');
   });
 });
 

@@ -14,7 +14,7 @@ import { attributeOf } from "./attributes.js";
 import { skillLevelOf } from "./skill-level.js";
 import { rollSuccess, type RollModifier } from "./roll.js";
 import { rollQuickContest } from "./contest.js";
-import { holdoutLevel, holdoutMovingModifier, holdoutSizeModifier, searchLevel, HOLDOUT_SIZES } from "../rules/holdout.js";
+import { holdoutClothingModifier, holdoutLevel, holdoutMovingModifier, holdoutSizeModifier, searchLevel, HOLDOUT_SIZES } from "../rules/holdout.js";
 import type { SuccessRollResult } from "../rules/success.js";
 
 const L = (key: string, data?: Record<string, unknown>) =>
@@ -28,13 +28,17 @@ export interface HoldoutOptions {
    * `flags.gworld.holdoutSize` is used; with neither, nothing is rolled.
    */
   size?: number | string;
-  /** What the character wears, as the modifier it gives: -7 to +5 (p. 200). */
+  /** What the character wears, as the modifier it gives: -7 to +5 (p. 200), held to that range. */
   clothing?: number;
   /** The thing moves or makes noise: true for -1, or a worse penalty as a negative number. */
   moving?: boolean | number;
   /** Other lines on the Holdout roll. */
   modifiers?: RollModifier[];
-  /** Someone searching for it: rolls a Quick Contest of their Search against the Holdout. */
+  /**
+   * Someone searching for it: rolls a Quick Contest of their Search against
+   * the Holdout, which the GM rolls in secret (p. 219) unless `rollMode` or
+   * `secret` says otherwise.
+   */
   searcher?: any;
   /** Lines on the searcher's side. */
   searchModifiers?: RollModifier[];
@@ -81,7 +85,9 @@ function validLines(lines: unknown): RollModifier[] {
 export async function rollHoldout(actor: any, item: any, options: HoldoutOptions = {}): Promise<SuccessRollResult | HoldoutContestResult | null> {
   if (!actor) return null;
   const itemName = String(item?.name ?? "");
-  const size = holdoutSizeModifier(options.size ?? item?.flags?.[SYSTEM_ID]?.holdoutSize);
+  // A blank size is no size: the item's own is read, as for one left out.
+  const given = typeof options.size === "string" && !options.size.trim() ? undefined : options.size;
+  const size = holdoutSizeModifier(given ?? item?.flags?.[SYSTEM_ID]?.holdoutSize);
   if (size === null) {
     ui.notifications?.warn(L("NoSize", { item: itemName }));
     return null;
@@ -93,13 +99,14 @@ export async function rollHoldout(actor: any, item: any, options: HoldoutOptions
   });
   const modifiers: RollModifier[] = [
     ...line(L("Size"), size, "holdoutSize"),
-    ...line(L("Clothing"), options.clothing, "clothing"),
+    ...line(L("Clothing"), holdoutClothingModifier(options.clothing), "clothing"),
     ...line(L("Moving"), holdoutMovingModifier(options.moving), "moving"),
     ...validLines(options.modifiers),
   ];
-  const label = typeof options.label === "string" && options.label.trim()
-    ? options.label.trim()
-    : skill.from === "Holdout" ? L("Label", { item: itemName }) : L("LabelDefault", { item: itemName, from: skill.from === "IQ" ? "IQ-5" : L("SleightOfHand") });
+  const custom = typeof options.label === "string" && options.label.trim() ? options.label.trim() : null;
+  // The default in use, where the skill isn't: "IQ-5" or "Sleight of Hand-3".
+  const basis = skill.from === "Holdout" ? null : skill.from === "IQ" ? "IQ-5" : L("SleightOfHand");
+  const label = custom ?? (basis ? L("LabelDefault", { item: itemName, from: basis }) : L("Label", { item: itemName }));
   const visibility = {
     ...(options.rollMode !== undefined ? { rollMode: options.rollMode } : {}),
     ...(options.secret !== undefined ? { secret: options.secret } : {}),
@@ -113,18 +120,23 @@ export async function rollHoldout(actor: any, item: any, options: HoldoutOptions
   const search = searchLevel({
     search: skillLevelOf(searcher, "Search"),
     per: Number(searcher?.system?.derived?.per) || attributeOf(searcher, "IQ"),
+    criminology: skillLevelOf(searcher, "Criminology"),
   });
   // Both sides are tagged `holdout` and carry the item; a listener tells
-  // them apart by `skill`, "Holdout" or "Search".
+  // them apart by `skill`, "Holdout" or "Search", whatever default is used.
+  // The GM rolls a search in secret (p. 219) unless the caller says who sees it.
+  const secretly = options.rollMode === undefined && options.secret === undefined;
   const contest = await rollQuickContest({
-    label: L("SearchLabel", { item: itemName }),
+    // The card names the hider's default, as the solo roll's label does;
+    // the side's `skill` stays "Holdout" for the listeners.
+    label: custom ?? (basis ? L("SearchLabelDefault", { item: itemName, from: basis }) : L("SearchLabel", { item: itemName })),
     first: { actor, base: skill.level, modifiers, note: "Holdout", ...(item ? { item } : {}) },
     second: {
       actor: searcher, base: search.level, modifiers: validLines(options.searchModifiers), note: "Search",
       ...(item ? { item } : {}),
     },
     tags: ["holdout"],
-    ...visibility,
+    ...(secretly ? { secret: true } : visibility),
   });
   return {
     hidden: contest.outcome !== "second",

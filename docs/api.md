@@ -546,7 +546,7 @@ and the roll continues.
     gear worn to slam with can add to a slam's damage alone. A slam's two
     rolls are `"slam"` (the slammer's blow) and `"slammed"` (what the slammer
     takes back); a shove's knockback roll, which gets no damage card, now
-    fires the hook too, as `"shove"`, and rolls what the listeners leave;
+    fires the hook too, as `"shove"`, and rolls what the listeners leave.
     Since 1.152.0 `gworld.damageModifiers` also gets `incendiary`: true where
     the blow is incendiary (Characters p. 104) as the mode or the
     `roll.damage` call has it, false otherwise. Set it to true to make this
@@ -555,11 +555,13 @@ and the roll continues.
     The card then carries `incendiary` as a mode marked incendiary does, and
     applying the blow sets the victim's clothes alight as Making Things Burn
     (Campaigns pp. 433-434) says, and counts it as burning for Fragile
-    (Characters p. 136). Anything but true or false leaves the mode's flag;
- and null says the distance is not known. Since 1.125.0, with
-    Modifying Dice + Adds on, the hook's lines are added to the formula before
-    its adds are turned into dice, so a per-die line is counted from the dice
-    the hook was given (see [Modifying dice + adds](#modifying-dice--adds));
+    (Characters p. 136). Anything but true or false leaves the mode's flag.
+    A shove's roll gets `incendiary: false`, and setting it there changes
+    nothing, since a shove injures nobody.
+    Since 1.125.0, with Modifying Dice + Adds on, the hook's lines are added
+    to the formula before its adds are turned into dice, so a per-die line is
+    counted from the dice the hook was given (see
+    [Modifying dice + adds](#modifying-dice--adds));
   - `gworld.breakageOdds`: set `breakage`. Since 1.25.0 it also gets `weight`, the weight
     the parry counts, which a listener may change, and a listener may set `item`
     to the weapon that breaks;
@@ -3474,19 +3476,24 @@ searcher's Quick Contest of Search against it.
   - `size`: the item's size modifier, a row's `key` from
     `roll.holdoutSizes()` or the modifier as a number (+4 for something the
     size of a stamp down to -6 for a crossbow). Left out, the item's
-    `flags.gworld.holdoutSize` is read (either form); with neither, nothing
-    is rolled, the user is warned and the call resolves to null.
+    `flags.gworld.holdoutSize` is read (either form), as it is for a blank
+    `size`; with neither, nothing is rolled, the user is warned and the call
+    resolves to null.
   - `clothing`: what the character wears, as its modifier (from -7 for
     nothing at all to +5 for the most concealing robes; clothing cut to hide
-    things is up to +4).
+    things is up to +4), held to -7..+5.
   - `moving`: true for a thing that moves or makes noise (-1), or a worse
     penalty as a negative number.
   - `modifiers`: other `{ label, value }` lines.
   - `searcher`, `searchModifiers`: an actor searching for the item, and lines
-    on their side. The roll is then a Quick Contest of their Search (or
-    Perception-5) against the Holdout.
+    on their side. The roll is then a Quick Contest of their Search (or the
+    better of Perception-5 and Criminology-5, where that beats it) against
+    the Holdout (Characters p. 219). The GM rolls a search in secret, so
+    with a searcher and neither `rollMode` nor `secret` given, the contest's
+    card goes to the GMs only, as with `secret: true`.
   - `label`, `rollMode`, `secret`: the card's label, and who sees it, as
-    `roll.success` takes them.
+    `roll.success` takes them. Where the hider rolls a default, the card's
+    label names it ("Holdout at IQ-5", "at Sleight of Hand-3").
 
   The size, clothing and moving lines are keyed `holdoutSize`, `clothing`
   and `moving`, zero lines left out. The roll passes through
@@ -3498,7 +3505,7 @@ searcher's Quick Contest of Search against it.
   margin, dice }`, or null). With one, both sides of the
   contest are tagged `holdout` and carry `item`, and a listener tells them
   apart by `skill`: "Holdout" for the hider, "Search" for the searcher
-  (whether they have the skill or roll Perception-5). It then resolves to
+  (whatever default either rolls). It then resolves to
   `{ hidden, outcome, marginOfVictory, messageId }`: `hidden` is false only
   where the searcher won; a tie leaves the item hidden.
 - **`roll.holdoutSizes()`** lists the table's rows, `{ key, modifier, label }`,

@@ -3804,6 +3804,7 @@
       "LabelDefault": "Holdout at {from}: hiding {item}",
       "SleightOfHand": "Sleight of Hand-3",
       "SearchLabel": "Search against Holdout: {item}",
+      "SearchLabelDefault": "Search against Holdout at {from}: {item}",
       "NoSize": "No size given for hiding {item}: pass the size modifier from the Holdout table (Characters p. 200)",
       "Size": "Size and shape",
       "Clothing": "Clothing",
