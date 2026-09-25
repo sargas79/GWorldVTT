@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * Dosing, injuring and conditioning an actor the user doesn't own, through the
- * GM's client (sargas79/GWorldVTT#807).
+ * Dosing, injuring and conditioning an actor the user doesn't own, and placing
+ * an area on a scene the user can't write, through the GM's client
+ * (sargas79/GWorldVTT#807, #814).
  *
  * The effects themselves are stood in for: what is tested is who makes them,
  * and where. Each stand-in refuses an actor this client doesn't own, as the
@@ -48,7 +49,7 @@ vi.mock("../procedure-extensions.js", async (importOriginal) => ({
   removeCondition: vi.fn((actor: any, id: string) => doRemove(actor, { id })),
 }));
 
-import { EFFECT_QUERY, answerEffectQuery, registerEffectQuery } from "../gm-relay.js";
+import { AREA_QUERY, EFFECT_QUERY, answerAreaQuery, answerEffectQuery, registerEffectQuery } from "../gm-relay.js";
 import { createApi } from "../api.js";
 
 const globals = globalThis as Record<string, unknown>;
@@ -262,5 +263,161 @@ describe("the GM's side of the query", () => {
     expect(await answerEffectQuery(request({ action: "advancePoison", args: {} }), { user: GM })).toBeNull();
     expect(await answerEffectQuery(null, { user: GM })).toBeNull();
     expect(made).toHaveLength(0);
+  });
+});
+
+describe("a player's area on a scene only the GM may write (API 1.150.0)", () => {
+  /** A scene only a GM owns, keeping its flags as Foundry would. */
+  function scene(uuid: string) {
+    const flags: Record<string, any> = {};
+    return {
+      uuid,
+      id: uuid.replace(/^Scene\./, ""),
+      name: uuid,
+      documentName: "Scene",
+      grid: { size: 100, distance: 1, units: "yd" },
+      get isOwner() {
+        return (globals.game as any)?.user?.isGM === true;
+      },
+      testUserPermission: (user: any, level: string) => level === "OWNER" && user?.isGM === true,
+      getFlag: (scope: string, key: string) => flags[`${scope}.${key}`],
+      setFlag: vi.fn(async (scope: string, key: string, value: unknown) => {
+        if ((globals.game as any)?.user?.isGM !== true) throw new Error("not permitted");
+        flags[`${scope}.${key}`] = value;
+      }),
+    };
+  }
+
+  const smoke = { id: "smoke1", label: "Smoke", center: { x: 500, y: 500 }, radius: 2, region: null, lines: [], expires: null };
+
+  /** A GM's client that answers the area query as the real one would, for the user who sent it. */
+  function connectAreaGm(sender: any = PLAYER) {
+    const query = vi.fn(async (name: string, data: unknown) => {
+      expect(name).toBe(AREA_QUERY);
+      const game = globals.game as any;
+      const caller = game.user;
+      game.user = GM;
+      try {
+        return await answerAreaQuery(JSON.parse(JSON.stringify(data)), { user: sender });
+      } finally {
+        game.user = caller;
+      }
+    });
+    (globals.game as any).users.activeGM = { isSelf: false, query };
+    return query;
+  }
+
+  let far: ReturnType<typeof scene>;
+  let viewed: ReturnType<typeof scene>;
+
+  beforeEach(() => {
+    far = scene("Scene.far");
+    viewed = scene("Scene.viewed");
+    documents.set(far.uuid, far).set(viewed.uuid, viewed);
+    const scenes = new Map([[far.id, far], [viewed.id, viewed]]);
+    Object.assign(globals.game as any, { scenes, time: { worldTime: 0 } });
+    // The GM is looking at another scene: the area must not land there.
+    globals.canvas = { scene: viewed };
+    globals.foundry = { utils: { randomID: () => "random1" } };
+  });
+
+  afterEach(() => {
+    delete globals.canvas;
+    delete globals.foundry;
+  });
+
+  it("is placed on the named scene through the GM's client, from a source the player owns", async () => {
+    const api = createApi();
+    const mine = actor("Actor.mine", ["player"]);
+    documents.set(mine.uuid, mine);
+    const query = connectAreaGm();
+    expect(await api.areas.add(far, smoke, { source: mine })).toBe("smoke1");
+    expect(query).toHaveBeenCalledWith(AREA_QUERY, expect.objectContaining({ action: "add", sceneUuid: "Scene.far", sourceUuid: "Actor.mine" }), expect.anything());
+    expect(api.areas.list(far).map((a) => a.id)).toEqual(["smoke1"]);
+    expect(api.areas.list(far)[0]?.radius).toBe(200);
+    expect(api.areas.list(viewed)).toEqual([]);
+    // By the scene's id too, and by a token as the source.
+    expect(await api.areas.add("far", { ...smoke, id: "smoke2" }, { source: { documentName: "Token", actor: mine } })).toBe("smoke2");
+    expect(api.areas.list(far).map((a) => a.id)).toEqual(["smoke1", "smoke2"]);
+    // And taken off again, by the scene or its uuid.
+    await api.areas.remove(far, "smoke1", { source: mine });
+    await api.areas.remove("Scene.far", "smoke2", { source: mine });
+    expect(api.areas.list(far)).toEqual([]);
+    expect(query).toHaveBeenCalledTimes(4);
+  });
+
+  it("is refused without a source the player owns, and the GM is never asked", async () => {
+    const api = createApi();
+    const theirs = actor("Actor.theirs", ["stranger"]);
+    documents.set(theirs.uuid, theirs);
+    const query = connectAreaGm();
+    for (const source of [undefined, theirs]) {
+      expect(await api.areas.add(far, smoke, source ? { source } : {})).toBeNull();
+      await api.areas.remove(far, "smoke1", source ? { source } : {});
+    }
+    expect(query).not.toHaveBeenCalled();
+    expect(far.setFlag).not.toHaveBeenCalled();
+  });
+
+  it("returns null, and tells the player, with no GM connected", async () => {
+    const api = createApi();
+    const mine = actor("Actor.mine", ["player"]);
+    expect(await api.areas.add(far, smoke, { source: mine })).toBeNull();
+    expect(notes).toEqual([expect.stringMatching(/^GWORLD\.Chat\.NoGmToApply/)]);
+  });
+
+  it("is placed on the GM's own client for a GM, as before, with or without a source", async () => {
+    const api = createApi();
+    (globals.game as any).user = GM;
+    const query = connectAreaGm(GM);
+    expect(await api.areas.add(far, smoke)).toBe("smoke1");
+    expect(await api.areas.add(far, { ...smoke, id: "smoke2" }, { source: actor("Actor.theirs", ["stranger"]) })).toBe("smoke2");
+    await api.areas.remove(far, "smoke1");
+    expect(api.areas.list(far).map((a) => a.id)).toEqual(["smoke2"]);
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it("is placed on the player's own client where the player owns the scene", async () => {
+    const api = createApi();
+    const own = { ...scene("Scene.own"), isOwner: true, setFlag: vi.fn(async () => {}) };
+    const query = connectAreaGm();
+    expect(await api.areas.add(own, smoke, { source: actor("Actor.mine", ["player"]) })).toBe("smoke1");
+    expect(own.setFlag).toHaveBeenCalledTimes(1);
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  describe("the GM's side", () => {
+    beforeEach(() => {
+      (globals.game as any).user = GM;
+      documents.set("Actor.mine", actor("Actor.mine", ["player"])).set("Actor.theirs", actor("Actor.theirs", ["stranger"]));
+    });
+
+    const add = (overrides: Record<string, unknown> = {}) => ({ action: "add", sceneUuid: "Scene.far", sourceUuid: "Actor.mine", area: smoke, ...overrides });
+
+    it("is registered in CONFIG.queries", () => {
+      globals.CONFIG = { queries: {} };
+      registerEffectQuery();
+      expect((globals.CONFIG as any).queries[AREA_QUERY]).toBe(answerAreaQuery);
+    });
+
+    it("acts for a GM or the owner of the source named, and returns true for a removal", async () => {
+      expect(await answerAreaQuery(add({ sourceUuid: "" }), { user: GM })).toBe("smoke1");
+      expect(await answerAreaQuery(add({ area: { ...smoke, id: "smoke2" } }), { user: PLAYER })).toBe("smoke2");
+      expect(await answerAreaQuery({ action: "remove", sceneUuid: "Scene.far", sourceUuid: "Actor.mine", id: "smoke1" }, { user: PLAYER })).toBe(true);
+      expect(far.getFlag("gworld", "modifierAreas").map((a: any) => a.id)).toEqual(["smoke2"]);
+    });
+
+    it("refuses a sender who owns neither, a scene that isn't one, and a malformed request", async () => {
+      expect(await answerAreaQuery(add(), { user: STRANGER })).toBeNull();
+      expect(await answerAreaQuery(add({ sourceUuid: "Actor.theirs" }), { user: PLAYER })).toBeNull();
+      expect(await answerAreaQuery(add({ sourceUuid: "" }), { user: PLAYER })).toBeNull();
+      expect(await answerAreaQuery(add(), {})).toBeNull();
+      expect(await answerAreaQuery(add({ sceneUuid: "Actor.mine" }), { user: GM })).toBeNull();
+      expect(await answerAreaQuery(add({ sceneUuid: "Scene.nowhere" }), { user: GM })).toBeNull();
+      expect(await answerAreaQuery(add({ action: "clear" }), { user: GM })).toBeNull();
+      expect(await answerAreaQuery(add({ area: "smoke" }), { user: GM })).toBeNull();
+      expect(await answerAreaQuery({ action: "remove", sceneUuid: "Scene.far", id: "" }, { user: GM })).toBeNull();
+      expect(far.setFlag).not.toHaveBeenCalled();
+    });
   });
 });

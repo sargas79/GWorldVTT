@@ -67,9 +67,9 @@ import {
   fragileCatchesFire, fragileExplodes, fragileKindsOf, irradiate, rollBrittleLimb, shootAtVehicle, controlVehicle, type ShockOptions, type ShockOutcome,
 } from "./hazards.js";
 import { detonateCharge } from "./demolition.js";
-import { relayEffect } from "./gm-relay.js";
+import { addAreaFor, relayEffect, removeAreaFor } from "./gm-relay.js";
 import { equipmentUseLines, familiarWith, setFamiliar } from "./tech-level.js";
-import { addArea, listAreas, removeArea, tokensInArea } from "./modifier-areas.js";
+import { listAreas, tokensInArea } from "./modifier-areas.js";
 import { darknessAt, litForOf, registerLightLevel, registerLitFor, setLitFor } from "./darkness.js";
 import { rollFrightCheck } from "./fright.js";
 import { spendUnspentPoints } from "./bonus-points.js";
@@ -107,7 +107,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.149.0";
+export const API_VERSION = "1.150.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -916,10 +916,11 @@ const socialApi = Object.freeze({ registerInfluenceSkill });
  * `darknessAt`, the darkness at a token or a point, since 1.96.0; lights only
  * some can see (`registerLitFor`, `setLitFor`, `litFor`) since 1.100.0; a
  * module's own light on an area (`add`'s `light`) since 1.102.0; the darkness
- * a light leaves (`registerLightLevel`) since 1.116.0.
+ * a light leaves (`registerLightLevel`) since 1.116.0; `add` and `remove`
+ * through the GM's client, for the owner of a `source` actor, since 1.150.0.
  */
 const areasApi = Object.freeze({
-  add: addArea, remove: removeArea, list: listAreas, standsIn: tokensInArea, darknessAt,
+  add: addAreaFor, remove: removeAreaFor, list: listAreas, standsIn: tokensInArea, darknessAt,
   registerLitFor, setLitFor, litFor: litForOf, registerLightLevel,
 });
 
