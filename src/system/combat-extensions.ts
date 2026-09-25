@@ -59,7 +59,7 @@ export const COMBAT_HOOKS = Object.freeze({
   parryWeapons: "gworld.parryWeapons",
   /** Before a defense roll: `{ defender, defense, attack, modifiers, deception, attacker }`, mutable. */
   defenseModifiers: "gworld.defenseModifiers",
-  /** Before a damage roll: `{ actor, item, mode, label, formula, damageType, modifiers, distanceYards }`, mutable (`distanceYards` since 1.69.0). */
+  /** Before a damage roll: `{ actor, item, mode, label, formula, damageType, modifiers, distanceYards, source, incendiary }`, mutable (`distanceYards` since 1.69.0, `source` since 1.139.0, `incendiary` since 1.152.0). */
   damageModifiers: "gworld.damageModifiers",
   /** A blow about to be worked out against a target: `{ actor, item, mode, damage }`, the damage mutable. */
   injury: "gworld.injury",
@@ -77,7 +77,8 @@ export const COMBAT_HOOKS = Object.freeze({
    * Before an equipment failure roll: `{ actor, item, target, modifiers, label, downgradeCriticalFailure, downgradeLabel }`;
    * push lines to `modifiers`. `label` (since 1.118.0) names a module's roll, null for the exposure check.
    * Set `downgradeCriticalFailure` (since 1.127.0) to make a critical failure an ordinary one, with
-   * `downgradeLabel` for the card.
+   * `downgradeLabel` for the card. `exposure` (since 1.152.0) is true for the item sheet's exposure
+   * check, where setting `cancel` calls the roll off, with `cancelLabel` for the card.
    */
   equipmentFailure: "gworld.equipmentFailure",
   /** A character's maneuver allowances as their data is prepared: `{ actor, maneuver, option, movement, defense }`, the allowances mutable. */
@@ -430,20 +431,25 @@ export function feintModifiers(context: Omit<FeintContext, "modifiers" | "refusa
  * Runs the equipment failure hook: the target, the lines modules added to it,
  * and (since 1.127.0) whether a critical failure counts only as a failure --
  * null where it counts in full, or the card's line for it ("" for the
- * system's own).
+ * system's own). Since 1.152.0 the exposure check (`exposure`) may be called
+ * off: `cancel` is then the card's line for it ("" for the system's own), and
+ * null where the roll goes ahead, as it always is for a module's own roll.
  */
 export function equipmentFailureModifiers(
   actor: any,
   item: any,
   target: number,
   label: string | null = null,
-): { target: number; modifiers: ModifierLine[]; downgrade: string | null } {
+  exposure = false,
+): { target: number; modifiers: ModifierLine[]; downgrade: string | null; cancel: string | null } {
   const context = callCombatHook(COMBAT_HOOKS.equipmentFailure, {
     actor, item, target, modifiers: [] as ModifierLine[], label, downgradeCriticalFailure: false, downgradeLabel: "",
+    exposure, cancel: false, cancelLabel: "",
   });
   const modifiers = (context.modifiers ?? []).filter((m) => typeof m?.label === "string" && typeof m.value === "number" && Number.isFinite(m.value));
   const downgrade = context.downgradeCriticalFailure === true ? String(context.downgradeLabel ?? "").trim() : null;
-  return { target: target + modifiers.reduce((sum, m) => sum + m.value, 0), modifiers, downgrade };
+  const cancel = exposure && context.cancel === true ? String(context.cancelLabel ?? "").trim() : null;
+  return { target: target + modifiers.reduce((sum, m) => sum + m.value, 0), modifiers, downgrade, cancel };
 }
 
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;

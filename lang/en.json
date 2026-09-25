@@ -3799,6 +3799,29 @@
       "LargeAreaHint": "Three sizes larger: a large-area injury, whatever the hit location.",
       "OnlyBecauseProne": "Possible only because they are on the ground."
     },
+    "Holdout": {
+      "Label": "Holdout: hiding {item}",
+      "LabelDefault": "Holdout at {from}: hiding {item}",
+      "SleightOfHand": "Sleight of Hand-3",
+      "SearchLabel": "Search against Holdout: {item}",
+      "NoSize": "No size given for hiding {item}: pass the size modifier from the Holdout table (Characters p. 200)",
+      "Size": "Size and shape",
+      "Clothing": "Clothing",
+      "Moving": "Moves or makes noise",
+      "Sizes": {
+        "tiny": "+4: a tiny gem, a stamp",
+        "pea": "+3: a small gem",
+        "coin": "+2: a coin, a letter, one lockpick",
+        "lockpickSet": "+1: a large coin, a set of lockpicks",
+        "disc": "0: a bare disc",
+        "dagger": "-1: a dagger, the smallest handgun or grenade",
+        "handgun": "-2: a typical handgun, a grenade, a large knife",
+        "submachineGun": "-3: a submachine gun, a shortsword, a short carbine",
+        "broadsword": "-4: a broadsword, an assault rifle",
+        "bastardSword": "-5: a bastard sword, a battle rifle",
+        "crossbow": "-6: a crossbow, a heavy sniper rifle"
+      }
+    },
     "Legality": {
       "Setting": "Control Rating",
       "SettingHint": "How tightly the campaign’s government controls its people (Campaigns p. 506). With an item’s Legality Class it decides who may carry the item. Leave blank to ignore legality.",
@@ -4040,6 +4063,7 @@
       "FailureLabel": "Equipment failure",
       "FailureModifier": "Modifier",
       "Downgraded": "A critical failure, held to an ordinary failure",
+      "ExposureSpared": "Kept out of the weather: no roll needed",
       "CareLabel": "How it has been treated: +1 cleaned daily, 0 ordinary, -1 or -2 abused",
       "HireOffer": "Nobody here has a repair skill. Hire a technician at ${rate} an hour?",
       "Hired": "A hired technician",

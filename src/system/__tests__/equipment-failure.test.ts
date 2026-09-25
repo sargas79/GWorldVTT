@@ -214,3 +214,61 @@ describe("the exposure check still rolls HT+4 (Campaigns p. 485)", () => {
     expect(labels).toEqual([null]);
   });
 });
+
+describe("a listener calling off the exposure check (since API 1.152.0)", () => {
+  function cancelling(label = "", when: (context: any) => boolean = () => true) {
+    const seen: any[] = [];
+    globals.Hooks = {
+      callAll: (event: string, context: any) => {
+        if (event !== "gworld.equipmentFailure") return;
+        seen.push({ exposure: context.exposure, cancel: context.cancel, cancelLabel: context.cancelLabel });
+        if (when(context)) {
+          context.cancel = true;
+          context.cancelLabel = label;
+        }
+      },
+    };
+    return seen;
+  }
+
+  it("rolls no dice and marks nothing, and the card says why", async () => {
+    const seen = cancelling("In its holster");
+    const item = gear();
+    dice.push([6, 6, 6]);
+    await exposureCheck({ actor: null, item, care: 0 });
+    expect(seen).toEqual([{ exposure: true, cancel: false, cancelLabel: "" }]);
+    expect(item.system.hpLost).toBe(0);
+    expect(item.update).not.toHaveBeenCalled();
+    // The die was never rolled.
+    expect(dice).toHaveLength(1);
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toMatchObject({ exposure: true, spared: "In its holster" });
+  });
+
+  it("shows the system's line where the listener gave none", async () => {
+    cancelling();
+    await exposureCheck({ actor: null, item: gear(), care: 0 });
+    expect(cards[0]?.spared).toBe("GWORLD.Repair.ExposureSpared");
+  });
+
+  it("lets the listener call off one item's check and not another's", async () => {
+    cancelling("Sealed case", (context) => context.item.name === "Radio");
+    const radio = gear({}, { name: "Radio" });
+    const generator = gear();
+    dice.push([6, 6, 6]);
+    await exposureCheck({ actor: null, item: radio, care: 0 });
+    await exposureCheck({ actor: null, item: generator, care: 0 });
+    expect(radio.system.hpLost).toBe(0);
+    expect(generator.system.hpLost).toBe(10);
+    expect(cards.map((card) => card.spared)).toEqual(["Sealed case", undefined]);
+  });
+
+  it("can't call off a module's own roll, which tells the listener it isn't the exposure check", async () => {
+    const seen = cancelling("In its holster");
+    dice.push([3, 3, 3]);
+    const result = await equipmentFailure({ item: gear() });
+    expect(seen[0]?.exposure).toBe(false);
+    expect(result?.outcome).toBe("success");
+    expect(cards[0]?.spared).toBeUndefined();
+  });
+});

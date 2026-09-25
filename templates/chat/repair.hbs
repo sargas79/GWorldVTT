@@ -5,7 +5,7 @@
       {{#if exposure}}{{title}}
       {{else}}{{localize "GWORLD.Repair.Title" name=name}}{{/if}}
     </span>
-    <span class="gc-target">{{localize "GWORLD.Chat.Target"}} {{target}}</span>
+    {{#unless spared}}<span class="gc-target">{{localize "GWORLD.Chat.Target"}} {{target}}</span>{{/unless}}
   </div>
 
   {{#unless exposure}}
@@ -22,6 +22,10 @@
     {{/if}}
   {{/unless}}
 
+  {{#if spared}}
+    {{!-- An exposure check a module called off: no dice. --}}
+    <div class="gc-result success">{{spared}}</div>
+  {{else}}
   <div class="gc-dice">
     {{#each dice as |die|}}<span class="gc-die">{{die}}</span>{{/each}}
     <span class="gc-total">{{roll}}</span>
@@ -40,5 +44,6 @@
     </div>
   {{else}}
     <div class="gc-result failure">{{localize "GWORLD.Repair.Failed"}}</div>
+  {{/if}}
   {{/if}}
 </div>

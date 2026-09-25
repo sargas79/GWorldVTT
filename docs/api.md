@@ -102,7 +102,7 @@ Contents:
 | `hooks` | The names of the hooks below. |
 | `rules` | The Basic Set's pure rules: dice, success rolls, contests, damage, hit locations, maneuvers, skills, costs. Since 1.12.0 it no longer includes the rule group removed in system 1.5.0. Since 1.17.0 it includes every rules module, including attack options (slams, evading), explosions, the tactical rules and shield damage. |
 | `registry` | `registerRuleGroup`, `registerRule`, `namespacedRuleKey`, `isAddonRuleKey`, `isRuleOn`, `activeRules`. |
-| `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. `normalizeDamage(formula)` (since 1.125.0) gives a damage formula as the table rolls it; see [Modifying dice + adds](#modifying-dice--adds). |
+| `roll` | `success`, `damage`, `quickContest`, `regularContest`, posted as the system's chat cards. `normalizeDamage(formula)` (since 1.125.0) gives a damage formula as the table rolls it; see [Modifying dice + adds](#modifying-dice--adds). `holdout(actor, item, options)` and `holdoutSizes()` (since 1.152.0) roll Holdout to hide one item; see [Hiding an item with Holdout](#hiding-an-item-with-holdout). |
 | `actors` | Read-only: `derived`, `attribute`, `skillLevel`, `defenses`, `basicLift`, `encumbrance`. Also `applyCondition`, `removeCondition` and `conditions` (since 1.5.0), `applyInjury` (since 1.8.0; at a hit location since 1.148.0), `setPosture(actor, posture)` (since 1.16.0), `stopBleeding(actor)` (since 1.36.0), `dosePoison`, `activePoisons`, `advancePoison` and `clearPoison` (since 1.57.0; `dosePoison`, `advancePoison`, `stopBleeding`, `applyCondition` and `removeCondition` take a `source` since 1.149.0, see *Effects on a character the user doesn't own*), `firstAid`, `attendPatient`, `operate` and `rollMortalWound` (since 1.60.0), `resuscitate`, `treatPoison` and `treatIllness` (since 1.77.0), `loseAim(actor, reason)` (since 1.87.0), `recoveryHold(actor, id)` (since 1.89.0), and `setFamiliar(actor, name, familiar)` and `isFamiliar(actor, name)` (since 1.102.0), and `restoreFatigue(actor, fp, options)` and `surprise(actor, options)` (since 1.104.0), and `bind(actor, options)`, `unbind(actor)`, `binding(actor)` and `breakFree(actor)` (since 1.107.0; see *Binding*), and `spendFatigue(actor, fp, options)` (since 1.109.0; see *Medical hooks*), and `changeTrait(actor, options)` (since 1.112.0; `operate` also resolves to its outcome since then; it adds and removes traits since 1.124.0), and `tow(actor, options)` and `stopTowing(actor)` (since 1.113.0; see *Towing and the wheelchair*), and `cripple(actor, location, options)`, `crippled(actor)` and `healCrippled(actor, which)` (since 1.114.0; see *Crippled parts*), and `vehicleAboard(actor)` (since 1.141.0; see *The vehicle a character is aboard*). and `addPendingModifier(actor, request)`, `pendingModifiers(actor)` and `removePendingModifier(actor, id)` (since 1.132.0; see *A bonus held for a later roll*). and `settleCrippling(actor, which, options)` (since 1.129.0; see *Crippled parts*). |
 | `items` | Read-only: `derived`. `load(item, modeIndex, shots)` (since 1.28.0) loads a ranged mode immediately, with no Ready maneuver and no chat card, up to its capacity and across a shared magazine. It returns the new count, or null if the mode has no count or the user doesn't own the item. `malfunction(item)`, `setMalfunction(item, malfunction)` and `clearMalfunction(actor, item)` (since 1.71.0) read, set and clear what put a weapon out of action. `refundShots(item, modeIndex, shots)` (since 1.83.0) gives a ranged mode back shots an attack took, for a rule that decides the attack fired nothing after all: up to its capacity, across a shared magazine, and nothing where Infinite Ammunition kept the count; it returns the new count, or null as `load` does. `restoreDr(item, points)` (since 1.59.0) gives a piece of armour back up to `points` of the ablative DR it has spent, and returns the new `drLost`, or null for an item that isn't armour or a user who doesn't own it. `wearDr(item, amount, { location?, reason? })` (since 1.99.0) wears `amount` points of DR off a piece of armour for good (Characters p. 47), for a corrosive, a fire or a rule of the module's: `drLost` goes up as the system's own ablative spending raises it, so the damage pipeline, the sheet and `restoreDr` all see it, but never past the piece's DR -- at `location` (a hit location key) where one is given, the place's own figure where the piece armours it differently, and anywhere on the piece otherwise. It works on any armour, ablative or not. It returns `{ itemId, from, to, location, reason }` -- `from` and `to` the lost DR before and after, `location` "" where none was given, `reason` as given, for the module's own card -- or null for an item that isn't armour, a user who doesn't own it, an amount that isn't a positive number, or a location the piece doesn't cover (a Force Field covers them all). `objectStats(item)` (since 1.90.0) returns a weapon's or shield's DR, HP and HT as an object, `{ kind, dr, hp, ht, notes }`, as the system uses them once `gworld.objectStats` listeners have had their say. `legalityClass(item)` (since 1.95.0) returns an item's Legality Class, 0-4 or null, once `gworld.legalityClass` listeners have had their say. `stuck(item)`, `setStuck(item, stuck)`, `freeStuck(actor, item)` and `letGoOfStuck(actor, item)` (since 1.105.0) read, set and end a weapon's being stuck in a foe (see *A weapon stuck in a foe*). `equipmentFailure({ actor?, item, modifier?, label?, apply? })` (since 1.118.0) rolls an equipment failure roll for a thing (see *Equipment failure rolls*). `setUnready(item, unready, { reason?, attacker?, contest? })` and `knockAway(item, { reason?, attacker?, contest? })` (since 1.136.0) leave a weapon unready or knock it out of its holder's hands, through the GM's client where the user doesn't own it: for a GM, or since 1.143.0 on behalf of an `attacker` the user owns with the `contest` card of the disarm they won (see *Disarms*). `applyDamage({ item, damage, type, armorDivisor?, label? })` (since 1.126.0) puts a blow on a thing that keeps hit points (see *Damage to things*). `changeQuantity(item, delta, { reason? })` (since 1.123.0) adds `delta` to a stack of an item, or takes it off with a negative one, for a module that makes, finds or uses up consumables: rounds put in a box, supplies spent. A fraction is dropped toward none. The quantity never goes below 0, and an emptied stack stays on the actor. Weight and cost are kept per unit, so the carried weight and the stack's worth follow with nothing else to change. It resolves to `{ from, to, reason }` -- the quantity before and after, `reason` as given, for the module's own card -- or null for an item that keeps no quantity, a user who doesn't own it, or a delta that isn't a number. |
 | `combat` | Combat extension points (since 1.1.0). |
@@ -547,6 +547,15 @@ and the roll continues.
     rolls are `"slam"` (the slammer's blow) and `"slammed"` (what the slammer
     takes back); a shove's knockback roll, which gets no damage card, now
     fires the hook too, as `"shove"`, and rolls what the listeners leave;
+    Since 1.152.0 `gworld.damageModifiers` also gets `incendiary`: true where
+    the blow is incendiary (Characters p. 104) as the mode or the
+    `roll.damage` call has it, false otherwise. Set it to true to make this
+    one blow incendiary -- a round that burns only through rigid armour, or
+    only out to part of its range -- or to false to take the flame off it.
+    The card then carries `incendiary` as a mode marked incendiary does, and
+    applying the blow sets the victim's clothes alight as Making Things Burn
+    (Campaigns pp. 433-434) says, and counts it as burning for Fragile
+    (Characters p. 136). Anything but true or false leaves the mode's flag;
  and null says the distance is not known. Since 1.125.0, with
     Modifying Dice + Adds on, the hook's lines are added to the formula before
     its adds are turned into dice, so a per-die line is counted from the dice
@@ -1009,7 +1018,16 @@ and the roll continues.
     not a major one, and the card shows `downgradeLabel`, or "A critical
     failure, held to an ordinary failure" where it is blank. It changes
     nothing on a roll that wasn't a critical failure. It works for the
-    exposure check and for `items.equipmentFailure` alike.
+    exposure check and for `items.equipmentFailure` alike. Since 1.152.0 the
+    context also has `exposure`, `cancel` and `cancelLabel`: `exposure` is
+    true for the item sheet's exposure check and false for
+    `items.equipmentFailure`, whatever its `label`. On the exposure check a
+    listener may set `cancel` to true to call the roll off -- a holster or a
+    sealed case keeping the weather off the thing: no dice are rolled, the
+    thing is not marked down, and the card says so with `cancelLabel`, or
+    "Kept out of the weather: no roll needed" where it is blank. `cancel`
+    changes nothing on `items.equipmentFailure`, whose caller decides when
+    it rolls.
   - **Equipment failure rolls** (since 1.118.0; Campaigns p. 485).
     `items.equipmentFailure({ actor?, item, modifier?, label?, apply? })`
     asks for the roll itself, for a module's own occasion: a daily
@@ -1522,7 +1540,8 @@ Two fields a module may read (since 1.62.0):
   lines to `modifiers`. `tags` holds the kind (`skill`, `attribute`,
   `attack`, `defense`, `contest`) and more: `fastDraw` and `teaching` from the
   skill's name, `fright`, `knockdown`, `bleeding`, and the defense
-  (`dodge`, `parry`, `block`); since 1.76.0 also `exposure`, `contagion`,
+  (`dodge`, `parry`, `block`); since 1.152.0 `holdout` (see
+  [Hiding an item with Holdout](#hiding-an-item-with-holdout)); since 1.76.0 also `exposure`, `contagion`,
   `infection`, `poison`, `illness`, `resuscitation` and `vehicleControl` (see
   *More rolls through `gworld.successRollModifiers`* below). `gworld.afterSuccessRoll` follows with the
   `outcome`. Since 1.30.0 each side of a contest also gets `opponent`, the
@@ -3442,6 +3461,50 @@ or 1/2D changed the figure, the card shows what the dice came to as well.
   card that applies it, and one that doubles or triples the damage shows the
   rolled figure times that (Campaigns p. 556). An explosion's card leaves
   them off, since the distance sets its figure too.
+
+## Hiding an item with Holdout
+
+Since 1.152.0 the system rolls Holdout (Characters p. 200) for hiding one
+item, with the item's size and shape from the skill's table, and a
+searcher's Quick Contest of Search against it.
+
+- **`roll.holdout(actor, item, options?)`** rolls the actor's Holdout, or the
+  better of IQ-5 and Sleight of Hand-3, as a success roll with the system's
+  card. `options`:
+  - `size`: the item's size modifier, a row's `key` from
+    `roll.holdoutSizes()` or the modifier as a number (+4 for something the
+    size of a stamp down to -6 for a crossbow). Left out, the item's
+    `flags.gworld.holdoutSize` is read (either form); with neither, nothing
+    is rolled, the user is warned and the call resolves to null.
+  - `clothing`: what the character wears, as its modifier (from -7 for
+    nothing at all to +5 for the most concealing robes; clothing cut to hide
+    things is up to +4).
+  - `moving`: true for a thing that moves or makes noise (-1), or a worse
+    penalty as a negative number.
+  - `modifiers`: other `{ label, value }` lines.
+  - `searcher`, `searchModifiers`: an actor searching for the item, and lines
+    on their side. The roll is then a Quick Contest of their Search (or
+    Perception-5) against the Holdout.
+  - `label`, `rollMode`, `secret`: the card's label, and who sees it, as
+    `roll.success` takes them.
+
+  The size, clothing and moving lines are keyed `holdoutSize`, `clothing`
+  and `moving`, zero lines left out. The roll passes through
+  `gworld.successRollModifiers` with `skill` "Holdout", `tags` including
+  `holdout`, and `item`, so a module adds its own line there -- a
+  concealment holster, a coat with hidden pockets -- or finds and changes a
+  keyed one. Without a searcher it resolves to what `roll.success` does
+  (`{ roll, effectiveSkill, success, criticalSuccess, criticalFailure,
+  margin, dice }`, or null). With one, both sides of the
+  contest are tagged `holdout` and carry `item`, and a listener tells them
+  apart by `skill`: "Holdout" for the hider, "Search" for the searcher
+  (whether they have the skill or roll Perception-5). It then resolves to
+  `{ hidden, outcome, marginOfVictory, messageId }`: `hidden` is false only
+  where the searcher won; a tie leaves the item hidden.
+- **`roll.holdoutSizes()`** lists the table's rows, `{ key, modifier, label }`,
+  largest bonus first, for a module's own picker: `tiny` +4, `pea` +3,
+  `coin` +2, `lockpickSet` +1, `disc` 0, `dagger` -1, `handgun` -2,
+  `submachineGun` -3, `broadsword` -4, `bastardSword` -5, `crossbow` -6.
 
 ## Taking over data the system is dropping
 
