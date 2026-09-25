@@ -478,6 +478,7 @@
       "Progress": "{label}: {done} of {total}",
       "ItemType": "Moving items from {from} to {to}",
       "Fields": "Moving {document} fields",
+      "Learnable": "Flagging learnable advantages",
       "Uncovered": "This world holds {label}, which the GURPS system has stopped defining or will stop defining. Install and enable {install}, and load the world with it under a system release that still defines this data before updating the system, or that data will be lost."
     },
     "Api": {
@@ -1373,6 +1374,8 @@
       "Power": "Power this belongs to",
       "PowerHint": "The power an ability belongs to, as its book names it (Bioenhancement, Mysticism, ESP). The Basic Set's psi abilities are recognised by their power modifier and can leave this blank. Tick the box on the power's Talent; its maximum level is where the GM's permission starts.",
       "PowerTalent": "This is the power's Talent",
+      "Learnable": "Can be learned through study",
+      "LearnableHint": "Some advantages can be learned as if they were skills (Characters p. 294), and the Study tool offers only those, a level at a time. The Basic Set's come flagged; the GM ticks the box for another.",
       "TalentSkillsHint": "Fill this in for a Talent and each skill named gets +1 per level; a specialty counts as its skill. The Basic Set's Talents are read by name when this is empty.",
       "CostTableHint": "A few traits are priced from a table rather than at a flat rate per level: Wealth runs 10/20/30/50/75. Fill this in and it replaces the points and per-level figures. Leave it empty for the great majority, which are priced evenly.",
       "TabledNote": "priced from the table",

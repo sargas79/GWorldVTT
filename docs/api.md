@@ -2083,8 +2083,11 @@ Two fields a module may read (since 1.62.0):
     Basic Set compendium flags the ones p. 294 names (Combat Reflexes, Fit,
     Enhanced Dodge, G-Experience, the psionic Talents and so on); a module
     flags its own book's traits the same way, `learnable: true` in its pack
-    data. A trait on a sheet copied before 1.146.0 keeps `false` until
-    flagged. Wealth, Magery, Status and other traits that aren't flagged are
+    data, and a GM can tick "Can be learned through study" on any trait's
+    sheet. Traits already in a world when it first loads under 1.146.0
+    are flagged once by the system's own migration step
+    (`learnable-traits`), matched to the Basic Set's list by name or base
+    name ("Enhanced Dodge 2", "Weapon Master (Broadsword)"). Wealth, Magery, Status and other traits that aren't flagged are
     never offered.
   - **Attributes and secondary characteristics**, only where the GM has
     switched on the `studyAttributes` optional rule (off by default). It is

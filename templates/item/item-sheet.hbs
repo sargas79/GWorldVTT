@@ -380,6 +380,13 @@
         </label>
       </div>
       <p class="ihint">{{localize "GWORLD.Trait.PowerHint"}}</p>
+      <div class="ifields">
+        <label>{{localize "GWORLD.Trait.Learnable"}}
+          <input type="checkbox" name="system.learnable" {{checked system.learnable}}
+                 {{#unless mayFlagLearnable}}disabled{{/unless}} />
+        </label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.Trait.LearnableHint"}}</p>
 
       {{!-- Enhancements and limitations, and the self-control number: what
            changes a trait's cost from the figure the book prints. --}}

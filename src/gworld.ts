@@ -56,7 +56,7 @@ import { GWorldVehicleSheet } from "./system/sheets/vehicle-sheet.js";
 import { READY_HOOK, createApi, warnIncompatibleModules } from "./system/api.js";
 import { registerCombatStateHooks } from "./system/combat-extensions.js";
 import { registerProcedureHooks } from "./system/procedure-extensions.js";
-import { configureDeprecatedData, registerMigrationSettings, warnUncoveredData } from "./system/migration.js";
+import { configureDeprecatedData, migrateLearnableTraits, registerMigrationSettings, warnUncoveredData } from "./system/migration.js";
 import { closeRuleRegistration, openRuleRegistration, registerRule, registerRuleGroup } from "./system/rule-registry.js";
 import { registerSettings } from "./system/settings.js";
 import { migratePartyCampaignTerms } from "./system/campaign.js";
@@ -236,6 +236,8 @@ Hooks.once("ready", () => {
   warnIncompatibleModules();
   // The campaign's terms, kept on a party before #642, into the world settings.
   void migratePartyCampaignTerms();
+  // Learnable advantages put on sheets before the flag existed (API 1.146.0).
+  void migrateLearnableTraits();
   Hooks.callAll(READY_HOOK, api);
   // The token controls were drawn with the canvas, before any module had its
   // ready turn, so GM tools registered just now aren't on them yet.
