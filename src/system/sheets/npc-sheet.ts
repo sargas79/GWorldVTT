@@ -11,6 +11,7 @@ import { castSpell } from "../casting.js";
 import { isRuleOn } from "../optional-rules.js";
 import { swarmAttack, swarmOf } from "../swarms.js";
 import { GWorldCharacterSheetV2, attackKey } from "./character-sheet-v2.js";
+import { rollAffliction } from "./character-sheet.js";
 import type { SwarmProtection } from "../../rules/swarms.js";
 import type { Attribute } from "../../rules/types.js";
 import { summariseDescription } from "../description-summary.js";
@@ -71,6 +72,7 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     actions: {
       roll: GWorldNpcSheet.#onRoll,
       rollDamage: GWorldNpcSheet.#onRollDamage,
+      affliction: GWorldNpcSheet.#onAffliction,
       editItem: GWorldNpcSheet.#onEditItem,
       readyWeapon: GWorldNpcSheet.#onReadyWeapon,
       castSpell: GWorldNpcSheet.#onCastSpell,
@@ -198,6 +200,11 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
 
   static async #onRollDamage(this: GWorldNpcSheet, event: Event, target: HTMLElement) {
     await handleDamageAction(this.actor, event, target);
+  }
+
+  /** An affliction's card rolls each target's resistance, as on the full sheet. */
+  static async #onAffliction(this: GWorldNpcSheet, _event: Event, target: HTMLElement) {
+    await rollAffliction(this.actor, target);
   }
 
   static async #onEditItem(this: GWorldNpcSheet, _event: Event, target: HTMLElement) {
