@@ -27,6 +27,7 @@
  */
 
 import { gmScreenApi } from "./gm-screen/api.js";
+import { containersApi } from "./container-moves.js";
 import * as rules from "../rules/index.js";
 import { skillLevelOf } from "./skill-level.js";
 import { holdoutSizes, rollHoldout } from "./holdout.js";
@@ -110,7 +111,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.158.0";
+export const API_VERSION = "1.159.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -863,6 +864,8 @@ export interface GWorldApi {
   readonly social: typeof socialApi;
   /** The GM Screen (since 1.157.0): open it, roll on its tables, add a module's tables, lists and tabs. */
   readonly gmScreen: typeof gmScreenApi;
+  /** Containers (since 1.159.0): which items are containers, what is in one, and putting gear in or taking it out. */
+  readonly containers: typeof containersApi;
   /** The hooks the API fires, by name; `partyChanged` since 1.68.0, `campaignChanged` since 1.82.0. */
   readonly hooks: { readonly registerRules: string; readonly ready: string; readonly partyChanged: string; readonly campaignChanged: string };
   /** Whether this API satisfies a semver range, as a module's manifest would declare it. */
@@ -1039,6 +1042,7 @@ export function createApi(): GWorldApi {
     world: worldApi,
     social: socialApi,
     gmScreen: gmScreenApi,
+    containers: containersApi,
     hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK, partyChanged: PARTY_CHANGED_HOOK, campaignChanged: CAMPAIGN_CHANGED_HOOK }),
     satisfies: (range: string) => satisfiesApiRange(API_VERSION, range),
   });

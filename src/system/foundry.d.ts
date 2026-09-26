@@ -400,6 +400,8 @@ declare global {
     system: any;
     _source: unknown;
     prepareBaseData(): void;
+    _onUpdate(changed: object, options: object, userId: string): void;
+    _onDelete(options: object, userId: string): void;
     [key: string]: any;
   }
   const ui: any;

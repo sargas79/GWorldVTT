@@ -4164,6 +4164,25 @@
       "FleshWound": "Flesh wound",
       "FleshWoundHint": "1 point reduces the injury to 1 HP or FP."
     },
+    "Container": {
+      "Title": "Container",
+      "IsContainer": "Holds other gear",
+      "Yes": "Yes",
+      "No": "No",
+      "Capacity": "Capacity",
+      "CapacityHint": "What it holds, in pounds. 0 for no limit. Going over warns and does not refuse.",
+      "Inside": "Inside",
+      "Holds": "{count} inside",
+      "InsideHint": "{count} inside: {weight} lb, ${cost}",
+      "OverCapacity": "More than it holds.",
+      "KeptIn": "Kept in",
+      "Loose": "Loose",
+      "ContentsOf": "Inside {name}",
+      "CannotHold": "{item} cannot go inside {container}: not into itself, nor into something it holds.",
+      "DeletePrompt": "Delete <strong>{name}</strong>? It has {count} item(s) inside. This cannot be undone.",
+      "DeleteTakeOut": "Delete it, keep what is inside",
+      "DeleteAll": "Delete it and everything inside"
+    },
     "ItemCard": {
       "Description": "Description",
       "Levels": "Levels",

@@ -58,6 +58,11 @@ function physicalFields() {
     /** Carried items count towards encumbrance; stored ones do not. */
     carried: new fields.BooleanField({ initial: true }),
     equipped: new fields.BooleanField({ initial: false }),
+    /**
+     * The id of the container, on the same actor, this is kept in: blank for
+     * loose. A container that is gone reads as loose (see containers.ts).
+     */
+    containerId: new fields.StringField({ required: true, blank: true, initial: "" }),
     tl: new fields.StringField({ required: true, blank: true, initial: "" }),
     /**
      * An article whose price is a share of the wearer's monthly cost of
@@ -1242,6 +1247,8 @@ function rangedModeField() {
  * Modes model that directly instead of forcing duplicate items.
  */
 export class EquipmentData extends foundry.abstract.TypeDataModel {
+  declare container: boolean;
+  declare capacity: number;
   /**
    * Arrows and bolts made before rounds were their own kind of gear were
    * filed as consumables. They read as ammunition that fits a bow or a
@@ -1263,6 +1270,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare weight: number;
   declare cost: number;
   declare carried: boolean;
+  declare containerId: string;
   declare equipped: boolean;
   declare category: EquipmentCategory;
   declare unready: boolean;
@@ -1295,6 +1303,10 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
     return {
       ...descriptionFields(),
       ...physicalFields(),
+      /** A backpack, a pouch, a chest: other gear can be kept inside it. */
+      container: new fields.BooleanField({ initial: false }),
+      /** What a container holds, in pounds; 0 for no limit. Over it warns, and does not refuse. */
+      capacity: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       /**
        * Swung and not yet brought back up (Characters p. 270, the "‡"). Set
        * by an attack with a weapon that becomes unready, cleared by a Ready
@@ -1475,6 +1487,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   declare weight: number;
   declare cost: number;
   declare carried: boolean;
+  declare containerId: string;
   declare equipped: boolean;
 
   static override defineSchema() {
@@ -1658,6 +1671,7 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
   declare weight: number;
   declare cost: number;
   declare carried: boolean;
+  declare containerId: string;
   declare equipped: boolean;
 
   static override defineSchema() {
