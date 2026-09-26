@@ -2482,6 +2482,7 @@
       "RegenerationHint": "Heal by Regeneration for the time that has passed",
       "RegenerationMinutes": "Minutes passed",
       "RegenerationDetail": "{rate}, over {seconds} seconds",
+      "RegenerationWhileResting": "Regeneration, {rate}",
       "Rate": {
         "slow": "1 HP / 12 hours",
         "regular": "1 HP / hour",

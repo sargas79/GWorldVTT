@@ -135,6 +135,36 @@ export async function regenerate(options: { actor: any; seconds: number }): Prom
 }
 
 /**
+ * What Regeneration gives back over a rest (Characters p. 80): the rest already
+ * knows how long it took, so a regenerator is not asked the same number twice.
+ *
+ * Null for anyone without the trait, and for a span too short to bring back a
+ * whole point, so neither card claims a gain of zero. Capped at max HP, and the
+ * conditions follow the new total as the day's rest has them do.
+ */
+async function regenerateWhileResting(actor: any, seconds: number): Promise<Record<string, unknown> | null> {
+  const rate = regenerationRate(Number(actor.system?.derived?.traitEffects?.regeneration ?? 0));
+  if (!rate) return null;
+
+  const hp = actor.system?.hp ?? { value: 0, max: 0 };
+  const previous = Number(hp.value) || 0;
+  const max = Number(hp.max) || 0;
+  const gained = Math.min(Math.max(0, max - previous), regeneratedHp(rate.key, seconds));
+  if (gained <= 0) return null;
+
+  await actor.update({ "system.hp.value": previous + gained });
+  await syncHealthConditions(actor);
+  return {
+    label: F("RegenerationWhileResting", { rate: R(`Rate.${rate.key}`) }),
+    gained,
+    pool: "HP",
+    previous,
+    now: previous + gained,
+    max,
+  };
+}
+
+/**
  * Rests for a while and gets some fatigue back (p. 427).
  *
  * No roll: resting quietly works, and the only question is for how long.
@@ -160,7 +190,11 @@ export async function restForFatigue(options: {
   const gained = Math.max(0, Math.min(wanted, max - current));
   if (gained > 0) await actor.update({ "system.fp.value": current + gained });
 
+  // A regenerator heals through the same minutes (Characters p. 80).
+  const regen = await regenerateWhileResting(actor, minutes * 60);
+
   await post(actor, {
+    regen,
     kind: game.i18n.localize("GWORLD.Recovery.Rest"),
     detail: meal
       ? game.i18n.format("GWORLD.Recovery.RestedFed", { minutes })
@@ -192,6 +226,11 @@ export async function restForADay(options: {
   const { actor, modifier } = options;
   if (!mayChange(actor)) return 0;
 
+  // Regeneration counts the whole day first (Characters p. 80), and the HT roll
+  // comes on top of it: the trait adds to natural recovery, it doesn't replace it.
+  const regen = await regenerateWhileResting(actor, 24 * 3600);
+  const regenerated = Number(regen?.gained ?? 0);
+
   const hp = actor.system?.hp ?? { value: 0, max: 0 };
   const current = Number(hp.value) || 0;
   const max = Number(hp.max) || 0;
@@ -213,6 +252,7 @@ export async function restForADay(options: {
   await post(actor, {
     kind: game.i18n.localize("GWORLD.Recovery.Daily"),
     detail: game.i18n.localize("GWORLD.Recovery.DailyDetail"),
+    regen,
     target: ht + modifier,
     dice: dieResults(roll),
     roll: roll.total,
@@ -226,7 +266,7 @@ export async function restForADay(options: {
     rolls: [roll],
   });
 
-  return gained;
+  return regenerated + gained;
 }
 
 /**
