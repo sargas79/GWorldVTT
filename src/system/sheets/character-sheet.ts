@@ -3101,170 +3101,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   }
 
   static async #onAffliction(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
-    if (!isRuleOn("afflictions")) return;
-    const attribute = target.dataset.resist ?? "";
-    if (!attribute) return;
-    // A linked affliction the row's last attack left unrolled (since API 1.154.0).
-    const secondLine = secondLineOf(target.dataset.secondLine);
-    if (lineDropped(this.actor, shotRow(target.parentElement?.closest<HTMLElement>("[data-item-id]") ?? null), secondLine)) {
-      ui.notifications?.warn(game.i18n.localize(secondLine === "followUp" ? "GWORLD.Attack.FollowUpDropped" : "GWORLD.Attack.LinkedDropped"));
-      return;
-    }
-    const modifier = Number(target.dataset.resistModifier) || 0;
-    const label = target.dataset.afflictionLabel ?? "";
-    // A ranged affliction past its 1/2D is resisted at +3 (Characters p. 270).
-    const halfDamageRange = Number(target.dataset.halfDamageRange) || 0;
-    const shooter = this.actor.getActiveTokens?.()?.[0];
-    // What forced the roll, for the modules that read it (since 1.49.0).
-    const item = target.dataset.itemId ? (this.actor.items?.get?.(target.dataset.itemId) ?? null) : null;
-    // A derived mode says which it is, so a roll it forced isn't taken for one
-    // the item's own mode at that index forced (#409).
-    const mode = target.dataset.modeIndex
-      ? {
-          index: Number(target.dataset.modeIndex) || 0,
-          ranged: target.dataset.modeRanged === "1",
-          ...(target.dataset.derivedMode ? { derived: String(target.dataset.derivedMode) } : {}),
-        }
-      : null;
-    const damageType = (target.dataset.damageType ?? "cr") as DamageType;
-
-    const targets = currentTargets();
-    if (targets.length === 0) {
-      ui.notifications?.warn(game.i18n.localize("GWORLD.Affliction.NoTarget"));
-      return;
-    }
-    // Where the attack that forced the roll struck, from the called shot its
-    // attack roll left (since API 1.130.0). Read rather than spent: a line
-    // that both burns and shocks rolls its damage from the same attack.
-    const struck = afflictionLocation({
-      hitLocations: isRuleOn("hitLocations"),
-      area: target.dataset.areaAttack === "1",
-      shot: peekCalledShot(this.actor),
-    });
-    // The victim's DR is the armour where the blow landed, and the torso's
-    // where it landed nowhere in particular.
-    const hitLocation: HitLocation = struck?.hitLocation ?? "torso";
-    const where = { hitLocation: struck?.hitLocation ?? null, addonLocation: struck?.addonLocation ?? null };
-    // An area affliction's centre (since API 1.63.0): this user's latest
-    // template on the map, or else the first target.
-    const centre = target.dataset.areaAttack === "1" ? areaCentre(targets) : null;
-    // A linked line's own area (Campaigns p. 381; since API 1.155.0): whoever
-    // is targeted beyond it is left out. It is measured only from a template
-    // the user placed; from a target, nobody is left out, and the user is told.
-    const radius = Number(target.dataset.areaRadius) || 0;
-    const measured = radius > 0 && centre?.templated === true;
-    const outside: string[] = [];
-    if (radius > 0 && !measured) {
-      ui.notifications?.info(game.i18n.format("GWORLD.Affliction.RadiusUnmeasured", { yards: radius }));
-    }
-
-    // One roll each: an affliction is resisted individually, and two people
-    // caught by the same stun gun do not share a roll.
-    const seen = new Set<string>();
-    for (const token of targets) {
-      const victim = token?.actor;
-      if (!victim) continue;
-      const key = String(victim.uuid ?? victim.id ?? "");
-      if (key && seen.has(key)) continue;
-      if (key) seen.add(key);
-
-      const yards = yardsBetween(shooter, token);
-      const fromCentre = centre ? yardsBetween(centre, token) : null;
-      if (!withinLinkedArea(measured ? fromCentre : null, radius)) {
-        outside.push(String(victim.name ?? ""));
-        continue;
-      }
-      const distance = fromCentre === null ? {} : { distance: fromCentre };
-      // What the victim's armour was worth against the attack that forced the
-      // roll. An affliction is not damage, so none of it is subtracted here.
-      const drHere = wornDrAt(wornArmor(victim), hitLocation, damageType);
-      // "The victim gets a bonus equal to his DR" -- worn and his own, as the
-      // attack's armour divisor leaves it -- unless DR does nothing against
-      // the attack: a cosmic divisor, a Malediction, or a follow-up (p. 35;
-      // since API 1.105.0). The other modifiers that get past DR are named
-      // nowhere on the row, and a module drops the line for them.
-      const met = drMetByAttack(victim, {
-        hitLocation,
-        damageType,
-        armorDivisor: Number(target.dataset.armorDivisor) || 1,
-        ignoresDr: target.dataset.ignoresDr === "1" || target.dataset.followUp === "1",
-        ...(typeof item?.uuid === "string" ? { itemUuid: item.uuid } : {}),
-        mode,
-      });
-      const drBonus = afflictionDrBonus(met);
-
-      // An affliction resisted with a Fright Check rather than an attribute (since API 1.63.0).
-      if (isFrightResistance(attribute)) {
-        const fright = await rollFrightCheckOutcome({
-          actor: victim,
-          modifier,
-          tags: ["resist", "affliction"],
-          attack: { attacker: this.actor, item, mode, distanceYards: yards, halfDamageRange, dr: drHere, drCounted: drBonus > 0, drBonus, ...distance },
-        });
-        if (fright && !fright.success) {
-          await applyAfflictionEffects({ actor: victim, attacker: this.actor, item, mode, label, margin: fright.margin, frightEffect: fright.effect, ...distance, ...where });
-        }
-        continue;
-      }
-
-      const outcome = await rollSuccess({
-        actor: victim,
-        base: resistanceScore(victim, attribute),
-        label: game.i18n.format("GWORLD.Affliction.Label", {
-          label,
-          resist: `${attribute}${modifier || ""}`,
-        }),
-        kind: "attribute",
-        // A resistance roll is its own kind of roll, and a module may have
-        // something to say to all of them or to this one (since 1.49.0).
-        tags: ["resist", "affliction"],
-        attack: {
-          attacker: this.actor,
-          item,
-          mode,
-          distanceYards: yards,
-          halfDamageRange,
-          dr: drHere,
-          drCounted: drBonus > 0,
-          drBonus,
-          ...distance,
-        },
-        modifiers: [
-          ...(modifier === 0 ? [] : [{ label: game.i18n.localize("GWORLD.Affliction.Short"), value: modifier }]),
-          ...(drBonus > 0 ? [{ key: "afflictionDr", label: game.i18n.localize("GWORLD.Affliction.DrBonus"), value: drBonus }] : []),
-          // "Those that require a HT roll to resist are resisted at +3" past 1/2D.
-          ...(beyondHalfDamage({ rangeYards: yardsBetween(shooter, token) ?? 0, halfDamageRange })
-            ? [{ label: game.i18n.localize("GWORLD.Affliction.PastHalfDamage"), value: 3 }]
-            : []),
-        ],
-        // A roll that fails is a condition somebody now has, and the card is
-        // where it is handed out (Campaigns pp. 428-429).
-        affliction: {
-          uuid: String(victim.uuid ?? ""),
-          name: String(victim.name ?? ""),
-          label,
-        },
-      });
-
-      // A roll that failed is an effect somebody now has. Which one is the
-      // GM's from the card for the Basic Set's own afflictions; a module may
-      // name its own instead, or beside it (since 1.49.0).
-      if (outcome && !outcome.success) {
-        await applyAfflictionEffects({
-          actor: victim,
-          attacker: this.actor,
-          item,
-          mode,
-          label,
-          margin: outcome.margin,
-          ...distance,
-          ...where,
-        });
-      }
-    }
-    if (outside.length > 0) {
-      ui.notifications?.info(game.i18n.format("GWORLD.Affliction.OutsideRadius", { names: outside.join(", "), yards: radius }));
-    }
+    await rollAffliction(this.actor, target);
   }
 
   /**
@@ -4066,4 +3903,176 @@ function areaCentre(targets: any[]): { center: { x: number; y: number }; templat
   if (last && Number.isFinite(last.x) && Number.isFinite(last.y)) return { center: { x: last.x, y: last.y }, templated: true };
   const first = targets[0];
   return first?.center ? { center: first.center } : null;
+}
+
+/**
+ * Rolls resistance for each target of an affliction: the row's
+ * `data-action="affliction"` element carries the attack (Campaigns pp. 428-429).
+ * Shared by every sheet that shows the attack card.
+ */
+export async function rollAffliction(actor: any, target: HTMLElement): Promise<void> {
+  if (!isRuleOn("afflictions")) return;
+  const attribute = target.dataset.resist ?? "";
+  if (!attribute) return;
+  // A linked affliction the row's last attack left unrolled (since API 1.154.0).
+  const secondLine = secondLineOf(target.dataset.secondLine);
+  if (lineDropped(actor, shotRow(target.parentElement?.closest<HTMLElement>("[data-item-id]") ?? null), secondLine)) {
+    ui.notifications?.warn(game.i18n.localize(secondLine === "followUp" ? "GWORLD.Attack.FollowUpDropped" : "GWORLD.Attack.LinkedDropped"));
+    return;
+  }
+  const modifier = Number(target.dataset.resistModifier) || 0;
+  const label = target.dataset.afflictionLabel ?? "";
+  // A ranged affliction past its 1/2D is resisted at +3 (Characters p. 270).
+  const halfDamageRange = Number(target.dataset.halfDamageRange) || 0;
+  const shooter = actor.getActiveTokens?.()?.[0];
+  // What forced the roll, for the modules that read it (since 1.49.0).
+  const item = target.dataset.itemId ? (actor.items?.get?.(target.dataset.itemId) ?? null) : null;
+  // A derived mode says which it is, so a roll it forced isn't taken for one
+  // the item's own mode at that index forced (#409).
+  const mode = target.dataset.modeIndex
+    ? {
+        index: Number(target.dataset.modeIndex) || 0,
+        ranged: target.dataset.modeRanged === "1",
+        ...(target.dataset.derivedMode ? { derived: String(target.dataset.derivedMode) } : {}),
+      }
+    : null;
+  const damageType = (target.dataset.damageType ?? "cr") as DamageType;
+
+  const targets = currentTargets();
+  if (targets.length === 0) {
+    ui.notifications?.warn(game.i18n.localize("GWORLD.Affliction.NoTarget"));
+    return;
+  }
+  // Where the attack that forced the roll struck, from the called shot its
+  // attack roll left (since API 1.130.0). Read rather than spent: a line
+  // that both burns and shocks rolls its damage from the same attack.
+  const struck = afflictionLocation({
+    hitLocations: isRuleOn("hitLocations"),
+    area: target.dataset.areaAttack === "1",
+    shot: peekCalledShot(actor),
+  });
+  // The victim's DR is the armour where the blow landed, and the torso's
+  // where it landed nowhere in particular.
+  const hitLocation: HitLocation = struck?.hitLocation ?? "torso";
+  const where = { hitLocation: struck?.hitLocation ?? null, addonLocation: struck?.addonLocation ?? null };
+  // An area affliction's centre (since API 1.63.0): this user's latest
+  // template on the map, or else the first target.
+  const centre = target.dataset.areaAttack === "1" ? areaCentre(targets) : null;
+  // A linked line's own area (Campaigns p. 381; since API 1.155.0): whoever
+  // is targeted beyond it is left out. It is measured only from a template
+  // the user placed; from a target, nobody is left out, and the user is told.
+  const radius = Number(target.dataset.areaRadius) || 0;
+  const measured = radius > 0 && centre?.templated === true;
+  const outside: string[] = [];
+  if (radius > 0 && !measured) {
+    ui.notifications?.info(game.i18n.format("GWORLD.Affliction.RadiusUnmeasured", { yards: radius }));
+  }
+
+  // One roll each: an affliction is resisted individually, and two people
+  // caught by the same stun gun do not share a roll.
+  const seen = new Set<string>();
+  for (const token of targets) {
+    const victim = token?.actor;
+    if (!victim) continue;
+    const key = String(victim.uuid ?? victim.id ?? "");
+    if (key && seen.has(key)) continue;
+    if (key) seen.add(key);
+
+    const yards = yardsBetween(shooter, token);
+    const fromCentre = centre ? yardsBetween(centre, token) : null;
+    if (!withinLinkedArea(measured ? fromCentre : null, radius)) {
+      outside.push(String(victim.name ?? ""));
+      continue;
+    }
+    const distance = fromCentre === null ? {} : { distance: fromCentre };
+    // What the victim's armour was worth against the attack that forced the
+    // roll. An affliction is not damage, so none of it is subtracted here.
+    const drHere = wornDrAt(wornArmor(victim), hitLocation, damageType);
+    // "The victim gets a bonus equal to his DR" -- worn and his own, as the
+    // attack's armour divisor leaves it -- unless DR does nothing against
+    // the attack: a cosmic divisor, a Malediction, or a follow-up (p. 35;
+    // since API 1.105.0). The other modifiers that get past DR are named
+    // nowhere on the row, and a module drops the line for them.
+    const met = drMetByAttack(victim, {
+      hitLocation,
+      damageType,
+      armorDivisor: Number(target.dataset.armorDivisor) || 1,
+      ignoresDr: target.dataset.ignoresDr === "1" || target.dataset.followUp === "1",
+      ...(typeof item?.uuid === "string" ? { itemUuid: item.uuid } : {}),
+      mode,
+    });
+    const drBonus = afflictionDrBonus(met);
+
+    // An affliction resisted with a Fright Check rather than an attribute (since API 1.63.0).
+    if (isFrightResistance(attribute)) {
+      const fright = await rollFrightCheckOutcome({
+        actor: victim,
+        modifier,
+        tags: ["resist", "affliction"],
+        attack: { attacker: actor, item, mode, distanceYards: yards, halfDamageRange, dr: drHere, drCounted: drBonus > 0, drBonus, ...distance },
+      });
+      if (fright && !fright.success) {
+        await applyAfflictionEffects({ actor: victim, attacker: actor, item, mode, label, margin: fright.margin, frightEffect: fright.effect, ...distance, ...where });
+      }
+      continue;
+    }
+
+    const outcome = await rollSuccess({
+      actor: victim,
+      base: resistanceScore(victim, attribute),
+      label: game.i18n.format("GWORLD.Affliction.Label", {
+        label,
+        resist: `${attribute}${modifier || ""}`,
+      }),
+      kind: "attribute",
+      // A resistance roll is its own kind of roll, and a module may have
+      // something to say to all of them or to this one (since 1.49.0).
+      tags: ["resist", "affliction"],
+      attack: {
+        attacker: actor,
+        item,
+        mode,
+        distanceYards: yards,
+        halfDamageRange,
+        dr: drHere,
+        drCounted: drBonus > 0,
+        drBonus,
+        ...distance,
+      },
+      modifiers: [
+        ...(modifier === 0 ? [] : [{ label: game.i18n.localize("GWORLD.Affliction.Short"), value: modifier }]),
+        ...(drBonus > 0 ? [{ key: "afflictionDr", label: game.i18n.localize("GWORLD.Affliction.DrBonus"), value: drBonus }] : []),
+        // "Those that require a HT roll to resist are resisted at +3" past 1/2D.
+        ...(beyondHalfDamage({ rangeYards: yardsBetween(shooter, token) ?? 0, halfDamageRange })
+          ? [{ label: game.i18n.localize("GWORLD.Affliction.PastHalfDamage"), value: 3 }]
+          : []),
+      ],
+      // A roll that fails is a condition somebody now has, and the card is
+      // where it is handed out (Campaigns pp. 428-429).
+      affliction: {
+        uuid: String(victim.uuid ?? ""),
+        name: String(victim.name ?? ""),
+        label,
+      },
+    });
+
+    // A roll that failed is an effect somebody now has. Which one is the
+    // GM's from the card for the Basic Set's own afflictions; a module may
+    // name its own instead, or beside it (since 1.49.0).
+    if (outcome && !outcome.success) {
+      await applyAfflictionEffects({
+        actor: victim,
+        attacker: actor,
+        item,
+        mode,
+        label,
+        margin: outcome.margin,
+        ...distance,
+        ...where,
+      });
+    }
+  }
+  if (outside.length > 0) {
+    ui.notifications?.info(game.i18n.format("GWORLD.Affliction.OutsideRadius", { names: outside.join(", "), yards: radius }));
+  }
 }

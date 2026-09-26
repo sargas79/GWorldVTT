@@ -1,80 +1,97 @@
 {{!-- The NPC sheet: one pane, no tabs. Everything a GM needs mid-combat.
 
+     It wears the character sheet's frame and components (sheet-v2.css): a dark
+     header, cream panels on the dark ground, the same attack cards and badges.
+
      One root element, because the sheet is a single Handlebars part and
      Foundry refuses to render a part that comes back as two: the header and
      the body used to sit side by side at the top level, and the sheet never
      opened. --}}
-<div class="isheet-npc">
-<div class="ihdr" style="grid-template-columns: 52px 1fr; padding: 13px 14px 12px">
-  <div class="iport blueprint">
-    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-    <img src="{{actor.img}}" alt="{{actor.name}}">
+<div class="v2-npc">
+<header class="v2-header v2-npc-header">
+  <div class="v2-portrait">
+    <img src="{{#if actor.img}}{{actor.img}}{{else}}icons/svg/mystery-man.svg{{/if}}" alt="{{actor.name}}">
   </div>
-  <div class="ihm" style="gap: 7px">
-    <div class="inrow">
-      <input class="iname" style="font-size: 22px" type="text" name="name" value="{{actor.name}}"
-             {{#unless editable}}disabled{{/unless}}>
-      {{#if groupSizeLabel}}<span class="ipts">{{groupSizeLabel}}</span>{{/if}}
-      {{#if editable}}
-        <button type="button" class="ibtn tiny" data-action="openFullSheet"
-                data-tooltip="{{localize "GWORLD.Npc.EditHint"}}">{{localize "GWORLD.Npc.Edit"}}</button>
-      {{/if}}
+
+  <div class="v2-identity">
+    <div class="v2-eyebrow">
+      <span>{{localize "GWORLD.SheetV2.Npc"}}</span>
+      {{#if groupSizeLabel}}<span aria-hidden="true">&mdash;</span><span>{{groupSizeLabel}}</span>{{/if}}
     </div>
-    <div class="ipools">
-      <div class="ipool">
-        <div class="ipt">
-          <span>HP</span><span class="ipv">{{system.hp.value}} / {{system.hp.max}}</span>
+    <input class="v2-name v2-npc-name" type="text" name="name" value="{{actor.name}}"
+           aria-label="{{localize 'GWORLD.SheetV2.Name'}}" {{#unless editable}}disabled{{/unless}}>
+    <div class="v2-meta"><span>TL {{system.tl}}</span></div>
+  </div>
+
+  {{#if editable}}
+    <div class="v2-header-side">
+      <button type="button" class="v2-button v2-build-button" data-action="openFullSheet"
+              data-tooltip="{{localize "GWORLD.Npc.EditHint"}}">{{> "gworld.v2icon.build"}} {{localize "GWORLD.Npc.Edit"}}</button>
+    </div>
+  {{/if}}
+</header>
+
+<div class="v2-npc-body">
+
+  {{!-- What is left of it, and the scores it rolls against. --}}
+  <div class="v2-panel v2-npc-vitals">
+    <div class="v2-npc-pools">
+      <div class="v2-pool">
+        <div class="v2-pool-head">
+          <span class="v2-pool-name">{{localize "GWORLD.Secondary.HP"}}</span>
+          <span class="v2-pool-value">{{system.hp.value}} <span class="v2-muted">/ {{system.hp.max}}</span></span>
         </div>
-        <div class="itrack">
-          <div class="ifill {{#if derived.reeling}}reeling{{/if}}" style="width: {{percent system.hp.value system.hp.max}}%"></div>
-        </div>
+        <div class="v2-bar v2-bar-hp"><span style="width: {{percent system.hp.value system.hp.max}}%"></span></div>
+        {{#if derived.reeling}}<span class="v2-pool-status v2-bad">{{localize "GWORLD.Health.reeling"}}</span>{{/if}}
       </div>
-      <div class="ipool">
-        <div class="ipt">
-          <span>FP</span><span class="ipv">{{system.fp.value}} / {{system.fp.max}}</span>
+      <div class="v2-pool">
+        <div class="v2-pool-head">
+          <span class="v2-pool-name">{{localize "GWORLD.Secondary.FP"}}</span>
+          <span class="v2-pool-value">{{system.fp.value}} <span class="v2-muted">/ {{system.fp.max}}</span></span>
         </div>
-        <div class="itrack">
-          <div class="ifill" style="width: {{percent system.fp.value system.fp.max}}%"></div>
-        </div>
+        <div class="v2-bar v2-bar-fp"><span style="width: {{percent system.fp.value system.fp.max}}%"></span></div>
       </div>
     </div>
+
+    <div class="v2-npc-scores">
+      {{#each statCells as |cell|}}
+        <div class="v2-score">
+          <span class="v2-stat-label">{{cell.label}}</span>
+          {{#if cell.rollable}}
+            <button type="button" class="v2-score-value" data-action="roll" data-roll-type="attribute"
+                    data-roll-label="{{cell.label}}" data-roll-target="{{cell.value}}">{{cell.value}}</button>
+          {{else}}
+            <span class="v2-score-value">{{cell.value}}</span>
+          {{/if}}
+        </div>
+      {{/each}}
+    </div>
   </div>
-</div>
 
-<div class="ibody" style="padding: 14px; gap: 14px">
-
-  <div class="cellgrid" style="grid-template-columns: repeat(8, minmax(0, 1fr))">
-    {{#each statCells as |cell|}}
-      <div class="cell {{#if cell.rollable}}rollable{{/if}}" style="padding: 6px 7px"
-           {{#if cell.rollable}}data-action="roll" data-roll-type="attribute"
-           data-roll-label="{{cell.label}}" data-roll-target="{{cell.value}}"{{/if}}>
-        <span class="cl">{{cell.label}}</span>
-        <span class="cv" style="font-size: 18px">{{cell.value}}</span>
+  <div class="v2-panel v2-npc-defenses">
+    <h2 class="v2-ph">{{localize "GWORLD.Section.ActiveDefenses"}}</h2>
+    <div class="v2-score-row">
+      <div class="v2-score">
+        <span class="v2-stat-label">{{localize "GWORLD.Secondary.Dodge"}}</span>
+        <button type="button" class="v2-score-value" data-action="roll" data-roll-type="dodge"
+                data-roll-label="{{localize 'GWORLD.Secondary.Dodge'}}" data-roll-target="{{derived.defenses.dodge.total}}">{{derived.defenses.dodge.total}}</button>
       </div>
-    {{/each}}
-  </div>
-
-  <div class="isec" style="gap: 7px">
-    <div class="grph">{{localize "GWORLD.Section.ActiveDefenses"}}</div>
-    <div class="npcline">
-      <span class="rollable" data-action="roll" data-roll-type="dodge"
-            data-roll-label="{{localize 'GWORLD.Secondary.Dodge'}}" data-roll-target="{{derived.defenses.dodge.total}}">
-        {{localize "GWORLD.Secondary.Dodge"}} <b>{{derived.defenses.dodge.total}}</b>
-      </span>
+      <div class="v2-score">
+        <span class="v2-stat-label">{{localize "GWORLD.Secondary.Parry"}}</span>
+        <span class="v2-score-value">{{#if derived.defenses.parry}}{{derived.defenses.parry.total}}{{else}}&mdash;{{/if}}</span>
+      </div>
+      <div class="v2-score">
+        <span class="v2-stat-label">{{localize "GWORLD.Secondary.Block"}}</span>
+        <span class="v2-score-value">{{#if derived.defenses.block}}{{derived.defenses.block.total}}{{else}}&mdash;{{/if}}</span>
+      </div>
+    </div>
+    <div class="v2-npc-armor">
       <span>
-        {{localize "GWORLD.Secondary.Parry"}}
-        <b>{{#if derived.defenses.parry}}{{derived.defenses.parry.total}}{{else}}&mdash;{{/if}}</b>
-      </span>
-      <span>
-        {{localize "GWORLD.Secondary.Block"}}
-        <b>{{#if derived.defenses.block}}{{derived.defenses.block.total}}{{else}}&mdash;{{/if}}</b>
-      </span>
-      <span class="wmode">
         {{#if derived.armorName}}{{derived.armorName}}{{else}}{{localize "GWORLD.Item.NoArmor"}}{{/if}}
-        {{#unless derived.shieldName}}, {{localize "GWORLD.Item.NoShield"}}{{/unless}}
+        {{~#unless derived.shieldName}}, {{localize "GWORLD.Item.NoShield"}}{{/unless}}
       </span>
       {{#if torsoDr}}
-        <span class="wmode">
+        <span class="v2-tag">
           {{localize "GWORLD.Armor.DRAbbr"}} {{torsoDr.dr}}
           {{~#if torsoDr.splits}}
             {{~#each torsoDr.exceptions as |ex|}} / {{ex.dr}} {{localize "GWORLD.Armor.Versus"}}
@@ -86,99 +103,77 @@
     </div>
   </div>
 
-  {{#if allAttacks.length}}
-    <div class="isec" style="gap: 7px">
-      <div class="grph">{{localize "GWORLD.Section.Attacks"}}</div>
-      <table class="gt">
-        <tbody>
-          {{#each allAttacks as |atk|}}
-            <tr data-item-id="{{atk.itemId}}">
-              <td><span class="wname">{{atk.name}}</span> <span class="wmode">{{atk.mode}}</span></td>
-              <td class="n">
-                {{#if atk.skillLevel}}<span class="lvl">{{atk.skillLevel}}</span>{{else}}<span class="bad">&mdash;</span>{{/if}}
-              </td>
-              <td class="dmg">{{shownDamage atk.damage}} <span class="dt">{{atk.damageType}}</span></td>
-              <td class="c">{{#if atk.range}}{{atk.range}}{{#if atk.minRange}} ({{localize "GWORLD.Ranged.MinRangeShort" yards=atk.minRange}}){{/if}}{{else}}{{atk.reach}}{{/if}}</td>
-              <td class="c">
-                {{#if atk.skillLevel}}
-                  <span class="rollable" data-action="roll" data-roll-type="attack"
-                        data-roll-label="{{atk.name}}" data-roll-target="{{atk.skillLevel}}"
-                        data-hit-modifier="{{atk.hitModifier}}"
-                        data-damage-type="{{atk.damageType}}"
-                        data-rapid-strike-halved="{{#if atk.rapidStrikeHalved}}1{{/if}}"
-                        data-unarmed="{{#if atk.unarmed}}1{{/if}}">
-                    {{> "gworld.die"}}
-                  </span>
-                {{/if}}
-              </td>
-            </tr>
-          {{/each}}
-        </tbody>
-      </table>
+  {{#if attacks.length}}
+    <div class="v2-panel v2-npc-attacks">
+      <h2 class="v2-ph">{{localize "GWORLD.Section.Attacks"}}</h2>
+      <div class="v2-attack-grid">
+        {{#each attacks as |entry|}}
+          {{> "gworld.v2.attackCard" atk=entry.atk ranged=entry.ranged key=entry.key}}
+        {{/each}}
+      </div>
     </div>
   {{/if}}
 
   {{#if notableSkills.length}}
-    <div class="isec" style="gap: 7px">
-      <div class="grph">{{localize "GWORLD.Section.SkillsOfNote"}}</div>
-      <div class="npcline">
+    <div class="v2-panel">
+      <h2 class="v2-ph">{{localize "GWORLD.Section.SkillsOfNote"}}</h2>
+      <div class="v2-npc-list">
         {{#each notableSkills as |skill|}}
-          <span class="rollable" data-action="roll" data-roll-type="skill"
-                data-roll-label="{{skill.name}}" data-roll-target="{{skill.level}}">
-            {{skill.name}} <b>{{skill.level}}</b>
-          </span>
+          <button type="button" class="v2-npc-entry" data-action="roll" data-roll-type="skill"
+                  data-roll-label="{{skill.name}}" data-roll-target="{{skill.level}}">
+            <span>{{skill.name}}</span><b>{{skill.level}}</b>
+          </button>
         {{/each}}
       </div>
     </div>
   {{/if}}
 
   {{#if notableSpells.length}}
-    <div class="isec" style="gap: 7px">
-      <div class="grph">{{localize "GWORLD.Section.SpellsKnown"}}</div>
-      <div class="npcline">
+    <div class="v2-panel">
+      <h2 class="v2-ph">{{localize "GWORLD.Section.SpellsKnown"}}</h2>
+      <div class="v2-npc-list">
         {{#each notableSpells as |spell|}}
-          <span class="rollable" data-action="castSpell" data-item-id="{{spell.id}}"
-                data-tooltip="{{localize 'GWORLD.Cast.Title'}}">
-            {{spell.name}} <b>{{spell.level}}</b>
-          </span>
+          <button type="button" class="v2-npc-entry" data-action="castSpell" data-item-id="{{spell.id}}"
+                  data-tooltip="{{localize 'GWORLD.Cast.Title'}}">
+            <span>{{spell.name}}</span><b>{{spell.level}}</b>
+          </button>
         {{/each}}
       </div>
     </div>
   {{/if}}
 
   {{#if swarm}}
-    <div class="isec" style="gap: 7px">
-      <div class="grph">{{localize "GWORLD.Swarm.Title"}}</div>
-      <div class="npcline">
-        <span>{{localize "GWORLD.Swarm.Line"
-                 damage=(either swarm.damage swarm.flatInjury)
-                 kind=(localize (concat "GWORLD.Swarm.Kind." swarm.kind))}}</span>
-        {{#if swarm.about}}<span class="wmode">{{swarm.about}}</span>{{/if}}
-      </div>
+    <div class="v2-panel">
+      <h2 class="v2-ph">{{localize "GWORLD.Swarm.Title"}}</h2>
+      <p class="v2-note">
+        {{localize "GWORLD.Swarm.Line"
+           damage=(either swarm.damage swarm.flatInjury)
+           kind=(localize (concat "GWORLD.Swarm.Kind." swarm.kind))}}
+        {{#if swarm.about}}<span class="v2-muted">&middot; {{swarm.about}}</span>{{/if}}
+      </p>
       {{#if swarm.inPlay}}
-        <div class="toolbar">
-          <button type="button" class="ibtn" data-action="swarmAttack"
-                  data-tooltip="{{localize "GWORLD.Swarm.AttackHint"}}">
-            {{localize "GWORLD.Swarm.Attack"}}
-          </button>
+        <div>
+          <button type="button" class="v2-button v2-button-red" data-action="swarmAttack"
+                  data-tooltip="{{localize "GWORLD.Swarm.AttackHint"}}">{{localize "GWORLD.Swarm.Attack"}}</button>
         </div>
       {{/if}}
     </div>
   {{/if}}
 
-  {{#if cannonFodderInPlay}}
-    {{!-- A mook (Campaigns p. 417): fails every defense, never goes all out,
-         and drops the moment anything gets through. --}}
-    <label class="inote icheck" data-tooltip="{{localize 'GWORLD.Cinematic.CannonFodderHint'}}">
-      <input type="checkbox" name="system.cannonFodder"
-             {{#if system.cannonFodder}}checked{{/if}} {{#unless editable}}disabled{{/unless}}>
-      <span>{{localize "GWORLD.Cinematic.CannonFodder"}}</span>
-    </label>
-  {{/if}}
-
-  {{#if system.tactics}}
-    <div class="inote">
-      {{> "gworld.info"}}<span>{{system.tactics}}</span>
+  {{#if (or system.tactics cannonFodderInPlay)}}
+    <div class="v2-panel v2-npc-notes">
+      {{#if cannonFodderInPlay}}
+        {{!-- A mook (Campaigns p. 417): fails every defense, never goes all out,
+             and drops the moment anything gets through. --}}
+        <label class="icheck" data-tooltip="{{localize 'GWORLD.Cinematic.CannonFodderHint'}}">
+          <input type="checkbox" name="system.cannonFodder"
+                 {{#if system.cannonFodder}}checked{{/if}} {{#unless editable}}disabled{{/unless}}>
+          <span>{{localize "GWORLD.Cinematic.CannonFodder"}}</span>
+        </label>
+      {{/if}}
+      {{#if system.tactics}}
+        <div class="v2-npc-tactics">{{> "gworld.info"}}<span>{{system.tactics}}</span></div>
+      {{/if}}
     </div>
   {{/if}}
 
@@ -187,9 +182,9 @@
        push the stat block off a one-pane sheet. Shown when there is anything
        to read, and to whoever can edit it so a GM can write one. --}}
   {{#if (or system.details.description editable)}}
-    <details class="isec tdfold npcdesc">
+    <details class="v2-panel tdfold npcdesc">
       <summary title="{{localize "GWORLD.Npc.DescriptionHint"}}">
-        <span class="grph">{{localize "GWORLD.Npc.Description"}}</span>
+        <span class="v2-ph">{{localize "GWORLD.Npc.Description"}}</span>
         {{#if description.first}}<span class="tdfirst">{{description.first}}</span>{{/if}}
       </summary>
       {{#if editable}}

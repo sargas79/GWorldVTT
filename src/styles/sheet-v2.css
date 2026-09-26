@@ -2066,3 +2066,94 @@
 
 /* A trait still to say what it is of. */
 .gworld.v2 .v2-tag-bad { border-color: var(--v2-red, #a33); color: var(--v2-red, #a33); }
+
+/* ── the NPC pane ──────────────────────────────────────────────────────── */
+
+/*
+ * The one-pane NPC sheet wears the frame and panels, with no rail and no tabs:
+ * a header, then the stat block as a column of panels that scrolls. Its root
+ * is one element, since the sheet is a single part.
+ */
+.gworld.v2.npc .window-content { display: flex; flex-direction: column; }
+.gworld.v2.npc .v2-npc { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.gworld.v2.npc .v2-npc-header { grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; padding: 10px 14px; }
+.gworld.v2.npc .v2-npc-header .v2-portrait { width: 64px; height: 64px; }
+.gworld.v2.npc .v2-npc-header .v2-header-side { grid-column: auto; align-self: center; }
+.gworld.v2.npc .v2-npc-name {
+  font-family: var(--font-heading);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: var(--v2-frame-text);
+}
+.gworld.v2.npc .v2-npc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px 16px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--v2-frame-line) transparent;
+  background: var(--v2-frame);
+}
+
+.gworld.v2.npc .v2-npc-pools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.gworld.v2.npc .v2-npc-pools .v2-bar { height: 12px; }
+.gworld.v2.npc .v2-npc-scores {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  row-gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-divider);
+}
+.gworld.v2.npc .v2-npc-scores .v2-score:nth-child(4n + 1) { border-left: 0; }
+.gworld.v2.npc .v2-npc-scores .v2-score-value,
+.gworld.v2.npc .v2-npc-defenses .v2-score-value { font-size: 24px; }
+
+.gworld.v2.npc .v2-npc-armor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-divider);
+  font-size: 12px;
+  color: var(--color-neutral-700);
+}
+.gworld.v2.npc .v2-npc-armor .v2-tag { margin-left: 0; font-size: 11px; }
+
+.gworld.v2.npc .v2-attack-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+
+/* Skills and spells of note: a name and its level, each pressed to roll. */
+.gworld.v2.npc .v2-npc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); column-gap: 14px; }
+.gworld.v2.npc .v2-npc-entry {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  width: auto;
+  height: auto;
+  padding: 3px 4px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--v2-ink) 12%, transparent);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  text-align: left;
+  color: var(--v2-ink);
+  cursor: pointer;
+}
+.gworld.v2.npc .v2-npc-entry span { min-width: 0; }
+.gworld.v2.npc .v2-npc-entry b { flex: none; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.gworld.v2.npc .v2-npc-entry:hover { background: var(--v2-panel-2); color: var(--v2-steel-deep); }
+
+.gworld.v2.npc .v2-npc-notes { gap: 8px; }
+.gworld.v2.npc .v2-npc-tactics { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 1.5; }
+.gworld.v2.npc .v2-npc-tactics svg { flex: none; margin-top: 3px; color: var(--v2-steel); }
+
+.gworld.v2.npc .npcdesc > summary .v2-ph { padding: 0; border: 0; }
+.gworld.v2.npc .npcdesc > summary .tdfirst { font-size: 12px; color: var(--color-neutral-700); }
+.gworld.v2.npc .npcdesc[open] > summary { padding-bottom: 6px; border-bottom: 1px solid var(--color-divider); }

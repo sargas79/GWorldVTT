@@ -791,15 +791,6 @@
 .gworld .npcline { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; }
 .gworld .npcline b { font-family: var(--font-heading); font-size: 13px; letter-spacing: 0.06em; }
 
-/* The NPC sheet's one root element: the header and the scrolling body inside
-   it lay out exactly as they did when they were the window's own children. */
-.gworld .isheet-npc {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
 /* ── limited view ──────────────────────────────────────────────────────── */
 
 .gworld .limited {
