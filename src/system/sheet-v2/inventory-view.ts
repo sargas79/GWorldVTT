@@ -84,6 +84,14 @@ export interface ReadyCandidate {
 }
 
 /**
+ * Whether an item can be moved between carried and stored: every physical
+ * thing, armour and shields as well as equipment. Stowing takes it off.
+ */
+export function canStow(type: unknown): boolean {
+  return type === "equipment" || type === "armor" || type === "shield";
+}
+
+/**
  * What is ready to hand, by name: equipped weapons and shields, then carried
  * consumables -- the draught and the throwing knife a player reaches for
  * without opening the pack.

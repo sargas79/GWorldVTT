@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { armorByArea, asGearSort, readiedItems, sortGear, totalWeight } from "../sheet-v2/inventory-view.js";
+import { armorByArea, asGearSort, canStow, readiedItems, sortGear, totalWeight } from "../sheet-v2/inventory-view.js";
 
 describe("armour by body area", () => {
   const pieces = [
@@ -55,5 +55,19 @@ describe("what is ready to hand", () => {
       { id: "5", name: "Antidote", type: "equipment", equipped: false, carried: false, armed: false, category: "consumable" },
     ];
     expect(readiedItems(items).map((i) => i.name)).toEqual(["Buckler", "Shortsword", "Healing Draught"]);
+  });
+});
+
+describe("canStow", () => {
+  it("stows armour and shields as well as equipment (#862)", () => {
+    expect(canStow("equipment")).toBe(true);
+    expect(canStow("armor")).toBe(true);
+    expect(canStow("shield")).toBe(true);
+  });
+
+  it("stows nothing that is not a thing", () => {
+    expect(canStow("trait")).toBe(false);
+    expect(canStow("skill")).toBe(false);
+    expect(canStow(undefined)).toBe(false);
   });
 });
