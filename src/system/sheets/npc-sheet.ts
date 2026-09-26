@@ -10,7 +10,7 @@ import { handleDamageAction, handleRollAction } from "../roll.js";
 import { castSpell } from "../casting.js";
 import { isRuleOn } from "../optional-rules.js";
 import { swarmAttack, swarmOf } from "../swarms.js";
-import { GWorldCharacterSheetV2 } from "./character-sheet-v2.js";
+import { GWorldCharacterSheetV2, attackKey } from "./character-sheet-v2.js";
 import type { SwarmProtection } from "../../rules/swarms.js";
 import type { Attribute } from "../../rules/types.js";
 import { summariseDescription } from "../description-summary.js";
@@ -62,14 +62,17 @@ async function promptForSwarmAttack(): Promise<{ protection: SwarmProtection; se
 
 export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static override DEFAULT_OPTIONS = {
-    classes: ["gworld", "sheet", "actor", "npc"],
-    position: { width: 480, height: "auto" },
+    // "v2" puts the character sheet's frame and components on it, as the
+    // vehicle and party sheets do; sheet-v2.css holds what the pane adds.
+    classes: ["gworld", "sheet", "actor", "npc", "v2"],
+    position: { width: 520, height: "auto" },
     window: { resizable: true },
     form: { submitOnChange: true, closeOnSubmit: false },
     actions: {
       roll: GWorldNpcSheet.#onRoll,
       rollDamage: GWorldNpcSheet.#onRollDamage,
       editItem: GWorldNpcSheet.#onEditItem,
+      readyWeapon: GWorldNpcSheet.#onReadyWeapon,
       castSpell: GWorldNpcSheet.#onCastSpell,
       swarmAttack: GWorldNpcSheet.#onSwarmAttack,
       openFullSheet: GWorldNpcSheet.#onOpenFullSheet,
@@ -80,7 +83,7 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   #fullSheet: GWorldCharacterSheetV2 | null = null;
 
   static override PARTS = {
-    sheet: { template: `${TEMPLATE_ROOT}/npc-sheet.hbs`, scrollable: [".ibody"] },
+    sheet: { template: `${TEMPLATE_ROOT}/npc-sheet.hbs`, scrollable: [".v2-npc-body"] },
   };
 
   static LIMITED_PARTS = {
@@ -162,7 +165,11 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
         cell("GWORLD.Secondary.DRAbbr", derived.dr),
       ],
 
-      allAttacks: [...derived.melee, ...derived.ranged],
+      // Each attack as the character sheet's card, which carries its roll.
+      attacks: [
+        ...(derived.melee ?? []).map((atk: any) => ({ atk, ranged: false })),
+        ...(derived.ranged ?? []).map((atk: any) => ({ atk, ranged: true })),
+      ].map((entry) => ({ ...entry, key: attackKey(entry.atk, entry.ranged) })),
       notableSkills,
       notableSpells,
       // A swarm attacks with none of those: it has a line of its own.
@@ -196,6 +203,15 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static async #onEditItem(this: GWorldNpcSheet, _event: Event, target: HTMLElement) {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     if (id) this.actor.items.get(id)?.sheet?.render({ force: true });
+  }
+
+  /** Readies a weapon an attack card shows as unready: a Ready maneuver. */
+  static async #onReadyWeapon(this: GWorldNpcSheet, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    if (!item) return;
+    await item.update({ "system.unready": false });
+    await this.actor.update({ "system.maneuver": "ready" });
   }
 
   /**
