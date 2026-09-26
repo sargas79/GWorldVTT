@@ -208,3 +208,55 @@ describe("migrateLearnableTraits", () => {
     expect(await api.migrateLearnableTraits()).toEqual({ skipped: false, changed: 0, failed: 0 });
   });
 });
+
+/** Containers already on sheets (sargas79/GWorldVTT#872; since API 1.161.0). */
+describe("migrateContainers", () => {
+  const gear = (id: string, name: string, system: Record<string, unknown> = {}) => ({
+    id, uuid: `Actor.a1.Item.${id}`, type: "equipment", name, _source: { system },
+  });
+  const compendium = (entries: object[]) => {
+    const pack = { collection: "gworld.equipment", locked: true, documentName: "Item", getIndex: vi.fn(async () => entries) };
+    (globals.game as any).packs = Object.assign([pack], { get: (id: string) => (id === "gworld.equipment" ? pack : undefined) });
+    return pack;
+  };
+
+  it("marks the compendium's containers characters hold, by name, with its capacity, once", async () => {
+    const api = await load();
+    const w = world();
+    compendium([
+      { name: "Backpack, Small", type: "equipment", system: { container: true, capacity: 40 } },
+      { name: "Hip Quiver", type: "equipment", system: { container: true, capacity: 0 } },
+      { name: "Torch", type: "equipment", system: {} },
+    ]);
+    w.actor.items = [
+      gear("g1", "Backpack, Small"),
+      gear("g2", "Hip Quiver"),
+      gear("g3", "Backpack, Small", { capacity: 35 }),
+      gear("g4", "Backpack, Small", { container: true, capacity: 0 }),
+      gear("g5", "Torch"),
+      { id: "t1", uuid: "Actor.a1.Item.t1", type: "trait", name: "Pouch", _source: { system: {} } },
+    ] as any;
+    expect(await api.migrateContainers()).toEqual({ skipped: false, changed: 3, failed: 0 });
+    expect(w.embeddedUpdates.flat()).toEqual([
+      { _id: "g1", "system.container": true, "system.capacity": 40 },
+      { _id: "g2", "system.container": true, "system.capacity": 0 },
+      // A capacity of its own is kept.
+      { _id: "g3", "system.container": true, "system.capacity": 35 },
+    ]);
+    expect(api.hasMigrated("gworld", api.CONTAINERS_STEP)).toBe(true);
+    expect(await api.migrateContainers()).toEqual({ skipped: true, changed: 0, failed: 0 });
+  });
+
+  it("waits for a compendium to read, and leaves a player's world alone", async () => {
+    const api = await load();
+    const w = world();
+    w.actor.items = [gear("g1", "Pouch")] as any;
+    expect(await api.migrateContainers()).toEqual({ skipped: false, changed: 0, failed: 0 });
+    expect(api.hasMigrated("gworld", api.CONTAINERS_STEP)).toBe(false);
+
+    compendium([{ name: "Pouch", type: "equipment", system: { container: true, capacity: 3 } }]);
+    (globals.game as any).user.isGM = false;
+    expect(await api.migrateContainers()).toEqual({ skipped: false, changed: 0, failed: 0 });
+    expect(w.embeddedUpdates).toEqual([]);
+  });
+});

@@ -911,6 +911,20 @@
             {{localize "GWORLD.Item.Wheelchair"}}
           </label>
         </div>
+        {{!-- A container other gear is kept in; whether it is one is the GM's to say. --}}
+        <div class="ifields">
+          <label class="icheck" data-tooltip="{{localize 'GWORLD.Container.IsContainerHint'}}">
+            <input type="checkbox" name="system.container" {{#if system.container}}checked{{/if}}
+                   {{#unless mayMarkContainer}}disabled{{/unless}} />
+            {{localize "GWORLD.Container.IsContainer"}}
+          </label>
+          {{#if system.container}}
+            <label data-tooltip="{{localize 'GWORLD.Container.CapacityHint'}}">{{localize "GWORLD.Container.Capacity"}}
+              <input type="number" name="system.capacity" value="{{system.capacity}}" step="1" min="0"
+                     {{#unless editable}}disabled{{/unless}} />
+            </label>
+          {{/if}}
+        </div>
         {{#if weapon.showQuality}}
           <div class="ifields">
             <label data-tooltip="{{localize 'GWORLD.Item.QualityHint'}}">{{localize "GWORLD.Item.Quality"}}

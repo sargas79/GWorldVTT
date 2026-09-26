@@ -409,9 +409,9 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         loadModeIndex: Math.max(0, loadModeIndex),
         // A box of rounds says how many it has left, and that count is edited here.
         isAmmunition: isAmmunition(item),
-        // Equipment can be a container; anything can be kept in one.
-        container: item.type === "equipment"
-          ? { is: isContainer(item), capacity: Number(s.capacity ?? 0) || 0, inside: rowById.get(String(item.id))?.inside ?? null, load: rowById.get(String(item.id))?.capacity ?? null }
+        // Gear made to hold gear is a container, as the item says; anything can be kept in one.
+        container: isContainer(item)
+          ? { capacity: Number(s.capacity ?? 0) || 0, inside: rowById.get(String(item.id))?.inside ?? null, load: rowById.get(String(item.id))?.capacity ?? null }
           : null,
         keptIn: {
           id: parentOf(String(item.id)) ?? "",

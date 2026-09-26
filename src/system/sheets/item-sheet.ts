@@ -261,6 +261,10 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
 
     context.isVehicle = item.type === "equipment" && item.system?.category === "vehicle";
 
+    // A container is gear made to hold gear -- a backpack, a pouch -- and the
+    // compendium says which. Making anything else one is the GM's call.
+    context.mayMarkContainer = context.editable && game.user?.isGM === true;
+
     // What a computer can run at once (Campaigns p. 472). Only shown for
     // something that has a Complexity at all, which is not most gear.
     const complexity = Number(item.system?.complexity) || 0;

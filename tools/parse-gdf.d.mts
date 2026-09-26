@@ -106,6 +106,7 @@ export declare function techLevel(value: string | undefined): string;
 export declare function fullLoad(shots: string | undefined): number;
 export declare function costOfLivingPercent(text: string | undefined): number;
 export declare function displayWeight(text: string | undefined): number;
+export declare function containerOf(text: string | undefined): { capacity: number } | null;
 /** The page reference for one book: "My Book p. 52". */
 export declare function reference(page: string | undefined, prefix: string, book: string): string;
 

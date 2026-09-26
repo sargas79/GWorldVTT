@@ -193,26 +193,14 @@
               <h4>{{localize "GWORLD.Container.Title"}}</h4>
               {{#if item.container}}
                 <div class="v2-box-line">
-                  <span>{{localize "GWORLD.Container.IsContainer"}}</span>
-                  {{#if @root.editable}}
-                    <input type="checkbox" data-item-flag="system.container" id="{{@root.sheetId}}-{{item.id}}-container" {{checked item.container.is}}
-                           aria-label="{{localize 'GWORLD.Container.IsContainer'}}">
-                  {{else}}<b>{{#if item.container.is}}{{localize "GWORLD.Container.Yes"}}{{else}}{{localize "GWORLD.Container.No"}}{{/if}}</b>{{/if}}
+                  <span data-tooltip="{{localize 'GWORLD.Container.CapacityHint'}}">{{localize "GWORLD.Container.Capacity"}}</span>
+                  <b>{{#if item.container.capacity}}{{item.container.capacity}} lb{{else}}&mdash;{{/if}}</b>
                 </div>
-                {{#if item.container.is}}
-                  <div class="v2-box-line">
-                    <span data-tooltip="{{localize 'GWORLD.Container.CapacityHint'}}">{{localize "GWORLD.Container.Capacity"}}</span>
-                    {{#if @root.editable}}
-                      <span><input type="number" class="v2-box-number" min="0" step="1" value="{{item.container.capacity}}" data-item-field="system.capacity"
-                             id="{{@root.sheetId}}-{{item.id}}-capacity" aria-label="{{localize 'GWORLD.Container.Capacity'}}"> lb</span>
-                    {{else}}<b>{{#if item.container.capacity}}{{item.container.capacity}} lb{{else}}&mdash;{{/if}}</b>{{/if}}
-                  </div>
-                  <div class="v2-box-line{{#if item.container.load.over}} v2-bad{{/if}}">
-                    <span>{{localize "GWORLD.Container.Inside"}}</span>
-                    <b>{{localize "GWORLD.Container.Holds" count=item.container.inside.count}} &middot; {{decimal item.container.inside.weight 1}}{{#if item.container.load}} / {{item.container.load.capacity}}{{/if}} lb &middot; ${{item.container.inside.cost}}</b>
-                  </div>
-                  {{#if item.container.load.over}}<p class="v2-note v2-bad">{{localize "GWORLD.Container.OverCapacity"}}</p>{{/if}}
-                {{/if}}
+                <div class="v2-box-line{{#if item.container.load.over}} v2-bad{{/if}}">
+                  <span>{{localize "GWORLD.Container.Inside"}}</span>
+                  <b>{{localize "GWORLD.Container.Holds" count=item.container.inside.count}} &middot; {{decimal item.container.inside.weight 1}}{{#if item.container.load}} / {{item.container.load.capacity}}{{/if}} lb &middot; ${{item.container.inside.cost}}</b>
+                </div>
+                {{#if item.container.load.over}}<p class="v2-note v2-bad">{{localize "GWORLD.Container.OverCapacity"}}</p>{{/if}}
               {{/if}}
               {{#if (or item.keptIn.options.length item.keptIn.id)}}
                 <div class="v2-box-line">

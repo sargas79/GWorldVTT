@@ -482,6 +482,7 @@
       "ItemType": "Moving items from {from} to {to}",
       "Fields": "Moving {document} fields",
       "Learnable": "Flagging learnable advantages",
+      "Containers": "Marking backpacks, pouches and quivers as containers",
       "Uncovered": "This world holds {label}, which the GURPS system has stopped defining or will stop defining. Install and enable {install}, and load the world with it under a system release that still defines this data before updating the system, or that data will be lost."
     },
     "Api": {
@@ -4168,8 +4169,7 @@
     "Container": {
       "Title": "Container",
       "IsContainer": "Holds other gear",
-      "Yes": "Yes",
-      "No": "No",
+      "IsContainerHint": "A backpack, a pouch, a quiver: gear made to hold other gear. The compendium marks these; only the GM can make anything else a container.",
       "Capacity": "Capacity",
       "CapacityHint": "What it holds, in pounds. 0 for no limit. Going over warns and does not refuse.",
       "Inside": "Inside",

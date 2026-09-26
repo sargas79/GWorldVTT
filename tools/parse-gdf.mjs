@@ -2087,6 +2087,23 @@ export function costOfLivingPercent(text) {
 }
 
 /**
+ * Whether a record is a container other gear is kept in, and what it holds
+ * in pounds (0 for no limit given): a backpack "holds 40 lbs." (Characters
+ * p. 288). GCA marks what can hold other items `isparent(yes)`, and gives a
+ * weight or a count capacity where the book states one; a quiver holds a
+ * count of arrows, not a weight, so it holds with no limit in pounds. A
+ * bottle, a canteen or a wineskin is a parent too, but what it holds is a
+ * measure of liquid, not gear. Null where the record is not a container.
+ */
+export function containerOf(text) {
+  const t = text ?? "";
+  if (!/isparent\(yes\)/i.test(t)) return null;
+  if (/\b(?:pints?|quarts?|gallons?)\b/i.test(t)) return null;
+  const m = /weightcapacity\((\d+(?:\.\d+)?)\)/i.exec(t);
+  return { capacity: m ? Number(m[1]) : 0 };
+}
+
+/**
  * A weight GCA states only for display, because the record's own is a
  * placeholder the player fills in: a complete wardrobe is "20+" pounds
  * (Characters p. 266).
@@ -2591,6 +2608,8 @@ export function parseEquipment(recs, reject, note, source = BASIC_SET_SOURCE) {
         category: categoryOf(name, armed),
         // Only rounds say what they fit; the field's default covers the rest.
         ...(ammunitionFitOf(name) ? { ammunition: { kind: "", fits: ammunitionFitOf(name) } } : {}),
+        // Only containers say so; the fields' defaults cover the rest.
+        ...(containerOf(r.text) ? { container: true, capacity: containerOf(r.text).capacity } : {}),
         equipmentQuality: "basic",
         forSkills: [],
         // The table's price buys good quality (Characters p. 274), and the
