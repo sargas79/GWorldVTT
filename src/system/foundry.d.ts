@@ -135,6 +135,8 @@ declare global {
            * checkbox group with nothing ticked.
            */
           _processFormData(event: Event | null, form: HTMLFormElement, formData: object): object;
+          /** Disables every control of the form, or enables them again; called with true when the sheet is not editable. */
+          _toggleDisabled(disabled: boolean): void;
         }
 
         class DialogV2 extends ApplicationV2 {

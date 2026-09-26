@@ -216,6 +216,10 @@
                 <button type="button" class="v2-button v2-button-steel" data-action="v2ToggleCarried">{{#if item.carried}}{{localize "GWORLD.SheetV2.MoveToStorage"}}{{else}}{{localize "GWORLD.SheetV2.Carry"}}{{/if}}</button>
               {{/if}}
             {{/if}}
+            {{#if @root.editable}}
+              <button type="button" class="v2-button" data-action="v2PostItem"
+                      data-tooltip="{{localize 'GWORLD.SheetV2.PostToChatHint'}}">{{localize "GWORLD.SheetV2.PostToChat"}}</button>
+            {{/if}}
             <button type="button" class="v2-button" data-action="editItem">{{localize "GWORLD.SheetV2.Edit"}}</button>
             {{#if @root.editable}}
               <button type="button" class="v2-button v2-button-red" data-action="deleteItem">{{localize "GWORLD.SheetV2.Drop"}}</button>

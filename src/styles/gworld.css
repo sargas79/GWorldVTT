@@ -930,6 +930,26 @@
   border-left: 2px solid var(--color-neutral-700);
   background: color-mix(in srgb, var(--color-text) 5%, transparent);
 }
+/* A trait or piece of gear shown to the table: its picture by its name, and
+   its description folded under its figures. */
+.gworld-chat .gc-item-img {
+  width: 22px;
+  height: 22px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border: none;
+  object-fit: contain;
+}
+.gworld-chat .gc-item-description summary {
+  cursor: pointer;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent-700);
+}
+.gworld-chat .gc-item-prose { margin-top: 4px; overflow-wrap: anywhere; }
+.gworld-chat .gc-item-prose p { margin: 0 0 4px; }
+.gworld-chat .gc-note { font-size: 10.5px; color: var(--color-neutral-700); }
 /* The apply row on a damage card: pick where it landed, then land it. */
 .gworld-chat .gc-apply {
   display: flex;

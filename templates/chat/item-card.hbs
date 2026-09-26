@@ -1,0 +1,21 @@
+<div class="gworld gworld-chat gworld-item-card">
+  <div class="gc-head">
+    <span class="gc-label">{{#if img}}<img class="gc-item-img" src="{{img}}" alt="">{{/if}}{{name}}</span>
+    <span class="gc-target">{{kinds}}</span>
+  </div>
+
+  {{#if facts.length}}
+    <div class="gc-mods">
+      {{#each facts as |fact|}}<span>{{#if fact.label}}{{fact.label}} {{/if}}<span class="gc-mod">{{fact.value}}</span></span>{{/each}}
+    </div>
+  {{/if}}
+
+  {{#if description}}
+    {{!-- Folded, so the chat stays short: a click opens it. --}}
+    <details class="gc-item-description">
+      <summary>{{localize "GWORLD.ItemCard.Description"}}</summary>
+      <div class="gc-item-prose">{{{description}}}</div>
+    </details>
+  {{/if}}
+  {{#if reference}}<div class="gc-note">{{reference}}</div>{{/if}}
+</div>
