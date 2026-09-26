@@ -264,7 +264,8 @@ function armorBlock(system: Record<string, any>, L: Localize): StatBlock {
     : String(dr);
   lines.push({ label: L("GWORLD.Column.DR"), value: drText });
 
-  const locations: string[] = Array.isArray(system.locations) ? system.locations.map(String) : [];
+  // Each place once: a piece that lists the same location twice covers it once.
+  const locations: string[] = Array.isArray(system.locations) ? [...new Set<string>(system.locations.map(String))] : [];
   lines.push({
     label: S("Covers"),
     value: locations.length ? locations.map((key) => L(`GWORLD.HitLocation.${key}`)).join(", ") : L("GWORLD.Item.WholeBody"),

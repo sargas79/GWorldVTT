@@ -55,7 +55,7 @@ import { effectiveCost, effectiveWeight } from "../data-extensions.js";
 import { gearGroupOf } from "../gear-groups.js";
 import { legalityClassOf, legalityNote } from "../legality.js";
 import { isRuleOn } from "../optional-rules.js";
-import { armorByArea, asGearSort, readiedItems, sortGear, type GearSort } from "../sheet-v2/inventory-view.js";
+import { armorByArea, asGearSort, canStow, readiedItems, sortGear, type GearSort } from "../sheet-v2/inventory-view.js";
 import {
   asProgressionMode,
   awardHistory,
@@ -346,7 +346,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const sort = asGearSort(this.gearSort.sort);
     const carriedGroups = ((context.gearGroups ?? []) as Array<{ key: string; label: string; rows: any[] }>).map((group) => ({
       ...group,
-      rows: sortGear(group.rows, sort, this.gearSort.descending).map((row) => ({ ...row, img: actor.items.get(row.id)?.img ?? "", canCarry: actor.items.get(row.id)?.type === "equipment", ammunition: isAmmunition(actor.items.get(row.id)) })),
+      rows: sortGear(group.rows, sort, this.gearSort.descending).map((row) => ({ ...row, img: actor.items.get(row.id)?.img ?? "", canCarry: canStow(actor.items.get(row.id)?.type), ammunition: isAmmunition(actor.items.get(row.id)) })),
     }));
     const stored = sortGear(((context.items?.stored ?? []) as any[]).map((item) => {
       const quantity = Number(item.system?.quantity ?? 1) || 1;
@@ -376,7 +376,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         cost: effectiveCost(item),
         equipped: Boolean(s.equipped),
         carried: s.carried !== false,
-        canCarry: item.type === "equipment",
+        canCarry: canStow(item.type),
         equippable: item.type !== "equipment" || armed(item),
         // The equipment's own figures: what the book prints and the player looks for.
         stats: gearStatistics({ type: item.type, system: item.system, objectStats: item.type === "shield" ? objectStats(item) : null }, attacks, localize),
@@ -407,7 +407,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       category: String(item.system?.category ?? ""),
       quantity: Number(item.system?.quantity ?? 1) || 1,
       weight: effectiveWeight(item),
-      canCarry: item.type === "equipment",
+      canCarry: canStow(item.type),
     })));
 
     const areas = armorByArea(physical.filter((i: any) => i.type === "armor").map((item: any) => ({
@@ -466,9 +466,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
   }
 
   /**
-   * Moving equipment between carried and stored by dragging a row onto the
-   * other table. Only equipment has the flag; armour and shields are worn or
-   * not, which Equip says.
+   * Moving equipment, armour and shields between carried and stored by
+   * dragging a row onto the other table. Stowing takes it off.
    */
   protected wireGearDrag(): void {
     if (!this.isEditable) return;
@@ -496,7 +495,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         const item = this.actor.items.get(id);
         const carried = zone.dataset.v2Drop === "carried";
         // Stowing puts the thing down: nothing left behind stays in hand.
-        if (item?.type === "equipment" && Boolean(item.system?.carried) !== carried) void item.update({ "system.carried": carried, ...(carried ? {} : { "system.equipped": false }) });
+        if (item && canStow(item.type) && (item.system?.carried !== false) !== carried) void item.update({ "system.carried": carried, ...(carried ? {} : { "system.equipped": false }) });
       });
     }
   }
@@ -1450,9 +1449,9 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
   /** Moves a piece of equipment into the pack or out of it. */
   static async #onToggleCarried(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
     const item = this.itemFrom(target);
-    if (!item || item.type !== "equipment" || !this.isEditable) return;
-    // Stowing puts the thing down: nothing left behind stays in hand.
-    const carried = !item.system.carried;
+    if (!item || !canStow(item.type) || !this.isEditable) return;
+    // Stowing puts the thing down: nothing left behind stays in hand or worn.
+    const carried = item.system.carried === false;
     await item.update({ "system.carried": carried, ...(carried ? {} : { "system.equipped": false }) });
   }
 

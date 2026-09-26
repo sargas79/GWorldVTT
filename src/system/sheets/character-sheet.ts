@@ -1625,12 +1625,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       ...items.carried.map((i: any) => ({ item: i, notes: describeModes(i), equippable: false })),
       // Armour arrives wrapped with its coverage text for the protection card,
       // so the inventory has to reach through to the item itself.
-      ...items.armor.map((a: any) => ({
+      ...items.armor.filter((a: any) => a.item.system.carried !== false).map((a: any) => ({
         item: a.item,
         notes: `DR ${a.item.system.dr} — ${a.coverage}`,
         equippable: true,
       })),
-      ...items.shields.map((i: any) => ({ item: i, notes: `DB ${i.system.db}`, equippable: true })),
+      ...items.shields.filter((i: any) => i.system.carried !== false).map((i: any) => ({ item: i, notes: `DB ${i.system.db}`, equippable: true })),
     ].map(({ item, notes, equippable }) => ({
       id: item.id,
       name: item.name,
@@ -1712,7 +1712,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       armor: byType("armor").map((a: any) => ({
         item: a,
         coverage: (a.system.locations ?? []).length
-          ? (a.system.locations as string[])
+          ? [...new Set(a.system.locations as string[])]
               .map((l) => game.i18n.localize(`GWORLD.HitLocation.${l}`))
               .join(", ")
           : game.i18n.localize("GWORLD.Item.WholeBody"),
@@ -1735,8 +1735,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
             modifier: Number(t.system.derived?.defaultModifier ?? t.system.defaultModifier) || 0,
           }),
         })),
-      carried: equipment.filter((i: any) => i.system.carried),
-      stored: equipment.filter((i: any) => !i.system.carried),
+      carried: equipment.filter((i: any) => i.system.carried !== false),
+      // Armour and shields are stowed as equipment is, and listed with it.
+      stored: [...equipment, ...byType("armor"), ...byType("shield")].filter((i: any) => i.system.carried === false),
     };
   }
 
@@ -4009,7 +4010,9 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onToggleEquipped(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const item = this.itemFrom(target);
     if (!item) return;
-    await item.update({ "system.equipped": !item.system.equipped });
+    // Putting on or taking up something stowed takes it out of storage.
+    const equipped = !item.system.equipped;
+    await item.update({ "system.equipped": equipped, ...(equipped && item.system.carried === false ? { "system.carried": true } : {}) });
   }
 
   protected itemFrom(target: HTMLElement) {
