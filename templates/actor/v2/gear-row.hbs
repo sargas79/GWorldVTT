@@ -1,15 +1,22 @@
 {{!-- One piece of gear as a list row: picture and name with its tags,
      quantity, weight, cost, and its buttons. Called with row and stored.
-     Equipment drags between carried and stored. --}}
+     Gear drags between carried and stored, and into a container's row; what
+     is in a container is listed under it, indented. --}}
 <div class="v2-row v2-gear{{#if stored}} dim{{/if}}{{#if (eq (concat 'item:' row.id) @root.v2.inventory.selected)}} selected{{/if}}"
      data-item-id="{{row.id}}" data-v2-row="inventory:item:{{row.id}}" data-v2-name="{{row.name}}" data-action="v2Select"
      role="option" tabindex="0" aria-selected="{{#if (eq (concat 'item:' row.id) @root.v2.inventory.selected)}}true{{else}}false{{/if}}"
-     {{#if (and @root.editable (or stored row.canCarry))}}draggable="true" data-v2-draggable{{/if}}>
+     {{#if (and @root.editable (or stored row.canCarry))}}draggable="true" data-v2-draggable{{/if}}
+     {{#if (and @root.editable row.container)}}data-v2-container-drop="{{row.id}}"{{/if}}>
   <img class="v2-gear-img" src="{{row.img}}" alt="">
   <span class="v2-row-name">
     {{row.name}}
     {{#if row.equipped}}<span class="v2-tag v2-tag-steel">{{localize "GWORLD.Item.Equipped"}}</span>{{/if}}
     {{#if row.legality.label}}<span class="v2-tag{{#if row.legality.restricted}} v2-tag-red{{/if}}">{{row.legality.label}}</span>{{/if}}
+    {{#if (and row.container (or row.capacity row.inside.count))}}
+      {{!-- What is inside: how full against its capacity where it has one. --}}
+      <span class="v2-tag v2-tag-container{{#if row.capacity.over}} v2-tag-red{{/if}}"
+            data-tooltip="{{localize 'GWORLD.Container.InsideHint' count=row.inside.count weight=(decimal row.inside.weight 1) cost=row.inside.cost}}">{{#if row.capacity}}{{decimal row.capacity.used 1}} / {{row.capacity.capacity}} lb{{else}}{{localize 'GWORLD.Container.Holds' count=row.inside.count}}{{/if}}</span>
+    {{/if}}
   </span>
   {{#if (and @root.editable row.ammunition)}}
     {{!-- A box of rounds: the count is edited in the row as rounds are bought, found and lost. --}}
@@ -39,3 +46,8 @@
     {{/if}}
   </span>
 </div>
+{{#if row.contents.length}}
+  <div class="v2-contents" role="group" aria-label="{{localize 'GWORLD.Container.ContentsOf' name=row.name}}">
+    {{#each row.contents as |child|}}{{> "gworld.v2.gearRow" row=child stored=../stored}}{{/each}}
+  </div>
+{{/if}}

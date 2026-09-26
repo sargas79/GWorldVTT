@@ -79,6 +79,8 @@ import {
 import { GWorldCharacterSheet } from "./character-sheet.js";
 import { VIEW_CONTROLS } from "../sheet-v2/view-controls.js";
 import { postItemCard } from "../item-card.js";
+import { canPutInside, capacityOf, containerIdOf, isContainer, nestRows } from "../containers.js";
+import { putInside } from "../container-moves.js";
 import { familiaritiesOf, familiarityApplies } from "../tech-level.js";
 import { isFamiliar, toggleFamiliarity } from "../../rules/tech-level.js";
 
@@ -344,14 +346,30 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     ];
 
     const sort = asGearSort(this.gearSort.sort);
-    const carriedGroups = ((context.gearGroups ?? []) as Array<{ key: string; label: string; rows: any[] }>).map((group) => ({
+    const sortedGroups = ((context.gearGroups ?? []) as Array<{ key: string; label: string; rows: any[] }>).map((group) => ({
       ...group,
       rows: sortGear(group.rows, sort, this.gearSort.descending).map((row) => ({ ...row, img: actor.items.get(row.id)?.img ?? "", canCarry: canStow(actor.items.get(row.id)?.type), ammunition: isAmmunition(actor.items.get(row.id)) })),
     }));
-    const stored = sortGear(((context.items?.stored ?? []) as any[]).map((item) => {
+    // What is in a container is listed under it, whatever kind of thing it is:
+    // the rows of every group are folded together, and each top row goes back
+    // to its own group.
+    const parentOf = (id: string) => containerIdOf(actor.items, id);
+    const dress = (row: any): any => ({
+      ...row,
+      contents: row.contents.map(dress),
+      container: isContainer(actor.items.get(row.id)),
+      capacity: capacityOf(actor.items.get(row.id)?.system?.capacity, row.inside.weight),
+    });
+    const groupOf = new Map<string, string>(sortedGroups.flatMap((g) => g.rows.map((r: any) => [String(r.id), g.key] as [string, string])));
+    const carriedTop = nestRows(sortedGroups.flatMap((g) => g.rows), parentOf).map(dress);
+    const carriedGroups = sortedGroups.map((group) => ({ ...group, rows: carriedTop.filter((row) => groupOf.get(String(row.id)) === group.key) }));
+    const stored = nestRows(sortGear(((context.items?.stored ?? []) as any[]).map((item) => {
       const quantity = Number(item.system?.quantity ?? 1) || 1;
       return { id: String(item.id), name: String(item.name ?? ""), img: item.img ?? "", quantity, weight: effectiveWeight(item) * quantity, cost: effectiveCost(item) * quantity };
-    }), sort, this.gearSort.descending);
+    }), sort, this.gearSort.descending), parentOf).map(dress);
+    const flat = (rows: any[]): any[] => rows.flatMap((row) => [row, ...flat(row.contents ?? [])]);
+    const rowById = new Map<string, any>([...flat(carriedTop), ...flat(stored)].map((row) => [String(row.id), row]));
+    const containers = physical.filter((i: any) => isContainer(i)).sort(byName);
 
     const reloading = isRuleOn("reloading");
     const details = await Promise.all(physical.map(async (item: any) => {
@@ -391,6 +409,17 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         loadModeIndex: Math.max(0, loadModeIndex),
         // A box of rounds says how many it has left, and that count is edited here.
         isAmmunition: isAmmunition(item),
+        // Equipment can be a container; anything can be kept in one.
+        container: item.type === "equipment"
+          ? { is: isContainer(item), capacity: Number(s.capacity ?? 0) || 0, inside: rowById.get(String(item.id))?.inside ?? null, load: rowById.get(String(item.id))?.capacity ?? null }
+          : null,
+        keptIn: {
+          id: parentOf(String(item.id)) ?? "",
+          name: String(actor.items.get(parentOf(String(item.id)) ?? "")?.name ?? ""),
+          options: containers
+            .filter((c: any) => canPutInside(actor.items, String(item.id), String(c.id)))
+            .map((c: any) => ({ id: String(c.id), name: String(c.name ?? ""), selected: String(c.id) === parentOf(String(item.id)) })),
+        },
         descriptionHtml: await this.enriched(s.description, item),
         reference: s.reference ?? "",
       };
@@ -421,7 +450,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     }))).map((area) => ({ ...area, label: L(`GWORLD.SheetV2.Area.${area.key}`) }));
 
     const state = this.stateOf("inventory");
-    const keys = [...readied.map((r) => `item:${r.id}`), ...carriedGroups.flatMap((g) => g.rows.map((r: any) => `item:${r.id}`)), ...stored.map((r) => `item:${r.id}`)];
+    const keys = [...readied.map((r) => `item:${r.id}`), ...carriedGroups.flatMap((g) => flat(g.rows).map((r: any) => `item:${r.id}`)), ...flat(stored).map((r) => `item:${r.id}`)];
     const selected = selectedKey(keys, state.selected);
     state.selected = selected;
     const chipKeys = carriedGroups.map((g) => g.key);
@@ -467,15 +496,45 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
 
   /**
    * Moving equipment, armour and shields between carried and stored by
-   * dragging a row onto the other table. Stowing takes it off.
+   * dragging a row onto the other table, and into a container by dropping it
+   * on the container's row. Stowing takes it off; dropping it on a table
+   * takes it out of any container. The row also carries Foundry's own drag
+   * data, so it can be dropped on another actor's sheet.
    */
   protected wireGearDrag(): void {
     if (!this.isEditable) return;
     const type = "application/x-gworld-item-row";
     for (const row of this.element.querySelectorAll<HTMLElement>("[data-v2-draggable]")) {
       row.addEventListener("dragstart", (event) => {
+        event.stopPropagation();
         event.dataTransfer?.setData(type, String(row.dataset.itemId ?? ""));
-        if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+        const item = this.actor.items.get(row.dataset.itemId ?? "");
+        if (item?.toDragData) event.dataTransfer?.setData("text/plain", JSON.stringify(item.toDragData()));
+        if (event.dataTransfer) event.dataTransfer.effectAllowed = "copyMove";
+      });
+    }
+    for (const target of this.element.querySelectorAll<HTMLElement>("[data-v2-container-drop]")) {
+      target.addEventListener("dragover", (event) => {
+        if (!event.dataTransfer?.types.includes(type)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        target.classList.add("v2-drop-into");
+      });
+      target.addEventListener("dragleave", () => target.classList.remove("v2-drop-into"));
+      target.addEventListener("drop", (event) => {
+        const id = event.dataTransfer?.getData(type);
+        target.classList.remove("v2-drop-into");
+        if (!id) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const item = this.actor.items.get(id);
+        const container = this.actor.items.get(target.dataset.v2ContainerDrop ?? "");
+        if (!item || !container) return;
+        if (!canPutInside(this.actor.items, String(item.id), String(container.id))) {
+          if (item.id !== container.id) ui.notifications?.warn(game.i18n.format("GWORLD.Container.CannotHold", { item: item.name, container: container.name }));
+          return;
+        }
+        void putInside(item, container);
       });
     }
     for (const zone of this.element.querySelectorAll<HTMLElement>("[data-v2-drop]")) {
@@ -494,8 +553,12 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         event.stopPropagation();
         const item = this.actor.items.get(id);
         const carried = zone.dataset.v2Drop === "carried";
+        if (!item || !canStow(item.type)) return;
+        const moved = (item.system?.carried !== false) !== carried;
+        // Dropped on the table itself: out of whatever it was in.
+        if (!moved && !item.system?.containerId) return;
         // Stowing puts the thing down: nothing left behind stays in hand.
-        if (item && canStow(item.type) && (item.system?.carried !== false) !== carried) void item.update({ "system.carried": carried, ...(carried ? {} : { "system.equipped": false }) });
+        void item.update({ "system.carried": carried, "system.containerId": "", ...(carried ? {} : { "system.equipped": false }) });
       });
     }
   }
@@ -1254,6 +1317,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     this.wireStatusPicker();
     this.wireListControls();
     this.wireGearDrag();
+    this.wireContainerChoice();
     this.wireJournalKinds();
     this.wireAttackSkills();
   }
@@ -1452,7 +1516,20 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     if (!item || !canStow(item.type) || !this.isEditable) return;
     // Stowing puts the thing down: nothing left behind stays in hand or worn.
     const carried = item.system.carried === false;
-    await item.update({ "system.carried": carried, ...(carried ? {} : { "system.equipped": false }) });
+    // Moved on its own, it comes out of the container it was in; a container
+    // moved takes its contents with it (GWorldItem._onUpdate).
+    await item.update({ "system.carried": carried, "system.containerId": "", ...(carried ? {} : { "system.equipped": false }) });
+  }
+
+  /** The detail panel's choice of container: one to put the item in, or none. */
+  protected wireContainerChoice(): void {
+    for (const select of this.element.querySelectorAll<HTMLSelectElement>("select[data-v2-kept-in]")) {
+      select.addEventListener("change", () => {
+        const item = this.actor.items.get(select.dataset.v2KeptIn ?? "");
+        if (!item || !this.isEditable) return;
+        void putInside(item, select.value ? this.actor.items.get(select.value) ?? null : null);
+      });
+    }
   }
 
   /** Sorts the carried and stored tables by a column, or flips the order of the one in force. */

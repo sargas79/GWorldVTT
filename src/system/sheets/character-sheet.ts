@@ -303,6 +303,8 @@ import {
   describeModes,
 } from "./character-prompts.js";
 import { reportRefusedDrop } from "./drop-errors.js";
+import { contentsOf, isContainer } from "../containers.js";
+import { copyContentsWith } from "../container-moves.js";
 import { templateGrants } from "../sheet-v2/template-grants.js";
 import { boughtForScore } from "../sheet-v2/builder-attributes.js";
 export { chooseTemplateOptions, pickTemplateItem } from "./character-prompts.js";
@@ -2821,7 +2823,15 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       if (!chosen) return null;
       return this.actor.createEmbeddedDocuments("Item", [chosen]);
     }
-    if (item?.type !== "template") return super._onDropItem(event, item);
+    if (item?.type !== "template") {
+      const result: any = await super._onDropItem(event, item);
+      // A container given by another actor brings what is inside it.
+      const created = Array.isArray(result) ? result[0] : result;
+      if (created && created !== item && item?.parent && item.parent !== this.actor && isContainer(item)) {
+        await copyContentsWith(item, created);
+      }
+      return result;
+    }
 
     const template = templateFromItem(item);
     if (!template) return null;
@@ -3446,6 +3456,24 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onDeleteItem(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     const item = this.itemFrom(target);
     if (!item) return;
+    // A container with something in it asks what becomes of what is inside.
+    const inside = isContainer(item) ? contentsOf(this.actor.items, String(item.id)) : [];
+    if (inside.length) {
+      const answer = await foundry.applications.api.DialogV2.wait({
+        window: { title: game.i18n.localize("GWORLD.Prompt.DeleteItemTitle") },
+        content: `<p>${game.i18n.format("GWORLD.Container.DeletePrompt", { name: foundry.utils.escapeHTML(String(item.name ?? "")), count: inside.length })}</p>`,
+        buttons: [
+          { action: "out", label: game.i18n.localize("GWORLD.Container.DeleteTakeOut"), default: true },
+          { action: "all", label: game.i18n.localize("GWORLD.Container.DeleteAll") },
+          { action: "cancel", label: game.i18n.localize("GWORLD.Chat.Cancel") },
+        ],
+        rejectClose: false,
+      });
+      if (answer === "all") await this.actor.deleteEmbeddedDocuments("Item", [String(item.id), ...inside]);
+      // Taking them out happens as the container goes (GWorldItem._onDelete).
+      else if (answer === "out") await item.delete();
+      return;
+    }
     const confirmed = await foundry.applications.api.DialogV2.confirm({
       window: { title: game.i18n.localize("GWORLD.Prompt.DeleteItemTitle") },
       content: `<p>${game.i18n.format("GWORLD.Prompt.DeleteItem", { name: item.name })}</p>`,

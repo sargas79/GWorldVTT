@@ -1415,6 +1415,11 @@
 .gworld.v2 .v2-gear .v2-row-actions { min-width: 0; }
 .gworld.v2 .v2-row-icon.on { color: var(--v2-steel-deep); background: var(--v2-steel-soft); border-color: var(--v2-steel); }
 .gworld.v2 .v2-group.v2-drop-over { box-shadow: 0 0 0 2px var(--v2-gold); }
+/* A container's contents, indented under its row; the row it is dropped into lights up. */
+.gworld.v2 .v2-contents { margin-left: 18px; border-left: 2px solid var(--v2-panel-line); }
+.gworld.v2 .v2-gear.v2-drop-into { box-shadow: inset 0 0 0 2px var(--v2-gold); background: var(--v2-gold-soft); }
+.gworld.v2 .v2-tag-container { background: var(--v2-panel-3); color: var(--v2-ink); }
+.gworld.v2 .v2-box-line input.v2-box-number { width: 5em; text-align: right; }
 .gworld.v2 .v2-group.v2-stored .v2-group-sub { font-size: 11px; }
 .gworld.v2 .v2-inventory .v2-groups .v2-empty { padding: 6px 8px; }
 

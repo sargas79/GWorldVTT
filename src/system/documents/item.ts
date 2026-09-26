@@ -10,6 +10,8 @@
 
 import { afterPrepare, effectivePrice } from "../data-extensions.js";
 import { defaultItemIcon, isGenericIcon } from "../item-icons.js";
+import { isContainer } from "../containers.js";
+import { carryContentsWith, takeOutContentsOf } from "../container-moves.js";
 
 export class GWorldItem extends Item {
   /** The picture a new item gets, by its kind rather than the same for all. */
@@ -42,5 +44,23 @@ export class GWorldItem extends Item {
     super.prepareDerivedData();
     this.effectivePrice = effectivePrice(this);
     afterPrepare(this);
+  }
+
+  /** A container carried or stowed takes its contents with it, done once by the client that moved it. */
+  override _onUpdate(changed: object, options: object, userId: string): void {
+    super._onUpdate(changed, options, userId);
+    if (userId !== game.user?.id) return;
+    if ((changed as { system?: { carried?: unknown; container?: unknown } }).system?.carried === undefined) return;
+    void carryContentsWith(this);
+  }
+
+  /** A container deleted leaves what was in it loose, done once by the client that deleted it. */
+  override _onDelete(options: object, userId: string): void {
+    super._onDelete(options, userId);
+    if (userId !== game.user?.id || !isContainer(this)) return;
+    const parent = this.parent;
+    const id = String(this.id);
+    // After the deletion settles, so contents deleted in the same call are gone first.
+    setTimeout(() => void takeOutContentsOf(id, parent), 0);
   }
 }

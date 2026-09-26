@@ -112,6 +112,7 @@ Contents:
 | `migration` | Moving world data from the system into a module (since 1.6.0). |
 | `world` | Facts about the campaign world (since 1.77.0): `controlRating()`, and `weather(actor?)` and `setTemperature(temperatureF)` (since 1.138.0). See [The campaign world](#the-campaign-world). |
 | `gmScreen` | The GM Screen (since 1.157.0): `open(tab?)`, `roll(sectionId, options?)`, `registerTable`, `registerRuleBlock`, `registerTab`. See [The GM Screen](#the-gm-screen). |
+| `containers` | Containers (since 1.159.0): `isContainer(item)`, `containerOf(item)`, `contentsOf(container)`, `putInside(item, container)`. See [Containers](#containers). |
 
 Since 1.5.0, `combat`, `roll` and `actors` also carry the procedure extension
 points described under [Inside the system's own procedures](#inside-the-systems-own-procedures).
@@ -3630,6 +3631,35 @@ that are world settings rather than anything on an actor:
   temperature (rounded to a whole degree), or clears it with null. Only the
   GM may. It resolves to whether it was set: false for anyone else or a
   value that isn't a number.
+
+## Containers
+
+Since 1.159.0 a piece of equipment can be a container -- a backpack, a pouch,
+a chest -- that other equipment, armour and shields are kept in, and the
+Inventory tab lists what is inside indented under it. None of it is a book's
+rule: a container has only its own weight and cost.
+
+- An equipment item is a container where `system.container` is true, and
+  `system.capacity` gives what it holds in pounds (0 for no limit; going over
+  warns on the sheet and refuses nothing).
+- Every physical item has `system.containerId`: the id of the container on the
+  same actor it is kept in, blank for loose. A reference to an item that is
+  gone, is not a container, or would put an item inside itself reads as loose.
+- A container's contents follow it: carried or stowed, its contents are too,
+  so `system.carried` stays the only thing encumbrance and the rest read.
+  Deleting a container leaves its contents loose (the sheet offers to delete
+  them with it), and a container dropped on another actor's sheet brings
+  copies of what is inside.
+
+`game.gworld.api.containers`:
+
+- **`isContainer(item)`** -- whether it is a container.
+- **`containerOf(item)`** -- the container item it is kept in, or null.
+- **`contentsOf(container)`** -- every item inside it, however deep.
+- **`putInside(item, container)`** -- puts an item in a container on the same
+  actor (carried or stored as the container is), or takes it out with null.
+  Resolves without doing anything where it may not go: into itself, or into
+  something it holds.
 
 ## The GM Screen
 
