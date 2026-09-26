@@ -3595,6 +3595,17 @@ is in a party. `game.gworld.api.party` (since 1.68.0):
 - **`party.addMembers(party, actors)`** and **`party.removeMember(party, uuid)`**
   -- change the roster, for a user who owns the party. Only characters and
   NPCs join, and an actor is in one party at a time.
+- **`party.awardRecipients(party)`** (since 1.160.0) -- the members an award
+  to the party reaches: the characters that still exist, in the party's order.
+  NPC members are left out.
+- **`party.awardPoints(party, points, { note?, session? })`** (since 1.160.0)
+  -- gives every character in the party the whole award, as the party sheet's
+  Award points button does: each gets `{ points, note, session, at }` added to
+  the end of `system.points.awards`, the same log the character sheet's own
+  award writes, and one chat message names who got what. GM only; `points`
+  must be a whole number above zero. Resolves to the characters awarded, or an
+  empty array where nothing was awarded (not a GM, not a party, no characters,
+  or a bad amount).
 - **`hooks.partyChanged`** (`gworld.partyChanged`) fires with `(party,
   members)` when a party's roster changes, after its members have been
   prepared again.

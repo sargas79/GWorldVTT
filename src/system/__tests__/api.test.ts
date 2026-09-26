@@ -22,9 +22,9 @@ describe("the add-on API", () => {
     expect(api.hooks).toEqual({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK, partyChanged: "gworld.partyChanged", campaignChanged: "gworld.campaignChanged" });
   });
 
-  it("reaches the party: whose it is, its members and the campaign's terms (since 1.68.0)", () => {
+  it("reaches the party: whose it is, its members and the campaign's terms (since 1.68.0), and awards its characters points (since 1.160.0)", () => {
     const api = createApi();
-    expect(Object.keys(api.party).sort()).toEqual(["addMembers", "campaignTerms", "membersOf", "of", "removeMember"]);
+    expect(Object.keys(api.party).sort()).toEqual(["addMembers", "awardPoints", "awardRecipients", "campaignTerms", "membersOf", "of", "removeMember"]);
     // Nothing is in a party where there is no world.
     expect(api.party.of({ uuid: "Actor.nobody", type: "character" })).toBeNull();
     // Since 1.82.0 the terms are the world's: a character in no party still has them.

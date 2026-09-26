@@ -24,12 +24,14 @@ import { CONTROL_RATINGS } from "../../rules/legality.js";
 import { isRuleOn } from "../optional-rules.js";
 import { RulesSettings } from "../apps/rules-settings.js";
 import { CompendiumSourcesSettings } from "../apps/compendium-sources.js";
-import { addMembers, partyOf, removeMember, resolveMember } from "../party.js";
+import { addMembers, awardPartyPoints, awardRecipientsOf, membersOf, partyOf, removeMember, resolveMember } from "../party.js";
+import { nextSessionLabel, type PointAward } from "../../rules/character-points.js";
 import { setCampaignTerm, worldCampaignTerms } from "../campaign.js";
 import { CAMPAIGN_TERM_KEYS, type CampaignTermKey } from "../party/roster.js";
 import {
   canJoin,
   memberRow,
+  partyAwardPoints,
   membersByName,
   partyLanguages,
   partySkills,
@@ -104,6 +106,51 @@ async function promptForMembers(party: any): Promise<string[] | null> {
   return Array.isArray(result) ? (result as string[]) : null;
 }
 
+/**
+ * Asks the GM what the party's award is, showing who gets it -- the dialog
+ * is the confirmation, since the list of characters is on it. Null when
+ * dismissed.
+ */
+async function promptForPartyAward(
+  recipients: readonly any[],
+  skipped: readonly any[],
+  suggestedSession: string,
+): Promise<{ points: number; note: string; session: string } | null> {
+  const esc = foundry.utils.escapeHTML;
+  const P = (key: string) => game.i18n.localize(`GWORLD.Points.${key}`);
+  const field = (label: string, input: string) => `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${esc(label)}</span>${input}</label>`;
+  const who = recipients
+    .map((a: any) => `<li style="display:flex;align-items:center;gap:8px">
+        <img src="${esc(String(a.img || DEFAULT_IMAGE))}" alt="" style="width:24px;height:24px;object-fit:cover;border:0;border-radius:50%">
+        <span>${esc(String(a.name ?? ""))}</span></li>`)
+    .join("");
+  const leftOut = skipped.length
+    ? `<p class="ihint" style="margin:0">${esc(L("AwardSkipped", { names: skipped.map((a: any) => String(a.name ?? "")).join(", ") }))}</p>`
+    : "";
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("AwardTitle") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      ${field(P("AwardPoints"), '<input type="number" name="points" value="3" min="1" step="1" autofocus style="width:90px">')}
+      ${field(P("AwardNote"), '<input type="text" name="note" value="" style="width:180px">')}
+      ${field(P("AwardSession"), `<input type="text" name="session" value="${esc(suggestedSession)}" style="width:180px">`)}
+      <p class="ihint" style="margin:6px 0 0">${esc(L("AwardEachGets"))}</p>
+      <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;max-height:40vh;overflow-y:auto">${who}</ul>
+      ${leftOut}
+    </div>`,
+    ok: {
+      label: L("AwardEach"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const read = (name: string) => String(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? "").trim();
+        return { points: Number(read("points")), note: read("note"), session: read("session") };
+      },
+    },
+    rejectClose: false,
+  });
+  return result && typeof result === "object" ? (result as { points: number; note: string; session: string }) : null;
+}
+
 export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static override DEFAULT_OPTIONS = {
     // "v2" puts the character sheet's frame and components on it.
@@ -116,6 +163,7 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       removeMember: GWorldPartySheet.#onRemoveMember,
       addMembers: GWorldPartySheet.#onAddMembers,
       addPlayers: GWorldPartySheet.#onAddPlayers,
+      awardPoints: GWorldPartySheet.#onAwardPoints,
       roll: GWorldPartySheet.#onRoll,
       changeMana: GWorldPartySheet.#onChangeMana,
       openRules: GWorldPartySheet.#onOpenRules,
@@ -511,6 +559,26 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       return;
     }
     await addMembers(this.actor, players);
+  }
+
+  /** Character points for every character in the party, at once (#871). The GM's alone. */
+  static async #onAwardPoints(this: GWorldPartySheet) {
+    if (!game.user?.isGM) return;
+    const recipients = awardRecipientsOf(this.actor);
+    if (recipients.length === 0) {
+      ui.notifications?.info(L("NoneToAward"));
+      return;
+    }
+    const skipped = membersOf(this.actor).filter((a: any) => !recipients.includes(a));
+    const logs = recipients.flatMap((a: any) => (a.system?.points?.awards ?? []) as PointAward[]);
+    const suggested = nextSessionLabel(logs, (n) => game.i18n.format("GWORLD.Points.SessionN", { n }));
+    const asked = await promptForPartyAward(recipients, skipped, suggested);
+    if (!asked) return;
+    if (partyAwardPoints(asked.points) === null) {
+      ui.notifications?.warn(L("AwardPositive"));
+      return;
+    }
+    await awardPartyPoints(this.actor, asked.points, { note: asked.note, session: asked.session });
   }
 
   /** A roll made from a member's row is that member's roll. */

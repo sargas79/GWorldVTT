@@ -96,7 +96,7 @@ import { REGISTER_RULES_HOOK, isAddonRuleKey, namespacedRuleKey, registerRule, r
 import { rollDamage, rollSuccess } from "./roll.js";
 import { postResistance } from "./spell-resistance.js";
 import { manaLevel } from "./casting.js";
-import { PARTY_CHANGED_HOOK, addMembers, membersOf, partyOf, removeMember } from "./party.js";
+import { PARTY_CHANGED_HOOK, addMembers, awardPartyPoints, awardRecipientsOf, membersOf, partyOf, removeMember } from "./party.js";
 import { CAMPAIGN_CHANGED_HOOK, actorCampaignTerms, worldCampaignTerms } from "./campaign.js";
 import { objectStats, type ItemObjectStats } from "./object-stats.js";
 import { vehicleAboard } from "./vehicle-aboard.js";
@@ -111,7 +111,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.159.0";
+export const API_VERSION = "1.160.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -856,7 +856,7 @@ export interface GWorldApi {
   readonly hazards: typeof hazardsApi;
   /** Areas on a scene that change rolls made in or through them (since 1.63.0). */
   readonly areas: typeof areasApi;
-  /** The party an actor is in, its members and the campaign's terms (since 1.68.0). */
+  /** The party an actor is in, its members and the campaign's terms (since 1.68.0); awarding its characters points (since 1.160.0). */
   readonly party: typeof partyApi;
   /** Facts about the campaign world (since 1.77.0): its Control Rating, its terms since 1.82.0, and the day's temperature since 1.138.0. */
   readonly world: typeof worldApi;
@@ -987,9 +987,13 @@ const magic = Object.freeze({ ...magicApi, postResistance, manaLevel });
  * The party namespace (since 1.68.0): which party an actor is in and its
  * members. `campaignTerms` is kept for modules written against it; since
  * 1.82.0 the terms are world settings (`world.campaignTerms`), and it gives
- * them for any player character, with its party or null.
+ * them for any player character, with its party or null. Since 1.160.0 the GM
+ * awards character points to every character in a party (`awardPoints`).
  */
-const partyApi = Object.freeze({ of: partyOf, membersOf, campaignTerms: actorCampaignTerms, addMembers, removeMember });
+const partyApi = Object.freeze({
+  of: partyOf, membersOf, campaignTerms: actorCampaignTerms, addMembers, removeMember,
+  awardRecipients: awardRecipientsOf, awardPoints: awardPartyPoints,
+});
 
 /**
  * The world namespace (since 1.77.0): the campaign's Control Rating (Campaigns

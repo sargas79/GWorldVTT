@@ -1,6 +1,26 @@
 import { describe, expect, it } from "vitest";
 
-import { awardsNewestFirst, earnedPoints, nextSessionLabel, pointsLedger } from "../character-points.js";
+import { awardsNewestFirst, earnedPoints, nextSessionLabel, pointsLedger, withAward } from "../character-points.js";
+
+describe("adding an award to the log", () => {
+  it("puts it at the end and leaves the rest as it was", () => {
+    const log = [{ points: 5, note: "Session 1", at: 1, session: "Session 1" }];
+    const next = withAward(log, { points: 3, note: "the heist", session: "Session 2", at: 2 });
+    expect(next).toEqual([...log, { points: 3, note: "the heist", at: 2, session: "Session 2" }]);
+    expect(log).toHaveLength(1);
+  });
+
+  it("stamps it now, and fills what was left out", () => {
+    const before = Date.now();
+    const [award] = withAward([], { points: 2 });
+    expect(award).toMatchObject({ points: 2, note: "", session: "" });
+    expect(award!.at).toBeGreaterThanOrEqual(before);
+  });
+
+  it("keeps whole points only", () => {
+    expect(withAward([], { points: 2.7, at: 1 })[0]!.points).toBe(2);
+  });
+});
 
 describe("what a character has earned", () => {
   it("adds the awards up", () => {
