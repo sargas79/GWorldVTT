@@ -175,6 +175,10 @@
               <button type="button" class="v2-button v2-button-steel rollable" data-action="weaknessExposure"
                       data-tooltip="{{localize 'GWORLD.Weakness.ExposedHint'}}">{{localize "GWORLD.Weakness.Exposed"}}</button>
             {{/if}}
+            {{#if @root.editable}}
+              <button type="button" class="v2-button" data-action="v2PostItem"
+                      data-tooltip="{{localize 'GWORLD.SheetV2.PostToChatHint'}}">{{localize "GWORLD.SheetV2.PostToChat"}}</button>
+            {{/if}}
             <button type="button" class="v2-button" data-action="editItem">{{localize "GWORLD.SheetV2.Edit"}}</button>
             {{#if @root.editable}}
               <button type="button" class="v2-button v2-button-red" data-action="deleteItem">{{> "gworld.trash"}} {{localize "GWORLD.Action.Delete"}}</button>

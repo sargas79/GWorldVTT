@@ -4164,6 +4164,18 @@
       "FleshWound": "Flesh wound",
       "FleshWoundHint": "1 point reduces the injury to 1 HP or FP."
     },
+    "ItemCard": {
+      "Description": "Description",
+      "Levels": "Levels",
+      "Reaction": "Reaction",
+      "SelfControl": "Self-control",
+      "Points": "Points",
+      "Dr": "DR",
+      "Db": "DB",
+      "Quantity": "Quantity",
+      "Weight": "Weight",
+      "Cost": "Cost"
+    },
     "Weakness": {
       "Exposed": "Exposed",
       "ExposedHint": "Apply exposure to what this Weakness is to. One 1d per interval, straight off HP (or FP for Fatigue Only), regardless of DR (Characters p. 161).",
@@ -4632,6 +4644,8 @@
       "WouldOverspend": "{points} CP over budget",
       "Upgrade": "Upgrade",
       "SelectSomething": "Select a row to see it here.",
+      "PostToChat": "Show in chat",
+      "PostToChatHint": "Post this to the chat, so the table can read what it is and does.",
       "Browse": "Browse",
       "Add": "Add",
       "NoneYet": "None yet.",

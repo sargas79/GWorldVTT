@@ -178,6 +178,10 @@
             {{#if (and @root.editable (eq row.kind "skill"))}}
               <button type="button" class="v2-button" data-action="v2PinSkill">{{#if row.pinned}}{{localize "GWORLD.SheetV2.Unpin"}}{{else}}{{localize "GWORLD.SheetV2.Pin"}}{{/if}}</button>
             {{/if}}
+            {{#if @root.editable}}
+              <button type="button" class="v2-button" data-action="v2PostItem"
+                      data-tooltip="{{localize 'GWORLD.SheetV2.PostToChatHint'}}">{{localize "GWORLD.SheetV2.PostToChat"}}</button>
+            {{/if}}
             <button type="button" class="v2-button" data-action="editItem">{{localize "GWORLD.SheetV2.Edit"}}</button>
             {{#if @root.editable}}
               <button type="button" class="v2-button v2-button-red" data-action="deleteItem">{{> "gworld.trash"}} {{localize "GWORLD.Action.Delete"}}</button>

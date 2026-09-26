@@ -77,6 +77,8 @@ import {
   type JournalKind,
 } from "../sheet-v2/journal-links.js";
 import { GWorldCharacterSheet } from "./character-sheet.js";
+import { VIEW_CONTROLS } from "../sheet-v2/view-controls.js";
+import { postItemCard } from "../item-card.js";
 import { familiaritiesOf, familiarityApplies } from "../tech-level.js";
 import { isFamiliar, toggleFamiliarity } from "../../rules/tech-level.js";
 
@@ -111,6 +113,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2CreateEntry: GWorldCharacterSheetV2.#onCreateEntry,
       v2ShowLink: GWorldCharacterSheetV2.#onShowLink,
       v2ViewPortrait: GWorldCharacterSheetV2.#onViewPortrait,
+      v2PostItem: GWorldCharacterSheetV2.#onPostItem,
       v2EditPortrait: GWorldCharacterSheetV2.#onEditPortrait,
       v2RollPlain: GWorldCharacterSheetV2.#onRollPlain,
     },
@@ -1235,6 +1238,17 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     if (title) title.textContent = label;
   }
 
+  /**
+   * A sheet its viewer can't edit has every control disabled. The ones that
+   * only change what is shown -- a row, a chip, a Journal pane, a search box
+   * -- stay live, so an observer can read the whole character.
+   */
+  override _toggleDisabled(disabled: boolean): void {
+    super._toggleDisabled(disabled);
+    if (!disabled) return;
+    for (const control of this.element.querySelectorAll<HTMLButtonElement>(VIEW_CONTROLS)) control.disabled = false;
+  }
+
   override async _onRender(context: object, options: object): Promise<void> {
     await super._onRender(context, options);
     this.wireListFilters();
@@ -1600,6 +1614,14 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       flavor: game.i18n.localize("GWORLD.SheetV2.PlainRollFlavor"),
       rolls: [roll],
     });
+  }
+
+  /** Shows the selected trait, skill or piece of gear to the table, as a card in the chat. */
+  static async #onPostItem(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    if (!item || !this.isEditable) return;
+    await postItemCard(item);
   }
 
   /** Opens the character's portrait full size, where a GM can show it to the players. */
