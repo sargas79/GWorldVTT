@@ -209,7 +209,7 @@
       <div class="v2-panel v2-defenses">
         <h2 class="v2-ph">{{localize "GWORLD.SheetV2.ActiveDefenses"}}</h2>
         {{> "gworld.v2.defenseCards"}}
-        <p class="v2-note">{{localize "GWORLD.SheetV2.RetreatHint"}}</p>
+        <p class="v2-note">{{#if retreatAllowed}}{{localize "GWORLD.SheetV2.RetreatHint"}} {{/if}}{{localize "GWORLD.SheetV2.DefendHint"}}</p>
       </div>
     </div>
 

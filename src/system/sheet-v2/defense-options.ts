@@ -41,6 +41,8 @@ export interface DefenseState {
   allOutDefenseTarget?: unknown;
   /** The All-Out Defense condition, which stands for the maneuver. */
   allOutDefense?: unknown;
+  /** Whether the Retreat rule is in play (it is an optional rule); on unless said otherwise. */
+  retreatAllowed?: boolean;
   /** What the parry and the block are made with, for Retreat's exception. */
   defenses?: Partial<Record<DefenseKey, { skillName?: unknown; isFencing?: unknown } | null>> | null;
 }
@@ -74,7 +76,7 @@ export function withDefenseOptions<C extends DefenseCard>(
   return cards.map((card) => {
     const key = isDefenseKey(card.key) ? card.key : null;
     const used = key ? state.defenses?.[key] : null;
-    const bonus = key
+    const bonus = key && state.retreatAllowed !== false
       ? retreatBonus({ defense: key, skill: String(used?.skillName ?? ""), isFencing: used?.isFencing === true })
       : 0;
     const on = card.available && bonus > 0 && retreating.has(card.key);

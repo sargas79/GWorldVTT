@@ -16,9 +16,11 @@
       <span class="v2-stat-note">{{def.source}}</span>
       {{#if (and def.available @root.editable)}}
         <span class="v2-defense-options">
+          {{#if def.retreat.bonus}}
           <button type="button" class="v2-defense-option{{#if def.retreat.on}} on{{/if}}" data-action="v2Retreat" data-defense="{{def.key}}"
                   aria-pressed="{{#if def.retreat.on}}true{{else}}false{{/if}}"
                   data-tooltip="{{localize 'GWORLD.SheetV2.RetreatOption' bonus=def.retreat.bonus}}">{{localize "GWORLD.Tactical.Retreat"}} +{{def.retreat.bonus}}</button>
+          {{/if}}
           <button type="button" class="v2-defense-option{{#if def.defend.on}} on{{/if}}" data-action="v2Defend" data-defense="{{def.key}}"
                   aria-pressed="{{#if def.defend.on}}true{{else}}false{{/if}}"
                   data-tooltip="{{#if def.defend.on}}{{localize 'GWORLD.SheetV2.DefendOn'}}{{else}}{{localize 'GWORLD.SheetV2.DefendOption' bonus=def.defend.bonus}}{{/if}}">{{localize "GWORLD.SheetV2.Defend"}} +{{def.defend.bonus}}</button>

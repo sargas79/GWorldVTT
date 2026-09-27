@@ -24,6 +24,14 @@ describe("withDefenseOptions", () => {
     expect(judo[0]!.retreat.bonus).toBe(3);
   });
 
+  it("offers no retreat where the Retreat rule is off", () => {
+    const off = withDefenseOptions(cards, { retreatAllowed: false }, new Set(["dodge"]));
+    expect(off.map((c) => [c.retreat.bonus, c.retreat.on, c.shown])).toEqual([[0, false, 9], [0, false, 10], [0, false, 0]]);
+    const partial = readFileSync(join(process.cwd(), "templates", "actor", "v2", "defense-cards.hbs"), "utf8");
+    // The chip is drawn only where a retreat is worth something.
+    expect(partial).toMatch(/\{\{#if def\.retreat\.bonus\}\}\s*<button[^>]*data-action="v2Retreat"/);
+  });
+
   it("shows a chosen retreat on the figure, only for a defense that can be rolled", () => {
     const shown = withDefenseOptions(cards, {}, new Set(["dodge", "block"]));
     expect(shown.map((c) => [c.key, c.shown, c.retreat.on])).toEqual([

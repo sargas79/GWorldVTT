@@ -169,8 +169,10 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       allOutDefenseOption: system.allOutDefenseOption,
       allOutDefenseTarget: system.allOutDefenseTarget,
       allOutDefense: system.conditions?.allOutDefense,
+      retreatAllowed: isRuleOn("retreat"),
       defenses: system.derived?.defenses ?? null,
     }, this.retreating);
+    context.retreatAllowed = isRuleOn("retreat");
     context.v2 = {
       tabLabel: tabs[active]?.label ?? "",
       points,
@@ -1697,14 +1699,10 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     this.showSelected(`journal-${kind}`, `link:${uuid}`);
   }
 
-  /**
-   * A plain 3d6 under the character's name, with no target and nothing
-   * judged: the GM asked for one, and will read it themselves.
-   */
   /** Chooses a retreat for a defense's next roll, or takes it back (Campaigns p. 377). */
   static #onRetreat(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
     const key = target.dataset.defense ?? "";
-    if (!(DEFENSE_KEYS as readonly string[]).includes(key) || !this.isEditable) return;
+    if (!(DEFENSE_KEYS as readonly string[]).includes(key) || !this.isEditable || !isRuleOn("retreat")) return;
     if (this.retreating.has(key)) this.retreating.delete(key);
     else this.retreating.add(key);
     void this.render();
@@ -1730,6 +1728,10 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     if (result && this.retreating.delete(key)) void this.render();
   }
 
+  /**
+   * A plain 3d6 under the character's name, with no target and nothing
+   * judged: the GM asked for one, and will read it themselves.
+   */
   static async #onRollPlain(this: GWorldCharacterSheetV2) {
     const roll = new Roll("3d6");
     await roll.evaluate();
