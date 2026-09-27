@@ -329,3 +329,32 @@ export function lockedTerms(terms: CampaignTerms | null): Record<CampaignTermKey
     disadvantageLimit: terms?.disadvantageLimit !== null && terms?.disadvantageLimit !== undefined,
   };
 }
+
+// ── awarding character points to the party ────────────────────────────────
+
+/**
+ * Who a party award reaches: the characters, not the NPCs. An NPC travelling
+ * with the party is the GM's to build, and earns no points at the table.
+ */
+export function receivesPartyAward(type: unknown): boolean {
+  return type === "character";
+}
+
+/** The members a party award reaches, in the order given; NPCs and missing members are left out. */
+export function partyAwardRecipients<T extends { type?: unknown }>(members: readonly (T | null | undefined)[]): T[] {
+  return members.filter((m): m is T => !!m && receivesPartyAward(m.type));
+}
+
+/**
+ * The points in an award to the party: a whole number above zero, or null.
+ *
+ * A single character's log takes a negative award as a correction; handed to
+ * a whole party at once, a negative or empty award is a slip, so it is refused.
+ */
+export function partyAwardPoints(value: unknown): number | null {
+  if (typeof value !== "number" && typeof value !== "string") return null;
+  if (typeof value === "string" && value.trim() === "") return null;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n <= 0) return null;
+  return n;
+}

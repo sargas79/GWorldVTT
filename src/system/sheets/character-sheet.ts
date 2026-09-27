@@ -213,7 +213,7 @@ import { effectiveCost, effectiveWeight, itemSectionsFor, registeredItemType, ru
 import { registeredTabsShownOn } from "../sheet-tabs.js";
 import { openCampaignTerms } from "../campaign.js";
 import { DRESS_STATES } from "../../rules/cinematic.js";
-import { awardsNewestFirst, nextSessionLabel, type PointAward } from "../../rules/character-points.js";
+import { awardsNewestFirst, nextSessionLabel, withAward, type PointAward } from "../../rules/character-points.js";
 import { exposeToWeakness } from "../weakness.js";
 import { requestGuidance } from "../bonus-points.js";
 import { activeSpellActionsFor, anyPointPools, registeredPointPools } from "../roll-extensions.js";
@@ -3129,13 +3129,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onAwardPoints(this: GWorldCharacterSheet) {
     const stored = (this.actor.system as { points?: { awards?: PointAward[] } }).points?.awards ?? [];
     const asked = await promptForAward(nextSessionLabel(stored, (n) => game.i18n.format("GWORLD.Points.SessionN", { n })));
-    if (!asked || asked.points === 0) return;
+    // Whole points only, as the log keeps them: half a point is no award.
+    if (!asked || Math.trunc(Number(asked.points) || 0) === 0) return;
 
-    const awards: PointAward[] = [
-      ...stored,
-      { points: asked.points, note: asked.note, at: Date.now(), session: asked.session },
-    ];
-    await this.actor.update({ "system.points.awards": awards });
+    await this.actor.update({ "system.points.awards": withAward(stored, asked) });
   }
 
   /**

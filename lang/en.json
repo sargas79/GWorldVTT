@@ -4574,7 +4574,18 @@
       "WorldHint": "Foundry's settings for this world, the same ones as on the settings page.",
       "SceneMana": "this scene: {level}",
       "RuleOff": "rule off",
-      "Notes": "Notes"
+      "Notes": "Notes",
+      "AwardPoints": "Award points",
+      "AwardPointsHint": "Give every character in the party the same character points at once, each added to that character's log. NPCs get none.",
+      "AwardTitle": "Award character points to the party",
+      "AwardEachGets": "Each of these characters gets the whole award:",
+      "AwardSkipped": "Not awarded (NPCs): {names}",
+      "AwardEach": "Award to each",
+      "NoneToAward": "No character in this party to award points to.",
+      "AwardPositive": "An award to the party is a whole number of points above zero.",
+      "AwardChatTitle": "Character points awarded",
+      "AwardChatPoints": "{points} each",
+      "AwardChatWho": "To {names}"
     },
     "Campaign": {
       "startingPoints": {

@@ -73,6 +73,26 @@ export function pointsLedger(options: {
 }
 
 /**
+ * The log with one more award at the end, stamped now unless a time is given.
+ * The log is only ever added to, so the award goes after everything already
+ * in it and nothing already there changes.
+ */
+export function withAward(
+  awards: readonly PointAward[],
+  award: { points: number; note?: string; session?: string; at?: number },
+): PointAward[] {
+  return [
+    ...awards,
+    {
+      points: Math.trunc(Number(award.points) || 0),
+      note: String(award.note ?? ""),
+      at: Number(award.at ?? Date.now()) || 0,
+      session: String(award.session ?? ""),
+    },
+  ];
+}
+
+/**
  * Awards ordered newest first, which is the order a log is read in.
  *
  * Anything never stamped with a time sorts to the end rather than the front:

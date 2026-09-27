@@ -8,10 +8,43 @@ import {
   memberRow,
   membersByName,
   partyLanguages,
+  partyAwardPoints,
+  partyAwardRecipients,
   partySkills,
+  receivesPartyAward,
   removeMember,
   termsFrom,
 } from "../party/roster.js";
+
+/** Character points for the whole party at once (sargas79/GWorldVTT#871). */
+describe("an award to the party", () => {
+  it("reaches the characters and no one else", () => {
+    expect(receivesPartyAward("character")).toBe(true);
+    expect(receivesPartyAward("npc")).toBe(false);
+    expect(receivesPartyAward("vehicle")).toBe(false);
+    expect(receivesPartyAward(undefined)).toBe(false);
+  });
+
+  it("leaves NPCs and missing members out, in the party's order", () => {
+    const ada = { name: "Ada", type: "character" };
+    const guide = { name: "Guide", type: "npc" };
+    const bo = { name: "Bo", type: "character" };
+    expect(partyAwardRecipients([ada, guide, null, bo, undefined])).toEqual([ada, bo]);
+    expect(partyAwardRecipients([guide])).toEqual([]);
+  });
+
+  it("is a whole number of points above zero", () => {
+    expect(partyAwardPoints(3)).toBe(3);
+    expect(partyAwardPoints("5")).toBe(5);
+    expect(partyAwardPoints(" 2 ")).toBe(2);
+  });
+
+  it("refuses zero, a negative, a fraction and anything not a number", () => {
+    for (const bad of [0, -1, "-3", 1.5, "2.5", "", "  ", "three", NaN, Infinity, null, undefined, {}]) {
+      expect(partyAwardPoints(bad)).toBeNull();
+    }
+  });
+});
 
 describe("the member list", () => {
   const list = [{ uuid: "Actor.a" }, { uuid: "Actor.b" }];

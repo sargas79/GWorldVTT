@@ -18,8 +18,11 @@ import {
   addMembers as addToList,
   PINNED_FLAG,
   canJoin,
+  partyAwardPoints,
+  partyAwardRecipients,
   removeMember as removeFromList,
 } from "./party/roster.js";
+import { withAward, type PointAward } from "../rules/character-points.js";
 import { registerPartySidebar } from "./party/sidebar.js";
 
 export const PARTY_TYPE = "party";
@@ -165,6 +168,63 @@ export async function addMembers(party: any, actors: readonly any[]): Promise<vo
 export async function removeMember(party: any, uuid: string): Promise<void> {
   if (!party?.isOwner || !uuid) return;
   await party.update({ "system.members": removeFromList(party.system?.members ?? [], uuid) });
+}
+
+/** The characters in a party an award would reach: its members that still exist, less the NPCs. */
+export function awardRecipientsOf(party: any): any[] {
+  return partyAwardRecipients(membersOf(party));
+}
+
+/**
+ * Awards the same character points to every character in the party (#871):
+ * each gets the whole award, added to their own log exactly as the award on
+ * their sheet adds it, and one chat message says who got what.
+ *
+ * Only a GM awards points. NPC members get nothing; a number that is not a
+ * whole number above zero awards nothing. Resolves to the characters awarded.
+ */
+export async function awardPartyPoints(
+  party: any,
+  points: number,
+  options: { note?: string; session?: string } = {},
+): Promise<any[]> {
+  if (!isParty(party) || (globalThis as any).game?.user?.isGM !== true) return [];
+  const amount = partyAwardPoints(points);
+  if (amount === null) return [];
+  const recipients = awardRecipientsOf(party);
+  if (recipients.length === 0) return [];
+
+  const note = String(options.note ?? "").trim();
+  const session = String(options.session ?? "").trim();
+  const at = Date.now();
+  // One character who cannot take it does not stop the rest, and the card
+  // names only those who did.
+  const awarded: any[] = [];
+  for (const actor of recipients) {
+    const awards = (actor.system?.points?.awards ?? []) as PointAward[];
+    try {
+      await actor.update({ "system.points.awards": withAward(awards, { points: amount, note, session, at }) });
+      awarded.push(actor);
+    } catch (error) {
+      console.error(`gworld | the party's award could not be given to ${String(actor.name ?? "")}`, error);
+    }
+  }
+  if (awarded.length === 0) return [];
+
+  const esc = foundry.utils.escapeHTML;
+  const names = awarded.map((a: any) => String(a.name ?? "")).join(", ");
+  const detail = [session, note].filter(Boolean).join(" · ");
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ alias: String(party.name ?? "") }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${esc(L("AwardChatTitle"))}</span>`
+      + `<span class="gc-target">${esc(L("AwardChatPoints", { points: amount }))}</span></div>`
+      + `<div class="gc-note">${esc(L("AwardChatWho", { names }))}</div>`
+      + (detail ? `<div class="gc-note">${esc(detail)}</div>` : "")
+      + `</div>`,
+    flags: { [SYSTEM_ID]: { partyAward: { partyUuid: String(party.uuid), points: amount, members: awarded.map((a: any) => String(a.uuid)) } } },
+  });
+  return awarded;
 }
 
 /** Wires the index, the members' refresh, a new party's ownership and the sidebar. Called at init. */

@@ -21,6 +21,11 @@
   </div>
 
   <div class="v2-header-side">
+    {{!-- Character points for every character in the party: the GM's to hand out. --}}
+    {{#if isGM}}
+      <button type="button" class="v2-button v2-build-button" data-action="awardPoints"
+              data-tooltip="{{localize "GWORLD.Party.AwardPointsHint"}}">{{> "gworld.plus"}} {{localize "GWORLD.Party.AwardPoints"}}</button>
+    {{/if}}
     {{#if editable}}
       <button type="button" class="v2-button v2-build-button" data-action="addMembers"
               data-tooltip="{{localize "GWORLD.Party.AddMembersHint"}}">{{> "gworld.plus"}} {{localize "GWORLD.Party.AddMembers"}}</button>
