@@ -16,6 +16,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import {
   addMembers as addToList,
+  attendingRecipients,
   PINNED_FLAG,
   canJoin,
   partyAwardPoints,
@@ -181,18 +182,22 @@ export function awardRecipientsOf(party: any): any[] {
  * their sheet adds it, and one chat message says who got what.
  *
  * Only a GM awards points. NPC members get nothing; a number that is not a
- * whole number above zero awards nothing. Resolves to the characters awarded.
+ * whole number above zero awards nothing. With `members` (UUIDs or actors),
+ * only the characters named there get it -- those who attended (#890); an
+ * empty list awards no one. Resolves to the characters awarded.
  */
 export async function awardPartyPoints(
   party: any,
   points: number,
-  options: { note?: string; session?: string } = {},
+  options: { note?: string; session?: string; members?: readonly (string | { uuid?: unknown })[] } = {},
 ): Promise<any[]> {
   if (!isParty(party) || (globalThis as any).game?.user?.isGM !== true) return [];
   const amount = partyAwardPoints(points);
   if (amount === null) return [];
-  const recipients = awardRecipientsOf(party);
+  const everyone = awardRecipientsOf(party);
+  const recipients = attendingRecipients(everyone, options.members);
   if (recipients.length === 0) return [];
+  const absent = everyone.filter((a: any) => !recipients.includes(a));
 
   const note = String(options.note ?? "").trim();
   const session = String(options.session ?? "").trim();
@@ -220,6 +225,7 @@ export async function awardPartyPoints(
     content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${esc(L("AwardChatTitle"))}</span>`
       + `<span class="gc-target">${esc(L("AwardChatPoints", { points: amount }))}</span></div>`
       + `<div class="gc-note">${esc(L("AwardChatWho", { names }))}</div>`
+      + (absent.length ? `<div class="gc-note">${esc(L("AwardChatAbsent", { names: absent.map((a: any) => String(a.name ?? "")).join(", ") }))}</div>` : "")
       + (detail ? `<div class="gc-note">${esc(detail)}</div>` : "")
       + `</div>`,
     flags: { [SYSTEM_ID]: { partyAward: { partyUuid: String(party.uuid), points: amount, members: awarded.map((a: any) => String(a.uuid)) } } },

@@ -346,6 +346,20 @@ export function partyAwardRecipients<T extends { type?: unknown }>(members: read
 }
 
 /**
+ * The recipients who were at the session (#890): those named in `attending`,
+ * by UUID or as the actor itself, in the recipients' order. Anyone named who
+ * is not a recipient is ignored. With no list, every recipient attended.
+ */
+export function attendingRecipients<T extends { uuid?: unknown }>(
+  recipients: readonly T[],
+  attending?: readonly (string | { uuid?: unknown } | null | undefined)[] | null,
+): T[] {
+  if (attending == null) return [...recipients];
+  const present = new Set(attending.map((a) => String(typeof a === "string" ? a : a?.uuid ?? "")).filter(Boolean));
+  return recipients.filter((r) => present.has(String(r.uuid ?? "")));
+}
+
+/**
  * The points in an award to the party: a whole number above zero, or null.
  *
  * A single character's log takes a negative award as a correction; handed to

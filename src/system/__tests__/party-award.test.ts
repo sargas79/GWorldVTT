@@ -66,6 +66,40 @@ describe("awarding the party character points (#871)", () => {
     expect((create.mock.calls[0] as any)[0].flags.gworld.partyAward.members).toEqual(["Actor.Ada"]);
   });
 
+  it("gives the award only to the characters who attended, and names the absent (#890)", async () => {
+    const ada = person("Ada", "character");
+    const bo = person("Bo", "character");
+    const cy = person("Cy", "character");
+    const guide = person("Guide", "npc");
+    const { create } = world([ada, bo, cy, guide]);
+    const party = partyOf([ada, bo, guide, cy]);
+
+    // Cy is named as the actor, Ada by UUID; the NPC and a stranger are ignored.
+    const awarded = await awardPartyPoints(party, 2, { members: [cy, "Actor.Ada", "Actor.Guide", "Actor.stranger"] });
+
+    expect(awarded).toEqual([ada, cy]);
+    expect(bo.update).not.toHaveBeenCalled();
+    expect(guide.update).not.toHaveBeenCalled();
+    const message = (create.mock.calls[0] as unknown[])[0] as any;
+    expect(message.flags.gworld.partyAward.members).toEqual(["Actor.Ada", "Actor.Cy"]);
+    expect(message.content).toContain("AwardChatAbsent");
+  });
+
+  it("awards no one when nobody attended", async () => {
+    const ada = person("Ada", "character");
+    const { create } = world([ada]);
+    expect(await awardPartyPoints(partyOf([ada]), 3, { members: [] })).toEqual([]);
+    expect(ada.update).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("names no one absent when everyone got the award", async () => {
+    const ada = person("Ada", "character");
+    const { create } = world([ada]);
+    await awardPartyPoints(partyOf([ada]), 3);
+    expect(((create.mock.calls[0] as unknown[])[0] as any).content).not.toContain("AwardChatAbsent");
+  });
+
   it("refuses zero, a negative or a fraction", async () => {
     const ada = person("Ada", "character");
     const { create } = world([ada]);

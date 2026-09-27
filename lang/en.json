@@ -4584,14 +4584,16 @@
       "AwardPoints": "Award points",
       "AwardPointsHint": "Give every character in the party the same character points at once, each added to that character's log. NPCs get none.",
       "AwardTitle": "Award character points to the party",
-      "AwardEachGets": "Each of these characters gets the whole award:",
+      "AwardEachGets": "Each ticked character gets the whole award; untick anyone who missed the session:",
       "AwardSkipped": "Not awarded (NPCs): {names}",
       "AwardEach": "Award to each",
       "NoneToAward": "No character in this party to award points to.",
       "AwardPositive": "An award to the party is a whole number of points above zero.",
+      "AwardNobody": "Tick at least one character to award points to.",
       "AwardChatTitle": "Character points awarded",
       "AwardChatPoints": "{points} each",
-      "AwardChatWho": "To {names}"
+      "AwardChatWho": "To {names}",
+      "AwardChatAbsent": "Absent: {names}"
     },
     "Campaign": {
       "startingPoints": {
