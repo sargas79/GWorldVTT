@@ -9,6 +9,7 @@
 import { registerConsciousnessTurns } from "./system/consciousness.js";
 import { registerHeldWeaponQuery } from "./system/held-weapons.js";
 import { registerEffectQuery } from "./system/gm-relay.js";
+import { fileLooseCharacterJournals, registerCharacterJournals } from "./system/character-journals.js";
 import "./styles/gworld.css";
 import "./styles/sheet-v2.css";
 import "./styles/party.css";
@@ -162,6 +163,9 @@ Hooks.once("init", () => {
   registerHeldWeaponQuery();
   // A dose, a shock or a condition on somebody else's character, the same way.
   registerEffectQuery();
+  // Each character's journal entries in a folder of its own, which only the
+  // GM's client can make, named after its token.
+  registerCharacterJournals();
 
   const { DocumentSheetConfig } = foundry.applications.apps;
   DocumentSheetConfig.unregisterSheet(Actor, "core", foundry.applications.sheets.ActorSheetV2);
@@ -250,6 +254,8 @@ Hooks.once("ready", () => {
     await migrateLearnableTraits();
     // Containers taken from the compendium before it said which gear is one (API 1.161.0).
     await migrateContainers();
+    // Characters' journal entries left loose in the sidebar, into their folders (#887).
+    await fileLooseCharacterJournals();
   })().catch((error) => console.error("gworld | a world migration failed", error));
   Hooks.callAll(READY_HOOK, api);
   // The token controls were drawn with the canvas, before any module had its

@@ -78,6 +78,7 @@ import {
   removeLink,
   type JournalKind,
 } from "../sheet-v2/journal-links.js";
+import { characterFolderId } from "../character-journals.js";
 import { GWorldCharacterSheet } from "./character-sheet.js";
 import { VIEW_CONTROLS } from "../sheet-v2/view-controls.js";
 import { postItemCard } from "../item-card.js";
@@ -1674,7 +1675,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
 
   /**
    * Makes a journal entry for this character -- a quest, a clue, a note --
-   * owned by whoever made it, links it, and opens it to be written.
+   * owned by whoever made it, in the character's folder, links it, and opens
+   * it to be written.
    */
   static async #onCreateEntry(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
     const kind = target.dataset.v2JournalKind;
@@ -1683,6 +1685,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const JournalEntry = (globalThis as any).JournalEntry;
     const entry = await JournalEntry.implementation.create({
       name: `${this.actor.name}: ${label}`,
+      folder: await characterFolderId(this.actor),
       ownership: { default: 0, [game.user.id]: 3 },
       pages: [{ name: label, type: "text", text: { content: "" } }],
     });
