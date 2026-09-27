@@ -68,8 +68,9 @@
                   {{else}}
                     <span class="v2-pin" aria-hidden="true"></span>
                   {{/if}}
-                  <span class="v2-row-name">
+                  <span class="v2-row-name{{#if row.talentMark}} v2-talent-raised{{/if}}">
                     {{row.name}}
+                    {{#if row.talentMark}}{{> "gworld.v2.talentMark" mark=row.talentMark}}{{/if}}
                     {{#if row.techLevel}}<span class="v2-tag">TL{{row.techLevel}}</span>{{/if}}
                     {{#unless row.trained}}<span class="v2-tag" data-tooltip="{{localize 'GWORLD.Section.RolledAtDefault'}}">{{localize "GWORLD.Skill.Untrained"}}</span>{{/unless}}
                   </span>

@@ -138,7 +138,7 @@
                 {{else if skill.pinned}}
                   <span class="v2-pin on" aria-hidden="true">{{> "gworld.v2icon.star"}}</span>
                 {{/if}}
-                <span class="v2-skill-name" data-action="editItem">{{skill.name}}</span>
+                <span class="v2-skill-name{{#if skill.talentMark}} v2-talent-raised{{/if}}" data-action="editItem">{{skill.name}}{{#if skill.talentMark}}{{> "gworld.v2.talentMark" mark=skill.talentMark}}{{/if}}</span>
                 {{#if skill.rollable}}
                   <button type="button" class="v2-skill-level rollable" data-action="roll" data-roll-type="skill"
                           data-roll-label="{{skill.name}}" data-roll-target="{{skill.level}}" data-based-on="{{skill.attribute}}"

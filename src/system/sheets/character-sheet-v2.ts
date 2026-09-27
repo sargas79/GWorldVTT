@@ -25,6 +25,7 @@ import {
   loadPercent,
   pointBadge,
   poolPercent,
+  talentMark,
   togglePinned,
 } from "../sheet-v2/overview.js";
 import { ALL_SKILLS_SECTION, asSkillOrder, skillSectionOf, skillSectionOrder } from "../skill-groups.js";
@@ -983,6 +984,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         reference: system.reference ?? "",
         bonusLines: system.derived?.bonusLines ?? [],
         talentBonus: Number(system.derived?.talentBonus ?? 0) || 0,
+        talentMark: talentMark(system.derived),
         toolBonus: Number(system.derived?.toolBonus ?? 0) || 0,
         chance: level === null ? null : successChance(level),
         improve: itemImprovement(item, unspent, scoreOf(attribute)),
@@ -1243,6 +1245,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         attribute: skill.item.system?.attribute,
         pinned,
         bonusLines: skill.item.system?.derived?.bonusLines ?? [],
+        talentMark: talentMark(skill.item.system?.derived),
       })),
       // The rolls the GM asks a player for by name: Will, Perception, and
       // Perception by one sense.
