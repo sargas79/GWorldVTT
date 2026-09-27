@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { restForADay, restForFatigue } from "../recovery.js";
+import { regenerate, restForADay, restForFatigue } from "../recovery.js";
 
 const globals = globalThis as Record<string, unknown>;
 
@@ -10,14 +10,15 @@ afterEach(() => {
 });
 
 /** A resting character, Regeneration at `level` (1 Slow, 2 Regular, 3 Fast; 0 none). */
-function character(options: { level?: number; hp?: number; maxHp?: number; fp?: number; maxFp?: number } = {}) {
-  return {
+function character(options: { level?: number; hp?: number; maxHp?: number; fp?: number; maxFp?: number; status?: string } = {}) {
+  const actor = {
     name: "Troll",
+    uuid: "Actor.troll",
     isOwner: true,
     system: {
       hp: { value: options.hp ?? 1, max: options.maxHp ?? 40 },
       fp: { value: options.fp ?? 0, max: options.maxFp ?? 10 },
-      derived: { attributes: { HT: 10 }, traitEffects: { regeneration: options.level ?? 0 } },
+      derived: { attributes: { HT: 10 }, traitEffects: { regeneration: options.level ?? 0 }, status: options.status },
     },
     items: [],
     statuses: new Set<string>(),
@@ -25,8 +26,17 @@ function character(options: { level?: number; hp?: number; maxHp?: number; fp?: 
     update: async function (this: any, data: Record<string, number>) {
       if (typeof data["system.hp.value"] === "number") this.system.hp.value = data["system.hp.value"];
       if (typeof data["system.fp.value"] === "number") this.system.fp.value = data["system.fp.value"];
+      // Reeling is a third of max HP or less, as the data model derives it.
+      if (typeof this.system.derived.status === "string") {
+        this.system.derived.status = this.system.hp.value < this.system.hp.max / 3 ? "reeling" : "well";
+      }
+    },
+    toggleStatusEffect: async (id: string, { active }: { active: boolean }) => {
+      if (active) actor.statuses.add(id);
+      else actor.statuses.delete(id);
     },
   };
+  return actor;
 }
 
 /** Foundry, as far as a rest reaches: every die comes up `face`, and each card's context is kept. */
@@ -131,5 +141,43 @@ describe("Regeneration while resting", () => {
     expect(await restForADay({ actor, modifier: 0 })).toBe(1);
     expect(actor.system.hp.value).toBe(6);
     expect(cards.map((card) => card.regen)).toEqual([null, null]);
+  });
+});
+
+/** The Regenerate button, for time passed outside a rest (Characters p. 80). */
+describe("the Regenerate button", () => {
+  it("clears reeling once the hit points are back above a third", async () => {
+    const cards = foundryWith(3);
+    const actor = character({ level: 3, hp: 2, maxHp: 30, status: "reeling" });
+    actor.statuses.add("reeling");
+
+    expect(await regenerate({ actor, seconds: 10 * 60 })).toBe(10);
+
+    expect(actor.system.hp.value).toBe(12);
+    expect(actor.statuses.has("reeling")).toBe(false);
+    expect(cards.at(-1)).toMatchObject({ kind: "GWORLD.Recovery.Regeneration", gained: 10, previous: 2, now: 12 });
+  });
+
+  it("leaves reeling on when the time was too short to climb out of it", async () => {
+    foundryWith(3);
+    const actor = character({ level: 3, hp: 2, maxHp: 30, status: "reeling" });
+    actor.statuses.add("reeling");
+
+    await regenerate({ actor, seconds: 3 * 60 });
+
+    expect(actor.system.hp.value).toBe(5);
+    expect(actor.statuses.has("reeling")).toBe(true);
+  });
+
+  it("brings nothing back to the dead, and says so", async () => {
+    const cards = foundryWith(3);
+    const actor = character({ level: 3, hp: -12, maxHp: 10 });
+    actor.statuses.add("dead");
+
+    expect(await regenerate({ actor, seconds: 60 * 60 })).toBe(0);
+
+    expect(actor.system.hp.value).toBe(-12);
+    expect(actor.statuses.has("dead")).toBe(true);
+    expect(cards.at(-1)).toMatchObject({ kind: "GWORLD.Recovery.Regeneration", lines: ["GWORLD.Recovery.RegenerationDead"], bad: true });
   });
 });
