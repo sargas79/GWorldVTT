@@ -821,7 +821,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
             /** The session the points were earned in, as the table names it: "Session 9". */
             session: new fields.StringField({ required: true, blank: true, initial: "" }),
           }),
-          { required: true, initial: [] },
+          { required: true, initial: () => [] },
         ),
       }),
 
@@ -1031,13 +1031,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
            * from ("attributes.ST", "purchased.hp"). Free-form because which
            * paths a template writes depends on the template.
            */
-          previous: new fields.ObjectField({ required: true, initial: {} }),
+          previous: new fields.ObjectField({ required: true, initial: () => ({}) }),
           /**
            * What the template wrote to each of those paths. Removal puts a
            * value back only while it still reads this: one the player has
            * changed since is theirs, and is left alone.
            */
-          written: new fields.ObjectField({ required: true, initial: {} }),
+          written: new fields.ObjectField({ required: true, initial: () => ({}) }),
           /**
            * When it was applied, so an item edited since can be told from
            * one left as granted. Null on records made before this was kept.
@@ -1046,7 +1046,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           /** The items it added, so removing it removes exactly those. */
           itemIds: new fields.ArrayField(
             new fields.StringField({ required: true, blank: true, initial: "" }),
-            { required: true, initial: [] },
+            { required: true, initial: () => [] },
           ),
           /**
            * Items an earlier template added that this one raised, and what
@@ -1058,10 +1058,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
               points: new fields.NumberField({ required: true, nullable: false, initial: 0 }),
               levels: new fields.NumberField({ required: false, nullable: true, initial: null }),
             }),
-            { required: true, initial: [] },
+            { required: true, initial: () => [] },
           ),
         }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
 
       /**
@@ -1108,7 +1108,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           /** Energy put into the casting, before skill, which an attack's damage scales with. */
           energy: new fields.NumberField({ required: true, nullable: true, integer: true, initial: null, min: 0 }),
         }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
 
       /**
@@ -1218,7 +1218,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
        */
       pinnedSkills: new fields.ArrayField(
         new fields.StringField({ required: true, blank: false }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
 
       /**
@@ -1228,7 +1228,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
        */
       familiarities: new fields.ArrayField(
         new fields.StringField({ required: true, blank: false }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
 
       /**
@@ -1245,7 +1245,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
             choices: ["quest", "clue", "person", "place", "note"],
           }),
         }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
     };
   }

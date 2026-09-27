@@ -43,7 +43,7 @@ export class PartyData extends foundry.abstract.TypeDataModel {
         new fields.SchemaField({
           uuid: new fields.StringField({ required: true, blank: false }),
         }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       campaign: new fields.SchemaField({
         tl: term(),

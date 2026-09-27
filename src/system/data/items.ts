@@ -108,7 +108,7 @@ function physicalFields() {
         alwaysOn: new fields.BooleanField({ initial: false }),
         mageOnly: new fields.BooleanField({ initial: false }),
       }),
-      { required: true, initial: [] },
+      { required: true, initial: () => [] },
     ),
   };
 }
@@ -301,7 +301,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
           name: new fields.StringField({ required: true, blank: true, initial: "" }),
           value: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
         }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /**
        * A disadvantage's self-control number (pp. 120-121): how often it can be
@@ -351,7 +351,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
        */
       costTable: new fields.ArrayField(
         new fields.NumberField({ required: true, nullable: false, integer: true }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /**
        * The book's name for each level, level 1 first. Players name Wealth by
@@ -360,7 +360,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
        */
       levelNames: new fields.ArrayField(
         new fields.StringField({ required: true, blank: true, initial: "" }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /** Highest level the book allows, or 0 where it sets no limit. */
       maxLevels: new fields.NumberField({
@@ -385,7 +385,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
        */
       talentSkills: new fields.ArrayField(
         new fields.StringField({ required: true, blank: false }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /**
        * The weapons a Weapon Master's class takes in (Characters p. 99), one
@@ -394,7 +394,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
        */
       masteredWeapons: new fields.ArrayField(
         new fields.StringField({ required: true, blank: false }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /**
        * The power this trait belongs to, by the name its book gives it --
@@ -410,8 +410,8 @@ export class TraitData extends foundry.abstract.TypeDataModel {
        * the character's attack list beside
        * what is carried. Empty for every trait that is not an attack.
        */
-      meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: [] }),
-      rangedModes: new fields.ArrayField(rangedModeField(), { required: true, initial: [] }),
+      meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: () => [] }),
+      rangedModes: new fields.ArrayField(rangedModeField(), { required: true, initial: () => [] }),
     };
   }
 
@@ -504,7 +504,7 @@ export class SkillData extends foundry.abstract.TypeDataModel {
             initial: 0,
           }),
         }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /** Set for skills marked /TL, recording which tech level was learned. */
       techLevel: new fields.StringField({ required: true, blank: true, initial: "" }),
@@ -1324,8 +1324,8 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
         initial: "misc",
         choices: [...EQUIPMENT_CATEGORIES],
       }),
-      meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: [] }),
-      rangedModes: new fields.ArrayField(rangedModeField(), { required: true, initial: [] }),
+      meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: () => [] }),
+      rangedModes: new fields.ArrayField(rangedModeField(), { required: true, initial: () => [] }),
       /**
        * The grade of a tool, and what it is worth to the skill that uses it
        * (GURPS Basic Set: Campaigns p. 345). Not the same axis as a weapon's
@@ -1362,7 +1362,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
        */
       forSkills: new fields.ArrayField(
         new fields.StringField({ required: true, blank: true, initial: "" }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /**
        * A muscle-powered wheelchair or wheeled platform (Characters p. 142;
@@ -1533,7 +1533,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
           blank: false,
           choices: ["burn", "cor", "cr", "cut", "fat", "imp", "pi-", "pi", "pi+", "pi++", "tox"],
         }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
 
       locations: new fields.ArrayField(
@@ -1546,7 +1546,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
             "vitals", "groin", "arm", "leg", "hand", "foot",
           ],
         }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /**
        * The "*" on the armour tables (GURPS Basic Set: Characters p. 282):
@@ -1617,11 +1617,11 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
                 "vitals", "groin", "arm", "leg", "hand", "foot",
               ],
             }),
-            { required: true, initial: [] },
+            { required: true, initial: () => [] },
           ),
           dr: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
         }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /**
        * Hardened (Characters p. 47): "Each level of Hardened reduces the armor
@@ -1721,7 +1721,7 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
        * A shield is a weapon as well as a defense, and the same field shape as
        * a weapon's modes is used so the Combat tab can render both alike.
        */
-      meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: [] }),
+      meleeModes: new fields.ArrayField(meleeModeField(), { required: true, initial: () => [] }),
     };
   }
 }
@@ -1756,12 +1756,12 @@ export class ModifierData extends foundry.abstract.TypeDataModel {
       /** The percentage at each level, level 1 first, for one priced from a table. */
       costTable: new fields.ArrayField(
         new fields.NumberField({ required: true, nullable: false, integer: true }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /** The book's name for each level, where it names them. */
       levelNames: new fields.ArrayField(
         new fields.StringField({ required: true, blank: true, initial: "" }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /** The most levels the book allows, or 0 where it sets no limit. */
       maxLevels: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
@@ -1871,7 +1871,7 @@ export class TechniqueData extends foundry.abstract.TypeDataModel {
        */
       skillFamilies: new fields.ArrayField(
         new fields.StringField({ required: true, nullable: false, initial: "melee", choices: [...SKILL_FAMILIES] }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /**
        * A technique kind an add-on module registered (`<module>.<key>`), which
@@ -1881,7 +1881,7 @@ export class TechniqueData extends foundry.abstract.TypeDataModel {
       /** Skills named outright that it may be bought for: Jam's Brawling or Karate. */
       skillChoices: new fields.ArrayField(
         new fields.StringField({ required: true, blank: false }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /**
        * Further defaults, the best of which the character uses: "Defaults:
@@ -1895,7 +1895,7 @@ export class TechniqueData extends foundry.abstract.TypeDataModel {
           skill: new fields.StringField({ required: true, blank: true, initial: "" }),
           modifier: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, max: 0 }),
         }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /** The default penalty, e.g. -2 for Kicking off Karate. Negative. */
       defaultModifier: new fields.NumberField({
@@ -2006,7 +2006,7 @@ export class TemplateData extends foundry.abstract.TypeDataModel {
           /** "(A) DX+1 [2]-13", as the book prints it. */
           note: new fields.StringField({ required: true, blank: true, initial: "" }),
         }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       choices: new fields.ArrayField(
         new fields.SchemaField({
@@ -2017,17 +2017,17 @@ export class TemplateData extends foundry.abstract.TypeDataModel {
           }),
           required: modifier(),
         }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /** Notes that cost nothing: "sterility and an ordinary tail" (p. 261). */
       features: new fields.ArrayField(
         new fields.StringField({ required: true, blank: true, initial: "" }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /** Traits members of the race may not have. Also free (p. 261). */
       tabooTraits: new fields.ArrayField(
         new fields.StringField({ required: true, blank: true, initial: "" }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
     };
   }
@@ -2154,7 +2154,7 @@ export class SpellData extends foundry.abstract.TypeDataModel {
        */
       colleges: new fields.ArrayField(
         new fields.StringField({ required: true, blank: false }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
       /** "Most spells are IQ/Hard skills, but a few potent spells are IQ/Very Hard." */
       difficulty: new fields.StringField({
@@ -2168,7 +2168,7 @@ export class SpellData extends foundry.abstract.TypeDataModel {
       /** "Each spell falls into one or more classes" (p. 239). */
       classes: new fields.ArrayField(
         new fields.StringField({ required: true, blank: false, choices: [...SPELL_CLASSES] }),
-        { required: true, initial: ["regular"] },
+        { required: true, initial: () => ["regular"] },
       ),
       /**
        * What a Resisted spell is resisted with: "HT", "Will", another spell,
