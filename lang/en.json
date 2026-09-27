@@ -1074,6 +1074,8 @@
       "SpendLess": "Take back the last step of points",
       "NoDefault": "No default",
       "BoughtUpFromDefault": "Bought up from its default: the default counts toward the points spent",
+      "RaisedByTalent": "Raised +{bonus} by a Talent",
+      "RaisedByTalents": "Raised +{bonus} by {talents}",
       "Trained": "skills trained",
       "Defaults": "Defaults",
       "FromAttribute": "From attribute",

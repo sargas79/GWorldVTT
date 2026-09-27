@@ -1,0 +1,5 @@
+{{!-- The mark on a skill a Talent has raised (GWorldVTT #876): a blue arrow and
+     the bonus, naming the talents. `mark` is talentMark()'s { bonus, talents }. --}}
+<span class="v2-talent-mark"
+      data-tooltip="{{#if mark.talents}}{{localize 'GWORLD.Skill.RaisedByTalents' bonus=mark.bonus talents=mark.talents}}{{else}}{{localize 'GWORLD.Skill.RaisedByTalent' bonus=mark.bonus}}{{/if}}"
+      aria-label="{{#if mark.talents}}{{localize 'GWORLD.Skill.RaisedByTalents' bonus=mark.bonus talents=mark.talents}}{{else}}{{localize 'GWORLD.Skill.RaisedByTalent' bonus=mark.bonus}}{{/if}}"><span aria-hidden="true">&uarr;+{{mark.bonus}}</span></span>

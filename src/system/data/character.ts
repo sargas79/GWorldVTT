@@ -36,7 +36,7 @@ import { gearEffects, grantedEffectSources } from "../../rules/gear-effects.js";
 import { crippledEffects } from "../../rules/hit-locations.js";
 import { crippledPartName, crippledParts } from "../crippling.js";
 import { attackAttribute, levelledDamage } from "../../rules/trait-attacks.js";
-import { talentBonusFor, talentBonuses, traitSkillBonuses, traitSkillBonusesFor } from "../../rules/talents.js";
+import { talentBonusFor, talentBonuses, talentsRaising, traitSkillBonuses, traitSkillBonusesFor } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
 import { senseScores } from "../../rules/senses.js";
@@ -1995,6 +1995,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         boughtUpFromDefault: credit > 0,
         hasDefault: attributeDefaults.length > 0,
         talentBonus: lineValue("talent"),
+        // The talents that raised it, by name, for the sheet to mark the skill
+        // with (GWorldVTT #876).
+        talentNames: lineValue("talent") > 0 ? talentsRaising(String(item.name ?? ""), heldTraits) : [],
         toolBonus: lineValue("tools"),
         // The tool that bonus came from, for the roll to name (since API 1.95.0).
         toolItemId: tool?.id ?? null,

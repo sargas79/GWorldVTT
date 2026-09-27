@@ -130,6 +130,16 @@ export function talentBonusFor(skillName: string, bonuses: ReadonlyMap<string, n
   return base !== whole ? (bonuses.get(base) ?? 0) : 0;
 }
 
+/**
+ * The talents that raise one skill, by the name each is held under, in the
+ * order given: what the sheet names beside a skill a Talent has raised.
+ */
+export function talentsRaising(skillName: string, traits: readonly BonusTrait[]): string[] {
+  return traits
+    .filter((trait) => isTalent(trait.name, trait.talentSkills) && talentBonusFor(skillName, talentBonuses([trait])) > 0)
+    .map((trait) => trait.name);
+}
+
 /** One trait's bonus to one skill, labelled with the trait so the sheet can say so. */
 export interface TraitSkillBonus {
   label: string;

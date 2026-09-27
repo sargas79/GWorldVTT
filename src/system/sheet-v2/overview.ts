@@ -225,3 +225,21 @@ export function awarenessRolls(input: AwarenessInput): AwarenessRoll[] {
     })),
   ];
 }
+
+/** The mark on a skill a Talent has raised: by how much, and by which talents. */
+export interface TalentMark {
+  bonus: number;
+  talents: string;
+}
+
+/**
+ * The mark a skill carries where a Talent raised it (GWorldVTT #876), read off
+ * the skill's derived data, or null where no Talent raised it. Only a rise is
+ * marked: a module that takes a talent's line away leaves the skill unmarked.
+ */
+export function talentMark(derived: { talentBonus?: unknown; talentNames?: unknown } | null | undefined): TalentMark | null {
+  const bonus = Number(derived?.talentBonus ?? 0) || 0;
+  if (bonus <= 0) return null;
+  const names = Array.isArray(derived?.talentNames) ? derived.talentNames.map(String).filter(Boolean) : [];
+  return { bonus, talents: names.join(", ") };
+}
