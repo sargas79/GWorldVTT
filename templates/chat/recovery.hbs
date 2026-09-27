@@ -16,6 +16,15 @@
     </div>
   {{/if}}
 
+  {{#if regen}}
+    {{!-- Regeneration over a rest's own span (Characters p. 80), ahead of the
+         rest's result because it is counted first. --}}
+    <div class="gc-result success">
+      {{regen.label}} &mdash; <strong>{{signed regen.gained}}</strong> {{regen.pool}}
+      <span class="gc-mod">{{regen.previous}} &rarr; {{regen.now}} / {{regen.max}}</span>
+    </div>
+  {{/if}}
+
   {{#if lines}}
     {{!-- A doctor's roll says several things rather than moving one number:
          what the tools were worth, what the operation did, what still has to
