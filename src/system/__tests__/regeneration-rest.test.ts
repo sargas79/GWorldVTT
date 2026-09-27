@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { healthStatus } from "../../rules/injury.js";
 import { regenerate, restForADay, restForFatigue } from "../recovery.js";
 
 const globals = globalThis as Record<string, unknown>;
@@ -26,9 +27,10 @@ function character(options: { level?: number; hp?: number; maxHp?: number; fp?: 
     update: async function (this: any, data: Record<string, number>) {
       if (typeof data["system.hp.value"] === "number") this.system.hp.value = data["system.hp.value"];
       if (typeof data["system.fp.value"] === "number") this.system.fp.value = data["system.fp.value"];
-      // Reeling is a third of max HP or less, as the data model derives it.
+      // The status follows the new total by the data model's own rule, so an
+      // update to FP leaves a dead total dead rather than resetting it.
       if (typeof this.system.derived.status === "string") {
-        this.system.derived.status = this.system.hp.value < this.system.hp.max / 3 ? "reeling" : "well";
+        this.system.derived.status = healthStatus(this.system.hp.value, this.system.hp.max);
       }
     },
     toggleStatusEffect: async (id: string, { active }: { active: boolean }) => {
@@ -179,5 +181,32 @@ describe("the Regenerate button", () => {
     expect(actor.system.hp.value).toBe(-12);
     expect(actor.statuses.has("dead")).toBe(true);
     expect(cards.at(-1)).toMatchObject({ kind: "GWORLD.Recovery.Regeneration", lines: ["GWORLD.Recovery.RegenerationDead"], bad: true });
+  });
+
+  // The hit point total can say dead before the condition has been set on
+  // the token, so the status alone refuses as well.
+  // A total that means the status: -5×HP is dead, -10×HP destroyed (GURPS Lite p. 29).
+  it.each([["dead", -60], ["destroyed", -110]] as const)("refuses a %s status without the dead condition", async (status, hp) => {
+    const cards = foundryWith(3);
+    const actor = character({ level: 3, hp, maxHp: 10, status });
+
+    expect(await regenerate({ actor, seconds: 60 * 60 })).toBe(0);
+
+    expect(actor.system.hp.value).toBe(hp);
+    expect(cards.at(-1)).toMatchObject({ lines: ["GWORLD.Recovery.RegenerationDead"], bad: true });
+  });
+});
+
+describe("a rest for the dead by status alone", () => {
+  it.each([["dead", -60], ["destroyed", -110]] as const)("brings back no HP to a %s status without the dead condition", async (status, hp) => {
+    // Every die a 6, so the day's HT roll fails and any gain is Regeneration's.
+    foundryWith(6);
+    const actor = character({ level: 3, hp, maxHp: 10, status });
+
+    await restForFatigue({ actor, minutes: 30, meal: false });
+    expect(actor.system.hp.value).toBe(hp);
+
+    await restForADay({ actor, modifier: 0 });
+    expect(actor.system.hp.value).toBe(hp);
   });
 });
