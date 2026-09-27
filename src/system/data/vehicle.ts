@@ -151,7 +151,7 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
            */
           strappedIn: new fields.BooleanField({ initial: false }),
         }),
-        { required: true, initial: [] },
+        { required: true, initial: () => [] },
       ),
 
       /**
