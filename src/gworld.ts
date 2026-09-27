@@ -254,9 +254,10 @@ Hooks.once("ready", () => {
     await migrateLearnableTraits();
     // Containers taken from the compendium before it said which gear is one (API 1.161.0).
     await migrateContainers();
-    // Characters' journal entries left loose in the sidebar, into their folders (#887).
-    await fileLooseCharacterJournals();
   })().catch((error) => console.error("gworld | a world migration failed", error));
+  // Characters' journal entries left loose in the sidebar, into their folders
+  // (#887). Not a recorded step, so it runs whatever became of the steps above.
+  void fileLooseCharacterJournals().catch((error) => console.error("gworld | filing characters' journal entries failed", error));
   Hooks.callAll(READY_HOOK, api);
   // The token controls were drawn with the canvas, before any module had its
   // ready turn, so GM tools registered just now aren't on them yet.

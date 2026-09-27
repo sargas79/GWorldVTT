@@ -176,6 +176,17 @@ describe("a player's entry", () => {
   });
 });
 
+describe("a GM's entry", () => {
+  it("is made loose when the folder can't be made", async () => {
+    (globals.Folder as any).implementation.create = vi.fn(async () => {
+      throw new Error("too deep");
+    });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(await characterFolderId(actor("a", "Althea", "Allie"))).toBeNull();
+    warn.mockRestore();
+  });
+});
+
 describe("the GM's side of the query", () => {
   it("makes the folder for the character's owner, and for nobody else", async () => {
     const allie = actor("a", "Althea", "Allie", ["player"]);

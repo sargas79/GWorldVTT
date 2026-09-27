@@ -116,7 +116,14 @@ export async function characterFolderId(actor: any): Promise<string | null> {
   const found = findCharacterFolder(actor);
   if (found) return found.id ?? null;
   const user = (game as any).user;
-  if (user?.isGM === true) return (await makeCharacterFolder(actor))?.id ?? null;
+  if (user?.isGM === true) {
+    try {
+      return (await makeCharacterFolder(actor))?.id ?? null;
+    } catch (error) {
+      console.warn(`${SYSTEM_ID} | could not make a journal folder for ${String(actor?.name ?? "")}`, error);
+      return null;
+    }
+  }
   if (!actor?.isOwner) return null;
   const gm = (game as any).users?.activeGM;
   if (!gm || gm.isSelf || typeof gm.query !== "function") return null;
