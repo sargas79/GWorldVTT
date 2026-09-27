@@ -60,7 +60,7 @@ function normalise(entry, type) {
     // run-time half behaves. An entry that chose an image keeps it.
     img: actor
       ? (entry.img ?? undefined)
-      : isGenericIcon(entry.img)
+      : isGenericIcon(entry.img, documentType)
         ? defaultItemIcon(documentType, entry.system ?? {}, entry.name)
         : entry.img,
     system: entry.system ?? {},
@@ -73,7 +73,7 @@ function normalise(entry, type) {
             ...item,
             // A creature's own traits and skills are items too, and are
             // listed on its sheet with a picture apiece.
-            img: isGenericIcon(item.img)
+            img: isGenericIcon(item.img, String(item.type ?? ""))
               ? defaultItemIcon(String(item.type ?? ""), item.system ?? {}, item.name)
               : item.img,
           })),

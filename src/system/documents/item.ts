@@ -30,7 +30,7 @@ export class GWorldItem extends Item {
   override prepareBaseData(): void {
     super.prepareBaseData();
     const source = this._source as { img?: unknown; system?: unknown } | undefined;
-    if (isGenericIcon(source?.img)) this.img = defaultItemIcon(this.type, source?.system, this.name);
+    if (isGenericIcon(source?.img, this.type)) this.img = defaultItemIcon(this.type, source?.system, this.name);
   }
 
   /**

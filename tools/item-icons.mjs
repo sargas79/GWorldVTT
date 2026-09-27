@@ -30,8 +30,10 @@ export const GENERIC_ITEM_ICON = "icons/svg/item-bag.svg";
  * Pictures this module used to hand out, before gear was drawn by what it is.
  * Items made then were stored wearing them, so they are read as "nothing
  * chosen" too, and follow the current default rather than keeping a tankard
- * for a battery.
+ * for a battery. Only for the kinds that were given them: a skill that wears
+ * a sword was given it by somebody.
  */
+const RETIRED_DEFAULT_TYPES = new Set(["equipment", "armor", "shield"]);
 const RETIRED_DEFAULT_ICONS = new Set([
   "icons/svg/sword.svg",
   "icons/svg/clockwork.svg",
@@ -189,7 +191,7 @@ const WEAPON_SKILL_ICONS = [
  */
 const GEAR_NAME_ICONS = [
   // Ammunition and power.
-  [/\b(arrows?|bolts?)\b/i, "icons/weapons/ammunition/arrow-broadhead.webp"],
+  [/\barrows?\b|\bbolts?\b(?! ?cutters?)/i, "icons/weapons/ammunition/arrow-broadhead.webp"],
   [/\bdarts?\b/i, "icons/weapons/thrown/dart-feathered.webp"],
   [/shotgun shells?|\bshells?\b/i, "icons/weapons/ammunition/ammunition-shotgun-shells.webp"],
   [
@@ -214,7 +216,7 @@ const GEAR_NAME_ICONS = [
   [/surgical|scalpel/i, "icons/tools/medical/toolkit-surgical-pink.webp"],
   [/bandage/i, "icons/tools/medical/bandages-gauze.webp"],
   [
-    /syringe|hypo|injector|antidote|serum|vaccine/i,
+    /syringe|\bhypo\b|hypospray|injector|antidote|serum|vaccine/i,
     "icons/tools/laboratory/injector-needle-syringe-plunger.webp",
   ],
   [
@@ -542,15 +544,17 @@ export function defaultItemIcon(type, system, name) {
 }
 
 /**
- * Whether an image is Foundry's bag, one of this module's former defaults, or
- * no image at all: no choice made.
+ * Whether an image is Foundry's bag, one of this module's former defaults for
+ * an item of this type, or no image at all: no choice made.
  *
  * @param {unknown} img
+ * @param {string} [type]
  * @returns {boolean}
  */
-export function isGenericIcon(img) {
+export function isGenericIcon(img, type) {
   const path = String(img ?? "").trim();
-  return path === "" || path === GENERIC_ITEM_ICON || RETIRED_DEFAULT_ICONS.has(path);
+  if (path === "" || path === GENERIC_ITEM_ICON) return true;
+  return RETIRED_DEFAULT_TYPES.has(String(type ?? "")) && RETIRED_DEFAULT_ICONS.has(path);
 }
 
 /**
@@ -564,5 +568,5 @@ export function isGenericIcon(img) {
  * @returns {string}
  */
 export function itemIcon(img, type, system, name) {
-  return isGenericIcon(img) ? defaultItemIcon(type, system, name) : String(img);
+  return isGenericIcon(img, type) ? defaultItemIcon(type, system, name) : String(img);
 }

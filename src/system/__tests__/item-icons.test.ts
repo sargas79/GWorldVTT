@@ -96,7 +96,10 @@ describe("itemIcon", () => {
   it("knows the bag when it sees it", () => {
     expect(isGenericIcon(GENERIC_ITEM_ICON)).toBe(true);
     // A picture this module used to hand out is no choice either.
-    expect(isGenericIcon("icons/svg/tankard.svg")).toBe(true);
+    expect(isGenericIcon("icons/svg/tankard.svg", "equipment")).toBe(true);
+    // ...but only on the kinds that were given it: a skill wearing a sword chose it.
+    expect(isGenericIcon("icons/svg/sword.svg", "skill")).toBe(false);
+    expect(itemIcon("icons/svg/sword.svg", "skill")).toBe("icons/svg/sword.svg");
     expect(isGenericIcon("  ")).toBe(true);
     expect(isGenericIcon("icons/svg/book.svg")).toBe(false);
   });
