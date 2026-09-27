@@ -19,6 +19,7 @@ import {
   regeneratedHp,
   regenerationRate,
   wakingFrom,
+  type RegenerationRate,
 } from "../rules/recovery.js";
 import { resolveSuccess, type SuccessRollResult } from "../rules/success.js";
 import { afterSuccessRoll, firstAidRules, physicianRoundsRules, procedureRoll } from "./procedure-extensions.js";
@@ -98,13 +99,29 @@ async function post(actor: any, context: Record<string, unknown>): Promise<void>
 }
 
 /**
+ * The rate Regeneration (Characters p. 80) gives something back at over a
+ * span of time, or null when there is nothing to say: no Regeneration, or too
+ * short a span for a whole point.
+ */
+function regenerationOver(actor: any, seconds: number): RegenerationRate | null {
+  const rate = regenerationRate(Number(actor?.system?.derived?.traitEffects?.regeneration ?? 0));
+  if (!rate) return null;
+  return regeneratedHp(rate.key, seconds) > 0 ? rate : null;
+}
+
+/**
  * Heals by Regeneration for a span of time (Characters p. 80).
  *
  * No roll: a regenerator heals at a rate, and the only question is how much
  * time has passed. Whole points only, so a Slow regenerator asked about eleven
  * hours has nothing back yet.
  */
-export async function regenerate(options: { actor: any; seconds: number }): Promise<number> {
+export async function regenerate(options: {
+  actor: any;
+  seconds: number;
+  /** What the card says the time was, where it was not simply "so many seconds". */
+  detail?: string;
+}): Promise<number> {
   const { actor, seconds } = options;
   if (!mayChange(actor)) return 0;
 
@@ -116,11 +133,16 @@ export async function regenerate(options: { actor: any; seconds: number }): Prom
   const max = Number(hp.max) || 0;
   const gained = Math.min(Math.max(0, max - previous), regeneratedHp(rate.key, seconds));
 
-  if (gained > 0) await actor.update({ "system.hp.value": previous + gained });
+  if (gained > 0) {
+    await actor.update({ "system.hp.value": previous + gained });
+    // Reeling and dead are what the hit point total means, so they follow it
+    // back up as readily as they followed it down.
+    await syncHealthConditions(actor);
+  }
 
   await post(actor, {
     kind: game.i18n.localize("GWORLD.Recovery.Regeneration"),
-    detail: game.i18n.format("GWORLD.Recovery.RegenerationDetail", {
+    detail: options.detail ?? game.i18n.format("GWORLD.Recovery.RegenerationDetail", {
       rate: game.i18n.localize(`GWORLD.Recovery.Rate.${rate.key}`),
       seconds,
     }),
@@ -135,9 +157,37 @@ export async function regenerate(options: { actor: any; seconds: number }): Prom
 }
 
 /**
+ * Regeneration's share of a rest: the time spent resting passes for a
+ * regenerator like any other time, so the rest credits it rather than leaving
+ * the player to press Regenerate with the same number a second time
+ * (sargas79/GWorldVTT#870).
+ *
+ * Nothing is posted for someone without the trait, for a span too short for a
+ * whole point, or for someone already at full: the rest's own card is the
+ * one that matters then.
+ */
+async function regenerateWhileResting(actor: any, seconds: number, detailKey: string, data: Record<string, unknown>): Promise<number> {
+  const rate = regenerationOver(actor, seconds);
+  if (!rate) return 0;
+
+  const hp = actor.system?.hp ?? { value: 0, max: 0 };
+  if ((Number(hp.value) || 0) >= (Number(hp.max) || 0)) return 0;
+
+  return regenerate({
+    actor,
+    seconds,
+    detail: game.i18n.format(`GWORLD.Recovery.${detailKey}`, {
+      rate: game.i18n.localize(`GWORLD.Recovery.Rate.${rate.key}`),
+      ...data,
+    }),
+  });
+}
+
+/**
  * Rests for a while and gets some fatigue back (p. 427).
  *
- * No roll: resting quietly works, and the only question is for how long.
+ * No roll: resting quietly works, and the only question is for how long. A
+ * regenerator's hit points come back over the same minutes (Characters p. 80).
  */
 export async function restForFatigue(options: {
   actor: any;
@@ -146,6 +196,8 @@ export async function restForFatigue(options: {
 }): Promise<number> {
   const { actor, minutes, meal } = options;
   if (!mayChange(actor)) return 0;
+
+  await regenerateWhileResting(actor, minutes * 60, "RegenerationRested", { minutes });
 
   const fp = actor.system?.fp ?? { value: 0, max: 0 };
   const current = Number(fp.value) || 0;
@@ -184,6 +236,10 @@ export async function restForFatigue(options: {
  * "At the end of each day of rest and decent food, make a HT roll. On a
  * success, you recover 1 HP." The GM's bonus or penalty for conditions is asked
  * for rather than assumed, because only they know what the conditions were.
+ *
+ * A regenerator gets the day's worth of Regeneration first (Characters p. 80),
+ * and the HT roll on top of it: the trait speeds healing up rather than
+ * replacing it.
  */
 export async function restForADay(options: {
   actor: any;
@@ -191,6 +247,8 @@ export async function restForADay(options: {
 }): Promise<number> {
   const { actor, modifier } = options;
   if (!mayChange(actor)) return 0;
+
+  await regenerateWhileResting(actor, 24 * 3600, "RegenerationDaily", {});
 
   const hp = actor.system?.hp ?? { value: 0, max: 0 };
   const current = Number(hp.value) || 0;
