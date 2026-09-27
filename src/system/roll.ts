@@ -850,6 +850,8 @@ export function standingRollLines(actor: any, options: {
   wildSwing?: boolean;
   /** Whether a dialog asked about the attack, which then saw to sight. */
   dialogAsked: boolean;
+  /** A retreat chosen on the sheet for this defense, as its bonus (Campaigns p. 377). */
+  retreat?: unknown;
 }): RollModifier[] {
   const lines: RollModifier[] = [];
   const { rollType, ranged } = options;
@@ -861,6 +863,11 @@ export function standingRollLines(actor: any, options: {
   if (hitModifier !== 0) {
     lines.push({ label: game.i18n.localize("GWORLD.Attack.WeaponToHit"), value: hitModifier });
   }
+
+  // A retreat the sheet chose for this defense, a line of its own on the card
+  // as it is on a defense rolled from an attack (GWorldVTT #877).
+  const retreat = rollType === "dodge" || rollType === "parry" || rollType === "block" ? Number(options.retreat) || 0 : 0;
+  if (retreat > 0) lines.push({ label: game.i18n.localize("GWORLD.Tactical.Retreat"), value: retreat });
 
   // Something has temporarily knocked an attribute down (p. 421). It comes off
   // every skill that attribute governs -- and off nothing else: a defense, a
@@ -1941,6 +1948,7 @@ async function rollAction(
     basedOn: target.dataset.basedOn,
     wildSwing: melee?.wildSwing === true,
     dialogAsked: Boolean(melee || shot),
+    retreat: target.dataset.retreat,
   }));
   if (equipmentUse) modifiers.push(...equipmentUse.lines);
 

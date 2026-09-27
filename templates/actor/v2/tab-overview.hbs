@@ -160,21 +160,7 @@
       {{!-- Defenses, rolled from here, and DR where a blow usually lands. --}}
       <div class="v2-panel v2-defenses">
         <h2 class="v2-ph">{{localize "GWORLD.SheetV2.Defenses"}}</h2>
-        <div class="v2-score-row">
-          {{#each defenseCards as |def|}}
-            <div class="v2-score">
-              <span class="v2-stat-label">{{localize def.label}}</span>
-              {{#if def.available}}
-                <button type="button" class="v2-score-value rollable" data-action="roll" data-roll-type="{{def.key}}"
-                        data-roll-label="{{localize def.label}}" data-roll-target="{{def.total}}"
-                        data-tooltip="{{def.math}}">{{def.total}}</button>
-              {{else}}
-                <span class="v2-score-value v2-muted">&mdash;</span>
-              {{/if}}
-              <span class="v2-stat-note">{{def.source}}</span>
-            </div>
-          {{/each}}
-        </div>
+        {{> "gworld.v2.defenseCards"}}
         <div class="v2-score-row v2-dr-row">
           {{#each v2.dr as |loc|}}
             <div class="v2-score">

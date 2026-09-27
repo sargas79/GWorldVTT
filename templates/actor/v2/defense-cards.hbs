@@ -1,0 +1,33 @@
+{{!-- The active defenses, rolled from here, with Retreat and Defend under each
+     (GWorldVTT #877): Retreat is taken on the defense's next roll; Defend is
+     All-Out Defense (Increased Defense), the maneuver, raising that defense. --}}
+<div class="v2-score-row v2-defense-row">
+  {{#each defenseCards as |def|}}
+    <div class="v2-score">
+      <span class="v2-stat-label">{{localize def.label}}</span>
+      {{#if def.available}}
+        <button type="button" class="v2-score-value rollable{{#if def.retreat.on}} v2-retreating{{/if}}" data-action="v2RollDefense" data-roll-type="{{def.key}}"
+                data-roll-label="{{localize def.label}}" data-roll-target="{{def.total}}"
+                {{#if def.retreat.on}}data-retreat="{{def.retreat.bonus}}"{{/if}}
+                data-tooltip="{{def.math}}{{#if def.retreat.on}} +{{def.retreat.bonus}} {{localize 'GWORLD.Tactical.Retreat'}}{{/if}}">{{def.shown}}</button>
+      {{else}}
+        <span class="v2-score-value v2-muted">&mdash;</span>
+      {{/if}}
+      <span class="v2-stat-note">{{def.source}}</span>
+      {{#if (and def.available @root.editable)}}
+        <span class="v2-defense-options">
+          {{#if def.retreat.bonus}}
+          <button type="button" class="v2-defense-option{{#if def.retreat.on}} on{{/if}}" data-action="v2Retreat" data-defense="{{def.key}}"
+                  aria-pressed="{{#if def.retreat.on}}true{{else}}false{{/if}}"
+                  data-tooltip="{{localize 'GWORLD.SheetV2.RetreatOption' bonus=def.retreat.bonus}}">{{localize "GWORLD.Tactical.Retreat"}} +{{def.retreat.bonus}}</button>
+          {{/if}}
+          <button type="button" class="v2-defense-option{{#if def.defend.on}} on{{/if}}" data-action="v2Defend" data-defense="{{def.key}}"
+                  aria-pressed="{{#if def.defend.on}}true{{else}}false{{/if}}"
+                  data-tooltip="{{#if def.defend.on}}{{localize 'GWORLD.SheetV2.DefendOn'}}{{else}}{{localize 'GWORLD.SheetV2.DefendOption' bonus=def.defend.bonus}}{{/if}}">{{localize "GWORLD.SheetV2.Defend"}} +{{def.defend.bonus}}</button>
+        </span>
+      {{else if def.defend.on}}
+        <span class="v2-defense-options"><span class="v2-defense-option on">{{localize "GWORLD.SheetV2.Defend"}} +{{def.defend.bonus}}</span></span>
+      {{/if}}
+    </div>
+  {{/each}}
+</div>
