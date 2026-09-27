@@ -25,7 +25,7 @@ import { afterSuccessRoll, firstAidRules, physicianRoundsRules, procedureRoll } 
 import { stopBleeding } from "./bleeding.js";
 import { crippledPartName, crippledParts, treatCrippled } from "./crippling.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
-import { setCondition, syncHealthConditions } from "./conditions.js";
+import { hasCondition, setCondition, syncHealthConditions } from "./conditions.js";
 import { refuseWhileHeld } from "./knockdown.js";
 import {
   ANESTHESIA_TL,
@@ -145,6 +145,9 @@ export async function regenerate(options: { actor: any; seconds: number }): Prom
 async function regenerateWhileResting(actor: any, seconds: number): Promise<Record<string, unknown> | null> {
   const rate = regenerationRate(Number(actor.system?.derived?.traitEffects?.regeneration ?? 0));
   if (!rate) return null;
+  // The dead do not rest: HP coming back does not bring them back.
+  const status = actor.system?.derived?.status;
+  if (hasCondition(actor, "dead") || status === "dead" || status === "destroyed") return null;
 
   const hp = actor.system?.hp ?? { value: 0, max: 0 };
   const previous = Number(hp.value) || 0;

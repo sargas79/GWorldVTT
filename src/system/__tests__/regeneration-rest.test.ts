@@ -54,6 +54,14 @@ function foundryWith(face: number) {
 
 /** Regeneration counts through a rest (sargas79/GWorldVTT#870; Characters p. 80). */
 describe("Regeneration while resting", () => {
+  it("brings back no HP to a regenerator who is dead", async () => {
+    foundryWith(3);
+    const actor = character({ level: 3, hp: -12, maxHp: 10 });
+    actor.statuses.add("dead");
+    await restForFatigue({ actor, minutes: 30, meal: false });
+    expect(actor.system.hp.value).toBe(-12);
+  });
+
   it("gives a Fast regenerator 30 HP over thirty minutes of rest, beside the FP", async () => {
     const cards = foundryWith(3);
     const actor = character({ level: 3 });
