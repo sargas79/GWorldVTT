@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 // wrong reading there is a wrong number on every sheet.
 import {
   alternatives,
+  containerOf,
   legalityClass,
   parseDamage,
   parseDr,
@@ -294,5 +295,37 @@ describe("minimum ranges (Characters p. 281, note 1)", () => {
     expect(first("SAM, 70mm")).toMatchObject({ minRange: 200, halfDamageRange: 1000 });
     const others = gear.flatMap((g) => g.system.rangedModes ?? []).filter((m) => m.minRange !== undefined);
     expect(others).toHaveLength(3);
+  });
+});
+
+/** Only gear made to hold gear is a container (sargas79/GWorldVTT#872). */
+describe("containers (Characters p. 288)", () => {
+  it("reads a GCA parent with a capacity as a container, and a vessel for liquid as none", () => {
+    expect(containerOf('"Backpack, Small", baseweight(3), description(TL:1 Notes: Holds 40 lbs. of gear.), page(B288), isparent(yes), weightcapacity(40)')).toEqual({ capacity: 40 });
+    // A quiver holds a count of arrows, not a weight: no limit in pounds.
+    expect(containerOf("Hip Quiver, description(TL:0 Notes: Holds 20 arrows or bolts.), isparent(yes), countcapacity(20)")).toEqual({ capacity: 0 });
+    expect(containerOf("Web Gear, description(TL:6 Notes: Belt and suspenders with pouches and rings for gear.), isparent(yes)")).toEqual({ capacity: 0 });
+    expect(containerOf("Canteen, description(TL:5 Notes: Holds 1 quart of liquid.), isparent(yes)")).toBeNull();
+    expect(containerOf("Thermos Bottle, description(TL:5 Notes: Keeps 1 pint hot (24hrs.) or cold (48hrs.).), isparent(yes)")).toBeNull();
+    expect(containerOf("Torch, basecost(3), baseweight(1)")).toBeNull();
+  });
+
+  it("marks the compendium's containers with what they hold, and nothing else", () => {
+    const gear = loadPack("gear.json");
+    const containers = Object.fromEntries(gear.filter((i) => i.system.container === true).map((i) => [i.name, i.system.capacity]));
+    expect(containers).toEqual({
+      "Backpack, Frame": 100,
+      "Backpack, Small": 40,
+      Pouch: 3,
+      Purse: 3,
+      "Suitcase, Hard": 100,
+      Saddlebags: 40,
+      Wheelbarrow: 350,
+      "Hip Quiver": 0,
+      "Shoulder Quiver": 0,
+      "Holster, Belt": 0,
+      "Holster, Shoulder": 0,
+      "Web Gear": 0,
+    });
   });
 });

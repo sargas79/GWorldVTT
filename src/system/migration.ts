@@ -477,5 +477,40 @@ export async function migrateLearnableTraits(): Promise<MigrationResult> {
   return { skipped: false, ...result };
 }
 
+/** The system's step that marked the containers already on sheets. */
+export const CONTAINERS_STEP = "containers";
+
+/**
+ * Marks as containers the backpacks, pouches and quivers worlds already hold
+ * (since API 1.161.0). Only gear made to hold gear is a container now, and
+ * the system's equipment compendium says which; a copy taken from it before
+ * then is marked here, once, by its name, with the compendium's capacity
+ * where it has none of its own. Gear already a container is left as it is.
+ * The step is recorded only when every save succeeded.
+ */
+export async function migrateContainers(): Promise<MigrationResult> {
+  const none = { skipped: false, changed: 0, failed: 0 };
+  if (!game.user?.isGM) return none;
+  if (hasMigrated(SYSTEM_ID, CONTAINERS_STEP)) return { ...none, skipped: true };
+  const pack = (game as any).packs?.get?.(`${SYSTEM_ID}.equipment`);
+  const index: any[] = pack ? [...(await pack.getIndex({ fields: ["system.container", "system.capacity"] }))] : [];
+  const capacities = new Map<string, number>();
+  for (const entry of index) {
+    if (entry?.type === "equipment" && entry.system?.container === true) capacities.set(String(entry.name), Number(entry.system.capacity) || 0);
+  }
+  // No compendium to read: nothing is known yet, so the step waits for a load that has one.
+  if (capacities.size === 0) return none;
+  const entries: Array<{ save: (changes: object[]) => Promise<unknown>; change: object }> = [];
+  for (const { item, save } of await itemsEverywhere()) {
+    const source = item?._source?.system;
+    if (item?.type !== "equipment" || source?.container === true || !capacities.has(String(item.name))) continue;
+    const capacity = Number(source?.capacity) || capacities.get(String(item.name)) || 0;
+    entries.push({ save, change: { _id: item.id, "system.container": true, "system.capacity": capacity } });
+  }
+  const result = await saveEach(entries, game.i18n.localize("GWORLD.Migration.Containers"));
+  if (result.failed === 0) await recordMigration(SYSTEM_ID, CONTAINERS_STEP);
+  return { skipped: false, ...result };
+}
+
 /** What the API exposes. */
 export const migrationApi = Object.freeze({ migrateItemType, moveFields, moveRuleState, hasMigrated, resetMigration });

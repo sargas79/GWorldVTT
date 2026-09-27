@@ -3653,6 +3653,17 @@ rule: a container has only its own weight and cost.
 - An equipment item is a container where `system.container` is true, and
   `system.capacity` gives what it holds in pounds (0 for no limit; going over
   warns on the sheet and refuses nothing).
+- Since 1.161.0 only gear made to hold gear is a container, and the item's
+  data says so: the system's equipment compendium marks its backpacks,
+  pouches, purses, suitcase, saddlebags, wheelbarrow, quivers, holsters and
+  web gear, with the capacity the book gives. The character sheet no longer
+  offers to make any item a container; on the item sheet only the GM can.
+  A module marks its own book's containers the same way, with
+  `system.container` and `system.capacity` on its compendium items --
+  `tools/parse-gdf.mjs` sets them from a GCA record's `isparent(yes)` and
+  `weightcapacity()`, leaving out vessels for liquids. A world's copies of
+  the system's containers taken before 1.161.0 are marked once, by name, when
+  the GM loads it.
 - Every physical item has `system.containerId`: the id of the container on the
   same actor it is kept in, blank for loose. A reference to an item that is
   gone, is not a container, or would put an item inside itself reads as loose.
