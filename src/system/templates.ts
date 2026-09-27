@@ -125,9 +125,9 @@ const FILE_PARTIALS: Record<string, string> = {
   "gworld.secondLine": `systems/${SYSTEM_ID}/templates/actor/second-line.hbs`,
   // The character sheet's own pieces.
   "gworld.v2.attackCard": `systems/${SYSTEM_ID}/templates/actor/v2/attack-card.hbs`,
+  "gworld.v2.defenseCards": `systems/${SYSTEM_ID}/templates/actor/v2/defense-cards.hbs`,
   "gworld.v2.bodyOutline": `systems/${SYSTEM_ID}/templates/actor/v2/body-outline.hbs`,
   "gworld.v2.gearRow": `systems/${SYSTEM_ID}/templates/actor/v2/gear-row.hbs`,
-  "gworld.v2.defenseCards": `systems/${SYSTEM_ID}/templates/actor/v2/defense-cards.hbs`,
   // Sections of the character sheet, one partial each: the attack sections
   // are drawn in more than one place, and a section a module's rule reads,
   // or a button a module decorates, is markup in a file of its own.
