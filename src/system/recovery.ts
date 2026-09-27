@@ -98,11 +98,23 @@ async function post(actor: any, context: Record<string, unknown>): Promise<void>
 }
 
 /**
+ * Whether Regeneration has anyone left to work on: the dead do not regenerate
+ * (Characters p. 80), and hit points coming back would not bring them back.
+ * Unkillable is the trait for that (p. 95), and it is its own procedure.
+ */
+function beyondRegeneration(actor: any): boolean {
+  const status = actor?.system?.derived?.status;
+  return hasCondition(actor, "dead") || status === "dead" || status === "destroyed";
+}
+
+/**
  * Heals by Regeneration for a span of time (Characters p. 80).
  *
  * No roll: a regenerator heals at a rate, and the only question is how much
  * time has passed. Whole points only, so a Slow regenerator asked about eleven
- * hours has nothing back yet.
+ * hours has nothing back yet. A dead regenerator gets a card saying so rather
+ * than hit points, as the rests already refuse them: this is the one button
+ * that could otherwise have raised the dead by accident.
  */
 export async function regenerate(options: { actor: any; seconds: number }): Promise<number> {
   const { actor, seconds } = options;
@@ -111,19 +123,32 @@ export async function regenerate(options: { actor: any; seconds: number }): Prom
   const rate = regenerationRate(Number(actor.system?.derived?.traitEffects?.regeneration ?? 0));
   if (!rate) return 0;
 
+  const kind = game.i18n.localize("GWORLD.Recovery.Regeneration");
+  const detail = game.i18n.format("GWORLD.Recovery.RegenerationDetail", {
+    rate: game.i18n.localize(`GWORLD.Recovery.Rate.${rate.key}`),
+    seconds,
+  });
+
+  if (beyondRegeneration(actor)) {
+    await post(actor, { kind, detail, lines: [R("RegenerationDead")], bad: true });
+    return 0;
+  }
+
   const hp = actor.system?.hp ?? { value: 0, max: 0 };
   const previous = Number(hp.value) || 0;
   const max = Number(hp.max) || 0;
   const gained = Math.min(Math.max(0, max - previous), regeneratedHp(rate.key, seconds));
 
-  if (gained > 0) await actor.update({ "system.hp.value": previous + gained });
+  if (gained > 0) {
+    await actor.update({ "system.hp.value": previous + gained });
+    // Reeling is what the hit point total means, so it follows the total back
+    // up as readily as it followed it down (as the rests already have it do).
+    await syncHealthConditions(actor);
+  }
 
   await post(actor, {
-    kind: game.i18n.localize("GWORLD.Recovery.Regeneration"),
-    detail: game.i18n.format("GWORLD.Recovery.RegenerationDetail", {
-      rate: game.i18n.localize(`GWORLD.Recovery.Rate.${rate.key}`),
-      seconds,
-    }),
+    kind,
+    detail,
     full: previous >= max,
     gained,
     pool: "HP",
@@ -146,8 +171,7 @@ async function regenerateWhileResting(actor: any, seconds: number): Promise<Reco
   const rate = regenerationRate(Number(actor.system?.derived?.traitEffects?.regeneration ?? 0));
   if (!rate) return null;
   // The dead do not rest: HP coming back does not bring them back.
-  const status = actor.system?.derived?.status;
-  if (hasCondition(actor, "dead") || status === "dead" || status === "destroyed") return null;
+  if (beyondRegeneration(actor)) return null;
 
   const hp = actor.system?.hp ?? { value: 0, max: 0 };
   const previous = Number(hp.value) || 0;

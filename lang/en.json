@@ -2486,6 +2486,7 @@
       "RegenerationMinutes": "Minutes passed",
       "RegenerationDetail": "{rate}, over {seconds} seconds",
       "RegenerationWhileResting": "Regeneration, {rate}",
+      "RegenerationDead": "Dead: Regeneration brings nothing back",
       "Rate": {
         "slow": "1 HP / 12 hours",
         "regular": "1 HP / hour",
