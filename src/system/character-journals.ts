@@ -226,13 +226,111 @@ export async function fileLooseCharacterJournals(): Promise<void> {
   await fileCharacterJournals((game as any).actors ?? []);
 }
 
+/*
+ * Filing an entry by hand. The automatic filing leaves alone what the sheet
+ * didn't make -- a GM's write-up of a character's background, an entry made
+ * in the sidebar and dropped on the sheet -- so the GM files those from the
+ * Journal sidebar's context menu, under the character of their choosing.
+ */
+
+/** The characters whose Journal tab links the entry, or one of its pages. */
+export function charactersLinking(entry: any, actors: Iterable<any>): any[] {
+  const uuid = String(entry?.uuid ?? "");
+  if (!uuid) return [];
+  const found: any[] = [];
+  for (const actor of actors) {
+    if (actor?.type !== "character") continue;
+    const links = readLinks(actor?.system?.journalLinks);
+    if (links.some((link) => link.uuid === uuid || link.uuid.startsWith(`${uuid}.`))) found.push(actor);
+  }
+  return found;
+}
+
+/** Puts the entry in the character's folder, made if need be. The folder, or null. */
+export async function fileIntoCharacterFolder(entry: any, actor: any): Promise<any> {
+  const folder = await makeCharacterFolder(actor);
+  if (!folder || !entry) return null;
+  if (entry.folder?.id !== folder.id) await entry.update({ folder: folder.id });
+  return folder;
+}
+
 /**
- * Lets the GM's client make the folders, and keeps their names in step.
- * Called during `init`.
+ * The character to file the entry under: the one character linking it, else
+ * the GM's choice, with the characters linking it first. Null if cancelled.
+ */
+async function chooseCharacter(entry: any): Promise<any> {
+  const characters = [...((game as any).actors ?? [])].filter((actor: any) => actor?.type === "character");
+  const linking = charactersLinking(entry, characters);
+  if (linking.length === 1) return linking[0];
+  const L = (key: string, data?: Record<string, string>) =>
+    data ? game.i18n.format(`GWORLD.CharacterJournals.${key}`, data) : game.i18n.localize(`GWORLD.CharacterJournals.${key}`);
+  const name = String(entry?.name ?? "");
+  if (characters.length === 0) {
+    ui.notifications?.warn(L("NoCharacters", { name }));
+    return null;
+  }
+  const escape = (text: string) => foundry.utils.escapeHTML(String(text ?? ""));
+  const rest = characters
+    .filter((actor) => !linking.includes(actor))
+    .sort((a, b) => characterFolderName(a).localeCompare(characterFolderName(b)));
+  const option = (actor: any, linked: boolean) =>
+    `<option value="${escape(actor.id)}">${escape(characterFolderName(actor))}${linked ? ` (${escape(L("Linked"))})` : ""}</option>`;
+  const options = [...linking.map((actor) => option(actor, true)), ...rest.map((actor) => option(actor, false))].join("");
+  const chosen = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("File") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:8px">
+      <p style="margin:0">${escape(L("Choose", { name }))}</p>
+      <label style="display:flex;flex-direction:column;gap:4px">${escape(L("Character"))}<select name="character">${options}</select></label>
+    </div>`,
+    ok: {
+      label: L("File"),
+      callback: (_event: Event, button: HTMLElement) =>
+        button.closest<HTMLElement>(".application")?.querySelector<HTMLSelectElement>('select[name="character"]')?.value ?? "",
+    },
+    rejectClose: false,
+  });
+  return typeof chosen === "string" && chosen ? (game as any).actors?.get?.(chosen) ?? null : null;
+}
+
+/** The context menu's action: the entry filed under the character chosen. */
+async function fileByHand(entry: any): Promise<void> {
+  const actor = await chooseCharacter(entry);
+  if (!actor) return;
+  const folder = await fileIntoCharacterFolder(entry, actor);
+  if (folder) {
+    ui.notifications?.info(game.i18n.format("GWORLD.CharacterJournals.Filed", { name: String(entry?.name ?? ""), folder: String(folder.name ?? "") }));
+  }
+}
+
+/** Adds "File into character folder" to the Journal sidebar's entries, for a GM. */
+export function addFileOption(app: any, options: any[]): void {
+  const entryOf = (li: HTMLElement) => {
+    const id = li?.closest?.<HTMLElement>("[data-entry-id]")?.dataset.entryId;
+    return id ? (app?.collection ?? (game as any).journal)?.get?.(id) ?? null : null;
+  };
+  options.push({
+    label: "GWORLD.CharacterJournals.File",
+    icon: "fa-solid fa-folder-open",
+    // The world's entries only: a compendium's list asks with the same hook.
+    visible: (li: HTMLElement) => (game as any).user?.isGM === true && !!entryOf(li) && !entryOf(li).pack,
+    onClick: (_event: Event, li: HTMLElement) => {
+      const entry = entryOf(li);
+      if (!entry) return;
+      void fileByHand(entry).catch((error) =>
+        console.error(`${SYSTEM_ID} | could not file the journal entry ${String(entry?.name ?? "")}`, error),
+      );
+    },
+  });
+}
+
+/**
+ * Lets the GM's client make the folders, keeps their names in step, and puts
+ * the filing action on the Journal sidebar. Called during `init`.
  */
 export function registerCharacterJournals(): void {
   const queries = (CONFIG as any).queries;
   if (queries && typeof queries === "object") queries[FOLDER_QUERY] = answerFolderQuery;
+  Hooks.on("getJournalEntryContextOptions", (app: any, options: any[]) => addFileOption(app, options));
   Hooks.on("updateActor", (actor: any, changes: any) => {
     void renameCharacterFolder(actor, changes).catch((error) =>
       console.warn(`${SYSTEM_ID} | could not rename the journal folder of ${String(actor?.name ?? "")}`, error),

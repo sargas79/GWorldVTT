@@ -478,7 +478,13 @@
       }
     },
     "CharacterJournals": {
-      "Folder": "Character Journals"
+      "Folder": "Character Journals",
+      "File": "File into character folder",
+      "Choose": "File {name} into which character's folder?",
+      "Character": "Character",
+      "Linked": "linked",
+      "Filed": "{name} filed in {folder}.",
+      "NoCharacters": "There are no characters to file {name} under."
     },
     "Migration": {
       "Progress": "{label}: {done} of {total}",

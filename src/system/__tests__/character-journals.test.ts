@@ -9,7 +9,10 @@ import {
   CHARACTER_FLAG,
   FOLDER_QUERY,
   PARENT_FLAG,
+  addFileOption,
   answerFolderQuery,
+  charactersLinking,
+  fileIntoCharacterFolder,
   characterFolderId,
   characterFolderName,
   fileCharacterJournals,
@@ -35,6 +38,7 @@ function actor(id: string, name: string, token: string, owners: string[] = []) {
     uuid: `Actor.${id}`,
     name,
     documentName: "Actor",
+    type: "character",
     prototypeToken: { name: token },
     system: { journalLinks: [] as Array<{ uuid: string; kind: string }> },
     get isOwner() {
@@ -228,6 +232,42 @@ describe("renaming", () => {
     await renameCharacterFolder(allie, { prototypeToken: { name: "Al" } });
     expect(findCharacterFolder(allie).name).toBe("Allie");
     GM.isSelf = true;
+  });
+});
+
+describe("filing by hand", () => {
+  it("finds the characters linking the entry or one of its pages", () => {
+    const allie = actor("a", "Althea", "Allie");
+    const sam = actor("b", "Sam", "Sam");
+    const npc = { ...actor("c", "Thug", "Thug"), type: "npc" };
+    allie.system.journalLinks = [{ uuid: "JournalEntry.p1", kind: "note" }];
+    sam.system.journalLinks = [{ uuid: "JournalEntry.p1.JournalEntryPage.x", kind: "clue" }];
+    npc.system.journalLinks = [{ uuid: "JournalEntry.p1", kind: "note" }];
+    const found = (list: any[]) => list.map((a) => a.id);
+    expect(found(charactersLinking({ uuid: "JournalEntry.p1" }, [allie, sam, npc]))).toEqual(["a", "b"]);
+    expect(found(charactersLinking({ uuid: "JournalEntry.p10" }, [allie, sam]))).toEqual([]);
+  });
+
+  it("moves the entry into the character's folder, from wherever it was", async () => {
+    const allie = actor("a", "Althea", "Allie");
+    const info = entry("p1", "Personal Information", { default: 0, gm: 3 }, "gmFolder");
+    const folder = await fileIntoCharacterFolder(info, allie);
+    expect(folder.name).toBe("Allie");
+    expect(info.folder).toBe(folder.id);
+  });
+
+  it("is offered to a GM, for the world's entries only", () => {
+    const options: any[] = [];
+    const world = { id: "p1" };
+    const packed = { id: "p2", pack: "world.notes" };
+    const collection = new Map([["p1", world], ["p2", packed]]);
+    addFileOption({ collection }, options);
+    const row = (id: string) => ({ closest: () => ({ dataset: { entryId: id } }) }) as any;
+    expect(options).toHaveLength(1);
+    expect(options[0].visible(row("p1"))).toBe(true);
+    expect(options[0].visible(row("p2"))).toBe(false);
+    asUser(PLAYER);
+    expect(options[0].visible(row("p1"))).toBe(false);
   });
 });
 
