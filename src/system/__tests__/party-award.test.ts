@@ -54,6 +54,18 @@ describe("awarding the party character points (#871)", () => {
     expect(message.flags.gworld.partyAward).toEqual({ partyUuid: "Actor.party", points: 3, members: ["Actor.Ada", "Actor.Bo"] });
   });
 
+  it("gives the rest their award when one character's update fails, and names only them", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const ada = person("Ada", "character");
+    const bo = person("Bo", "character");
+    bo.update.mockRejectedValueOnce(new Error("invalid"));
+    const { create } = world([ada, bo]);
+    expect(await awardPartyPoints(partyOf([bo, ada]), 3)).toEqual([ada]);
+    expect(ada.system.points.awards).toHaveLength(1);
+    expect(bo.system.points.awards).toEqual([]);
+    expect((create.mock.calls[0] as any)[0].flags.gworld.partyAward.members).toEqual(["Actor.Ada"]);
+  });
+
   it("refuses zero, a negative or a fraction", async () => {
     const ada = person("Ada", "character");
     const { create } = world([ada]);

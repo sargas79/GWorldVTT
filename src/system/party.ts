@@ -197,13 +197,22 @@ export async function awardPartyPoints(
   const note = String(options.note ?? "").trim();
   const session = String(options.session ?? "").trim();
   const at = Date.now();
+  // One character who cannot take it does not stop the rest, and the card
+  // names only those who did.
+  const awarded: any[] = [];
   for (const actor of recipients) {
     const awards = (actor.system?.points?.awards ?? []) as PointAward[];
-    await actor.update({ "system.points.awards": withAward(awards, { points: amount, note, session, at }) });
+    try {
+      await actor.update({ "system.points.awards": withAward(awards, { points: amount, note, session, at }) });
+      awarded.push(actor);
+    } catch (error) {
+      console.error(`gworld | the party's award could not be given to ${String(actor.name ?? "")}`, error);
+    }
   }
+  if (awarded.length === 0) return [];
 
   const esc = foundry.utils.escapeHTML;
-  const names = recipients.map((a: any) => String(a.name ?? "")).join(", ");
+  const names = awarded.map((a: any) => String(a.name ?? "")).join(", ");
   const detail = [session, note].filter(Boolean).join(" · ");
   await ChatMessage.implementation.create({
     speaker: ChatMessage.implementation.getSpeaker({ alias: String(party.name ?? "") }),
@@ -213,9 +222,9 @@ export async function awardPartyPoints(
       + `<div class="gc-note">${esc(L("AwardChatWho", { names }))}</div>`
       + (detail ? `<div class="gc-note">${esc(detail)}</div>` : "")
       + `</div>`,
-    flags: { [SYSTEM_ID]: { partyAward: { partyUuid: String(party.uuid), points: amount, members: recipients.map((a: any) => String(a.uuid)) } } },
+    flags: { [SYSTEM_ID]: { partyAward: { partyUuid: String(party.uuid), points: amount, members: awarded.map((a: any) => String(a.uuid)) } } },
   });
-  return recipients;
+  return awarded;
 }
 
 /** Wires the index, the members' refresh, a new party's ownership and the sidebar. Called at init. */

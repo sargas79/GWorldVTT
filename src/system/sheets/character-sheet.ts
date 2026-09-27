@@ -3129,7 +3129,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   static async #onAwardPoints(this: GWorldCharacterSheet) {
     const stored = (this.actor.system as { points?: { awards?: PointAward[] } }).points?.awards ?? [];
     const asked = await promptForAward(nextSessionLabel(stored, (n) => game.i18n.format("GWORLD.Points.SessionN", { n })));
-    if (!asked || asked.points === 0) return;
+    // Whole points only, as the log keeps them: half a point is no award.
+    if (!asked || Math.trunc(Number(asked.points) || 0) === 0) return;
 
     await this.actor.update({ "system.points.awards": withAward(stored, asked) });
   }
