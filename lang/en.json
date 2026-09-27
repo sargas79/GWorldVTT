@@ -477,6 +477,9 @@
         "tooManyZones": "Several zones need RoF 10+ and at least {per} shots in each."
       }
     },
+    "CharacterJournals": {
+      "Folder": "Character Journals"
+    },
     "Migration": {
       "Progress": "{label}: {done} of {total}",
       "ItemType": "Moving items from {from} to {to}",
