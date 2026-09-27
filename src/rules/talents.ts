@@ -135,8 +135,13 @@ export function talentBonusFor(skillName: string, bonuses: ReadonlyMap<string, n
  * order given: what the sheet names beside a skill a Talent has raised.
  */
 export function talentsRaising(skillName: string, traits: readonly BonusTrait[]): string[] {
+  // Looked up as talentBonusFor looks the total up: the whole name where any
+  // talent lists it, and the base only where none does -- so a talent listing
+  // only "Musical Instrument" is not named beside one that lists "(Flute)".
+  const whole = normalizeSkillName(skillName);
+  const key = talentBonuses(traits).has(whole) ? whole : whole.replace(/\s*\(.*\)\s*$/, "");
   return traits
-    .filter((trait) => isTalent(trait.name, trait.talentSkills) && talentBonusFor(skillName, talentBonuses([trait])) > 0)
+    .filter((trait) => isTalent(trait.name, trait.talentSkills) && (talentBonuses([trait]).get(key) ?? 0) > 0)
     .map((trait) => trait.name);
 }
 

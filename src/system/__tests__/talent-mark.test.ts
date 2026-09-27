@@ -26,6 +26,15 @@ describe("talentsRaising", () => {
     expect(talentsRaising("Gardening", held)).toEqual(["Green Thumb"]);
   });
 
+  it("names only the talents the bonus came from: the specialty's own over the base's", () => {
+    const listed = [
+      { name: "Flautist", talentSkills: ["Musical Instrument (Flute)"] },
+      { name: "Musician", talentSkills: ["Musical Instrument"] },
+    ];
+    expect(talentsRaising("Musical Instrument (Flute)", listed)).toEqual(["Flautist"]);
+    expect(talentsRaising("Musical Instrument (Lute)", listed)).toEqual(["Musician"]);
+  });
+
   it("names none for a skill no talent reaches", () => {
     expect(talentsRaising("Broadsword", held)).toEqual([]);
   });
