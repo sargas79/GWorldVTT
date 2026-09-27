@@ -241,12 +241,16 @@ Hooks.once("ready", () => {
   // the system is about to stop defining, and no active module takes over.
   warnUncoveredData();
   warnIncompatibleModules();
-  // The campaign's terms, kept on a party before #642, into the world settings.
-  void migratePartyCampaignTerms();
-  // Learnable advantages put on sheets before the flag existed (API 1.146.0).
-  void migrateLearnableTraits();
-  // Containers taken from the compendium before it said which gear is one (API 1.161.0).
-  void migrateContainers();
+  // The system's own steps, one after another: each records itself by
+  // rewriting the world's list of steps, so two at once could lose one.
+  void (async () => {
+    // The campaign's terms, kept on a party before #642, into the world settings.
+    await migratePartyCampaignTerms();
+    // Learnable advantages put on sheets before the flag existed (API 1.146.0).
+    await migrateLearnableTraits();
+    // Containers taken from the compendium before it said which gear is one (API 1.161.0).
+    await migrateContainers();
+  })().catch((error) => console.error("gworld | a world migration failed", error));
   Hooks.callAll(READY_HOOK, api);
   // The token controls were drawn with the canvas, before any module had its
   // ready turn, so GM tools registered just now aren't on them yet.
