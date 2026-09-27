@@ -47,7 +47,8 @@ import { isAmmunition } from "../ammunition.js";
 import { lacksSpecialty, traitDisplayName } from "../../rules/traits.js";
 import { successChance } from "../sheet-v2/success-chance.js";
 import { mechanicFallbackLabel, mechanicsOf } from "../sheet-v2/trait-mechanics.js";
-import { previewAttack } from "../roll.js";
+import { handleRollAction, previewAttack } from "../roll.js";
+import { DEFENSE_KEYS, defendUpdate, withDefenseOptions, type DefenseKey } from "../sheet-v2/defense-options.js";
 import { targetedTokens } from "../targets.js";
 import { combatLog } from "../sheet-v2/combat-log.js";
 import { locationDrTooltip } from "../sheet-v2/location-dr.js";
@@ -118,6 +119,9 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2PostItem: GWorldCharacterSheetV2.#onPostItem,
       v2EditPortrait: GWorldCharacterSheetV2.#onEditPortrait,
       v2RollPlain: GWorldCharacterSheetV2.#onRollPlain,
+      v2Retreat: GWorldCharacterSheetV2.#onRetreat,
+      v2Defend: GWorldCharacterSheetV2.#onDefend,
+      v2RollDefense: GWorldCharacterSheetV2.#onRollDefense,
     },
   };
 
@@ -158,6 +162,15 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const tabs = (context.tabs ?? {}) as Record<string, { label?: string }>;
     const active = this.tabGroups.primary ?? "overview";
     const points = pointBadge(context.derived?.points ?? {});
+    // Retreat and Defend under each defense (GWorldVTT #877).
+    const system = this.actor.system ?? {};
+    context.defenseCards = withDefenseOptions(context.defenseCards ?? [], {
+      maneuver: system.maneuver,
+      allOutDefenseOption: system.allOutDefenseOption,
+      allOutDefenseTarget: system.allOutDefenseTarget,
+      allOutDefense: system.conditions?.allOutDefense,
+      defenses: system.derived?.defenses ?? null,
+    }, this.retreating);
     context.v2 = {
       tabLabel: tabs[active]?.label ?? "",
       points,
@@ -913,6 +926,12 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
 
   /** Folds that start shut and have been opened. */
   protected opened = new Set<string>();
+
+  /**
+   * The defenses a retreat is chosen for, taken on each one's next roll. On
+   * the sheet, not the actor: a retreat is declared as you defend.
+   */
+  protected retreating = new Set<string>();
 
   protected stateOf(list: string) {
     if (!this.listState.has(list)) this.listState.set(list, {});
@@ -1682,6 +1701,35 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
    * A plain 3d6 under the character's name, with no target and nothing
    * judged: the GM asked for one, and will read it themselves.
    */
+  /** Chooses a retreat for a defense's next roll, or takes it back (Campaigns p. 377). */
+  static #onRetreat(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const key = target.dataset.defense ?? "";
+    if (!(DEFENSE_KEYS as readonly string[]).includes(key) || !this.isEditable) return;
+    if (this.retreating.has(key)) this.retreating.delete(key);
+    else this.retreating.add(key);
+    void this.render();
+  }
+
+  /** Makes the maneuver All-Out Defense, raising this defense by 2 (p. 366), or gives it up. */
+  static async #onDefend(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const key = target.dataset.defense ?? "";
+    if (!(DEFENSE_KEYS as readonly string[]).includes(key) || !this.isEditable) return;
+    const system = this.actor.system ?? {};
+    await this.actor.update(defendUpdate({
+      maneuver: system.maneuver,
+      allOutDefenseOption: system.allOutDefenseOption,
+      allOutDefenseTarget: system.allOutDefenseTarget,
+      allOutDefense: system.conditions?.allOutDefense,
+    }, key as DefenseKey));
+  }
+
+  /** Rolls a defense, taking the retreat chosen for it, which is then spent. */
+  static async #onRollDefense(this: GWorldCharacterSheetV2, event: Event, target: HTMLElement) {
+    const key = target.dataset.rollType ?? "";
+    const result = await handleRollAction(this.actor, event, target);
+    if (result && this.retreating.delete(key)) void this.render();
+  }
+
   static async #onRollPlain(this: GWorldCharacterSheetV2) {
     const roll = new Roll("3d6");
     await roll.evaluate();

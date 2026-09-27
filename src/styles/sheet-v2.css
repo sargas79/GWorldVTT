@@ -678,6 +678,25 @@
 }
 .gworld.v2 button.v2-score-value { cursor: pointer; }
 .gworld.v2 button.v2-score-value:hover { color: var(--v2-steel); }
+/* Retreat and Defend under each defense (GWorldVTT #877). */
+.gworld.v2 .v2-score-value.v2-retreating { color: var(--v2-steel-deep); }
+.gworld.v2 .v2-defense-options { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 4px; }
+.gworld.v2 .v2-defense-option {
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 1px 6px;
+  border: 1px solid var(--v2-panel-line);
+  border-radius: 999px;
+  background: var(--v2-panel-2);
+  color: var(--v2-ink-muted);
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.gworld.v2 button.v2-defense-option { cursor: pointer; }
+.gworld.v2 button.v2-defense-option:hover { border-color: var(--v2-steel); color: var(--v2-steel-deep); }
+.gworld.v2 .v2-defense-option.on { border-color: var(--v2-steel); background: var(--v2-steel); color: #fff; }
 
 .gworld.v2 .v2-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .gworld.v2 .v2-chip {
