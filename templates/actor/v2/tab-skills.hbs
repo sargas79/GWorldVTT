@@ -163,8 +163,6 @@
             {{else}}
               <li><span>{{localize "GWORLD.SheetV2.Default"}}</span><b>{{row.defaultLabel}}</b></li>
             {{/if}}
-            {{#if row.talentBonus}}<li><span>{{localize "GWORLD.SheetV2.Talent"}}</span><b>{{signed row.talentBonus}}</b></li>{{/if}}
-            {{#if row.toolBonus}}<li><span>{{localize "GWORLD.SheetV2.Equipment"}}</span><b>{{signed row.toolBonus}}</b></li>{{/if}}
             {{#each row.bonusLines as |line|}}<li><span>{{line.label}}{{#if line.reason}} <em>({{line.reason}})</em>{{/if}}</span><b>{{signed line.value}}</b></li>{{/each}}
           </ul>
           {{#if row.descriptionHtml}}
