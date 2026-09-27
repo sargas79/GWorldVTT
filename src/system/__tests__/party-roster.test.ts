@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   addMembers,
+  attendingRecipients,
   canJoin,
   isPinned,
   lockedTerms,
@@ -31,6 +32,17 @@ describe("an award to the party", () => {
     const bo = { name: "Bo", type: "character" };
     expect(partyAwardRecipients([ada, guide, null, bo, undefined])).toEqual([ada, bo]);
     expect(partyAwardRecipients([guide])).toEqual([]);
+  });
+
+  it("reaches only those who attended, in the party's order (#890)", () => {
+    const ada = { uuid: "Actor.Ada" };
+    const bo = { uuid: "Actor.Bo" };
+    const cy = { uuid: "Actor.Cy" };
+    expect(attendingRecipients([ada, bo, cy], ["Actor.Cy", ada])).toEqual([ada, cy]);
+    expect(attendingRecipients([ada, bo], ["Actor.stranger", null, undefined, ""])).toEqual([]);
+    expect(attendingRecipients([ada, bo], [])).toEqual([]);
+    expect(attendingRecipients([ada, bo])).toEqual([ada, bo]);
+    expect(attendingRecipients([ada, bo], null)).toEqual([ada, bo]);
   });
 
   it("is a whole number of points above zero", () => {

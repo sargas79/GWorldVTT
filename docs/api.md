@@ -3598,14 +3598,18 @@ is in a party. `game.gworld.api.party` (since 1.68.0):
 - **`party.awardRecipients(party)`** (since 1.160.0) -- the members an award
   to the party reaches: the characters that still exist, in the party's order.
   NPC members are left out.
-- **`party.awardPoints(party, points, { note?, session? })`** (since 1.160.0)
+- **`party.awardPoints(party, points, { note?, session?, members? })`** (since 1.160.0)
   -- gives every character in the party the whole award, as the party sheet's
   Award points button does: each gets `{ points, note, session, at }` added to
   the end of `system.points.awards`, the same log the character sheet's own
   award writes, and one chat message names who got what. GM only; `points`
-  must be a whole number above zero. Resolves to the characters awarded, or an
-  empty array where nothing was awarded (not a GM, not a party, no characters,
-  or a bad amount).
+  must be a whole number above zero. Since 1.162.0, `members` (UUIDs or
+  actors) limits the award to the characters who attended the session, as the
+  dialog's ticked boxes do; anyone on it who is not one of the party's
+  characters is ignored, an empty list awards no one, and the chat message
+  names the characters left out as absent. Resolves to the characters
+  awarded, or an empty array where nothing was awarded (not a GM, not a party,
+  no characters, nobody attending, or a bad amount).
 - **`hooks.partyChanged`** (`gworld.partyChanged`) fires with `(party,
   members)` when a party's roster changes, after its members have been
   prepared again.

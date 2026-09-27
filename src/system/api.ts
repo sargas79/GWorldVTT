@@ -111,7 +111,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.161.0";
+export const API_VERSION = "1.162.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -988,7 +988,8 @@ const magic = Object.freeze({ ...magicApi, postResistance, manaLevel });
  * members. `campaignTerms` is kept for modules written against it; since
  * 1.82.0 the terms are world settings (`world.campaignTerms`), and it gives
  * them for any player character, with its party or null. Since 1.160.0 the GM
- * awards character points to every character in a party (`awardPoints`).
+ * awards character points to every character in a party (`awardPoints`), and
+ * since 1.162.0 to only those who attended (its `members` option).
  */
 const partyApi = Object.freeze({
   of: partyOf, membersOf, campaignTerms: actorCampaignTerms, addMembers, removeMember,

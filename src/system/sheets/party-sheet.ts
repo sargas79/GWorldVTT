@@ -108,22 +108,24 @@ async function promptForMembers(party: any): Promise<string[] | null> {
 
 /**
  * Asks the GM what the party's award is, showing who gets it -- the dialog
- * is the confirmation, since the list of characters is on it. Null when
- * dismissed.
+ * is the confirmation, since the list of characters is on it. Each character
+ * has a box, ticked to start with; untick those who missed the session (#890).
+ * Null when dismissed.
  */
 async function promptForPartyAward(
   recipients: readonly any[],
   skipped: readonly any[],
   suggestedSession: string,
-): Promise<{ points: number; note: string; session: string } | null> {
+): Promise<{ points: number; note: string; session: string; attending: string[] } | null> {
   const esc = foundry.utils.escapeHTML;
   const P = (key: string) => game.i18n.localize(`GWORLD.Points.${key}`);
   const field = (label: string, input: string) => `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${esc(label)}</span>${input}</label>`;
   const who = recipients
-    .map((a: any) => `<li style="display:flex;align-items:center;gap:8px">
+    .map((a: any) => `<li><label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" name="attending" value="${esc(String(a.uuid ?? ""))}" checked style="margin:0">
         <img src="${esc(String(a.img || DEFAULT_IMAGE))}" alt="" style="width:24px;height:24px;object-fit:cover;border:0;border-radius:50%">
-        <span>${esc(String(a.name ?? ""))}</span></li>`)
+        <span>${esc(String(a.name ?? ""))}</span></label></li>`)
     .join("");
   const leftOut = skipped.length
     ? `<p class="ihint" style="margin:0">${esc(L("AwardSkipped", { names: skipped.map((a: any) => String(a.name ?? "")).join(", ") }))}</p>`
@@ -143,12 +145,13 @@ async function promptForPartyAward(
       callback: (_event: Event, button: HTMLElement) => {
         const form = button.closest<HTMLElement>(".application");
         const read = (name: string) => String(form?.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? "").trim();
-        return { points: Number(read("points")), note: read("note"), session: read("session") };
+        const attending = [...(form?.querySelectorAll<HTMLInputElement>('input[name="attending"]:checked') ?? [])].map((box) => box.value);
+        return { points: Number(read("points")), note: read("note"), session: read("session"), attending };
       },
     },
     rejectClose: false,
   });
-  return result && typeof result === "object" ? (result as { points: number; note: string; session: string }) : null;
+  return result && typeof result === "object" ? (result as { points: number; note: string; session: string; attending: string[] }) : null;
 }
 
 export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
@@ -578,7 +581,11 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       ui.notifications?.warn(L("AwardPositive"));
       return;
     }
-    await awardPartyPoints(this.actor, asked.points, { note: asked.note, session: asked.session });
+    if (asked.attending.length === 0) {
+      ui.notifications?.warn(L("AwardNobody"));
+      return;
+    }
+    await awardPartyPoints(this.actor, asked.points, { note: asked.note, session: asked.session, members: asked.attending });
   }
 
   /** A roll made from a member's row is that member's roll. */
