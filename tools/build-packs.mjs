@@ -61,7 +61,7 @@ function normalise(entry, type) {
     img: actor
       ? (entry.img ?? undefined)
       : isGenericIcon(entry.img)
-        ? defaultItemIcon(documentType, entry.system ?? {})
+        ? defaultItemIcon(documentType, entry.system ?? {}, entry.name)
         : entry.img,
     system: entry.system ?? {},
     // A creature carries its traits and skills with it, each keyed under it:
@@ -74,7 +74,7 @@ function normalise(entry, type) {
             // A creature's own traits and skills are items too, and are
             // listed on its sheet with a picture apiece.
             img: isGenericIcon(item.img)
-              ? defaultItemIcon(String(item.type ?? ""), item.system ?? {})
+              ? defaultItemIcon(String(item.type ?? ""), item.system ?? {}, item.name)
               : item.img,
           })),
           prototypeToken: entry.prototypeToken ?? undefined,

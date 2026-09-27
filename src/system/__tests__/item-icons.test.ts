@@ -37,6 +37,46 @@ describe("defaultItemIcon", () => {
     expect(defaultItemIcon("equipment", { category: "tool" })).not.toBe(sword);
   });
 
+  it("draws a weapon as what its name or skill says it is", () => {
+    const pistol = { rangedModes: [{ skill: "Guns (Pistol)" }] };
+    expect(defaultItemIcon("equipment", pistol, "Revolver, .38")).toMatch(/revolver/);
+    expect(
+      defaultItemIcon("equipment", { meleeModes: [{ skill: "Broadsword" }] }, "Broadsword"),
+    ).toMatch(/weapons\/swords\//);
+    expect(defaultItemIcon("equipment", { meleeModes: [{ skill: "Axe/Mace" }] }, "Mace")).toMatch(
+      /weapons\/maces\//,
+    );
+    expect(defaultItemIcon("equipment", { rangedModes: [{ skill: "Bow" }] }, "Longbow")).toMatch(
+      /weapons\/bows\//,
+    );
+    expect(
+      defaultItemIcon("equipment", { rangedModes: [{ skill: "Throwing" }] }, "Stun Grenade"),
+    ).toMatch(/grenade/);
+  });
+
+  it("draws other gear as the thing it is, not its category", () => {
+    expect(defaultItemIcon("equipment", { category: "consumable" }, "Batteries")).toMatch(
+      /battery/,
+    );
+    expect(defaultItemIcon("equipment", { category: "tool" }, "Doctor's Bag")).toMatch(/medkit/);
+    expect(defaultItemIcon("equipment", { category: "tool" }, "Camera, 35mm")).toMatch(/camera/);
+    expect(defaultItemIcon("equipment", { category: "tool" }, "Unheard-of Gadget")).toBe(
+      defaultItemIcon("equipment", { category: "tool" }),
+    );
+  });
+
+  it("draws armour by the part of the body it covers", () => {
+    expect(defaultItemIcon("armor", { locations: ["skull"] }, "Bronze Helmet")).toMatch(
+      /equipment\/head\//,
+    );
+    expect(defaultItemIcon("armor", { locations: ["foot"] }, "Sollerets")).toMatch(
+      /equipment\/feet\//,
+    );
+    expect(defaultItemIcon("armor", { locations: ["torso", "vitals"] }, "Steel Corselet")).toMatch(
+      /equipment\/chest\//,
+    );
+  });
+
   it("falls back to the bag for a type it does not know", () => {
     expect(defaultItemIcon("mystery")).toBe(GENERIC_ITEM_ICON);
   });
@@ -50,11 +90,13 @@ describe("itemIcon", () => {
   it("replaces the bag, or nothing, with the kind's default", () => {
     expect(itemIcon(GENERIC_ITEM_ICON, "skill")).toBe("icons/svg/book.svg");
     expect(itemIcon("", "skill")).toBe("icons/svg/book.svg");
-    expect(itemIcon(undefined, "shield")).toBe("icons/svg/shield.svg");
+    expect(itemIcon(undefined, "shield", {}, "Small Buckler")).toMatch(/buckler/);
   });
 
   it("knows the bag when it sees it", () => {
     expect(isGenericIcon(GENERIC_ITEM_ICON)).toBe(true);
+    // A picture this module used to hand out is no choice either.
+    expect(isGenericIcon("icons/svg/tankard.svg")).toBe(true);
     expect(isGenericIcon("  ")).toBe(true);
     expect(isGenericIcon("icons/svg/book.svg")).toBe(false);
   });
@@ -91,15 +133,23 @@ describe("every entry that ships gets a picture of its own", () => {
   it("leaves no item wearing the bag", () => {
     const wearing = entries
       .filter(({ entry }) => entry.type !== undefined && !ACTOR_TYPES.has(String(entry.type)))
-      .filter(({ entry }) => defaultItemIcon(String(entry.type), entry.system ?? {}) === GENERIC_ITEM_ICON)
+      .filter(
+        ({ entry }) =>
+          defaultItemIcon(String(entry.type), entry.system ?? {}) === GENERIC_ITEM_ICON,
+      )
       .map(({ pack, entry }) => `${pack}/${entry.name} (${entry.type})`);
     expect(wearing).toEqual([]);
   });
 
   it("leaves nothing a creature carries wearing the bag either", () => {
     const wearing = entries
-      .flatMap(({ entry }) => (entry.items ?? []) as Array<{ name?: string; type?: string; system?: unknown }>)
-      .filter((item) => defaultItemIcon(String(item.type ?? ""), item.system ?? {}) === GENERIC_ITEM_ICON)
+      .flatMap(
+        ({ entry }) =>
+          (entry.items ?? []) as Array<{ name?: string; type?: string; system?: unknown }>,
+      )
+      .filter(
+        (item) => defaultItemIcon(String(item.type ?? ""), item.system ?? {}) === GENERIC_ITEM_ICON,
+      )
       .map((item) => `${item.name} (${item.type})`);
     expect(wearing).toEqual([]);
   });

@@ -5,7 +5,8 @@
  * same bag, and this class hands out one per kind instead -- at creation,
  * through `getDefaultArtwork`, and at read time for items that were made
  * before there was anything better to give them. What somebody chose for an
- * item is never touched; only the bag is read as "nothing chosen".
+ * item is never touched; only the bag, or a picture this system used to hand
+ * out by default, is read as "nothing chosen".
  */
 
 import { afterPrepare, effectivePrice } from "../data-extensions.js";
@@ -15,8 +16,8 @@ import { carryContentsWith, takeOutContentsOf } from "../container-moves.js";
 
 export class GWorldItem extends Item {
   /** The picture a new item gets, by its kind rather than the same for all. */
-  static override getDefaultArtwork(itemData: { type?: string; system?: unknown }): { img: string } {
-    return { img: defaultItemIcon(String(itemData?.type ?? ""), itemData?.system) };
+  static override getDefaultArtwork(itemData: { name?: string; type?: string; system?: unknown }): { img: string } {
+    return { img: defaultItemIcon(String(itemData?.type ?? ""), itemData?.system, itemData?.name) };
   }
 
   /**
@@ -29,7 +30,7 @@ export class GWorldItem extends Item {
   override prepareBaseData(): void {
     super.prepareBaseData();
     const source = this._source as { img?: unknown; system?: unknown } | undefined;
-    if (isGenericIcon(source?.img)) this.img = defaultItemIcon(this.type, source?.system);
+    if (isGenericIcon(source?.img)) this.img = defaultItemIcon(this.type, source?.system, this.name);
   }
 
   /**
