@@ -4679,8 +4679,6 @@
       "SuccessChance": "success chance",
       "CriticalsHint": "Critical success {success}%, critical failure {failure}%",
       "Default": "Default",
-      "Talent": "Talent",
-      "Equipment": "Equipment",
       "RollIt": "Roll",
       "Edit": "Open",
       "Improve": "Improve {name}",
