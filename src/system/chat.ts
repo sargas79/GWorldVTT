@@ -20,7 +20,7 @@ import { applyDamageToShield, consumeShieldNote, noteShieldTookIt } from "./shie
 import { attackOptionsFromEntries, rollDamage, rollSuccess, type AttackWeaponFlag } from "./roll.js";
 import { currentTargets, ownsATokenOnScene } from "./targets.js";
 import {
-  BLAST_PLACEMENTS, blastAt, blastPlacementOf, contactCoverDr, fragmentationLabel, fragmentationStrikes,
+  BLAST_PLACEMENTS, blastAt, blastPlacementOf, collateralInjury, contactCoverDr, fragmentationLabel, fragmentationStrikes,
   type BlastPlacement, type FragmentationSpec,
 } from "../rules/explosions.js";
 import { criticalEntry, criticalHitTableFor, isUnarmedSkill } from "../rules/criticals.js";
@@ -464,9 +464,12 @@ async function applyFromCard(options: {
     return;
   }
 
-  // "Use torso armor to determine DR against explosion damage" (p. 414),
-  // whatever part of them happened to be nearest.
-  const struck: HitLocation = blast && !blast.direct ? "torso" : hitLocation;
+  // "Work out DR against explosion damage as explained in Large-Area Injury
+  // (p. 400)" (p. 414): a victim the blast did not strike takes a large-area
+  // injury, a torso hit against the average DR of the torso and the least
+  // protected exposed location, whatever part of them happened to be nearest.
+  const collateral = blast ? collateralInjury(blast, hitLocation) : null;
+  const struck: HitLocation = collateral ? (collateral.hitLocation as HitLocation) : hitLocation;
 
   // One roll on the table, applied to everyone the blow lands on: a critical is
   // something the attacker did, not something each victim rolls separately.
@@ -529,7 +532,7 @@ async function applyFromCard(options: {
     // in the figure for a contact blast, and an internal one is worked out at
     // the vitals, through no DR, at x3.
     ...(placement ? { blastPlacement: placement } : {}),
-    ...(options.largeArea ? { largeArea: true } : {}),
+    ...(options.largeArea || collateral?.largeArea ? { largeArea: true } : {}),
     // Yards from the blast's centre, for the damage hooks (since API 1.63.0).
     ...(flag.explosive ? { blastDistance: Math.max(0, distanceYards) } : {}),
   };

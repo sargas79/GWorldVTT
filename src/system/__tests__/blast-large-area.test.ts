@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { collateralInjury, blastAt } from "../../rules/explosions.js";
 import { resolveDamageAgainst, type IncomingDamage } from "../damage.js";
 
 // A blast inside its victim (Campaigns p. 415) and a large-area injury
@@ -43,6 +44,29 @@ describe("a blast inside its victim", () => {
     expect(result.effectiveDr).toBe(6);
     expect(result.injury).toBe(12);
     expect(result.blastPlacement).toBe("contact");
+  });
+});
+
+describe("an explosion's collateral damage (Revised p. 414)", () => {
+  // "Work out DR against explosion damage as explained in Large-Area Injury (p. 400)."
+  const collateral = blastAt({ rolledDamage: 18, distanceYards: 1, diceOfDamage: 3 });
+
+  it("is a large-area torso hit for a victim the blast did not strike", () => {
+    expect(collateral.direct).toBe(false);
+    expect(collateralInjury(collateral, "skull")).toEqual({ hitLocation: "torso", largeArea: true });
+  });
+
+  it("leaves the one the attack struck to the ordinary hit location", () => {
+    const direct = blastAt({ rolledDamage: 18, distanceYards: 0, diceOfDamage: 3 });
+    expect(collateralInjury(direct, "skull")).toEqual({ hitLocation: "skull", largeArea: false });
+  });
+
+  it("meets the average of the vest and the bare face, not the vest alone", () => {
+    const { hitLocation, largeArea } = collateralInjury(collateral, "torso");
+    // DR 6 torso, DR 0 face: (6 + 0) / 2 = 3, where the 2004 rule gave 6.
+    const result = resolveDamageAgainst(soldier(), blow({ basicDamage: collateral.damage, hitLocation: hitLocation as any, largeArea }));
+    expect(result.effectiveDr).toBe(3);
+    expect(result.largeArea).toEqual({ dr: 3, leastProtected: "face" });
   });
 });
 
