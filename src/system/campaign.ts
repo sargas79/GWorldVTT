@@ -1,7 +1,7 @@
 /**
  * The campaign's terms: the starting points and the disadvantage limit
- * (GURPS Basic Set: Characters pp. 10-11) and the Tech Level (Characters
- * p. 22).
+ * (GURPS Basic Set: Characters pp. 10-11), the Tech Level (Characters
+ * p. 22) and the highest level of Multimillionaire (Characters p. 25).
  *
  * They are facts about the campaign, so they are world settings, which only
  * the GM changes. Every player character reads them, in a party or not:
@@ -26,6 +26,7 @@ export const CAMPAIGN_TERM_SETTINGS: Readonly<Record<CampaignTermKey, string>> =
   startingPoints: "campaignStartingPoints",
   disadvantageLimit: "campaignDisadvantageLimit",
   tl: "campaignTL",
+  multimillionaireCap: "campaignMultimillionaireCap",
 });
 
 /** The actor types the terms apply to: player characters, not NPCs or monsters. */
@@ -109,7 +110,7 @@ function refreshAll(): void {
 
 export function registerCampaignSettings(): void {
   const fields = foundry.data.fields;
-  const steps: Record<CampaignTermKey, number> = { startingPoints: 5, disadvantageLimit: 5, tl: 1 };
+  const steps: Record<CampaignTermKey, number> = { startingPoints: 5, disadvantageLimit: 5, tl: 1, multimillionaireCap: 1 };
   for (const key of CAMPAIGN_TERM_KEYS) {
     game.settings.register(SYSTEM_ID, CAMPAIGN_TERM_SETTINGS[key], {
       name: `GWORLD.Campaign.${key}.Name`,
@@ -152,7 +153,7 @@ export async function migratePartyCampaignTerms(): Promise<void> {
 
 /** The first figure set for each term across the parties, and the terms they disagree on. */
 export function mergePartyTerms(list: readonly CampaignTerms[]): { chosen: CampaignTerms; conflicts: CampaignTermKey[] } {
-  const chosen: CampaignTerms = { tl: null, startingPoints: null, disadvantageLimit: null };
+  const chosen: CampaignTerms = { tl: null, startingPoints: null, disadvantageLimit: null, multimillionaireCap: null };
   const conflicts: CampaignTermKey[] = [];
   for (const key of CAMPAIGN_TERM_KEYS) {
     const values = list.map((terms) => terms[key]).filter((value): value is number => value !== null);

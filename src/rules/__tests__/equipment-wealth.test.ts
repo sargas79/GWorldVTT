@@ -14,6 +14,8 @@ import {
   pointsForMoney,
   signatureGearPoints,
   signatureGearValue,
+  startingWealth,
+  wealthFrom,
 } from "../wealth.js";
 import { bestTool } from "../tech-level.js";
 
@@ -185,5 +187,33 @@ describe("paying for a purchase (Characters pp. 25-27)", () => {
   it("buys whole things only, and nothing at all for a nonsense number", () => {
     expect(purchase({ price: 10, quantity: 2.7, money: 100 }).quantity).toBe(2);
     expect(purchase({ price: 10, quantity: -3, money: 100 })).toMatchObject({ quantity: 0, total: 0 });
+  });
+});
+
+/** Characters p. 25: Multimillionaire goes "to a maximum level (usually 3 or 4) set by the GM". */
+describe("the GM's cap on Multimillionaire", () => {
+  const wealth = (levels: number) => [{ name: "Wealth", levels }];
+
+  it("leaves Multimillionaire uncapped by default", () => {
+    expect(wealthFrom(wealth(9))).toEqual({ level: "multimillionaire", multimillionaire: 5 });
+    expect(wealthFrom(wealth(9), null)).toEqual({ level: "multimillionaire", multimillionaire: 5 });
+  });
+
+  it("holds a level bought beyond the cap to the cap", () => {
+    // Multimillionaire 5 is 10^4 x 1,000 = 10,000,000 times average; capped at 3, 100,000 times.
+    const capped = wealthFrom(wealth(9), 3);
+    expect(capped).toEqual({ level: "multimillionaire", multimillionaire: 3 });
+    expect(startingWealth(8, capped)).toBe(20000 * 100000);
+    expect(wealthFrom(wealth(7), 3)).toEqual({ level: "multimillionaire", multimillionaire: 3 });
+  });
+
+  it("changes nothing at or under the cap", () => {
+    expect(wealthFrom(wealth(6), 3)).toEqual({ level: "multimillionaire", multimillionaire: 2 });
+    expect(wealthFrom(wealth(4), 0)).toEqual({ level: "filthyRich", multimillionaire: 0 });
+  });
+
+  it("stops at Filthy Rich where the cap is 0", () => {
+    expect(wealthFrom(wealth(5), 0)).toEqual({ level: "filthyRich", multimillionaire: 0 });
+    expect(startingWealth(8, wealthFrom(wealth(9), 0))).toBe(20000 * 100);
   });
 });

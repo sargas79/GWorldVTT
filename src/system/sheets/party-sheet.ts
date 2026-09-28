@@ -228,6 +228,7 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     if (terms.tl !== null) termChips.push({ label: game.i18n.localize("GWORLD.Field.TechLevel"), value: String(terms.tl) });
     if (terms.startingPoints !== null) termChips.push({ label: game.i18n.localize("GWORLD.Field.StartingPoints"), value: `${terms.startingPoints} CP` });
     if (terms.disadvantageLimit !== null) termChips.push({ label: game.i18n.localize("GWORLD.Field.DisadvantageLimit"), value: `-${terms.disadvantageLimit} CP` });
+    if (terms.multimillionaireCap !== null) termChips.push({ label: game.i18n.localize("GWORLD.Field.MultimillionaireCap"), value: String(terms.multimillionaireCap) });
 
     return {
       ...context,

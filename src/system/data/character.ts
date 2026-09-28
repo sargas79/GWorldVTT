@@ -714,9 +714,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
    * has set, worked out at the start of every preparation. Not stored: the
    * world settings are the record of the terms.
    */
-  campaign: { party: { id: string; uuid: string; name: string } | null; locked: Record<CampaignTermKey, boolean> } = {
+  campaign: {
+    party: { id: string; uuid: string; name: string } | null;
+    locked: Record<CampaignTermKey, boolean>;
+    /** The highest level of Multimillionaire the GM allows (Characters p. 25), or null for no cap. */
+    multimillionaireCap: number | null;
+  } = {
     party: null,
-    locked: { tl: false, startingPoints: false, disadvantageLimit: false },
+    locked: { tl: false, startingPoints: false, disadvantageLimit: false, multimillionaireCap: false },
+    multimillionaireCap: null,
   };
 
   declare derived: ReturnType<CharacterData["buildDerived"]>;
@@ -1426,7 +1432,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
    * was written for.
    */
   #wealth(traits: ReadonlyArray<{ name: string; levels?: number }>) {
-    const standing = wealthFrom(traits);
+    const standing = wealthFrom(traits, this.campaign?.multimillionaireCap ?? null);
     const status = statusFrom(traits);
     const tl = Number(this.tl) || 0;
     const gear = gearCost(
@@ -1565,7 +1571,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   override prepareBaseData(): void {
     super.prepareBaseData();
     const terms = actorCampaignTerms(this.parent);
-    this.campaign = { party: terms?.party ?? null, locked: lockedTerms(terms) };
+    this.campaign = { party: terms?.party ?? null, locked: lockedTerms(terms), multimillionaireCap: terms?.multimillionaireCap ?? null };
     if (!terms) return;
     if (terms.tl !== null) this.tl = terms.tl;
     if (terms.startingPoints !== null) this.points.starting = terms.startingPoints;

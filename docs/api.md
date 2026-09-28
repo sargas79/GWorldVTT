@@ -3643,7 +3643,7 @@ is in a party. `game.gworld.api.party` (since 1.68.0):
 - **`party.membersOf(party)`** -- the member actors that still exist, in the
   party's order.
 - **`party.campaignTerms(actor)`** -- `{ party, tl, startingPoints,
-  disadvantageLimit }`, each term null where the GM left it blank. Since
+  disadvantageLimit, multimillionaireCap }`, each term null where the GM left it blank. Since
   1.82.0 the terms are the world's and reach every player character: `party`
   is `{ id, uuid, name }` or null for a character in no party, and the result
   is null only for an actor the terms don't bind (an NPC, a vehicle). Kept for
@@ -3682,9 +3682,13 @@ that are world settings rather than anything on an actor:
   notes read the same figure. Compare an item's class against it with
   `rules.legalityUnder(lc, rating)`.
 - **`world.campaignTerms()`** (since 1.82.0) -- `{ tl, startingPoints,
-  disadvantageLimit }`: the terms every player character is made on
-  (Characters pp. 10-11, 22), as the GM set them in the system settings or on
-  a party's Campaign tab, each null where left blank. A term that is set
+  disadvantageLimit, multimillionaireCap }`: the terms every player character
+  is made on (Characters pp. 10-11, 22, 25), as the GM set them in the system
+  settings or on a party's Campaign tab, each null where left blank. Since
+  1.163.0 `multimillionaireCap` is the highest level of Multimillionaire the
+  campaign allows (Characters p. 25): null is uncapped, and a level bought
+  beyond it is worth no more starting wealth than the cap (0 stops at Filthy
+  Rich); it is also `actor.system.derived.campaign.multimillionaireCap`. A term that is set
   replaces a player character's own during preparation -- `actor.system.tl`,
   `actor.system.points.starting` and `actor.system.points.disadvantageLimit`
   already read it, and `actor.system.derived.campaign.locked` says which terms

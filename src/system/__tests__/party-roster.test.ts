@@ -239,15 +239,24 @@ describe("the party's languages", () => {
 });
 
 describe("the campaign's terms", () => {
+  const none = { tl: null, startingPoints: null, disadvantageLimit: null, multimillionaireCap: null };
+
   it("keeps a blank as not set, and reads a figure", () => {
-    expect(termsFrom({ tl: 8, startingPoints: null, disadvantageLimit: undefined })).toEqual({ tl: 8, startingPoints: null, disadvantageLimit: null });
-    expect(termsFrom(null)).toEqual({ tl: null, startingPoints: null, disadvantageLimit: null });
-    expect(termsFrom({ tl: "3" as unknown as number })).toEqual({ tl: null, startingPoints: null, disadvantageLimit: null });
+    expect(termsFrom({ tl: 8, startingPoints: null, disadvantageLimit: undefined })).toEqual({ ...none, tl: 8 });
+    expect(termsFrom(null)).toEqual(none);
+    expect(termsFrom({ tl: "3" as unknown as number })).toEqual(none);
   });
 
   it("locks only what is set", () => {
-    expect(lockedTerms({ tl: 8, startingPoints: null, disadvantageLimit: 50 })).toEqual({ tl: true, startingPoints: false, disadvantageLimit: true });
-    expect(lockedTerms(null)).toEqual({ tl: false, startingPoints: false, disadvantageLimit: false });
+    expect(lockedTerms({ ...none, tl: 8, disadvantageLimit: 50 })).toEqual({ tl: true, startingPoints: false, disadvantageLimit: true, multimillionaireCap: false });
+    expect(lockedTerms(null)).toEqual({ tl: false, startingPoints: false, disadvantageLimit: false, multimillionaireCap: false });
+  });
+
+  /** Characters p. 25: Multimillionaire goes "to a maximum level (usually 3 or 4) set by the GM". */
+  it("holds the Multimillionaire cap, uncapped until the GM sets one", () => {
+    expect(termsFrom({ multimillionaireCap: 3 }).multimillionaireCap).toBe(3);
+    expect(termsFrom({}).multimillionaireCap).toBeNull();
+    expect(lockedTerms({ ...none, multimillionaireCap: 0 }).multimillionaireCap).toBe(true);
   });
 });
 

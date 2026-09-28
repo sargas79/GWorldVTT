@@ -154,6 +154,7 @@
       "SizeModifier": "size",
       "StartingPoints": "Starting Points",
       "DisadvantageLimit": "Disadv. Limit",
+      "MultimillionaireCap": "Multimillionaire cap",
       "Maneuver": "This Turn",
       "EvaluateTurns": "Turns Evaluating",
       "ConcentrateTurns": "Turns Concentrating",
@@ -1714,6 +1715,7 @@
     "Hint": {
       "OverBudget": "Spent past the starting budget.",
       "DisadvantageLimit": "A rule of thumb, not a hard cap. Disadvantages and quirks both count.",
+      "MultimillionaireCap": "The highest level of Multimillionaire the campaign allows (Characters p. 25). Blank: no cap.",
       "Languages": "Accented is -1 to skills that depend on language. One native language is free: tick Native on it.",
       "GMOnly": "visible to the GM only",
       "LimitedSheet": "Sheet is limited to you",
@@ -4669,6 +4671,10 @@
       "disadvantageLimit": {
         "Name": "Campaign disadvantage limit",
         "Hint": "The most points a player character may take in disadvantages (Characters p. 11). Blank: each character keeps its own."
+      },
+      "multimillionaireCap": {
+        "Name": "Campaign Multimillionaire cap",
+        "Hint": "The highest level of Multimillionaire a player character may have (Characters p. 25: usually 3 or 4, set by the GM). Blank: no cap. A level bought beyond it is worth no more starting wealth than the cap; 0 stops at Filthy Rich."
       },
       "tl": {
         "Name": "Campaign Tech Level",
