@@ -122,11 +122,12 @@ describe("bulletproof nudity (p. 417)", () => {
     expect(nudityDefenseBonus({ appearance: 0, dress: "nude" })).toBe(0);
   });
 
-  it("adds the book's extra point for a bare chest", () => {
-    expect(nudityDefenseBonus({ ...attractive, dress: "bares", topless: true })).toBe(2);
-    expect(nudityDefenseBonus({ ...attractive, dress: "skimpy", topless: true })).toBe(3);
-    // Nothing to add it to while they are dressed.
-    expect(nudityDefenseBonus({ ...attractive, dress: "clothed", topless: true })).toBe(0);
+  /** Revised p. 417 dropped the 2004 printing's "Topless females get an extra +1". */
+  it("gives no extra point for a bare chest: +1 for bare skin and +2 for a loincloth stay", () => {
+    expect(nudityDefenseBonus({ ...attractive, dress: "bares" })).toBe(1);
+    expect(nudityDefenseBonus({ ...attractive, dress: "skimpy" })).toBe(2);
+    // A stale option on an old call changes nothing.
+    expect(nudityDefenseBonus({ ...attractive, dress: "bares", topless: true } as Parameters<typeof nudityDefenseBonus>[0])).toBe(1);
   });
 
   it("makes a naked swimmer faster, however they look", () => {

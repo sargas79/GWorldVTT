@@ -657,7 +657,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare magic: { style: MagicStylePreference };
   declare activeSpells: ActiveSpell[];
   declare attributePenalties: { ST: number; DX: number; IQ: number; HT: number };
-  declare dress: { state: Dress; topless: boolean };
+  declare dress: { state: Dress };
   declare entangled: {
     kind: "" | "net" | "smallNet" | "bolas" | "lariat" | "binding";
     successes: number;
@@ -842,8 +842,6 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           required: true, nullable: false, initial: "clothed",
           choices: ["clothed", "bares", "skimpy", "nude"],
         }),
-        /** The book's extra +1 for a bare chest, which the player sets. */
-        topless: new fields.BooleanField({ initial: false }),
       }),
 
       /**
@@ -3141,7 +3139,6 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ? nudityDefenseBonus({
           dress: this.dress?.state ?? "clothed",
           appearance: appearanceLevels,
-          topless: this.dress?.topless === true,
         })
       : 0;
 

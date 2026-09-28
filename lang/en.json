@@ -4158,8 +4158,6 @@
         "skimpy": "Loincloth or skimpy swimwear",
         "nude": "Nothing at all"
       },
-      "Topless": "Bare chest",
-      "ToplessHint": "The extra +1 the book gives a bare chest. It is set here rather than read off the sheet (Campaigns p. 417).",
       "CannonFodder": "Cannon fodder",
       "CannonFodderHint": "A mook: fails every defense roll, never takes All-Out Attack, and collapses the moment any damage gets through their DR. Nobody keeps track of their HP (Campaigns p. 417).",
       "CannonFodderDefense": "Cannon fodder: automatically fails",
