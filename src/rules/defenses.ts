@@ -3,6 +3,7 @@
  */
 
 import { sameSkill } from "./skills.js";
+import { FENCING_SKILLS } from "./weapon-quality.js";
 import { halveForReeling } from "./injury.js";
 import { POSTURE_EFFECTS } from "./posture.js";
 import type { EncumbranceLevel, Posture } from "./types.js";
@@ -251,11 +252,20 @@ export function flailDefenseModifier(kind: FlailKind, defense: "dodge" | "parry"
   return kind === "nunchaku" ? full / 2 : full;
 }
 
-/** "Fencing weapons and knives cannot parry them at all!" (Characters p. 208). */
+/**
+ * "Fencing weapons and knives cannot parry them at all!" (Characters p. 208) --
+ * but "a fencing weapon that also works with a non-fencing skill can parry
+ * flails at the usual -4" (Revised p. 405). So a fencing weapon is barred only
+ * while it is used with a fencing skill; used with another (a main-gauche with
+ * Knife, say) it parries a flail at -4 like anything else.
+ */
 export function canParryFlail(parry: { skill: string | undefined; isFencing: boolean }): boolean {
   const base = String(parry.skill ?? "").replace(/\s*\(.*$/, "").trim().toLowerCase();
-  return !parry.isFencing && base !== "knife";
+  if (parry.isFencing) return base !== "" && !FENCING_SKILL_KEYS.has(base.replace(/[-\s]/g, ""));
+  return base !== "knife";
 }
+
+const FENCING_SKILL_KEYS = new Set([...FENCING_SKILLS].map((skill) => skill.toLowerCase().replace(/[-\s]/g, "")));
 
 /**
  * Parrying a thrown weapon (Campaigns p. 376): -1, or -2 for a small one that

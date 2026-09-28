@@ -28,6 +28,17 @@ describe("flails (Characters p. 208, Campaigns pp. 405, 548)", () => {
     expect(flailDefenseModifier(null, "parry")).toBe(0);
   });
 
+  /** Revised p. 405: "A fencing weapon that also works with a non-fencing skill can parry flails at the usual -4." */
+  it("can be parried with a fencing weapon used with a non-fencing skill", () => {
+    expect(canParryFlail({ skill: "Knife", isFencing: true })).toBe(true);
+    expect(canParryFlail({ skill: "Shortsword", isFencing: true })).toBe(true);
+    expect(canParryFlail({ skill: "Main-Gauche", isFencing: true })).toBe(false);
+    expect(canParryFlail({ skill: "Main Gauche", isFencing: true })).toBe(false);
+    expect(canParryFlail({ skill: "Saber", isFencing: true })).toBe(false);
+    expect(canParryFlail({ skill: "Smallsword", isFencing: true })).toBe(false);
+    expect(canParryFlail({ skill: undefined, isFencing: true })).toBe(false);
+  });
+
   it("can't be parried with a fencing weapon or a knife", () => {
     expect(canParryFlail({ skill: "Rapier", isFencing: true })).toBe(false);
     expect(canParryFlail({ skill: "Knife", isFencing: false })).toBe(false);

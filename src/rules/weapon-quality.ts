@@ -41,7 +41,8 @@ const SWORD_SKILLS = new Set([
   "Broadsword", "Shortsword", "Two-Handed Sword", "Rapier", "Saber", "Smallsword",
   "Main-Gauche", "Force Sword",
 ]);
-const FENCING_SKILLS = new Set(["Rapier", "Saber", "Smallsword", "Main-Gauche"]);
+/** The Melee Weapon skills of the fencing weapons (Characters p. 208). */
+export const FENCING_SKILLS = new Set(["Rapier", "Saber", "Smallsword", "Main-Gauche"]);
 const BOW_SKILLS = new Set(["Bow", "Crossbow", "Blowpipe"]);
 
 /**
