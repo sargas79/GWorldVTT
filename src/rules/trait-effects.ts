@@ -59,6 +59,11 @@ export interface TraitEffects {
   aquatic: boolean;
   /** No penalty for using the off hand (Ambidexterity, Characters p. 39). */
   ambidextrous: boolean;
+  /**
+   * Gunslinger (Characters p. 58; since API 1.163.0): the shooting rules
+   * read it with a Beam Weapons, Gunner, Guns or Liquid Projector weapon.
+   */
+  gunslinger: boolean;
   /** Influence rolls fail against them outright (Indomitable, Characters p. 60). */
   indomitable: boolean;
   /** Influence rolls against them win outright (Heteronomy, Characters p. 138). */
@@ -272,6 +277,7 @@ export function noTraitEffects(): TraitEffects {
     enhancedMove: 1,
     aquatic: false,
     ambidextrous: false,
+    gunslinger: false,
     indomitable: false,
     heteronomy: false,
     attributes: { ST: 0, DX: 0, IQ: 0, HT: 0 },
@@ -404,6 +410,10 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   // "You can use either hand... you suffer no -4 penalty for using the 'off'
   // hand" (Characters p. 39).
   ambidexterity: () => ({ ambidextrous: true }),
+
+  // "You have uncanny talent with firearms" (Characters p. 58): what it does
+  // to a shot is worked out where the shot is (rules/gunslinger.ts).
+  gunslinger: () => ({ gunslinger: true }),
 
   // "You cannot be affected by Influence rolls" (Characters p. 60), and its
   // opposite: "you win automatically against those with Heteronomy"
@@ -769,6 +779,7 @@ export function addTraitEffects(total: TraitEffects, applied: Partial<TraitEffec
   total.noShock ||= applied.noShock ?? false;
   total.aquatic ||= applied.aquatic ?? false;
   total.ambidextrous ||= applied.ambidextrous ?? false;
+  total.gunslinger ||= applied.gunslinger ?? false;
   total.indomitable ||= applied.indomitable ?? false;
   total.heteronomy ||= applied.heteronomy ?? false;
   if (applied.electrical) total.electrical = true;

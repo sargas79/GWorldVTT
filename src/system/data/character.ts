@@ -133,6 +133,7 @@ import {
   inWeaponMasterClass, thrownDamageBonusPerDie, weaponMasterBonusPerDie, weaponMasterDamage, weaponMasterDefault,
   weaponMasteryFrom,
 } from "../../rules/weapon-master.js";
+import { fasterShootingDefault } from "../../rules/gunslinger.js";
 import {
   checkPrerequisites,
   collegeSkillNames,
@@ -2101,10 +2102,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     for (const item of this.itemsOfType("technique")) {
       const sys = item.system as any;
       // The technique's own defaults, and any a module offers beside them.
+      // A Gunslinger takes half the default penalty of a technique that allows
+      // faster shooting, rounded in their favour (Characters p. 58), and buys
+      // it up from that improved default.
+      const halved = traits.gunslinger && sys.fasterShooting === true;
       const defaults = techniqueDefaultsWithHooks(this.parent, item, [
         { from: String(sys.defaultFrom ?? "skill"), skill: String(sys.prerequisite ?? ""), modifier: Number(sys.defaultModifier) || 0 },
         ...((sys.alternateDefaults ?? []) as Array<{ from: string; skill: string; modifier: number }>),
-      ]);
+      ]).map((d) => (halved ? { ...d, modifier: fasterShootingDefault(d.modifier, true) } : d));
       const standard = () => resolveTechniqueDefaults({
         defaults: defaults.map((d) => ({ base: techniqueBase(d.from, d.skill), modifier: Number(d.modifier) || 0 })),
         levels: techniqueLevelsForPoints(sys.points, sys.difficulty),

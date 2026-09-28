@@ -183,6 +183,7 @@ import { canTargetFromArc, missByOneHitsTorso } from "../rules/hit-locations.js"
 import { facingAgainstTarget } from "./attack-arc.js";
 import { POSTURE_EFFECTS } from "../rules/posture.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
+import { gunslingerAccuracy, gunslingerWeapon, type GunslingerWeapon } from "../rules/gunslinger.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
 import { rollMalediction } from "./malediction.js";
 import { pendingModifierLines, spendPendingModifiers } from "./pending-modifiers.js";
@@ -203,10 +204,18 @@ export interface RollModifier {
    * and `laser`; since 1.87.0 `movingPlatform`; since 1.91.0 `size` on a
    * ranged attack, and `zen`, a zen skill's line (with `zen`, the skill's id);
    * since 1.105.0 `afflictionDr`, the DR bonus to an affliction's resistance roll;
-   * since 1.153.0 `dualWeapon` (with `hand`) and `strikeAtWeapon` (with `itemId`).
+   * since 1.153.0 `dualWeapon` (with `hand`) and `strikeAtWeapon` (with `itemId`);
+   * since 1.163.0 `gunslinger` (with `gunslinger`).
    * Blank or absent on lines nobody has named.
    */
   key?: string;
+  /**
+   * On a `gunslinger` line (since 1.163.0), what Gunslinger did: `accuracy`,
+   * the Acc added without an Aim maneuver, or the penalty it waived in place
+   * of Acc, at value 0 -- `moveAndAttack`, `closeCombat`, `driving` or
+   * `riding` (weapon skill to hit, not the lower of it and Riding).
+   */
+  gunslinger?: "accuracy" | "moveAndAttack" | "closeCombat" | "driving" | "riding";
   /** On a `dualWeapon` line, the hand rolled: `primary` or `off` (since 1.153.0). */
   hand?: "primary" | "off";
   /** On a `strikeAtWeapon` line, the id of the foe's item struck at (since 1.153.0). */
@@ -1013,6 +1022,13 @@ export function previewAttack(actor: any, row: {
 export function weaponFromDataset(actor: any, dataset: Record<string, unknown>) {
   const n = (key: string) => Number(dataset[key]) || 0;
   return {
+    // A Gunslinger's weapon (Characters p. 58; since 1.163.0): null for
+    // anyone else and for a weapon of another skill.
+    gunslinger: gunslingerWeapon({
+      gunslinger: actor?.system?.derived?.traitEffects?.gunslinger === true,
+      skill: String(dataset.rollSkill ?? ""),
+      twoHanded: dataset.twoHanded === "1" || dataset.twoHanded === true,
+    }),
     damageType: String(dataset.damageType ?? "cr") as DamageType,
     accuracy: n("accuracy"),
     // Telescopic Vision is a scope of its own, the better of the two counting (Characters p. 92).
@@ -1926,7 +1942,15 @@ async function rollAction(
       ridingSkill: Number(actor?.system?.derived?.ridingSkill) || 6,
       weaponSkill: base,
     }).toHit;
-    if (capped < base) {
+    if (capped < base && weapon.gunslinger) {
+      // "Use weapon skill to hit while mounted (p. 397), not the lower of it or Riding."
+      shot.modifiers.push({
+        label: game.i18n.localize("GWORLD.Ranged.GunslingerRiding"),
+        value: 0,
+        key: "gunslinger",
+        gunslinger: "riding",
+      });
+    } else if (capped < base) {
       shot.modifiers.push({
         label: game.i18n.localize("GWORLD.Mounted.Riding"),
         value: capped - base,
@@ -2197,6 +2221,10 @@ async function rollAction(
         weaponStrike: shot?.weaponStrike
           ? { itemId: shot.weaponStrike.id, name: shot.weaponStrike.name, penalty: shot.weaponStrike.penalty }
           : (null as { itemId: string; name: string; penalty: number } | null),
+        // Since 1.163.0: what Gunslinger (Characters p. 58) did to this shot,
+        // or null for anyone else and for a weapon of another skill. Its
+        // lines are in `modifiers`, keyed `gunslinger`. Read-only.
+        gunslinger: shot ? gunslingerDecision(weapon.gunslinger ?? null, modifiers) : (null as GunslingerDecision | null),
         // Since 1.154.0: set either true to leave the row's follow-up or its
         // linked attack (Characters p. 106) unrolled for this attack alone --
         // a round whose follow-up fails to go off, say.
@@ -2929,6 +2957,7 @@ function quickShot(
       size: measured.targetSizeModifier,
       modifier: 0,
       shots: pellets.effectiveShots,
+      shells,
       situation: "normal",
       aimed: (weapon.aim?.turns ?? 0) > 0,
     },
@@ -3319,6 +3348,8 @@ export async function promptForRangedAttack(options: {
   offHandTraining?: number;
   /** The weapons on the one foe targeted that the shot may be aimed at (Campaigns p. 400; since 1.153.0). */
   weaponTargets?: WeaponTarget[];
+  /** Set for a Gunslinger's gun (Characters p. 58; since 1.163.0). */
+  gunslinger?: GunslingerWeapon | null;
 }): Promise<RangedShot | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   const addonContext = attackContextFor({
@@ -3575,7 +3606,7 @@ export async function promptForRangedAttack(options: {
     halfDamageRange: options.halfDamageRange ?? 0,
   });
 
-  const modifiers = rangedModifiers({ ...input, shots: pellets.effectiveShots }, options);
+  const modifiers = rangedModifiers({ ...input, shots: pellets.effectiveShots, shells: shellsFired }, options);
   const extras = rangedDialogLines(input, options);
   modifiers.push(...extras.modifiers);
   const aimed = extras.aimed;
@@ -3619,6 +3650,8 @@ interface RangedInput {
   modifier: number;
   /** Shots fired this attack, at most the weapon's Rate of Fire. */
   shots: number;
+  /** Shells fired, where they are not the shots: pellets count as shots of their own (since 1.163.0). */
+  shells?: number;
   /**
    * Why the weapon's Bulk applies, if it does: a Move and Attack takes the
    * worse of -2 and Bulk, and close combat takes Bulk in place of the
@@ -3705,6 +3738,27 @@ function platformMounting(vehicle: VehicleShot): PlatformMounting {
   return vehicle.weaponMount ?? "fixedMount";
 }
 
+/** What Gunslinger decided about a shot: the Acc it added and the penalties it waived (since 1.163.0). */
+export interface GunslingerDecision {
+  /** Whether the weapon takes both hands. */
+  twoHanded: boolean;
+  /** The Acc added without an Aim maneuver, 0 where none was. */
+  accuracy: number;
+  /** The penalties ignored in its place: `moveAndAttack`, `closeCombat`, `driving`, `riding`. */
+  waived: string[];
+}
+
+/** Reads a Gunslinger's shot off its lines: null where the weapon is not a Gunslinger's. */
+export function gunslingerDecision(weapon: GunslingerWeapon | null, modifiers: readonly RollModifier[]): GunslingerDecision | null {
+  if (!weapon) return null;
+  const lines = modifiers.filter((line) => line.key === "gunslinger" && line.gunslinger);
+  return {
+    twoHanded: weapon.twoHanded,
+    accuracy: lines.filter((line) => line.gunslinger === "accuracy").reduce((sum, line) => sum + line.value, 0),
+    waived: lines.filter((line) => line.gunslinger !== "accuracy").map((line) => String(line.gunslinger)),
+  };
+}
+
 /**
  * Turns what the dialog collected into labelled modifiers, so the chat card
  * shows the shot's arithmetic rather than one opaque number.
@@ -3733,6 +3787,8 @@ export function rangedModifiers(
     halfDamageRange?: number;
     /** How far it can fly before it crashes. */
     maxRange?: number;
+    /** A Gunslinger's gun (Characters p. 58; since 1.163.0). */
+    gunslinger?: GunslingerWeapon | null;
   },
 ): RollModifier[] {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
@@ -3817,8 +3873,22 @@ export function rangedModifiers(
     }
   }
 
+  // A Gunslinger ignores the Move and Attack penalty and Bulk in close combat,
+  // instead of adding Acc (Characters p. 58): the line stays, at nothing, to say so.
+  const gunslinger = weapon.gunslinger ?? null;
+  let gunslingerWaived = false;
   if (situation !== "normal") {
-    modifiers.push({ label: L("Bulk"), value: bulkPenalty(weapon.bulk, situation), key: "bulk", situation });
+    if (gunslinger) {
+      gunslingerWaived = true;
+      modifiers.push({
+        label: L(situation === "moveAndAttack" ? "GunslingerMoveAndAttack" : "GunslingerCloseCombat"),
+        value: 0,
+        key: "gunslinger",
+        gunslinger: situation,
+      });
+    } else {
+      modifiers.push({ label: L("Bulk"), value: bulkPenalty(weapon.bulk, situation), key: "bulk", situation });
+    }
   }
 
   // From a vehicle (p. 469). "If the operator fires a handheld weapon ... -2 to
@@ -3829,7 +3899,13 @@ export function rangedModifiers(
   if (vehicle) {
     if (vehicle.operator) {
       const divided = drivingAttackPenalty({ kind: vehicle.kind, bulk: weapon.bulk });
-      if (divided !== 0) modifiers.push({ label: L("Driving"), value: divided });
+      if (divided !== 0 && gunslinger) {
+        // "Also ignore Move and Attack penalties when driving and shooting" -- in place of Acc.
+        gunslingerWaived = true;
+        modifiers.push({ label: L("GunslingerDriving"), value: 0, key: "gunslinger", gunslinger: "driving" });
+      } else if (divided !== 0) {
+        modifiers.push({ label: L("Driving"), value: divided });
+      }
     }
     const thrown = unexpectedDodgePenalty({
       dodged: vehicle.dodged,
@@ -3884,7 +3960,8 @@ export function rangedModifiers(
   // so a listener that clears the lock-on knows which line to take away.
   const lockedOn = guidance === "homing" && input.lockedOn === true;
   const onlyLockedOn = lockedOn && !accuracyApplies({ guidance, aimed: deliberatelyAimed, secondsInFlight: flight.seconds });
-  if (accuracyApplies({ guidance, aimed: deliberatelyAimed, secondsInFlight: flight.seconds, lockedOn })) {
+  const accuracyClaimed = accuracyApplies({ guidance, aimed: deliberatelyAimed, secondsInFlight: flight.seconds, lockedOn });
+  if (accuracyClaimed) {
     // Aimed on the sheet: Accuracy, the second and third turns, the bracing.
     // Aimed by the checkbox alone: Accuracy, as one turn's aim is worth.
     const aimedFor = deliberatelyAimed ? Math.max(1, weapon.aim?.turns ?? 0) : 1;
@@ -3928,6 +4005,32 @@ export function rangedModifiers(
           label: game.i18n.format("GWORLD.Ranged.StabilityCap", { sr: vehicle.stabilityRating }),
           value: capped - total,
         });
+      }
+    }
+  }
+  // A Gunslinger's Acc without an Aim maneuver (Characters p. 58): the whole
+  // of it for single shots from a one-handed gun, half for a two-handed weapon
+  // or automatic fire. Not where a penalty was ignored in its place, and not on
+  // top of an aim that already gives all of it.
+  if (gunslinger && !accuracyClaimed && !gunslingerWaived) {
+    const added = gunslingerAccuracy({
+      accuracy: weapon.accuracy,
+      shots: input.shells ?? input.shots ?? 1,
+      twoHanded: gunslinger.twoHanded,
+    });
+    if (added !== 0) {
+      modifiers.push({ label: L("GunslingerAccuracy"), value: added, key: "gunslinger", gunslinger: "accuracy" });
+      // A moving vehicle caps every bonus from aiming at its SR (p. 469).
+      if (vehicle) {
+        const capped = cappedAimBonus({
+          bonus: added,
+          stabilityRating: vehicle.stabilityRating,
+          stabilized: vehicle.stabilized,
+          moving: vehicle.moving,
+        });
+        if (capped < added) {
+          modifiers.push({ label: game.i18n.format("GWORLD.Ranged.StabilityCap", { sr: vehicle.stabilityRating }), value: capped - added });
+        }
       }
     }
   }
