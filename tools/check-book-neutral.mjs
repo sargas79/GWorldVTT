@@ -2,8 +2,10 @@
 /**
  * Keeps the system book-neutral.
  *
- * The system implements the GURPS Basic Set, and GURPS Lite, which is drawn
- * from it. Every other book lives in an add-on module, which reaches the
+ * The system implements the GURPS Basic Set (the two-volume Fourth Edition and
+ * its Revised edition, which reprints some supplements' rules in its addenda,
+ * so those are Basic Set text and cited as "Basic Set Revised p. 571"), and
+ * GURPS Lite, which is drawn from it. Every other book lives in an add-on module, which reaches the
  * system through `game.gworld.api`. So nothing the system ships -- its code,
  * templates, strings and compendium sources -- cites another book's pages, and
  * nothing names an add-on module: the system never knows which ones exist.
