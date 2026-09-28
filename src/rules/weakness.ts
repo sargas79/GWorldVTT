@@ -5,7 +5,8 @@
  * substance or condition ... This injury comes off your HP directly,
  * regardless of your DR or defensive advantages." The level bought is how
  * quickly: 1d per 30 minutes, per 5 minutes, or per minute, which is how the
- * compendium names its three levels.
+ * compendium names its three levels. The Revised edition adds that 1d per
+ * minute is "or per attack, for things useful as attacks".
  *
  * Two limitations change what it does. Fatigue Only drains FP instead of HP.
  * Variable halves the rate behind "one relatively common class of barriers"
@@ -15,6 +16,9 @@
 
 /** The minutes each level's die takes: level 1 is the slowest. */
 export const WEAKNESS_INTERVALS: readonly number[] = [30, 5, 1];
+
+/** The interval that may also be read as one die per attack (p. 161: "1d per minute ... or per attack"). */
+export const PER_ATTACK_INTERVAL_MINUTES = 1;
 
 /** One Weakness a character has. */
 export interface Weakness {
@@ -62,6 +66,24 @@ export function weaknessOf(trait: WeaknessTrait): Weakness | null {
     fatigue: modifiers.some((m) => m.includes("fatigue only")),
     variable: modifiers.some((m) => /\bvariable\b/.test(m)) || /\bvariable\b/i.test(inside),
   };
+}
+
+/**
+ * Whether this Weakness may be read as 1d per attack (p. 161): only 1d per
+ * minute, and only for "things useful as attacks", which the table judges.
+ */
+export function mayBePerAttack(weakness: Pick<Weakness, "intervalMinutes">): boolean {
+  return weakness.intervalMinutes === PER_ATTACK_INTERVAL_MINUTES;
+}
+
+/**
+ * How many 1d a run of attacks with the source costs (p. 161): one die each,
+ * for a Weakness that may be read per attack, and nothing for any other.
+ * Whole attacks only.
+ */
+export function weaknessAttackDice(weakness: Pick<Weakness, "intervalMinutes">, attacks: number): number {
+  if (!mayBePerAttack(weakness)) return 0;
+  return Math.max(0, Math.floor(Number(attacks) || 0));
 }
 
 /**

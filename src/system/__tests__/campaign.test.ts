@@ -48,14 +48,14 @@ function world(stored: Record<string, unknown>, actors: any[] = [], isGM = true)
 /** The campaign's terms are the world's, not a party's (sargas79/GWorldVTT#642). */
 describe("the campaign's terms", () => {
   it("are read from the world settings, blank as not set", () => {
-    expect(worldCampaignTerms()).toEqual({ tl: null, startingPoints: null, disadvantageLimit: null });
+    expect(worldCampaignTerms()).toEqual({ tl: null, startingPoints: null, disadvantageLimit: null, multimillionaireCap: null });
     world({ [CAMPAIGN_TERM_SETTINGS.tl]: 8, [CAMPAIGN_TERM_SETTINGS.startingPoints]: 150, [CAMPAIGN_TERM_SETTINGS.disadvantageLimit]: null });
-    expect(worldCampaignTerms()).toEqual({ tl: 8, startingPoints: 150, disadvantageLimit: null });
+    expect(worldCampaignTerms()).toEqual({ tl: 8, startingPoints: 150, disadvantageLimit: null, multimillionaireCap: null });
   });
 
   it("reach every player character, in a party or not, and no NPC", () => {
     world({ [CAMPAIGN_TERM_SETTINGS.tl]: 3 });
-    expect(actorCampaignTerms({ uuid: "Actor.loner", type: "character" })).toEqual({ party: null, tl: 3, startingPoints: null, disadvantageLimit: null });
+    expect(actorCampaignTerms({ uuid: "Actor.loner", type: "character" })).toEqual({ party: null, tl: 3, startingPoints: null, disadvantageLimit: null, multimillionaireCap: null });
     const party = { id: "p1", uuid: "Actor.p1", name: "The Crew", type: "party", system: { members: [{ uuid: "Actor.pc" }] } };
     world({ [CAMPAIGN_TERM_SETTINGS.tl]: 3 }, [party]);
     expect(actorCampaignTerms({ uuid: "Actor.pc", type: "character" })?.party).toEqual({ id: "p1", uuid: "Actor.p1", name: "The Crew" });
@@ -81,10 +81,10 @@ describe("the terms a party held before #642", () => {
 
   it("take the first party's figure for each term, and name the terms the parties disagree on", () => {
     expect(mergePartyTerms([
-      { tl: 8, startingPoints: null, disadvantageLimit: 50 },
-      { tl: 8, startingPoints: 100, disadvantageLimit: 40 },
-    ])).toEqual({ chosen: { tl: 8, startingPoints: 100, disadvantageLimit: 50 }, conflicts: ["disadvantageLimit"] });
-    expect(mergePartyTerms([])).toEqual({ chosen: { tl: null, startingPoints: null, disadvantageLimit: null }, conflicts: [] });
+      { tl: 8, startingPoints: null, disadvantageLimit: 50, multimillionaireCap: null },
+      { tl: 8, startingPoints: 100, disadvantageLimit: 40, multimillionaireCap: null },
+    ])).toEqual({ chosen: { tl: 8, startingPoints: 100, disadvantageLimit: 50, multimillionaireCap: null }, conflicts: ["disadvantageLimit"] });
+    expect(mergePartyTerms([])).toEqual({ chosen: { tl: null, startingPoints: null, disadvantageLimit: null, multimillionaireCap: null }, conflicts: [] });
   });
 
   it("are copied into the world settings once, keeping any the GM already set", async () => {

@@ -10,7 +10,8 @@ import {
   poisonNamed,
   symptomShowing,
   treatmentBonus,
-  treatmentRollModifier,
+  TREATMENTS,
+  isTreatment,
 } from "../poison.js";
 
 describe("how long a poison waits (Campaigns p. 437)", () => {
@@ -70,10 +71,20 @@ describe("varying the dose (Campaigns p. 438)", () => {
 });
 
 describe("treating a poisoning (Campaigns p. 439)", () => {
-  /** "Sucking the poison from the wound... gives +2 on HT rolls to resist." */
-  it("gives two for sucking the wound or bringing it back up", () => {
-    expect(treatmentBonus("suckWound")).toBe(2);
+  /** "...induce vomiting... gives +2 to resist the poison." */
+  it("gives two for bringing it back up", () => {
     expect(treatmentBonus("induceVomiting")).toBe(2);
+  });
+
+  /**
+   * Basic Set Revised p. 439: "Sucking poison from such a wound is an obsolete,
+   * ineffective, harmful practice", so the +2 and the First Aid-2 roll are gone.
+   */
+  it("no longer offers sucking the wound", () => {
+    expect([...TREATMENTS].sort()).toEqual(["antidote", "induceVomiting", "medical"]);
+    expect(isTreatment("suckWound")).toBe(false);
+    expect(isTreatment("medical")).toBe(true);
+    expect(treatmentBonus("suckWound" as never)).toBe(0);
   });
 
   /** "The HT bonus never exceeds TL/2 (round up, minimum +1)." */
@@ -87,11 +98,6 @@ describe("treating a poisoning (Campaigns p. 439)", () => {
   /** An antidote's bonus is the poison's own, so this knows of none. */
   it("leaves an antidote's worth to the poison", () => {
     expect(treatmentBonus("antidote")).toBe(0);
-  });
-
-  it("charges two for the difficulty of sucking a wound clean", () => {
-    expect(treatmentRollModifier("suckWound")).toBe(-2);
-    expect(treatmentRollModifier("induceVomiting")).toBe(0);
   });
 });
 

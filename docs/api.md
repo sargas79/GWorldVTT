@@ -2462,10 +2462,12 @@ Two fields a module may read (since 1.62.0):
   applies a Surge blow to a character with it, and the card's Critical hit
   box is ticked (the critical tables switch shows it), the victim
   short-circuits: the token gets `unconscious`, on top of the blow's other
-  effects, and the card says so. Any other Surge hit on such a character
-  only gets a note that what the surge disables is the GM's call, since
-  p. 105 gives no roll or number for it, and nothing is done to a victim
-  without Electrical. What a surge does to electronics, a vehicle or
+  effects, and the card says so. Since 1.165.0 (Characters p. 105),
+  any other Surge hit that takes more than a third of the character's
+  maximum HP has the victim roll vs. HT (a `surge`-tagged attribute roll):
+  failure disables it for the margin of failure in seconds, a critical failure
+  until repaired, and the card says which; a lesser hit needs no roll. Nothing
+  is done to a victim without Electrical. What a surge does to electronics, a vehicle or
   another machine is left to the GM too; a module that has a rule for it
   reads `IncomingDamage.surge` in the damage hooks.
 - **Tight-beam burning** (since 1.97.0; Campaigns pp. 399, 408, 433-434): a
@@ -3527,7 +3529,9 @@ Two fields a module may read (since 1.62.0):
 - **Treating poison and illness** (since 1.77.0; Campaigns pp. 439, 443):
   `actors.treatPoison(patient, id, { treatment?, bonus?, skill?, healer?, techLevel?, label?,
   modifier? })` treats a dose as the sheet's Treat button does. `treatment` is one of the book's
-  (`suckWound`, `induceVomiting`, `medical`, `antidote`), rolled at the treater's First Aid or
+  (`induceVomiting`, `medical`, `antidote`; since 1.165.0 the Revised edition's
+  "obsolete, ineffective, harmful" `suckWound` is gone, and a call naming it does nothing and
+  returns 0), rolled at the treater's First Aid or
   Physician (`skill`, else `healer`'s better of the two, else the patient's; nobody with either
   fails), with `bonus` the antidote's own. Leave `treatment` out for a module's own drug or
   device: its `bonus` stands to the HT rolls to resist, with a roll at `skill` + `modifier` only
@@ -3639,7 +3643,7 @@ is in a party. `game.gworld.api.party` (since 1.68.0):
 - **`party.membersOf(party)`** -- the member actors that still exist, in the
   party's order.
 - **`party.campaignTerms(actor)`** -- `{ party, tl, startingPoints,
-  disadvantageLimit }`, each term null where the GM left it blank. Since
+  disadvantageLimit, multimillionaireCap }`, each term null where the GM left it blank. Since
   1.82.0 the terms are the world's and reach every player character: `party`
   is `{ id, uuid, name }` or null for a character in no party, and the result
   is null only for an actor the terms don't bind (an NPC, a vehicle). Kept for
@@ -3678,9 +3682,13 @@ that are world settings rather than anything on an actor:
   notes read the same figure. Compare an item's class against it with
   `rules.legalityUnder(lc, rating)`.
 - **`world.campaignTerms()`** (since 1.82.0) -- `{ tl, startingPoints,
-  disadvantageLimit }`: the terms every player character is made on
-  (Characters pp. 10-11, 22), as the GM set them in the system settings or on
-  a party's Campaign tab, each null where left blank. A term that is set
+  disadvantageLimit, multimillionaireCap }`: the terms every player character
+  is made on (Characters pp. 10-11, 22, 25), as the GM set them in the system
+  settings or on a party's Campaign tab, each null where left blank. Since
+  1.165.0 `multimillionaireCap` is the highest level of Multimillionaire the
+  campaign allows (Characters p. 25): null is uncapped, and a level bought
+  beyond it is worth no more starting wealth than the cap (0 stops at Filthy
+  Rich); it is also `actor.system.derived.campaign.multimillionaireCap`. A term that is set
   replaces a player character's own during preparation -- `actor.system.tl`,
   `actor.system.points.starting` and `actor.system.points.disadvantageLimit`
   already read it, and `actor.system.derived.campaign.locked` says which terms

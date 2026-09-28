@@ -6,6 +6,7 @@
 
   <div class="gc-mods">
     <span>{{localize "GWORLD.Weakness.Exposure" minutes=minutes}}</span>
+    {{#if attacks}}<span class="gc-mod">{{localize "GWORLD.Weakness.Attacks" attacks=attacks}}</span>{{/if}}
     {{#if intensityLabel}}<span class="gc-mod">{{intensityLabel}}</span>{{/if}}
     <span class="gc-mod">{{localize "GWORLD.Weakness.Dice" dice=diceCount}}</span>
   </div>

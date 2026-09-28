@@ -27,6 +27,12 @@ export interface SleepTrait {
  * How long this character must sleep (Characters pp. 50, 65, 136): Less Sleep
  * "reduces your sleep period by one hour" a level, Extra Sleep adds one, and
  * Doesn't Sleep "can ignore this entire section". Null for the last.
+ *
+ * The Revised edition adds that Doesn't Sleep "cannot be put to sleep" (p. 50).
+ * Nothing in the system puts a character to sleep by a roll of its own -- an
+ * affliction is resisted before the GM chooses its condition, and there is no
+ * sleep condition to refuse -- so the addition is a module's to apply to an
+ * ability of its own.
  */
 export function sleepPeriodFrom(traits: readonly SleepTrait[]): number | null {
   let hours = SLEEP_PERIOD_HOURS;

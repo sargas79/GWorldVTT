@@ -154,6 +154,7 @@
       "SizeModifier": "size",
       "StartingPoints": "Starting Points",
       "DisadvantageLimit": "Disadv. Limit",
+      "MultimillionaireCap": "Multimillionaire cap",
       "Maneuver": "This Turn",
       "EvaluateTurns": "Turns Evaluating",
       "ConcentrateTurns": "Turns Concentrating",
@@ -292,7 +293,7 @@
         "AgonyDrain": "Loses {fatigue} FP a minute while it lasts",
         "TortureBonus": "Anyone who can threaten more of it gets +{bonus} to Interrogation and Intimidation",
         "EcstasyInfluence": "Anyone offering more of it gets +{bonus} to Influence rolls",
-        "AgonyFunctions": "High Pain Threshold: able to act, at {penalty} to DX and IQ",
+        "AgonyFunctions": "High Pain Threshold: able to act, at {penalty} to DX, IQ, skill and self-control rolls",
         "NauseaRoll": "Roll HT {target} after eating, a foul smell, a failed Fright Check or being stunned",
         "Vomits": "On a failure, vomits for {seconds} seconds — treat as Retching",
         "HallucinationRoll": "Roll Will before each success roll: success {success} for {successFor}; failure {failure} for {failureFor}; critical failure freaks out for {freakOutFor}",
@@ -1561,7 +1562,7 @@
       "SpecialDamageShort": "spec.",
       "SpecialDamageHint": "The table prints “spec.”: a net entangles, a lasso catches. The attack rolls to hit and its own rules say what a hit does.",
       "Surge": "Surge",
-      "SurgeHint": "Surge (Characters p. 105): an electrical surge that can disable electronics or anything with the Electrical disadvantage; a critical hit knocks out a character with Electrical (p. 134).",
+      "SurgeHint": "Surge (Characters p. 105): electronics and characters with Electrical that take over 1/3 HP from the attack roll vs. HT or are disabled; a critical hit knocks out a character with Electrical (p. 134).",
       "Incendiary": "Incendiary",
       "IncendiaryHint": "A secondary flame effect that can ignite volatile material (Characters p. 104). The card checks the victim's clothes as burning damage would.",
       "Radiation": "Radiation",
@@ -1713,7 +1714,8 @@
     },
     "Hint": {
       "OverBudget": "Spent past the starting budget.",
-      "DisadvantageLimit": "A rule of thumb, not a hard cap. Disadvantages and quirks both count.",
+      "DisadvantageLimit": "A rule of thumb, not a hard cap: hold disadvantages to -50 points (Characters p. 11), more in a high-powered game. Disadvantages and quirks both count.",
+      "MultimillionaireCap": "The highest level of Multimillionaire the campaign allows (Characters p. 25). Blank: no cap.",
       "Languages": "Accented is -1 to skills that depend on language. One native language is free: tick Native on it.",
       "GMOnly": "visible to the GM only",
       "LimitedSheet": "Sheet is limited to you",
@@ -2052,8 +2054,13 @@
       "InjuryCappedWhy": "Capped at {cap} ({reason}): {lost} not taken",
       "Vulnerable": "Vulnerability ×{multiplier} ({label})",
       "Surge": {
+        "Roll": "Surge: HT to keep working (Characters p. 105)",
         "shortCircuit": "Surge: short-circuited, unconscious (Electrical, Characters p. 134)",
-        "gmDecides": "Surge: what it disables is the GM's call (Electrical, Characters p. 134)"
+        "belowThird": "Surge: no more than 1/3 HP lost, so no HT roll (Characters p. 105)",
+        "htRoll": "Surge: over 1/3 HP lost. Roll vs. HT; failure disables for the margin of failure in seconds, a critical failure until repaired (Characters p. 105)",
+        "resisted": "Surge: HT roll made, still working (Characters p. 105)",
+        "disabledSeconds": "Surge: HT roll failed, disabled for {seconds} seconds (Characters p. 105)",
+        "untilRepaired": "Surge: HT roll critically failed, disabled until repaired (Characters p. 105)"
       },
       "AreaRadius": "Everyone within {yards} yards of where it landed",
       "MajorWound": "Major wound — HT roll to avoid knockdown and stunning",
@@ -2769,7 +2776,6 @@
       "Clear": "Clear",
       "Treat": "Treat",
       "Treatment": "Treatment",
-      "Treatment_suckWound": "Suck the wound (First Aid-2)",
       "Treatment_induceVomiting": "Induce vomiting (First Aid)",
       "Treatment_antidote": "Antidote",
       "Treatment_medical": "Medical procedures (Physician)",
@@ -2787,7 +2793,7 @@
       "Resistible": "Allows a roll to resist",
       "OfCycles": "cycles left of {cycles}",
       "TreaterSkill": "Treater's First Aid or Physician",
-      "TreaterSkillHint": "Sucking the wound is First Aid or Physician at -2; inducing vomiting is either unmodified; medical procedures need Physician. Leave blank if nobody has it. An antidote needs no roll.",
+      "TreaterSkillHint": "Inducing vomiting is First Aid or Physician; medical procedures need Physician. Leave blank if nobody has it. An antidote needs no roll.",
       "TreatmentFailed": "the roll failed, and it does no good",
       "NoSkill": "nobody with the skill to do it",
       "Symptom": "Past {share} of HP lost to it: its worse symptoms now show",
@@ -4230,6 +4236,8 @@
       "ExposedHint": "Apply exposure to what this Weakness is to. One 1d per interval, straight off HP (or FP for Fatigue Only), regardless of DR (Characters p. 161).",
       "Title": "Weakness: {source}",
       "MinutesPrompt": "Minutes exposed",
+      "AttacksPrompt": "Attacks (1d each)",
+      "AttacksHint": "Only for things useful as attacks: 1d per minute may instead be 1d per attack (Characters p. 161). Leave at 0 for ordinary exposure.",
       "IntensityPrompt": "Exposure",
       "Intensity": {
         "normal": "Ordinary",
@@ -4238,6 +4246,7 @@
       },
       "Apply": "Apply",
       "Exposure": "{minutes} min. exposed",
+      "Attacks": "{attacks} attacks",
       "Dice": "{dice}d",
       "LostHp": "{points} HP lost",
       "LostFp": "{points} FP lost",
@@ -4662,6 +4671,10 @@
       "disadvantageLimit": {
         "Name": "Campaign disadvantage limit",
         "Hint": "The most points a player character may take in disadvantages (Characters p. 11). Blank: each character keeps its own."
+      },
+      "multimillionaireCap": {
+        "Name": "Campaign Multimillionaire cap",
+        "Hint": "The highest level of Multimillionaire a player character may have (Characters p. 25: usually 3 or 4, set by the GM). Blank: no cap. A level bought beyond it is worth no more starting wealth than the cap; 0 stops at Filthy Rich."
       },
       "tl": {
         "Name": "Campaign Tech Level",

@@ -28,9 +28,9 @@ describe("the add-on API", () => {
     // Nothing is in a party where there is no world.
     expect(api.party.of({ uuid: "Actor.nobody", type: "character" })).toBeNull();
     // Since 1.82.0 the terms are the world's: a character in no party still has them.
-    expect(api.party.campaignTerms({ uuid: "Actor.nobody", type: "character" })).toEqual({ party: null, tl: null, startingPoints: null, disadvantageLimit: null });
+    expect(api.party.campaignTerms({ uuid: "Actor.nobody", type: "character" })).toEqual({ party: null, tl: null, startingPoints: null, disadvantageLimit: null, multimillionaireCap: null });
     expect(api.party.campaignTerms({ uuid: "Actor.monster", type: "npc" })).toBeNull();
-    expect(api.world.campaignTerms()).toEqual({ tl: null, startingPoints: null, disadvantageLimit: null });
+    expect(api.world.campaignTerms()).toEqual({ tl: null, startingPoints: null, disadvantageLimit: null, multimillionaireCap: null });
   });
 
   it("reaches the hazards: shocks and radiation (since 1.63.0)", () => {

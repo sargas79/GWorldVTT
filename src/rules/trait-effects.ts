@@ -383,7 +383,12 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   "hard to kill": (levels) => ({ survival: levels }),
 
   // "Each level of Hard to Subdue gives +1 to any HT roll to avoid
-  // unconsciousness" (p. 59).
+  // unconsciousness -- as a result of injury, drugs, weapon effects, etc. -- and
+  // to resist hostile abilities that cause unconsciousness or sleep" (p. 59).
+  // The system rolls only the first kind (injury, in damage.ts); an affliction's
+  // roll is made before the GM picks which condition it causes, so a module
+  // whose ability puts someone out or to sleep reads `consciousness` for the
+  // bonus to its own resistance roll.
   "hard to subdue": (levels) => ({ consciousness: levels }),
 
   // "Each point of DR stops one point of basic damage" (p. 46).

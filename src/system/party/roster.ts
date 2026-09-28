@@ -307,9 +307,15 @@ export interface CampaignTerms {
   tl: number | null;
   startingPoints: number | null;
   disadvantageLimit: number | null;
+  /**
+   * The highest level of Multimillionaire the campaign allows (Characters
+   * p. 25, "a maximum level (usually 3 or 4) set by the GM"); null is
+   * uncapped, and 0 allows none.
+   */
+  multimillionaireCap: number | null;
 }
 
-export const CAMPAIGN_TERM_KEYS = ["tl", "startingPoints", "disadvantageLimit"] as const;
+export const CAMPAIGN_TERM_KEYS = ["tl", "startingPoints", "disadvantageLimit", "multimillionaireCap"] as const;
 export type CampaignTermKey = (typeof CAMPAIGN_TERM_KEYS)[number];
 
 /** The stored terms read strictly: anything but a finite number is "not set". */
@@ -318,7 +324,12 @@ export function termsFrom(stored: Partial<Record<CampaignTermKey, unknown>> | nu
     const value = stored?.[key];
     return typeof value === "number" && Number.isFinite(value) ? value : null;
   };
-  return { tl: read("tl"), startingPoints: read("startingPoints"), disadvantageLimit: read("disadvantageLimit") };
+  return {
+    tl: read("tl"),
+    startingPoints: read("startingPoints"),
+    disadvantageLimit: read("disadvantageLimit"),
+    multimillionaireCap: read("multimillionaireCap"),
+  };
 }
 
 /** Which of the terms the GM has set, and so locks on the characters' sheets. */
@@ -327,6 +338,7 @@ export function lockedTerms(terms: CampaignTerms | null): Record<CampaignTermKey
     tl: terms?.tl !== null && terms?.tl !== undefined,
     startingPoints: terms?.startingPoints !== null && terms?.startingPoints !== undefined,
     disadvantageLimit: terms?.disadvantageLimit !== null && terms?.disadvantageLimit !== undefined,
+    multimillionaireCap: terms?.multimillionaireCap !== null && terms?.multimillionaireCap !== undefined,
   };
 }
 

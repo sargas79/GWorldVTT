@@ -111,7 +111,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.164.0";
+export const API_VERSION = "1.165.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -407,8 +407,8 @@ const actors = {
 
   /**
    * Treats a dose of poison (Campaigns p. 439, since 1.77.0), as the sheet's Treat button
-   * does. `treatment` is one of the book's (`suckWound`, `induceVomiting`, `medical`,
-   * `antidote`), or left out for a module's own: a drug or device whose `bonus` stands to
+   * does. `treatment` is one of the book's (`induceVomiting`, `medical`, `antidote`; the old
+   * `suckWound` went in 1.165.0 and, named, does nothing and returns 0), or left out for a module's own: a drug or device whose `bonus` stands to
    * the HT rolls to resist, rolled for only where `skill` is given. `skill` stands in for the
    * treater's First Aid or Physician (the book's treatments fall back to `healer`'s better
    * of the two, and fail where nobody has either); `techLevel` for the TL medical procedures

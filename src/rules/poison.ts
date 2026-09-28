@@ -10,7 +10,7 @@
  * card; this works out what the roll is against and what a failure costs.
  */
 
-import { modifier, penalty } from "./modifiers.js";
+import { modifier } from "./modifiers.js";
 
 /** How a poison reaches its victim (p. 437). */
 export type PoisonDelivery =
@@ -20,7 +20,7 @@ export type PoisonDelivery =
   | "contact"
   /** Swallowed. */
   | "digestive"
-  /** Carried in on a piercing or impaling weapon that did damage. */
+  /** Carried in on a cutting, piercing or impaling weapon that did damage (p. 437). */
   | "followUp"
   /** Breathed into the lungs. */
   | "respiratory"
@@ -95,10 +95,13 @@ export function dosage(doublings: number): Dosage {
   };
 }
 
-/** A treatment somebody tried, and what the book gives it (p. 439). */
+/**
+ * A treatment somebody tried, and what the book gives it (p. 439).
+ *
+ * The Revised edition drops the old "suck the poison from the wound" treatment:
+ * it calls that "an obsolete, ineffective, harmful practice".
+ */
 export type Treatment =
-  /** A minute's work and a First Aid or Physician roll at -2. */
-  | "suckWound"
   /** Ten seconds and a First Aid or Physician roll, for a digestive agent. */
   | "induceVomiting"
   /** The right antidote, which is specific to the poison. */
@@ -106,24 +109,25 @@ export type Treatment =
   /** Chelation, lavage, fluids -- a Physician roll, and capped by tech level. */
   | "medical";
 
+/** The treatments the book still gives, for checking a stored or passed-in name (p. 439). */
+export const TREATMENTS: readonly Treatment[] = ["induceVomiting", "antidote", "medical"];
+
+/** Whether a name is one of the treatments the book still gives (p. 439). */
+export function isTreatment(value: unknown): value is Treatment {
+  return typeof value === "string" && (TREATMENTS as readonly string[]).includes(value);
+}
+
 /**
  * The bonus a treatment gives to the HT rolls to resist (p. 439).
  *
- * Sucking the wound and inducing vomiting are +2 each. Medical procedures are
- * "TL/2 (round up, minimum +1)". An antidote is whatever the poison's own
- * description says, so it is the caller's number and not one this can know.
+ * Inducing vomiting is +2. Medical procedures are "TL/2 (round up, minimum
+ * +1)". An antidote is whatever the poison's own description says, so it is the
+ * caller's number and not one this can know.
  */
 export function treatmentBonus(treatment: Treatment, techLevel = 3): number {
-  if (treatment === "suckWound" || treatment === "induceVomiting") return 2;
+  if (treatment === "induceVomiting") return 2;
   if (treatment === "medical") return Math.max(1, Math.ceil(Math.max(0, techLevel) / 2));
   return 0;
-}
-
-/** The roll a treatment itself calls for, before it does any good (p. 439). */
-export function treatmentRollModifier(treatment: Treatment): number {
-  // "Sucking the poison from the wound... requires a First Aid or Physician
-  // roll at -2"; inducing vomiting calls for the same roll unmodified.
-  return treatment === "suckWound" ? penalty(2) : 0;
 }
 
 /** What one cycle of a poison did. */

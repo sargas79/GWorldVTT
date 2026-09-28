@@ -21,9 +21,9 @@ import {
   dosage,
   effectMinutes,
   poisonCycle,
+  isTreatment,
   symptomShowing,
   treatmentBonus,
-  treatmentRollModifier,
   type Poison,
   type Treatment,
 } from "../rules/poison.js";
@@ -215,6 +215,9 @@ export async function treatPoison(options: {
   if (!mayChange(actor)) return 0;
 
   const treatment = options.treatment;
+  // A name the book no longer gives -- the old "suckWound", from a module still
+  // written against it -- does nothing: no roll, no bonus, no card.
+  if (treatment !== null && !isTreatment(treatment)) return 0;
   const techLevel = typeof options.techLevel === "number" ? options.techLevel : Number(actor.system?.tl) || 3;
   const bonus =
     treatment === "antidote" || treatment === null
@@ -225,15 +228,14 @@ export async function treatPoison(options: {
   const dose = doses.find((d) => d.id === options.id);
   if (!dose) return 0;
 
-  // Every treatment but an antidote is a skill roll first (p. 439): sucking the
-  // wound "requires a First Aid or Physician roll at -2", inducing vomiting
-  // "calls for a First Aid or Physician roll", and medical procedures "require
-  // a Physician roll". The bonus is only there if the roll is made. A module's
-  // own treatment rolls where it says who is giving it.
+  // Every treatment but an antidote is a skill roll first (p. 439): inducing
+  // vomiting "calls for a First Aid or Physician roll", and medical procedures
+  // "require a Physician roll". The bonus is only there if the roll is made. A
+  // module's own treatment rolls where it says who is giving it.
   const rolls = treatment === null ? typeof options.skillLevel === "number" : treatment !== "antidote";
   let rolled: { roll: any; target: number; success: boolean } | null = null;
   if (rolls) {
-    const target = (options.skillLevel ?? 0) + (treatment ? treatmentRollModifier(treatment) : 0) + (options.modifier ?? 0);
+    const target = (options.skillLevel ?? 0) + (options.modifier ?? 0);
     const roll = new Roll("3d6");
     await roll.evaluate();
     const outcome = resolveSuccess(roll.total, target, dieResults(roll));
@@ -270,8 +272,8 @@ export async function treatPoison(options: {
 /**
  * Treats an illness rather than a poison (p. 443).
  *
- * The poison treatments are the wrong list for a disease: nobody sucks
- * influenza out of a wound. "At TL6+, antibiotics give +3 to recover from most
+ * The poison treatments are the wrong list for a disease: nobody induces
+ * vomiting to be rid of influenza. "At TL6+, antibiotics give +3 to recover from most
  * bacterial diseases. At any TL, a physician's care provides the same bonuses
  * to recover from disease that it gives to recover from injuries."
  */

@@ -11,7 +11,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { syncHealthConditions } from "./conditions.js";
-import { weaknessDice, weaknessOf, type WeaknessIntensity } from "../rules/weakness.js";
+import { mayBePerAttack, weaknessAttackDice, weaknessDice, weaknessOf, type WeaknessIntensity } from "../rules/weakness.js";
 
 const WEAKNESS_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/weakness.hbs`;
 
@@ -38,6 +38,12 @@ export async function exposeToWeakness(actor: any, item: any): Promise<void> {
         <span>${L("MinutesPrompt")}</span>
         <input type="number" name="minutes" value="${weakness.intervalMinutes}" min="0" step="1" style="width:90px" autofocus>
       </label>
+      ${mayBePerAttack(weakness)
+        ? `<label style="display:flex;justify-content:space-between;gap:8px" title="${L("AttacksHint")}">
+            <span>${L("AttacksPrompt")}</span>
+            <input type="number" name="attacks" value="0" min="0" step="1" style="width:90px">
+          </label>`
+        : ""}
       ${weakness.variable
         ? `<label style="display:flex;justify-content:space-between;gap:8px">
             <span>${L("IntensityPrompt")}</span>
@@ -53,15 +59,18 @@ export async function exposeToWeakness(actor: any, item: any): Promise<void> {
         const form = button.closest<HTMLElement>(".application");
         const minutes = Number(form?.querySelector<HTMLInputElement>('input[name="minutes"]')?.value ?? 0);
         const intensity = (form?.querySelector<HTMLSelectElement>('select[name="intensity"]')?.value ?? "normal") as WeaknessIntensity;
-        return { minutes: Number.isFinite(minutes) ? minutes : 0, intensity };
+        const attacks = Number(form?.querySelector<HTMLInputElement>('input[name="attacks"]')?.value ?? 0);
+        return { minutes: Number.isFinite(minutes) ? minutes : 0, intensity, attacks: Number.isFinite(attacks) ? attacks : 0 };
       },
     },
     rejectClose: false,
   });
   if (!answer || typeof answer !== "object") return;
-  const { minutes, intensity } = answer as { minutes: number; intensity: WeaknessIntensity };
+  const { minutes, intensity, attacks } = answer as { minutes: number; intensity: WeaknessIntensity; attacks: number };
 
-  const diceCount = weaknessDice(weakness, minutes, intensity);
+  // "1d per minute... or per attack, for things useful as attacks" (p. 161).
+  const attackDice = weaknessAttackDice(weakness, attacks);
+  const diceCount = weaknessDice(weakness, minutes, intensity) + attackDice;
   const pool = weakness.fatigue ? actor.system?.fp : actor.system?.hp;
   const previous = Number(pool?.value) || 0;
   const max = Number(pool?.max) || 0;
@@ -84,6 +93,7 @@ export async function exposeToWeakness(actor: any, item: any): Promise<void> {
     minutes,
     interval: weakness.intervalMinutes,
     intensityLabel: weakness.variable && intensity !== "normal" ? L(`Intensity.${intensity}`) : "",
+    attacks: attackDice,
     diceCount,
     dice,
     total,

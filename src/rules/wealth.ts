@@ -64,8 +64,15 @@ function levelsOf(trait: WealthTrait): number {
   return Math.max(1, Math.floor(trait.levels ?? 0) || 1);
 }
 
-/** Wealth from the traits held: Average for anyone without the trait. */
-export function wealthFrom(traits: readonly WealthTrait[]): WealthStanding {
+/**
+ * Wealth from the traits held: Average for anyone without the trait.
+ *
+ * Multimillionaire goes "to a maximum level (usually 3 or 4) set by the GM"
+ * (p. 25, Revised), the campaign's `multimillionaireCap`. A level bought
+ * beyond it is worth no more than the cap, and a cap of 0 stops at Filthy
+ * Rich. Null is uncapped.
+ */
+export function wealthFrom(traits: readonly WealthTrait[], multimillionaireCap: number | null = null): WealthStanding {
   let standing: WealthStanding = { level: "average", multimillionaire: 0 };
   for (const trait of traits) {
     const key = trait.name.trim().toLowerCase();
@@ -80,6 +87,10 @@ export function wealthFrom(traits: readonly WealthTrait[]): WealthStanding {
     } else if (key === "wealth (disadvantage)") {
       standing = { level: DISADVANTAGE_LEVELS[Math.min(levels, DISADVANTAGE_LEVELS.length) - 1]!, multimillionaire: 0 };
     }
+  }
+  if (multimillionaireCap !== null && Number.isFinite(multimillionaireCap) && standing.multimillionaire > multimillionaireCap) {
+    const cap = Math.max(0, Math.floor(multimillionaireCap));
+    return cap === 0 ? { level: "filthyRich", multimillionaire: 0 } : { level: "multimillionaire", multimillionaire: cap };
   }
   return standing;
 }

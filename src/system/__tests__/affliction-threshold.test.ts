@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { agonyCost } from "../../rules/afflictions.js";
+
 import {
   afflictionEffectFor,
   afflictionNotes,
@@ -32,8 +34,8 @@ describe("pain threshold", () => {
   });
 
   it("lets High Pain Threshold act through agony, at -3", () => {
-    // "High Pain Threshold lets you overcome the agony enough to function, but
-    // at -3 to DX and IQ."
+    // Basic Set Revised p. 428: "High Pain Threshold lets you function at -3 to
+    // DX, IQ, skill, and self-control rolls; you still lose FP."
     const ordinary = afflictionEffectFor("agony", "normal");
     expect(ordinary.helpless).toBe(true);
 
@@ -42,6 +44,11 @@ describe("pain threshold", () => {
     expect(tough.fallsDown).toBe(false);
     expect(tough.dx).toBe(-3);
     expect(tough.iq).toBe(-3);
+    // The Revised text adds self-control rolls (skill rolls follow DX and IQ).
+    expect(tough.selfControl).toBe(-3);
+    expect(ordinary.selfControl).toBe(0);
+    // And the fatigue still runs.
+    expect(agonyCost({ minutes: 2, threshold: "high" }).fatigue).toBe(2);
   });
 
   it("carries the threshold through the total an actor's sheet reads", () => {

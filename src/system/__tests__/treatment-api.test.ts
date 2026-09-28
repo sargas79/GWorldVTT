@@ -111,8 +111,18 @@ describe("a module's treatments", () => {
     const medical = await api.actors.treatPoison(patient, "d1", { treatment: "medical", healer: character("Doc", { items: [firstAid, physician] }) });
     // TL8 / 2 = +4.
     expect(medical).toBe(4);
-    await api.actors.treatPoison(patient, "d1", { treatment: "suckWound", skill: 14 });
+    await api.actors.treatPoison(patient, "d1", { treatment: "induceVomiting", skill: 14 });
     expect((patient.getFlag("gworld", POISON_FLAG) as any[])[0].treatment).toBe(4);
+  });
+
+  /** Basic Set Revised p. 439: sucking the wound is "obsolete, ineffective, harmful"; a module still naming it gets nothing. */
+  it("does nothing for the sucking of a wound the book dropped", async () => {
+    const { cards } = foundryWith([3, 3, 3]);
+    const patient = character("Patient");
+    await dosed(patient);
+    expect(await createApi().actors.treatPoison(patient, "d1", { treatment: "suckWound" as never, skill: 14 })).toBe(0);
+    expect((patient.getFlag("gworld", POISON_FLAG) as any[])[0].treatment).toBe(0);
+    expect(cards).toHaveLength(0);
   });
 
   it("fails a book's treatment nobody has the skill for", async () => {

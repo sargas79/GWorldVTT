@@ -188,8 +188,8 @@ export const TORTURE_BONUS = 3;
  * caused it (p. 428).
  *
  * "Low Pain Threshold doubles the FP loss and torture bonus. High Pain
- * Threshold lets you overcome the agony enough to function, but at -3 to DX
- * and IQ." Ecstasy is the same thing from the other direction, and neither
+ * Threshold lets you function at -3 to DX, IQ, skill, and self-control rolls;
+ * you still lose FP." (The 2004 text named DX and IQ only.) Ecstasy is the same thing from the other direction, and neither
  * threshold touches it.
  */
 export function agonyCost(options: {
