@@ -237,3 +237,11 @@ export declare function guidanceOf(
 export declare function scopeAccOf(value: string | undefined): number;
 /** Folds a second line into a mode: into `linked`, or `linkedAlso` where `linked` holds the other kind. False where it does not fit. */
 export declare function addSecondLine(mode: Record<string, unknown>, line: Record<string, unknown>): boolean;
+
+/** The advantages and disadvantages of a data file, as compendium records. */
+export declare function parseTraits(
+  recs: ReadonlyArray<{ section: string; text: string }>,
+  reject: (what: string, why: string) => void,
+  note: (text: string) => void,
+  source: { prefix: string; book: string; outDir: string; overlap: (...args: unknown[]) => void; basicIds?: Set<string> | null; basic?: boolean },
+): Array<{ _id: string; name: string; type: string; system: { points: number; levelNames: string[]; reference: string; [field: string]: unknown } }>;

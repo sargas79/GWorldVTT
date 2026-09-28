@@ -212,22 +212,22 @@ export function influenceResult(options: {
 }
 
 /**
- * Whether an Influence attempt is decided before any dice (pp. 60, 95, 154).
+ * Whether an Influence attempt is decided before any dice (pp. 60, 95, 138).
  *
  * "If the subject is Indomitable, you lose automatically unless you have
  * Empathy... Intimidation attempts against those with the Unfazeable advantage
  * also fail automatically. On the other hand, you win automatically -- no roll
- * required -- against those with Slave Mentality."
+ * required -- against those with Heteronomy."
  */
 export function automaticInfluence(options: {
   skill: InfluenceSkill;
   indomitable?: boolean;
   unfazeable?: boolean;
-  slaveMentality?: boolean;
+  heteronomy?: boolean;
   /** Empathy of the appropriate kind, which lets you try an Indomitable. */
   empathy?: boolean;
 }): boolean | null {
-  if (options.slaveMentality) return true;
+  if (options.heteronomy) return true;
   if (options.unfazeable && String(options.skill) === "Intimidation") return false;
   if (options.indomitable && !options.empathy) return false;
   return null;

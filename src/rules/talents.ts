@@ -270,7 +270,7 @@ const SKILL_BONUS_TRAITS: Readonly<Record<string, readonly SkillBonusTrait[]>> =
   }],
   // "-1 to use or resist Influence skills" (p. 146).
   oblivious: [{ skills: INFLUENCE_SKILLS, value: -1 }],
-  // Mild -1, Severe -2, Crippling "-4 on default rolls" (p. 154).
+  // Mild -1, Severe -2, Overwhelming "-4 on default rolls" (p. 154).
   shyness: [{ skills: SHYNESS_SKILLS, value: row([-1, -2, -4]) }],
   stuttering: [{ skills: STUTTERING_SKILLS, value: -2 }],
   "disturbing voice": [{ skills: STUTTERING_SKILLS, value: -2 }],

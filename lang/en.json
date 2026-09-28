@@ -492,6 +492,7 @@
       "Fields": "Moving {document} fields",
       "Learnable": "Flagging learnable advantages",
       "Containers": "Marking backpacks, pouches and quivers as containers",
+      "RenamedTraits": "Renaming Heteronomy and the Overwhelming levels",
       "Uncovered": "This world holds {label}, which the GURPS system has stopped defining or will stop defining. Install and enable {install}, and load the world with it under a system release that still defines this data before updating the system, or that data will be lost."
     },
     "Api": {
@@ -4727,7 +4728,7 @@
         "aquatic": "Aquatic",
         "ambidextrous": "Either hand at no penalty",
         "indomitable": "Indomitable",
-        "slaveMentality": "Slave Mentality",
+        "heteronomy": "Heteronomy",
         "attributes": {
           "ST": "ST",
           "DX": "DX",

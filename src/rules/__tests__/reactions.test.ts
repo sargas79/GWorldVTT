@@ -153,11 +153,11 @@ describe("an Influence roll (Campaigns p. 359)", () => {
   });
 });
 
-describe("the people it is settled against in advance (Campaigns pp. 60, 95, 154)", () => {
-  /** "You win automatically -- no roll required -- against those with Slave
-   * Mentality." */
-  it("wins against Slave Mentality without rolling", () => {
-    expect(automaticInfluence({ skill: "Fast-Talk", slaveMentality: true })).toBe(true);
+describe("the people it is settled against in advance (Campaigns pp. 60, 95, 138)", () => {
+  /** "You win automatically -- no roll required -- against those with
+   * Heteronomy (p. 138)." */
+  it("wins against Heteronomy without rolling", () => {
+    expect(automaticInfluence({ skill: "Fast-Talk", heteronomy: true })).toBe(true);
   });
 
   /** "Intimidation attempts against those with the Unfazeable advantage also

@@ -167,13 +167,13 @@ export async function rollInfluence(options: {
   const skill = given + mine.reduce((sum, line) => sum + line.value, 0);
   const resisted = will + theirs.reduce((sum, line) => sum + line.value, 0);
 
-  // Some subjects settle it before the dice: Slave Mentality loses outright,
+  // Some subjects settle it before the dice: Heteronomy loses outright,
   // Unfazeable cannot be intimidated, and the Indomitable cannot be swayed.
   const settled = automaticInfluence({
     skill: options.skill,
     indomitable: options.subject?.system?.derived?.traitEffects?.indomitable === true,
     unfazeable: options.subject?.system?.derived?.traitEffects?.unfazeable === true,
-    slaveMentality: options.subject?.system?.derived?.traitEffects?.slaveMentality === true,
+    heteronomy: options.subject?.system?.derived?.traitEffects?.heteronomy === true,
   });
 
   const rolls: any[] = [];

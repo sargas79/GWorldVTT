@@ -3325,7 +3325,7 @@
       "levelNames": [
         "Mild",
         "Severe",
-        "Crippling"
+        "Overwhelming"
       ],
       "maxLevels": 3,
       "specialty": "",
@@ -4912,7 +4912,7 @@
       "levelNames": [
         "Mild",
         "Severe",
-        "Crippling"
+        "Overwhelming"
       ],
       "maxLevels": 3,
       "specialty": "",
@@ -6092,7 +6092,7 @@
       "levelNames": [
         "Mild",
         "Severe",
-        "Crippling"
+        "Overwhelming"
       ],
       "maxLevels": 3,
       "specialty": "",
@@ -6110,7 +6110,7 @@
   },
   {
     "_id": "64d3974ee15da74a",
-    "name": "Slave Mentality",
+    "name": "Heteronomy",
     "type": "trait",
     "system": {
       "category": "disadvantage",
@@ -6130,7 +6130,7 @@
       "meleeModes": [],
       "rangedModes": [],
       "description": "",
-      "reference": "Basic Set: Characters p. 154"
+      "reference": "Basic Set: Characters p. 138"
     }
   },
   {

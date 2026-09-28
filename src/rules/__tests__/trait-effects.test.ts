@@ -90,6 +90,22 @@ describe("reading a character's traits", () => {
     expect(traitEffects([held("No Legs (Aquatic)")]).aquatic).toBe(true);
   });
 
+  /**
+   * "You win automatically -- no roll required -- against those with
+   * Heteronomy (p. 138)" (Influence Rolls, p. 359). The Revised edition
+   * renamed Slave Mentality, and a character made before it still has that.
+   */
+  it("reads Heteronomy, and Slave Mentality under its old name", () => {
+    expect(traitEffects([held("Heteronomy")]).heteronomy).toBe(true);
+    expect(traitEffects([held("Slave Mentality")]).heteronomy).toBe(true);
+    expect(traitEffects([held("  slave mentality ")]).heteronomy).toBe(true);
+    expect(traitEffects([held("Indomitable")]).heteronomy).toBe(false);
+    expect(isReadTrait("Heteronomy")).toBe(true);
+    expect(isReadTrait("Slave Mentality")).toBe(true);
+    expect(readTraitNames()).toContain("heteronomy");
+    expect(readTraitNames()).not.toContain("slave mentality");
+  });
+
   it("knows who makes no Fright Check at all", () => {
     expect(traitEffects([held("Unfazeable")]).unfazeable).toBe(true);
     expect(traitEffects([held("Fearlessness", 9)]).unfazeable).toBe(false);
