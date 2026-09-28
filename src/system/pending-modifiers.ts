@@ -29,7 +29,7 @@ export interface PendingModifierRequest {
   /** The world time, in seconds, it lapses at if no roll has taken it. */
   expires?: number;
   /**
-   * What kind of bonus it is (since API 1.163.0), for the rule that holds it to
+   * What kind of bonus it is (since API 1.164.0), for the rule that holds it to
    * find its own again: `complementary` is a complementary skill's.
    */
   source?: string;
@@ -43,7 +43,7 @@ export interface PendingModifier {
   tags: string[];
   skill: string | null;
   expires: number | null;
-  /** Set where the request gave a source (since API 1.163.0). */
+  /** Set where the request gave a source (since API 1.164.0). */
   source?: string;
 }
 

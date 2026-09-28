@@ -3391,7 +3391,7 @@ Two fields a module may read (since 1.62.0):
     matches the roll goes on it.
   - The sheet's modifier dialog (shift-click) lists the bonuses held for the
     roll, which are added to it without being typed in.
-  - `source` (since 1.163.0) is a short tag for the kind of bonus, for the
+  - `source` (since 1.164.0) is a short tag for the kind of bonus, for the
     rule that holds it to find its own again; a module leaves it out. The
     system uses `complementary` for the bonus a complementary skill roll holds
     (Basic Set Revised p. 206, see below). A held bonus with that source is
@@ -3402,11 +3402,11 @@ Two fields a module may read (since 1.62.0):
     tag, or one whose `expires` has passed. `actors.pendingModifiers(actor)`
     lists the held bonuses that haven't lapsed, as `{ id, label, value, tags,
     skill, expires }` (`skill` and `expires` null where none was given, and
-    `source` present where one was, since 1.163.0), and
+    `source` present where one was, since 1.164.0), and
     `actors.removePendingModifier(actor, id)` takes one off unused, resolving
     to whether there was one to take. The bonuses are kept in the actor's
     `pendingModifiers` system flag, which a module doesn't write itself.
-- **Complementary skills and team efforts** (since 1.163.0; Basic Set Revised
+- **Complementary skills and team efforts** (since 1.164.0; Basic Set Revised
   pp. 206 and 185). Two switches in the rolls group, both on by default:
   `complementarySkills` puts a "Complementary roll" button on a skill's panel
   on the character sheet, and `teamEfforts` a "Team" button on each skill of
