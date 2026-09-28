@@ -293,6 +293,68 @@ describe("laser sight", () => {
   });
 });
 
+/**
+ * Revised p. 372: "The sum of Acc and all bonuses from targeting systems can
+ * never exceed twice the base Acc of the attack." Extra seconds of Aim and
+ * bracing are outside the cap.
+ */
+describe("the cap on targeting systems", () => {
+  const cutOf = (mods: ReturnType<typeof rangedModifiers>) => mods.find((m) => m.key === "targetingCap")?.value;
+
+  it("cuts a +4 scope on an Acc 2 pistol to +2", () => {
+    const pistol = { accuracy: 2, scopeBonus: 4, bulk: -2 };
+    const mods = rangedModifiers(shot({ aimed: true }), { ...pistol, aim: { turns: 4, braced: false } });
+    expect(valueOf(mods, "Accuracy")).toBe(6);
+    expect(cutOf(mods)).toBe(-2);
+    // Acc 2 and a scope worth 2 is 4, twice the base Acc; the extra seconds of Aim come on top.
+    expect(total(mods.filter((m) => m.key === "accuracy" || m.key === "targetingCap"))).toBe(4);
+    expect(valueOf(mods, "AimedLonger")).toBe(2);
+  });
+
+  it("leaves bracing and extra seconds of Aim outside the cap", () => {
+    const pistol = { accuracy: 1, scopeBonus: 0, bulk: -2 };
+    const mods = rangedModifiers(shot({ aimed: true }), { ...pistol, aim: { turns: 3, braced: true } });
+    expect(cutOf(mods)).toBeUndefined();
+    expect(total(mods)).toBe(1 + 2 + 1);
+  });
+
+  it("leaves a scope within the base Acc alone", () => {
+    const mods = rangedModifiers(shot({ aimed: true }), { accuracy: 5, scopeBonus: 2, bulk: -5, aim: { turns: 2, braced: false } });
+    expect(cutOf(mods)).toBeUndefined();
+  });
+
+  it("counts a laser sight and a vehicle's targeting system with the scope", () => {
+    const carbine = { accuracy: 2, scopeBonus: 2, bulk: -4, halfDamageRange: 150 };
+    const aimed = rangedModifiers(shot({ aimed: true, range: 20, laser: { on: true, targetSees: false } }), { ...carbine, aim: { turns: 2, braced: false } });
+    // Scope 2 + laser 1 is 3 against a base Acc of 2: a cut of 1.
+    expect(cutOf(aimed)).toBe(-1);
+    expect(valueOf(aimed, "LaserSight")).toBe(1);
+  });
+
+  it("caps a laser sight on a weapon with no Acc, even unaimed", () => {
+    const thrower = { accuracy: 0, scopeBonus: 0, bulk: -2, halfDamageRange: 150 };
+    const mods = rangedModifiers(shot({ range: 20, laser: { on: true, targetSees: false } }), thrower);
+    expect(cutOf(mods)).toBe(-1);
+  });
+
+  it("does not count the laser sight against a weapon it fits within", () => {
+    const pistol = { accuracy: 2, scopeBonus: 0, bulk: -2, halfDamageRange: 150 };
+    const mods = rangedModifiers(shot({ range: 20, laser: { on: true, targetSees: false } }), pistol);
+    expect(cutOf(mods)).toBeUndefined();
+  });
+
+  it("is applied before a moving vehicle's SR cap, not on top of it", () => {
+    const pistol = { accuracy: 2, scopeBonus: 4, bulk: -2 };
+    const mods = rangedModifiers(
+      shot({ aimed: true, vehicle: { kind: "handheld", operator: false, dodged: false, flying: false, moving: true, stabilityRating: 9, stabilized: false, targetingTl: 0 } }),
+      { ...pistol, aim: { turns: 4, braced: false } },
+    );
+    expect(cutOf(mods)).toBe(-2);
+    // SR 9 is far above what is left, so it cuts nothing more.
+    expect(mods.some((m) => m.label.includes("StabilityCap"))).toBe(false);
+  });
+});
+
 /** Darkness short of total (GURPS Basic Set: Campaigns p. 394). */
 describe("darkness", () => {
   const pistol = { accuracy: 2, scopeBonus: 0, bulk: -2 };

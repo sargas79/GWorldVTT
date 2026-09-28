@@ -1784,6 +1784,7 @@
       "VehicleDodged": "The vehicle dodged",
       "TargetingSystem": "Targeting system",
       "StabilityCap": "Aim capped at SR {sr}",
+      "TargetingCap": "Targeting systems capped at base Acc {acc}",
       "FromVehicle": "From {vehicle}",
       "VehicleWeapon": "Weapon",
       "Handheld": "Held in the hand",

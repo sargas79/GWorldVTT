@@ -18,6 +18,17 @@ export const MAX_EXTRA_AIM_TURNS = 2;
 /** What a braced weapon is worth on top of Accuracy. */
 export const BRACED_BONUS = 1;
 
+/**
+ * The most that targeting systems -- a scope, a laser sight, a vehicle's
+ * targeting computer -- can add to a shot (p. 364, Revised p. 372): "The sum
+ * of Acc and all bonuses from targeting systems can never exceed twice the
+ * base Acc of the attack", which is to say the systems together are worth no
+ * more than the base Acc. Extra seconds of Aim and bracing are outside the cap.
+ */
+export function cappedTargetingBonus(baseAccuracy: number, targetingBonus: number): number {
+  return Math.min(Math.max(0, targetingBonus), Math.max(0, baseAccuracy));
+}
+
 export interface AimInput {
   /** Turns spent aiming so far, this one included. Zero means not aiming. */
   turnsAimed: number;
