@@ -86,8 +86,9 @@ function painGradeOf(affliction: Affliction): PainGrade | null {
  * The table's figures are for somebody with an ordinary pain threshold, and
  * the book adjusts two conditions for anybody else. Pain: "High Pain Threshold
  * halves these penalties; Low Pain Threshold doubles them." Agony: "High Pain
- * Threshold lets you overcome the agony enough to function, but at -3 to DX
- * and IQ" -- so for them it stops being incapacitating at all.
+ * Threshold lets you function at -3 to DX, IQ, skill, and self-control rolls;
+ * you still lose FP" (Revised; the 2004 text named DX and IQ only) -- so for
+ * them it stops being incapacitating at all. Skill rolls follow DX and IQ.
  */
 export function afflictionEffectFor(
   affliction: Affliction,
@@ -111,6 +112,7 @@ export function afflictionEffectFor(
         fallsDown: false,
         dx: functionsAt,
         iq: functionsAt,
+        selfControl: functionsAt,
       };
     }
   }

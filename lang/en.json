@@ -292,7 +292,7 @@
         "AgonyDrain": "Loses {fatigue} FP a minute while it lasts",
         "TortureBonus": "Anyone who can threaten more of it gets +{bonus} to Interrogation and Intimidation",
         "EcstasyInfluence": "Anyone offering more of it gets +{bonus} to Influence rolls",
-        "AgonyFunctions": "High Pain Threshold: able to act, at {penalty} to DX and IQ",
+        "AgonyFunctions": "High Pain Threshold: able to act, at {penalty} to DX, IQ, skill and self-control rolls",
         "NauseaRoll": "Roll HT {target} after eating, a foul smell, a failed Fright Check or being stunned",
         "Vomits": "On a failure, vomits for {seconds} seconds — treat as Retching",
         "HallucinationRoll": "Roll Will before each success roll: success {success} for {successFor}; failure {failure} for {failureFor}; critical failure freaks out for {freakOutFor}",
