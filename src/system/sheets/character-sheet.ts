@@ -149,7 +149,7 @@ import { drMetByAttack, traitsOf, wornArmor } from "../damage.js";
 import { afflictionDrBonus } from "../../rules/affliction-resistance.js";
 import { afflictionLocation, applyAfflictionEffects } from "../afflictions.js";
 import { peekCalledShot } from "../called-shot.js";
-import { feintDefenseScore, recordFeint } from "../feint.js";
+import { feintDefenseScore, noteFeintedWith, recordFeint } from "../feint.js";
 import { facingChangeAtEndOfMove, facingChangeCost, hexMovementCost } from "../../rules/tactical.js";
 import { CompendiumPicker } from "../apps/compendium-picker.js";
 import { SYSTEM_ID } from "../constants.js";
@@ -1948,6 +1948,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // their best of several things, and the card should say which it was.
       defender: { actor: foe, base: defense.score, note: defense.source },
     });
+
+    // "If you Feint with an unbalanced weapon, you cannot parry with it,
+    // exactly as if you had used it to attack" (p. 365), whether or not the
+    // Feint worked.
+    await noteFeintedWith(this.actor, item?.id, mode?.index);
 
     // A module may take the result over; otherwise it is the Basic Set's feint.
     const record = feintResultRecorded({ feinter: this.actor, foe, result });

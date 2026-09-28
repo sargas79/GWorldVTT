@@ -107,6 +107,36 @@ export async function consumeFeint(attacker: any): Promise<number> {
 }
 
 /**
+ * Whether a Feint made with this weapon uses up its parry (p. 365): "if you
+ * Feint with an unbalanced weapon ("U" on Parry), you cannot parry with it,
+ * exactly as if you had used it to attack." The weapon is the sheet's melee row
+ * the Feint was rolled from.
+ */
+export function feintUsesUnbalancedWeapon(actor: any, itemId: string | undefined, modeIndex: number | undefined): boolean {
+  if (!itemId || modeIndex === undefined || !Number.isInteger(modeIndex)) return false;
+  const rows: any[] = actor?.system?.derived?.melee ?? [];
+  return rows.some((row) => row?.itemId === itemId && row?.modeIndex === modeIndex && row.unbalanced === true);
+}
+
+/**
+ * A Feint with an unbalanced weapon counts as an attack with it for parrying
+ * (p. 365), so it sets the same "attacked this turn" condition an attack does.
+ * The condition ends when the feinter's next turn begins; see `endAttackedThisTurn`.
+ */
+export async function noteFeintedWith(actor: any, itemId: string | undefined, modeIndex: number | undefined): Promise<boolean> {
+  if (!actor?.isOwner || !feintUsesUnbalancedWeapon(actor, itemId, modeIndex)) return false;
+  if (actor.system?.conditions?.attackedThisTurn === true) return true;
+  await actor.update({ "system.conditions.attackedThisTurn": true });
+  return true;
+}
+
+/** "Attacked this turn" is over when the character's next turn begins. */
+export async function endAttackedThisTurn(actor: any): Promise<void> {
+  if (!actor?.isOwner || actor.system?.conditions?.attackedThisTurn !== true) return;
+  await actor.update({ "system.conditions.attackedThisTurn": false });
+}
+
+/**
  * What a foe rolls to see through a feint.
  *
  * "roll a Quick Contest of Melee Weapon skills with your foe; if either of you
