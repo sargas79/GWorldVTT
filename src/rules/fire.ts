@@ -52,6 +52,25 @@ export function catchingFire(basicBurningDamage: number): Burning | null {
   return null;
 }
 
+/**
+ * Whether a blow sets things alight where it lands (p. 433). An incendiary
+ * attack does (Characters p. 104), and so does an electrical one: "Electrical
+ * damage is burning and can definitely start fires!" (Revised text), which is
+ * what the Surge modifier marks (Characters p. 105).
+ */
+export function setsThingsAlight(blow: { incendiary?: boolean | undefined; surge?: boolean | undefined }): boolean {
+  return blow.incendiary === true || blow.surge === true;
+}
+
+/**
+ * Whether a blow counts as fire to something Fragile (Characters p. 136):
+ * burning damage, an explosion, an incendiary attack, or -- since electrical
+ * damage is burning (Revised p. 433) -- a Surge, whatever its damage type.
+ */
+export function burnsLikeFire(blow: { type: string; explosive?: boolean | undefined; incendiary?: boolean | undefined; surge?: boolean | undefined }): boolean {
+  return blow.type === "burn" || blow.explosive === true || setsThingsAlight(blow);
+}
+
 /** "Jumping into water takes only one second, and automatically extinguishes the fire." */
 export const WATER_PUTS_OUT = true;
 

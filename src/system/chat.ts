@@ -26,6 +26,7 @@ import {
 import { criticalEntry, criticalHitTableFor, isUnarmedSkill } from "../rules/criticals.js";
 import { healthRollScore } from "./attributes.js";
 import { surgeDisabled, surgeEffect, type SurgeDisabled, type SurgeEffect } from "../rules/surge.js";
+import { burnsLikeFire, setsThingsAlight } from "../rules/fire.js";
 import { BLOCKS_PER_TURN, acrobaticDefenseModifier, bareHandedParryModifier, mayTryAcrobatic, blockableAttack, canParryFlail, flailDefenseModifier, masterHalvesParry, multipleParryPenalty, parriedLimbStrikeModifier, thrownParryModifier } from "../rules/defenses.js";
 import { getCombatState, setCombatState } from "./combat-extensions.js";
 import { rollKnockdown } from "./knockdown.js";
@@ -634,7 +635,8 @@ async function applyFromCard(options: {
       // effect that can ignite volatile material", and Campaigns p. 433 counts
       // incendiary damage with burning for what it takes to set things alight.
       // The clothes are the volatile material a victim is wearing.
-      if (result.incendiary) {
+      // Electrical damage is burning and can start fires (Revised p. 433).
+      if (setsThingsAlight({ incendiary: result.incendiary, surge: flag.surge })) {
         // A tight-beam burn counts a tenth of its damage (p. 434).
         await catchFire({ actor, basicBurningDamage: incoming.basicDamage, tightBeam: incoming.tightBeam === true });
       }
@@ -647,7 +649,7 @@ async function applyFromCard(options: {
           kinds: fragile,
           injury: result.injury,
           majorWound: result.consequences.majorWound === true,
-          burningOrExplosive: incoming.type === "burn" || flag.explosive === true || result.incendiary === true,
+          burningOrExplosive: burnsLikeFire({ type: incoming.type, explosive: flag.explosive, incendiary: result.incendiary, surge: flag.surge }),
           vitals: result.hitLocation === "vitals",
         });
         const who = { uuid: String(actor.uuid ?? ""), name: String(actor.name ?? "") };
