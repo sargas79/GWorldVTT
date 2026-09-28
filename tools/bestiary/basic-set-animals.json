@@ -16,10 +16,11 @@
     "weight": "140 lbs.",
     "traits": [
       "Arm ST 3",
-      "Bad Grip 2",
       "Brachiator",
       "DR 1",
+      "Ham-Fisted 1",
       "Sharp Teeth",
+      "Semi-Upright",
       "Wild Animal"
     ],
     "skills": {
@@ -43,10 +44,11 @@
     "weight": "400 lbs.",
     "traits": [
       "Arm ST 3",
-      "Bad Grip 2",
       "Brachiator",
       "DR 1",
+      "Ham-Fisted 1",
       "Sharp Teeth",
+      "Semi-Upright",
       "Wild Animal"
     ],
     "skills": {
@@ -965,7 +967,7 @@
     "speed": 6.5,
     "dodge": 9,
     "move": 2,
-    "moveNote": "Ground; Air Move 12",
+    "moveNote": "Ground; Air Move 13",
     "sm": -1,
     "weight": "18 lbs.",
     "traits": [

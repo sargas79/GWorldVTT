@@ -4131,7 +4131,7 @@
         "maintain": null,
         "text": "Varies"
       },
-      "mageryRequired": 2,
+      "mageryRequired": 0,
       "prerequisiteCount": 1,
       "prerequisites": "Shield",
       "attack": {
@@ -4143,7 +4143,7 @@
         "maxRange": 0,
         "explosive": false
       },
-      "description": "",
+      "description": "The entry (p. 253) lists Shield alone; the spell table (p. 304) still prints Magery 2, Shield. The entry is followed.",
       "reference": "Basic Set: Characters p. 253"
     }
   },
