@@ -21,9 +21,15 @@ describe("Spraying Fire", () => {
     expect(spray.problem).toBeNull();
   });
 
-  it("wastes nothing between targets a yard apart, and two shots a yard above RoF 16", () => {
+  it("wastes nothing between targets a yard apart, and two shots a yard at RoF 16 or more", () => {
     expect(sprayingFire({ rateOfFire: 10, recoil: 2, targets: [{ shots: 3 }, { shots: 3, yardsFromPrevious: 1 }] }).attacks[1]!.wasted).toBe(0);
     expect(sprayingFire({ rateOfFire: 20, recoil: 2, targets: [{ shots: 3 }, { shots: 3, yardsFromPrevious: 3 }] }).attacks[1]!.wasted).toBe(4);
+    // Revised p. 409: "For RoF 15 or less ... one shot per yard. For RoF 16+, two."
+    const wasted = (rateOfFire: number) =>
+      sprayingFire({ rateOfFire, recoil: 2, targets: [{ shots: 3 }, { shots: 3, yardsFromPrevious: 3 }] }).attacks[1]!.wasted;
+    expect(wasted(15)).toBe(2);
+    expect(wasted(16)).toBe(4);
+    expect(wasted(17)).toBe(4);
   });
 
   it("says why a spray can't be fired", () => {

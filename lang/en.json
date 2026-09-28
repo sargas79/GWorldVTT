@@ -428,7 +428,7 @@
     },
     "Spraying": {
       "Title": "Spraying Fire",
-      "Intro": "Split one burst of up to {rof} shots over the targets, in the order it sweeps them (Campaigns p. 409). Each gets its own attack at the shots aimed at it, at Rcl {recoil} for the first and +1 more for each target after. Swinging between targets more than a yard apart wastes a shot a yard, two above RoF 16.",
+      "Intro": "Split one burst of up to {rof} shots over the targets, in the order it sweeps them (Campaigns p. 409). Each gets its own attack at the shots aimed at it, at Rcl {recoil} for the first and +1 more for each target after. Swinging between targets more than a yard apart wastes a shot a yard, two at RoF 16 or more.",
       "Sweep": "Sweep",
       "From": "From {name}",
       "Target": "Target",
