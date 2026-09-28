@@ -151,6 +151,7 @@ import { afflictionLocation, applyAfflictionEffects } from "../afflictions.js";
 import { peekCalledShot } from "../called-shot.js";
 import { feintDefenseScore, noteFeintedWith, recordFeint } from "../feint.js";
 import { facingChangeAtEndOfMove, facingChangeCost, hexMovementCost } from "../../rules/tactical.js";
+import { flightMoveCost } from "../../rules/mounted.js";
 import { CompendiumPicker } from "../apps/compendium-picker.js";
 import { SYSTEM_ID } from "../constants.js";
 import { SKILL_ORDER } from "../settings.js";
@@ -361,6 +362,14 @@ function tacticalPanel(system: any, derived: any) {
     // (p. 387): a 60-degree turn, a 120, and turning right round.
     turnCosts: [1, 2, 3].map((sides) => facingChangeCost(0, sides as 0 | 1 | 2 | 3 | 4 | 5)),
     handedness: system.handedness ?? "right",
+    // Flyers and swimmers pay a point a yard up or along and a point and a half
+    // on the diagonal, and nothing extra for posture, footing or obstructions
+    // (Revised p. 387).
+    flying: {
+      level: hexMovementCost({ direction: "forward", flyingOrSwimming: true }),
+      vertical: flightMoveCost({ horizontal: 0, vertical: 1 }),
+      diagonal: flightMoveCost({ horizontal: 1, vertical: 1 }),
+    },
   };
 }
 

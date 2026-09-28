@@ -169,6 +169,26 @@ describe("retreatBonus", () => {
   });
 });
 
+/** Revised p. 387: flyers and swimmers pay "nothing extra for posture, footing, or obstructed ground". */
+describe("hexMovementCost for flyers and swimmers", () => {
+  it("leaves out posture, footing and obstructions", () => {
+    const flying = { flyingOrSwimming: true } as const;
+    expect(hexMovementCost({ direction: "forward", posture: "crawling", ...flying })).toBe(1);
+    expect(hexMovementCost({ direction: "forward", posture: "kneeling", obstructions: 2, badFooting: true, ...flying })).toBe(1);
+    expect(hexMovementCost({ direction: "forward", posture: "lying", ...flying })).toBe(1);
+    expect(hexMovementCost({ direction: "forward", posture: "sitting", ...flying })).toBe(1);
+  });
+
+  it("still prices the direction of travel", () => {
+    expect(hexMovementCost({ direction: "sideways", flyingOrSwimming: true })).toBe(2);
+    expect(hexMovementCost({ direction: "backward", posture: "crawling", flyingOrSwimming: true })).toBe(2);
+  });
+
+  it("charges a walker as before", () => {
+    expect(hexMovementCost({ direction: "forward", posture: "crawling", flyingOrSwimming: false })).toBe(3);
+  });
+});
+
 describe("hexMovementCost", () => {
   it("charges a point to go forward and two to go any other way", () => {
     expect(hexMovementCost({ direction: "forward" })).toBe(1);

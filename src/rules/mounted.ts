@@ -145,7 +145,10 @@ export const PASSENGER_HOLD_PENALTY = penalty(3);
 // ── flying combat (p. 397) ──────────────────────────────────────────────────
 
 /**
- * What a yard of movement costs a flyer (p. 397).
+ * What a yard of movement costs a flyer (p. 397), or a swimmer (Revised
+ * p. 387: "Flyers and swimmers pay 1 movement point/yard for vertical
+ * movement, 1.5 movement points/yard for diagonal movement, and nothing extra
+ * for posture, footing, or obstructed ground").
  *
  * "Vertical movement costs the same as horizontal movement. Moving a yard
  * vertically and a yard horizontally simultaneously (diagonal movement at 45

@@ -132,6 +132,9 @@ describe("flying (Campaigns p. 397)", () => {
     expect(flightMoveCost({ horizontal: 0, vertical: 3 })).toBe(3);
     expect(flightMoveCost({ horizontal: 2, vertical: 2 })).toBe(3);
     expect(flightMoveCost({ horizontal: 4, vertical: 2 })).toBe(5);
+    // Revised p. 387: 1 point a yard vertically, 1.5 a yard diagonally.
+    expect(flightMoveCost({ horizontal: 0, vertical: 1 })).toBe(1);
+    expect(flightMoveCost({ horizontal: 1, vertical: 1 })).toBe(1.5);
   });
 
   /** "Add +10 to basic air Move and double top airspeed on any turn spent
