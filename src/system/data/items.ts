@@ -1845,6 +1845,7 @@ export class TechniqueData extends foundry.abstract.TypeDataModel {
   declare defaultModifier: number;
   declare points: number;
   declare maxRelativeToPrerequisite: number;
+  declare fasterShooting: boolean;
   declare derived: { level: number | null; levels: number; cappedByPrerequisite: boolean };
 
   static override defineSchema() {
@@ -1914,6 +1915,12 @@ export class TechniqueData extends foundry.abstract.TypeDataModel {
       maxRelativeToPrerequisite: new fields.NumberField({
         required: true, nullable: false, integer: true, initial: 0,
       }),
+      /**
+       * A technique that allows faster shooting: a Gunslinger takes half its
+       * default penalty, rounded in their favour, and buys it up from that
+       * (Characters p. 58; since API 1.163.0).
+       */
+      fasterShooting: new fields.BooleanField({ initial: false }),
     };
   }
 }

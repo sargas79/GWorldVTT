@@ -129,6 +129,9 @@
         </label>
       </div>
       <p class="ihint">{{localize "GWORLD.Technique.MaxRelativeHint"}}</p>
+      <label class="icheck" data-tooltip="{{localize 'GWORLD.Technique.FasterShootingHint'}}"><input type="checkbox" name="system.fasterShooting"
+             {{#if system.fasterShooting}}checked{{/if}} {{#unless editable}}disabled{{/unless}} />
+        {{localize "GWORLD.Technique.FasterShooting"}}</label>
       {{!-- A technique written for a kind of skill, whose skill is chosen when a
            character takes it (Characters p. 230). --}}
       <div class="ish">{{localize "GWORLD.Technique.Open.Kinds"}}</div>

@@ -456,6 +456,22 @@ and the roll continues.
     the row starts again with every line offered; an attack from another
     row (the other hand of a Dual-Weapon Attack) leaves it alone. Over a
     Spraying Fire burst, a line dropped for any target is dropped;
+  - Since 1.163.0, `gworld.attackModifiers` also gets `gunslinger`, read-only:
+    null for a melee attack, for a shooter without Gunslinger (Characters
+    p. 58) and for a weapon that is not rolled against Beam Weapons, Gunner,
+    Guns or Liquid Projector; otherwise `{ twoHanded, accuracy, waived }`.
+    `accuracy` is the Acc added without an Aim maneuver (the weapon's full Acc
+    for one to three shots from a one-handed gun, half of it rounded up for a
+    two-handed weapon or automatic fire; 0 where it was aimed, which gives
+    full Acc by the ordinary lines, or where a penalty was ignored in its
+    place). `waived` lists the penalties ignored instead of adding Acc:
+    `moveAndAttack`, `closeCombat` (Bulk), `driving` (Move and Attack when
+    driving and shooting) and `riding` (weapon skill, not the lower of it and
+    Riding, on a mount). The lines are in `modifiers`, keyed `gunslinger`,
+    each with `gunslinger` set to `accuracy` or to what was waived (a waived
+    penalty is a line at 0, and the `bulk` line it replaces is not there). A
+    module's own rules for a Gunslinger's shooting read the decision instead
+    of working the Basic Set's part out again;
   - Since 1.19.0, a `gworld.attackModifiers` listener may set `refusal` (text): the
     attack isn't rolled, and the user is told why;
   - Since 1.83.0, `gworld.attackModifiers` also gets `shots`, the shells the
@@ -3570,7 +3586,15 @@ Two fields a module may read (since 1.62.0):
   permanent parts are not touched. The card names the parts it put in care.
 - **Technique defaults:** `gworld.techniqueDefaults` gets `{ actor, item, defaults }`;
   push `{ from, skill, modifier }` to offer another default. The best one is
-  used.
+  used. Since 1.163.0 a technique record may set `system.fasterShooting`
+  (a technique that allows faster shooting): for a Gunslinger (Characters
+  p. 58) every default it ends up with, the ones a listener added included,
+  has its penalty halved, rounded in their favour, and the technique is bought
+  up from that. `traitEffects.gunslinger` (true, or false) says the character
+  is one, and `rules.fastDrawAmmoPenalty(penalties, gunslinger)` gives the
+  Fast-Draw (Ammo) sum halved the same way, for a rule of a module that
+  assesses those penalties; `rules.gunslingerAccuracy`,
+  `rules.halvePenaltyInFavour` and `rules.isGunslingerSkill` are the pieces.
 
 `combat.hooks` lists every hook's name.
 
