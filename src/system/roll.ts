@@ -186,7 +186,7 @@ import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js"
 import { gunslingerAccuracy, gunslingerWeapon, type GunslingerWeapon } from "../rules/gunslinger.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
 import { rollMalediction } from "./malediction.js";
-import { pendingModifierLines, spendPendingModifiers } from "./pending-modifiers.js";
+import { COMPLEMENTARY_SOURCE, pendingModifierLines, removePendingModifier, spendPendingModifiers } from "./pending-modifiers.js";
 
 const CHAT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/success-roll.hbs`;
 const DAMAGE_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/damage-roll.hbs`;
@@ -1651,10 +1651,13 @@ export async function rollDamage(options: DamageRollOptions): Promise<number | n
  * Returns null when the dialog is dismissed, which cancels the roll — distinct
  * from returning 0, which rolls unmodified.
  */
-export async function promptForModifier(held: RollModifier[] = []): Promise<number | null> {
+export async function promptForModifier(
+  held: HeldLine[] = [],
+  onDiscard?: (ids: string[]) => Promise<void>,
+): Promise<number | null> {
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: game.i18n.localize("GWORLD.Chat.ModifierTitle") },
-    content: `<div class="gworld">${heldModifiersNote(held)}
+    content: `<div class="gworld">${heldModifiersNote(held, onDiscard !== undefined)}
       <label style="display:flex;align-items:center;gap:8px">
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
         <input type="number" name="modifier" value="0" step="1" autofocus style="width:80px">
@@ -1662,10 +1665,15 @@ export async function promptForModifier(held: RollModifier[] = []): Promise<numb
     </div>`,
     ok: {
       label: game.i18n.localize("GWORLD.Chat.Roll"),
-      callback: (_event: Event, button: HTMLElement) => {
-        const input = button
-          .closest<HTMLElement>(".application")
-          ?.querySelector<HTMLInputElement>('input[name="modifier"]');
+      callback: async (_event: Event, button: HTMLElement) => {
+        const form = button.closest<HTMLElement>(".application");
+        const input = form?.querySelector<HTMLInputElement>('input[name="modifier"]');
+        // A held bonus the player ticked to discard is taken off before the
+        // roll, so the roll never finds it.
+        const discarded = [...(form?.querySelectorAll<HTMLInputElement>('input[name="discard"]:checked') ?? [])]
+          .map((box) => box.value)
+          .filter(Boolean);
+        if (discarded.length > 0 && onDiscard) await onDiscard(discarded);
         return Number(input?.value ?? 0);
       },
     },
@@ -1675,14 +1683,20 @@ export async function promptForModifier(held: RollModifier[] = []): Promise<numb
   return typeof result === "number" && Number.isFinite(result) ? result : null;
 }
 
+/** A bonus held for a roll as its dialog lists it: with the id to discard it by, where the rule that holds it lets it be discarded. */
+export type HeldLine = RollModifier & { heldId?: string };
+
 /**
  * The bonuses held for this roll (since API 1.132.0), listed above the
  * modifier so the player knows they are coming and not to add them again.
  */
-function heldModifiersNote(held: RollModifier[]): string {
+function heldModifiersNote(held: HeldLine[], canDiscard = false): string {
   if (held.length === 0) return "";
   const escape = foundry.utils.escapeHTML;
-  const lines = held.map((m) => `<li>${escape(m.label)} ${m.value > 0 ? "+" : ""}${m.value}</li>`).join("");
+  const discard = (m: HeldLine) => canDiscard && m.heldId
+    ? ` <label class="discard"><input type="checkbox" name="discard" value="${escape(m.heldId)}"> ${escape(game.i18n.localize("GWORLD.Chat.DiscardHeld"))}</label>`
+    : "";
+  const lines = held.map((m) => `<li>${escape(m.label)} ${m.value > 0 ? "+" : ""}${m.value}${discard(m)}</li>`).join("");
   return `<p class="hint">${escape(game.i18n.localize("GWORLD.Chat.HeldModifiers"))}</p><ul class="held-modifiers">${lines}</ul>`;
 }
 
@@ -1690,9 +1704,13 @@ function heldModifiersNote(held: RollModifier[]): string {
  * The bonuses held for the roll a sheet button is about to make, as the roll
  * itself will find them, for its dialog to list.
  */
-function heldForRoll(actor: any, rollType: string | undefined, skill: string | undefined, dataset: DOMStringMap): RollModifier[] {
+function heldForRoll(actor: any, rollType: string | undefined, skill: string | undefined, dataset: DOMStringMap): HeldLine[] {
   const tags = successRollTags({ kind: rollKind(rollType), skill, tags: [dataset.basedOn, dataset.sense].filter((t): t is string => Boolean(t)) });
-  return pendingModifierLines(actor, { skill, tags }).map((h) => h.line);
+  // A complementary skill's bonus can be discarded from the dialog (Basic Set
+  // Revised p. 206: the GM may rule it out), so it carries the id to do it by.
+  return pendingModifierLines(actor, { skill, tags }).map((h) => (
+    h.source === COMPLEMENTARY_SOURCE ? { ...h.line, heldId: h.id } : h.line
+  ));
 }
 
 /**
@@ -1962,7 +1980,7 @@ async function rollAction(
     ? shot.modifiers
     : melee
       ? melee.modifiers
-      : await maybePromptModifiers(event, heldForRoll(actor, rollType, target.dataset.rollSkill ?? (rollType === "skill" ? rollLabel : undefined), target.dataset));
+      : await maybePromptModifiers(event, heldForRoll(actor, rollType, target.dataset.rollSkill ?? (rollType === "skill" ? rollLabel : undefined), target.dataset), actor);
   if (modifiers === null) return null;
 
   modifiers.push(...standingRollLines(actor, {
@@ -5025,10 +5043,15 @@ function rollKind(rollType: string | undefined): RollKind {
  * Shift-click asks for a situational modifier. Returns null when the prompt is
  * dismissed, meaning the caller should abandon the roll entirely.
  */
-async function maybePromptModifiers(event: Event, held: RollModifier[] = []): Promise<RollModifier[] | null> {
-  if (!(event as MouseEvent).shiftKey) return [];
+export async function maybePromptModifiers(event: Event, held: HeldLine[] = [], actor: any = null): Promise<RollModifier[] | null> {
+  // A complementary skill's bonus is put to the roller before the roll, not
+  // only on shift-click, so that it is seen and can be discarded.
+  const discardable = held.some((m) => m.heldId !== undefined);
+  if (!(event as MouseEvent).shiftKey && !discardable) return [];
 
-  const value = await promptForModifier(held);
+  const value = await promptForModifier(held, discardable && actor
+    ? async (ids) => { for (const id of ids) await removePendingModifier(actor, id); }
+    : undefined);
   if (value === null) return null;
   if (value === 0) return [];
   return [{ label: game.i18n.localize("GWORLD.Chat.Situational"), value }];

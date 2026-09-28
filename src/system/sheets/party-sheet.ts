@@ -38,6 +38,7 @@ import {
   type MemberRow,
   type PartySkillRow,
 } from "../party/roster.js";
+import { promptForTeamEffort, rollTeamEffort, teamEffortMembers } from "../team-effort.js";
 import { reportRefusedDrop } from "./drop-errors.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
@@ -168,6 +169,7 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       addPlayers: GWorldPartySheet.#onAddPlayers,
       awardPoints: GWorldPartySheet.#onAwardPoints,
       roll: GWorldPartySheet.#onRoll,
+      teamEffort: GWorldPartySheet.#onTeamEffort,
       changeMana: GWorldPartySheet.#onChangeMana,
       openRules: GWorldPartySheet.#onOpenRules,
       openSources: GWorldPartySheet.#onOpenSources,
@@ -235,6 +237,8 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       editable: this.isEditable,
       isOwner: actor.isOwner,
       isGM,
+      // A team effort is the GM's to allow (Basic Set Revised p. 185).
+      teamEfforts: isGM && isRuleOn("teamEfforts"),
       tabLabel: tabs[active]?.label ?? "",
       countLabel: members.length === 1 ? L("OneMember") : L("Members", { count: members.length }),
       terms: termChips,
@@ -592,6 +596,20 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
   static async #onRoll(this: GWorldPartySheet, event: Event, target: HTMLElement) {
     const member = GWorldPartySheet.#memberOf(target);
     if (member) await handleRollAction(member, event, target);
+  }
+
+  /**
+   * One roll for the whole party in a skill (Basic Set Revised p. 185): the GM
+   * says who takes part, and the best of them rolls at their level, plus the
+   * number who know the skill, less the size of the group.
+   */
+  static async #onTeamEffort(this: GWorldPartySheet, _event: Event, target: HTMLElement) {
+    if (!game.user?.isGM || !isRuleOn("teamEfforts")) return;
+    const skill = target.closest<HTMLElement>("[data-party-name]")?.dataset.partyName ?? "";
+    if (!skill) return;
+    const asked = await promptForTeamEffort(skill, teamEffortMembers(this.actor, skill));
+    if (!asked) return;
+    await rollTeamEffort({ members: asked.members, skill, modifier: asked.modifier });
   }
 
   /* ── the world ───────────────────────────────────────────────────────── */

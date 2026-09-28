@@ -622,6 +622,14 @@
           "Name": "Regular Contests",
           "Hint": "A drawn-out contest of repeated rolls, rather than one apiece."
         },
+        "complementarySkills": {
+          "Name": "Complementary skills",
+          "Hint": "Roll a skill that helps another: +2 to -2 on the next roll of the skill it assists, discarded from the roll dialog if the GM rules it out."
+        },
+        "teamEfforts": {
+          "Name": "Team efforts",
+          "Hint": "The party rolls once in a skill, on the Party sheet: the best member’s level, plus one for each who knows it, less the size of the group."
+        },
         "frightChecks": {
           "Name": "Fright Checks",
           "Hint": "A Will roll against horror, with the Fright Check Table for failures."
@@ -2015,6 +2023,7 @@
       "Modifier": "Modifier",
       "ModifierTitle": "Situational Modifier",
       "HeldModifiers": "Held for this roll, and added to it already:",
+      "DiscardHeld": "Discard",
       "Roll": "Roll",
       "BasicDamage": "basic damage",
       "WoundingModifier": "Wounding modifier",
@@ -4541,6 +4550,42 @@
       "Traits": "Hard to Subdue, Fit",
       "Out": "{name} falls unconscious",
       "TurnStart": "{name} is at 0 HP or less: roll HT to stay conscious, unless this turn is Do Nothing with no defense rolls."
+    },
+    "Complementary": {
+      "Action": "Complementary roll",
+      "Hint": "Roll this skill to help another: the outcome is held as a modifier to that skill’s next roll.",
+      "Title": "Complementary skill",
+      "DialogTitle": "Complementary roll: {skill}",
+      "DialogHint": "Only personal modifiers count, never equipment or the situation. The outcome is held for the master skill’s next roll, which lists it and can discard it.",
+      "Master": "Master skill",
+      "Recipient": "Who rolls it",
+      "LongTask": "Long task: several complementary skills, up to +4",
+      "ContestedBy": "Quick Contest against {name}",
+      "TheirSkill": "Their score",
+      "Label": "{skill}, complementary to {master}",
+      "Line": "Complementary: {skill} ({helper})",
+      "NoEquipment": "Equipment (not counted)",
+      "NoChaining": "{skill} holds a complementary bonus itself, and a master skill can’t complement a third skill.",
+      "NotYours": "You can’t hold a modifier for {name}: it isn’t your character.",
+      "Card": "{bonus} to {recipient}’s next {master} roll.",
+      "CardCapped": "Nothing more for {master}: complementary skills add up to +4 at most.",
+      "CardPartlyCapped": "The roll earned {bonus}; the +4 limit held back the rest."
+    },
+    "TeamEffort": {
+      "Action": "Team",
+      "Hint": "Roll this skill once for the whole team",
+      "Title": "Team effort",
+      "DialogTitle": "Team effort: {skill}",
+      "DialogHint": "Tick who is in the effort, in contact and working together. The best skill rolls for all.",
+      "Knows": "level {level}",
+      "DoesNotKnow": "doesn’t know it",
+      "NobodyKnows": "Nobody in the team knows {skill}: a default doesn’t count for a team effort.",
+      "Label": "Team effort: {skill}",
+      "Knowers": "Members who know the skill",
+      "GroupSize": "Group size",
+      "Arithmetic": "Best skill {best} ({leader}) +{bonus} who know it, -{size} for the size of the group.",
+      "AppliesSuccess": "Success, for everyone: {names}.",
+      "AppliesFailure": "Failure, for everyone: {names}."
     },
     "Party": {
       "Tab": {

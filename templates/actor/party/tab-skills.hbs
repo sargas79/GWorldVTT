@@ -22,6 +22,10 @@
               <button type="button" class="v2-skill-level rollable" data-action="roll" data-roll-type="skill"
                       data-roll-label="{{row.name}}" data-roll-target="{{row.best.level}}" data-based-on="{{row.best.attribute}}"
                       aria-label="{{localize 'GWORLD.Party.RollFor' what=row.name name=row.best.memberName}}">{{row.best.level}}</button>
+              {{#if @root.teamEfforts}}
+                <button type="button" class="v2-button party-team-effort" data-action="teamEffort"
+                        data-tooltip="{{localize 'GWORLD.TeamEffort.Hint'}}">{{localize "GWORLD.TeamEffort.Action"}}</button>
+              {{/if}}
             </li>
           {{/each}}
         </ul>

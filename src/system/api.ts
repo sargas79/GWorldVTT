@@ -197,9 +197,10 @@ const actors = {
 
   /**
    * Holds a bonus for the actor's next success roll that matches it (since
-   * 1.132.0): `{ label, value, tags?, skill?, expires? }`. The roll takes its
-   * line and uses it up; it lapses unused at `expires`, a world time. Returns
-   * its id, or null where it can't be held.
+   * 1.132.0): `{ label, value, tags?, skill?, expires?, source? }` (`source`
+   * since 1.163.0: a tag for the kind of bonus). The roll takes its line and
+   * uses it up; it lapses unused at `expires`, a world time. Returns its id,
+   * or null where it can't be held.
    */
   addPendingModifier(actor: any, request: PendingModifierRequest): Promise<string | null> {
     return addPendingModifier(actor, request);

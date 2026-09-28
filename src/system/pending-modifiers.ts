@@ -28,6 +28,11 @@ export interface PendingModifierRequest {
   skill?: string;
   /** The world time, in seconds, it lapses at if no roll has taken it. */
   expires?: number;
+  /**
+   * What kind of bonus it is (since API 1.163.0), for the rule that holds it to
+   * find its own again: `complementary` is a complementary skill's.
+   */
+  source?: string;
 }
 
 /** A held bonus as the actor keeps it. */
@@ -38,6 +43,8 @@ export interface PendingModifier {
   tags: string[];
   skill: string | null;
   expires: number | null;
+  /** Set where the request gave a source (since API 1.163.0). */
+  source?: string;
 }
 
 /** What a success roll is, for matching it to the bonuses held for it. */
@@ -49,6 +56,9 @@ export interface PendingRoll {
 
 /** Where the held bonuses are kept on an actor. */
 export const PENDING_MODIFIERS_FLAG = "pendingModifiers";
+
+/** The source of the bonus a complementary skill roll holds (Basic Set Revised p. 206). */
+export const COMPLEMENTARY_SOURCE = "complementary";
 
 /** The key a held bonus's line carries on the roll, for a listener to find it by. */
 export const PENDING_MODIFIER_KEY = "pendingModifier";
@@ -84,7 +94,7 @@ export function pendingModifiers(actor: any, now = worldTime()): PendingModifier
  * A skill's name as the two sides are compared: case, spacing and a tech
  * level don't count, so "Guns/TL8 (Pistol)" is "guns (pistol)".
  */
-function skillName(name: string): string {
+export function skillName(name: string): string {
   return name.toLowerCase().replace(/\/tl\d*/g, "").replace(/\s+/g, " ").trim();
 }
 
@@ -105,10 +115,14 @@ export function pendingModifierMatches(entry: PendingModifier, roll: PendingRoll
  * `pendingModifier`, with the bonus each came from, so the ones the roll
  * keeps can be used up once it is made.
  */
-export function pendingModifierLines(actor: any, roll: PendingRoll, now = worldTime()): Array<{ line: RollModifier; id: string }> {
+export function pendingModifierLines(actor: any, roll: PendingRoll, now = worldTime()): Array<{ line: RollModifier; id: string; source?: string }> {
   return pendingModifiers(actor, now)
     .filter((entry) => pendingModifierMatches(entry, roll))
-    .map((entry) => ({ line: { label: entry.label, value: entry.value, key: PENDING_MODIFIER_KEY }, id: entry.id }));
+    .map((entry) => ({
+      line: { label: entry.label, value: entry.value, key: PENDING_MODIFIER_KEY },
+      id: entry.id,
+      ...(entry.source ? { source: entry.source } : {}),
+    }));
 }
 
 /**
@@ -128,7 +142,8 @@ export async function addPendingModifier(actor: any, request: PendingModifierReq
   const now = worldTime();
   const expires = request.expires === undefined || request.expires === null ? null : Number(request.expires);
   if (expires !== null && (!Number.isFinite(expires) || expires <= now)) return null;
-  const entry: PendingModifier = { id: newId(), label, value, tags, skill, expires };
+  const source = typeof request.source === "string" && request.source.trim() ? request.source.trim() : null;
+  const entry: PendingModifier = { id: newId(), label, value, tags, skill, expires, ...(source ? { source } : {}) };
   await actor.setFlag(SYSTEM_ID, PENDING_MODIFIERS_FLAG, [...pendingModifiers(actor, now), entry]);
   return entry.id;
 }
