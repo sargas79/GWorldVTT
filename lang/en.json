@@ -3683,7 +3683,7 @@
       "LameHint": "Taken off every Melee Weapon and unarmed combat skill, and so off the parry (Characters p. 141)",
       "ImpairedRanged": "Taken off every ranged attack roll (Characters pp. 123, 147)",
       "PerTurn": "{count} attacks a turn",
-      "ExtraAttackHint": "Extra Attack: one more attack on each Attack maneuver.",
+      "ExtraAttackHint": "Extra Attack: one more attack on any maneuver that allows attacks, and some of them may be feints. Aim, Ready and other actions take Altered Time Rate (Characters p. 38).",
       "ExtraArms": "{count} extra arms",
       "WeaponToHit": "Weapon, to hit",
       "FollowUp": "(follow-up)",

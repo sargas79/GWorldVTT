@@ -60,25 +60,6 @@
         }
       },
       {
-        "_id": "30fbf4067d5af9dd",
-        "name": "Bad Grip",
-        "type": "trait",
-        "system": {
-          "category": "disadvantage",
-          "points": 0,
-          "levels": 2,
-          "pointsPerLevel": -5,
-          "costTable": [],
-          "levelNames": [],
-          "maxLevels": 3,
-          "reactionModifier": 0,
-          "description": "",
-          "reference": "Basic Set: Characters p. 123",
-          "modifiers": [],
-          "selfControl": null
-        }
-      },
-      {
         "_id": "1a727ca6b52fcc64",
         "name": "Brachiator",
         "type": "trait",
@@ -117,6 +98,32 @@
         }
       },
       {
+        "_id": "1cbbcc0797990d2f",
+        "name": "Ham-Fisted",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": -5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 2,
+          "specialty": "",
+          "needsSpecialty": false,
+          "selfControl": null,
+          "reactionModifier": 0,
+          "talentSkills": [],
+          "power": "",
+          "powerTalent": false,
+          "meleeModes": [],
+          "rangedModes": [],
+          "description": "",
+          "reference": "Basic Set: Characters p. 138",
+          "modifiers": []
+        }
+      },
+      {
         "_id": "02b78e447c70dedb",
         "name": "Teeth (Sharp Teeth)",
         "type": "trait",
@@ -133,6 +140,32 @@
           "reference": "Basic Set: Characters p. 91",
           "modifiers": [],
           "selfControl": null
+        }
+      },
+      {
+        "_id": "e75a22746d965584",
+        "name": "Semi-Upright",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "specialty": "",
+          "needsSpecialty": false,
+          "selfControl": null,
+          "reactionModifier": 0,
+          "talentSkills": [],
+          "power": "",
+          "powerTalent": false,
+          "meleeModes": [],
+          "rangedModes": [],
+          "description": "",
+          "reference": "Basic Set: Characters p. 153",
+          "modifiers": []
         }
       },
       {
@@ -239,25 +272,6 @@
         }
       },
       {
-        "_id": "17e590997706d531",
-        "name": "Bad Grip",
-        "type": "trait",
-        "system": {
-          "category": "disadvantage",
-          "points": 0,
-          "levels": 2,
-          "pointsPerLevel": -5,
-          "costTable": [],
-          "levelNames": [],
-          "maxLevels": 3,
-          "reactionModifier": 0,
-          "description": "",
-          "reference": "Basic Set: Characters p. 123",
-          "modifiers": [],
-          "selfControl": null
-        }
-      },
-      {
         "_id": "1a56ef6cd4186bb3",
         "name": "Brachiator",
         "type": "trait",
@@ -296,6 +310,32 @@
         }
       },
       {
+        "_id": "dfb1434f69d28378",
+        "name": "Ham-Fisted",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": 0,
+          "levels": 1,
+          "pointsPerLevel": -5,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 2,
+          "specialty": "",
+          "needsSpecialty": false,
+          "selfControl": null,
+          "reactionModifier": 0,
+          "talentSkills": [],
+          "power": "",
+          "powerTalent": false,
+          "meleeModes": [],
+          "rangedModes": [],
+          "description": "",
+          "reference": "Basic Set: Characters p. 138",
+          "modifiers": []
+        }
+      },
+      {
         "_id": "6d01781329bdbb58",
         "name": "Teeth (Sharp Teeth)",
         "type": "trait",
@@ -312,6 +352,32 @@
           "reference": "Basic Set: Characters p. 91",
           "modifiers": [],
           "selfControl": null
+        }
+      },
+      {
+        "_id": "e2ab80c96f964cfb",
+        "name": "Semi-Upright",
+        "type": "trait",
+        "system": {
+          "category": "disadvantage",
+          "points": -5,
+          "levels": 0,
+          "pointsPerLevel": 0,
+          "costTable": [],
+          "levelNames": [],
+          "maxLevels": 0,
+          "specialty": "",
+          "needsSpecialty": false,
+          "selfControl": null,
+          "reactionModifier": 0,
+          "talentSkills": [],
+          "power": "",
+          "powerTalent": false,
+          "meleeModes": [],
+          "rangedModes": [],
+          "description": "",
+          "reference": "Basic Set: Characters p. 153",
+          "modifiers": []
         }
       },
       {
@@ -7046,7 +7112,7 @@
       "tactics": "",
       "details": {
         "weight": "18 lbs.",
-        "notes": "Fantasy Monsters. Move: Ground; Air Move 12. Basic Set: Campaigns p. 461"
+        "notes": "Fantasy Monsters. Move: Ground; Air Move 13. Basic Set: Campaigns p. 461"
       }
     },
     "items": [
