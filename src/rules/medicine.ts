@@ -7,6 +7,13 @@
  * doctor's rounds, and the minute somebody spends on a drowned man's chest.
  */
 
+/**
+ * The skills that stand in for Physician where it does not exist (Characters
+ * pp. 192, 213): Pharmacy (Herbal) "and Esoteric Medicine (p. 192) replace
+ * Physician" before TL5. The 2004 text named Pharmacy (Herbal) alone.
+ */
+export const PHYSICIAN_STAND_INS: readonly string[] = ["Pharmacy (Herbal)", "Esoteric Medicine"];
+
 /** "Basic equipment gives -6 at TL1, -5 at TL2-3, -4 at TL4, -2 at TL5, and +(TL-6) at TL6+." */
 export function surgeryEquipment(techLevel: number): number {
   const tl = Math.max(0, Math.floor(techLevel));

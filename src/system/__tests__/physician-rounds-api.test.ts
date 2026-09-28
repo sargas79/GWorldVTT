@@ -241,3 +241,34 @@ describe("a physician's rounds and the patient's crippled parts", () => {
     expect(content(cards[1])).not.toContain("AttendCrippled");
   });
 });
+
+/** Characters p. 213: Pharmacy (Herbal) "and Esoteric Medicine (p. 192) replace Physician". */
+describe("a physician's rounds by the skills that replace Physician", () => {
+  const skill = (name: string, level: number, attribute = "IQ") => ({ type: "skill", name, system: { attribute, derived: { level } } });
+
+  it("rolls at Esoteric Medicine or Pharmacy (Herbal) where the healer has no Physician", async () => {
+    for (const [held, target] of [
+      [skill("Esoteric Medicine", 12, "Per"), 12],
+      [skill("Pharmacy/TL (Herbal)", 13), 13],
+    ] as const) {
+      const { cards } = foundryWith();
+      const healer = character("Healer", { physician: null });
+      healer.items.push(held as never);
+      await createApi().actors.attendPatient({ healer, patient: character("Patient") });
+      expect(content(cards[0])).toContain(`"target":${target}`);
+    }
+  });
+
+  it("takes the best of the three, and falls back to IQ-5 with none of them", async () => {
+    let { cards } = foundryWith();
+    const healer = character("Healer", { physician: skill("Physician/TL", 11) });
+    healer.items.push(skill("Esoteric Medicine", 15, "Per") as never, skill("Pharmacy/TL (Synthetic)", 17) as never);
+    await createApi().actors.attendPatient({ healer, patient: character("Patient") });
+    // Synthetic Pharmacy is not a stand-in for Physician.
+    expect(content(cards[0])).toContain('"target":15');
+
+    ({ cards } = foundryWith());
+    await createApi().actors.attendPatient({ healer: character("Nobody", { physician: null }), patient: character("Patient") });
+    expect(content(cards[0])).toContain('"target":5');
+  });
+});

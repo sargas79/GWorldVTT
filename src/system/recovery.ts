@@ -43,6 +43,7 @@ import {
 } from "../rules/medicine.js";
 import { skillLevelOf } from "./skill-level.js";
 import { normalizeSkillName } from "../rules/skills.js";
+import { PHYSICIAN_STAND_INS } from "../rules/medicine.js";
 import { parseTechLevel, skillTechLevel, techLevelModifier } from "../rules/tech-level.js";
 import { isRuleOn } from "./optional-rules.js";
 
@@ -506,7 +507,13 @@ export async function attendPatient(options: {
   if (!mayChange(patient)) return;
 
   const physician = physicianSkillItem(healer);
-  const skill = typeof options.skill === "number" ? options.skill : (skillLevelOf(healer, "Physician") ?? attributeOf(healer, "IQ") - 5);
+  // Pharmacy (Herbal) and Esoteric Medicine replace Physician (p. 213), so the
+  // best of them is the healer's skill for the rounds; nobody with any of them
+  // rolls at the default.
+  const heldLevel = physician?.system?.derived?.level;
+  const skill = typeof options.skill === "number"
+    ? options.skill
+    : typeof heldLevel === "number" && Number.isFinite(heldLevel) ? heldLevel : attributeOf(healer, "IQ") - 5;
   // Physician is a technological skill (Characters p. 168), learned at the TL
   // the caller gives, else at the one recorded for it, else at the healer's own.
   const personal = parseTechLevel(healer?.system?.tl) ?? 3;
@@ -612,10 +619,23 @@ async function putCrippledInCare(patient: any, rawTechLevel: number): Promise<st
   return names;
 }
 
-/** The healer's Physician skill item, compared through the "/TL" marker, or null. */
+/**
+ * The healer's Physician skill item, or the one that replaces it, compared
+ * through the "/TL" marker: the best of Physician, Pharmacy (Herbal) and
+ * Esoteric Medicine (Characters p. 213). Null where
+ * they have none.
+ */
 function physicianSkillItem(healer: any): any {
-  const wanted = normalizeSkillName("Physician");
-  return [...(healer?.items ?? [])].find((item: any) => item?.type === "skill" && normalizeSkillName(String(item.name ?? "")) === wanted) ?? null;
+  const names = ["Physician", ...PHYSICIAN_STAND_INS].map((name) => normalizeSkillName(name));
+  let best: any = null;
+  let bestLevel = -Infinity;
+  for (const item of healer?.items ?? []) {
+    if (item?.type !== "skill" || !names.includes(normalizeSkillName(String(item.name ?? "")))) continue;
+    const level = Number(item.system?.derived?.level);
+    const rank = Number.isFinite(level) ? level : -Infinity;
+    if (best === null || rank > bestLevel) { best = item; bestLevel = rank; }
+  }
+  return best;
 }
 
 /**
