@@ -35,7 +35,7 @@ describe("the rule catalogue", () => {
   it("cites a book and page for every rule", () => {
     for (const group of Object.values(OPTIONAL_RULES)) {
       for (const rule of group) {
-        expect(rule.reference).toMatch(/^(Campaigns|Characters|GURPS Lite) pp?\. /);
+        expect(rule.reference).toMatch(/^(Campaigns|Characters|GURPS Lite|Basic Set Revised) pp?\. /);
       }
     }
   });

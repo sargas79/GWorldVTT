@@ -3361,7 +3361,7 @@ Two fields a module may read (since 1.62.0):
 - **A bonus held for a later roll** (since 1.132.0): a bonus earned now and
   spent on a roll to come, as Evaluate's is (Campaigns p. 364) -- a survey
   that gives +2 to the next roll of a related skill.
-  `actors.addPendingModifier(actor, { label, value, tags?, skill?, expires? })`
+  `actors.addPendingModifier(actor, { label, value, tags?, skill?, expires?, source? })`
   holds it on the actor, and the actor's next success roll that matches takes
   its line and uses it up.
   - A roll matches when it is of `skill`, where one is given, and carries
@@ -3391,14 +3391,42 @@ Two fields a module may read (since 1.62.0):
     matches the roll goes on it.
   - The sheet's modifier dialog (shift-click) lists the bonuses held for the
     roll, which are added to it without being typed in.
+  - `source` (since 1.164.0) is a short tag for the kind of bonus, for the
+    rule that holds it to find its own again; a module leaves it out. The
+    system uses `complementary` for the bonus a complementary skill roll holds
+    (Basic Set Revised p. 206, see below). A held bonus with that source is
+    put to the roller in the modifier dialog on an ordinary click as well as
+    a shift-click, with a tick box to discard it before the roll.
   - It returns the bonus's id, or null for a user who can't change the actor,
     a bonus without a label or a value, one that names neither a skill nor a
     tag, or one whose `expires` has passed. `actors.pendingModifiers(actor)`
     lists the held bonuses that haven't lapsed, as `{ id, label, value, tags,
-    skill, expires }` (`skill` and `expires` null where none was given), and
+    skill, expires }` (`skill` and `expires` null where none was given, and
+    `source` present where one was, since 1.164.0), and
     `actors.removePendingModifier(actor, id)` takes one off unused, resolving
     to whether there was one to take. The bonuses are kept in the actor's
     `pendingModifiers` system flag, which a module doesn't write itself.
+- **Complementary skills and team efforts** (since 1.164.0; Basic Set Revised
+  pp. 206 and 185). Two switches in the rolls group, both on by default:
+  `complementarySkills` puts a "Complementary roll" button on a skill's panel
+  on the character sheet, and `teamEfforts` a "Team" button on each skill of
+  the Party sheet's Skills tab, for the GM. A complementary roll is made at
+  personal modifiers only (the equipment in the skill's level is taken out)
+  and holds its outcome -- +2 for a critical success or a Quick Contest won
+  by 5+, +1 for a success or won by 0-4, -1 for a failure or lost by 1-4, -2
+  for a critical failure or lost by 5+ -- as a held bonus (`source:
+  "complementary"`) for the master skill on whoever will attempt it. A new
+  roll for the same master skill replaces the last; on a long task the
+  bonuses add up to +4 at most. A skill that holds a complementary bonus
+  can't complement another (no chaining). A team effort is one roll, made by
+  the member with the best level, at that level plus the number of members
+  who know the skill (a point in it; no defaults) less the size of the
+  group. `rules.complementaryBonus(outcome)` (an uncontested roll's
+  `{ success, criticalSuccess?, criticalFailure? }` or a Quick Contest's
+  `{ contestMargin }`, the margin of victory, negative for a loss),
+  `rules.contestMarginFor(result)`, `rules.complementaryTotal(values)`,
+  `rules.complementaryRoom(held, value)`, `rules.COMPLEMENTARY_CAP` and
+  `rules.teamEffort(members)` give the arithmetic.
 - **Restoring FP** (since 1.104.0, Campaigns p. 427): `actors.restoreFatigue(actor,
   fp, { reason? })` gives FP back outside rest -- a drug, energy lent, a
   module's meal -- never above the actor's FP (and not at all past it),

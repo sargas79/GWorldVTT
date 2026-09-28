@@ -102,6 +102,10 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "frightChecks", reference: "Campaigns p. 360", default: true },
     { key: "extraEffort", reference: "Campaigns p. 356", default: true },
     { key: "reactions", reference: "Campaigns pp. 359, 494", default: true },
+    // Two boxes new to retained pages of the Revised edition, presented as
+    // standard rules: a skill that helps another, and a party rolling as one.
+    { key: "complementarySkills", reference: "Basic Set Revised p. 206", default: true },
+    { key: "teamEfforts", reference: "Basic Set Revised p. 185", default: true },
   ],
   activities: [
     { key: "physicalActivities", reference: "Campaigns pp. 349-355", default: true },

@@ -18,6 +18,7 @@ export * from "./atmosphere.js";
 export * from "./bleeding.js";
 export * from "./character-points.js";
 export * from "./cinematic.js";
+export * from "./complementary.js";
 export * from "./contests.js";
 export * from "./cover.js";
 export * from "./criticals.js";

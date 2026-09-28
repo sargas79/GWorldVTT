@@ -57,6 +57,7 @@ import { effectiveCost, effectiveWeight } from "../data-extensions.js";
 import { gearGroupOf } from "../gear-groups.js";
 import { legalityClassOf, legalityNote } from "../legality.js";
 import { isRuleOn } from "../optional-rules.js";
+import { promptForComplementary, rollComplementary } from "../complementary.js";
 import { armorByArea, asGearSort, canStow, readiedItems, sortGear, type GearSort } from "../sheet-v2/inventory-view.js";
 import {
   asProgressionMode,
@@ -119,6 +120,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2ShowLink: GWorldCharacterSheetV2.#onShowLink,
       v2ViewPortrait: GWorldCharacterSheetV2.#onViewPortrait,
       v2PostItem: GWorldCharacterSheetV2.#onPostItem,
+      v2Complementary: GWorldCharacterSheetV2.#onComplementary,
       v2EditPortrait: GWorldCharacterSheetV2.#onEditPortrait,
       v2RollPlain: GWorldCharacterSheetV2.#onRollPlain,
       v2Retreat: GWorldCharacterSheetV2.#onRetreat,
@@ -1755,6 +1757,30 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const item = id ? this.actor.items.get(id) : null;
     if (!item || !this.isEditable) return;
     await postItemCard(item);
+  }
+
+  /**
+   * Rolls a skill as a complementary skill for another (Basic Set Revised
+   * p. 206): the dialog names the master skill and who will attempt it, and the
+   * outcome is held for that skill's next roll.
+   */
+  static async #onComplementary(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    if (!isRuleOn("complementarySkills") || !this.actor.isOwner) return;
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    const level = item?.system?.derived?.level;
+    if (!item || item.type !== "skill" || typeof level !== "number") return;
+    const name = String(item.name ?? "");
+    const asked = await promptForComplementary(this.actor, name);
+    if (!asked) return;
+    await rollComplementary({
+      actor: this.actor,
+      skill: { name, level, equipment: Number(item.system?.derived?.toolBonus) || 0, attribute: String(item.system?.attribute ?? "") },
+      master: asked.master,
+      recipient: asked.recipient,
+      longTask: asked.longTask,
+      contest: asked.contest,
+    });
   }
 
   /** Opens the character's portrait full size, where a GM can show it to the players. */
