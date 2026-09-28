@@ -148,7 +148,7 @@ import {
   type WeaponTarget,
 } from "./weapon-damage.js";
 import { announceShots, shotsReady, shotsSourceOf, spendShots, type ShotsTally } from "./ammunition.js";
-import { malfunctionOf, malfunctionWithHooks, setMalfunction, type MalfunctionReport } from "./malfunctions.js";
+import { explosionLine, malfunctionOf, malfunctionWithHooks, setMalfunction, type MalfunctionReport } from "./malfunctions.js";
 import { strikingPart } from "../rules/hurting-yourself.js";
 import type { DamageType } from "../rules/types.js";
 
@@ -1127,7 +1127,7 @@ async function rollMalfunction(
   attackRoll: number,
   weapon: NonNullable<SuccessRollOptions["malfunction"]>,
   actor: any,
-): Promise<(MalfunctionReport & { roll: any }) | null> {
+): Promise<(MalfunctionReport & { roll: any; explosion: string }) | null> {
   if (!malfunctioned({ roll: attackRoll, malfunctionNumber: weapon.number })) return null;
 
   const roll = new Roll("3d6");
@@ -1149,7 +1149,7 @@ async function rollMalfunction(
   if (!report) return null;
   // A weapon left out of action stays so until it is cleared.
   if (report.jams && weapon.item?.isOwner) await setMalfunction(weapon.item, { kind: report.kind, label: report.label, modeIndex: modeIndex ?? 0 });
-  return { ...report, roll };
+  return { ...report, roll, explosion: report.explodes ? explosionLine(weapon.item, modeIndex, weapon.techLevel, actor) : "" };
 }
 
 /**

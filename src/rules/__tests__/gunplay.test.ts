@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   EXPLOSION_DAMAGE,
+  explosionOf,
   MALFUNCTION_TABLE,
   REPAIRS,
   clearsItself,
@@ -326,5 +327,26 @@ describe("a drink in the face (Campaigns p. 405)", () => {
 
   it("does nothing on a miss", () => {
     expect(liquidInTheFace({ hit: false })).toMatchObject({ flinched: false, blinded: false });
+  });
+});
+
+/**
+ * Revised p. 407: "A TL3 or TL4 firearm may blow up in the gunner's face, inflicting 1d+2 [2d] cr ex.
+ * A TL3 or TL4 grenade or weapon that fires an explosive warhead does its usual explosive damage instead."
+ */
+describe("what a weapon that blows up does", () => {
+  it("does the fixed 1d+2 [2d] cr ex for a TL3 or TL4 firearm", () => {
+    expect(explosionOf({ techLevel: 3, explosive: false })).toBe("firearm");
+    expect(explosionOf({ techLevel: 4, explosive: false })).toBe("firearm");
+  });
+
+  it("does its usual explosive damage for a grenade or an explosive warhead", () => {
+    expect(explosionOf({ techLevel: 3, explosive: true })).toBe("usual");
+    expect(explosionOf({ techLevel: 4, explosive: true })).toBe("usual");
+  });
+
+  it("does not explode at TL5 or higher, whatever it fires", () => {
+    expect(explosionOf({ techLevel: 5, explosive: false })).toBeNull();
+    expect(explosionOf({ techLevel: 8, explosive: true })).toBeNull();
   });
 });

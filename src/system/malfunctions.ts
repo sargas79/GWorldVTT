@@ -20,6 +20,7 @@ import {
   clearingResult,
   clearingRolls,
   clearsItself,
+  explosionOf,
   type ClearingResult,
   type Malfunction,
 } from "../rules/malfunctions.js";
@@ -44,6 +45,20 @@ const localize = (key: string, data?: Record<string, unknown>): string => {
   if (!i18n) return key;
   return data ? i18n.format(`GWORLD.Malfunction.${key}`, data) : i18n.localize(`GWORLD.Malfunction.${key}`);
 };
+
+/**
+ * What a weapon that blew up does to its gunner, in words (Revised p. 407): a
+ * plain firearm the fixed 1d+2 [2d] cr ex; a grenade, or a weapon that fires
+ * an explosive warhead, its usual explosive damage.
+ */
+export function explosionLine(item: any, modeIndex: number | null, techLevel: number, actor?: any): string {
+  const mode = modeIndex === null ? null : (item?.system?.rangedModes as any[] | undefined)?.[modeIndex];
+  const explosive = mode?.explosive === true || /grenade/i.test(String(item?.name ?? ""));
+  if (explosionOf({ techLevel, explosive }) !== "usual") return localize("Exploded");
+  const row = ((actor?.system?.derived?.ranged ?? []) as any[]).find((r) => r?.itemId === item?.id && r?.modeIndex === modeIndex);
+  const damage = mode?.explosive === true && row?.damage ? `${row.damage} ${String(row.damageType ?? "cr")} ex` : "";
+  return damage ? localize("ExplodedUsualWith", { damage }) : localize("ExplodedUsual");
+}
 
 /** What an item's flag says is wrong with it, or null where nothing is. */
 export function malfunctionOf(item: any): WeaponMalfunction | null {
