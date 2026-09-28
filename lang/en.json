@@ -1561,7 +1561,7 @@
       "SpecialDamageShort": "spec.",
       "SpecialDamageHint": "The table prints “spec.”: a net entangles, a lasso catches. The attack rolls to hit and its own rules say what a hit does.",
       "Surge": "Surge",
-      "SurgeHint": "Surge (Characters p. 105): an electrical surge that can disable electronics or anything with the Electrical disadvantage; a critical hit knocks out a character with Electrical (p. 134).",
+      "SurgeHint": "Surge (Characters p. 105): electronics and characters with Electrical that take over 1/3 HP from the attack roll vs. HT or are disabled; a critical hit knocks out a character with Electrical (p. 134).",
       "Incendiary": "Incendiary",
       "IncendiaryHint": "A secondary flame effect that can ignite volatile material (Characters p. 104). The card checks the victim's clothes as burning damage would.",
       "Radiation": "Radiation",
@@ -2052,8 +2052,13 @@
       "InjuryCappedWhy": "Capped at {cap} ({reason}): {lost} not taken",
       "Vulnerable": "Vulnerability ×{multiplier} ({label})",
       "Surge": {
+        "Roll": "Surge: HT to keep working (Characters p. 105)",
         "shortCircuit": "Surge: short-circuited, unconscious (Electrical, Characters p. 134)",
-        "gmDecides": "Surge: what it disables is the GM's call (Electrical, Characters p. 134)"
+        "belowThird": "Surge: no more than 1/3 HP lost, so no HT roll (Characters p. 105)",
+        "htRoll": "Surge: over 1/3 HP lost. Roll vs. HT; failure disables for the margin of failure in seconds, a critical failure until repaired (Characters p. 105)",
+        "resisted": "Surge: HT roll made, still working (Characters p. 105)",
+        "disabledSeconds": "Surge: HT roll failed, disabled for {seconds} seconds (Characters p. 105)",
+        "untilRepaired": "Surge: HT roll critically failed, disabled until repaired (Characters p. 105)"
       },
       "AreaRadius": "Everyone within {yards} yards of where it landed",
       "MajorWound": "Major wound — HT roll to avoid knockdown and stunning",

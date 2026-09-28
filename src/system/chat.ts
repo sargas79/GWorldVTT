@@ -24,7 +24,8 @@ import {
   type BlastPlacement, type FragmentationSpec,
 } from "../rules/explosions.js";
 import { criticalEntry, criticalHitTableFor, isUnarmedSkill } from "../rules/criticals.js";
-import { surgeEffect, type SurgeEffect } from "../rules/surge.js";
+import { healthRollScore } from "./attributes.js";
+import { surgeDisabled, surgeEffect, type SurgeDisabled, type SurgeEffect } from "../rules/surge.js";
 import { BLOCKS_PER_TURN, acrobaticDefenseModifier, bareHandedParryModifier, mayTryAcrobatic, blockableAttack, canParryFlail, flailDefenseModifier, masterHalvesParry, multipleParryPenalty, parriedLimbStrikeModifier, thrownParryModifier } from "../rules/defenses.js";
 import { getCombatState, setCombatState } from "./combat-extensions.js";
 import { rollKnockdown } from "./knockdown.js";
@@ -536,7 +537,7 @@ async function applyFromCard(options: {
   const applied: AppliedDamage[] = [];
   // What a Surge blow did to a victim with Electrical (Characters pp. 105,
   // 134; since API 1.155.0), by the result it goes with.
-  const surged = new Map<AppliedDamage, SurgeEffect>();
+  const surged = new Map<AppliedDamage, { effect: SurgeEffect; disabled: SurgeDisabled | null }>();
   const refused: string[] = [];
   const knockdowns: Array<{ actor: any; result: AppliedDamage }> = [];
   // The rolls a Fragile body owes after the blow (Characters p. 136).
@@ -600,12 +601,31 @@ async function applyFromCard(options: {
       await syncHealthConditions(actor);
       if (result.bleeds && isRuleOn("bleeding")) await setCondition(actor, "bleeding", true);
       // "A critical hit from an electrical attack causes you to
-      // 'short-circuit', rendering you unconscious in addition to any other
-      // damage effects" (p. 134). Any other hit is the GM's to judge.
-      const surge = surgeEffect({ surge: flag.surge === true, electrical: traitsOf(actor).electrical === true, criticalHit: options.critical });
+      // 'short-circuit,' rendering you unconscious in addition to any other
+      // damage effects" (p. 134). Any other Surge hit that took over 1/3 of the
+      // victim's HP is a HT roll: failure disables for the margin in seconds,
+      // a critical failure until repaired (p. 105).
+      const surge = surgeEffect({
+        surge: flag.surge === true,
+        electrical: traitsOf(actor).electrical === true,
+        criticalHit: options.critical,
+        injury: result.costsFatigue ? 0 : result.injury,
+        maxHp: Number(actor.system?.hp?.max) || 0,
+      });
       if (surge) {
-        surged.set(result, surge);
+        let disabled: SurgeDisabled | null = null;
         if (surge === "shortCircuit") await setCondition(actor, "unconscious", true);
+        if (surge === "htRoll") {
+          const rolled = await rollSuccess({
+            actor,
+            base: healthRollScore(actor),
+            label: game.i18n.localize("GWORLD.Chat.Surge.Roll"),
+            kind: "attribute",
+            tags: ["surge"],
+          });
+          if (rolled) disabled = surgeDisabled(rolled);
+        }
+        surged.set(result, { effect: surge, disabled });
       }
       // Incendiary (Characters p. 104) "gives the damage a secondary flame
       // effect that can ignite volatile material", and Campaigns p. 433 counts
@@ -732,8 +752,8 @@ async function applyFromCard(options: {
         ? game.i18n.format("GWORLD.Chat.Vulnerable", { multiplier: result.vulnerability.multiplier, label: result.vulnerability.label })
         : "",
       // A Surge blow on somebody with Electrical (since API 1.155.0).
-      surgeNote: surged.has(result) ? game.i18n.localize(`GWORLD.Chat.Surge.${surged.get(result)}`) : "",
-      shortCircuit: surged.get(result) === "shortCircuit",
+      surgeNote: surgeNote(surged.get(result)),
+      shortCircuit: surged.get(result)?.effect === "shortCircuit" || surged.get(result)?.disabled?.kind === "untilRepaired",
     })),
   });
 
@@ -1513,6 +1533,19 @@ async function strikeParriedLimb(defender: any, itemId: string, attackSkill: str
     mode: { index: Number(row.modeIndex) || 0, ranged: false },
     source: "parriedLimb",
   });
+}
+
+/** The card's line for what a Surge blow did to a victim with Electrical (Characters pp. 105, 134). */
+function surgeNote(surged: { effect: SurgeEffect; disabled: SurgeDisabled | null } | undefined): string {
+  if (!surged) return "";
+  const key = (name: string) => `GWORLD.Chat.Surge.${name}`;
+  if (surged.effect !== "htRoll") return game.i18n.localize(key(surged.effect));
+  const disabled = surged.disabled;
+  // No roll was made (nobody to make it): the GM is told to roll it.
+  if (!disabled) return game.i18n.localize(key("htRoll"));
+  if (disabled.kind === "none") return game.i18n.localize(key("resisted"));
+  if (disabled.kind === "untilRepaired") return game.i18n.localize(key("untilRepaired"));
+  return game.i18n.format(key("disabledSeconds"), { seconds: disabled.seconds });
 }
 
 /** A defense that cannot be rolled: named, greyed, and carrying its reason. */

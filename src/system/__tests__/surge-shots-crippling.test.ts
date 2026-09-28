@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../optional-rules.js", () => ({ isRuleOn: () => true }));
 vi.mock("../cinematic.js", () => ({ hasInfiniteAmmunition: (actor: any) => actor?.infinite === true }));
 
-import { surgeEffect } from "../../rules/surge.js";
+import { overOneThirdHp, surgeDisabled, surgeEffect } from "../../rules/surge.js";
 import { noTraitEffects, traitEffects } from "../../rules/trait-effects.js";
 import { cripplingMonths, cripplingRelief } from "../../rules/mortal-wounds.js";
 import { withinLinkedArea } from "../../rules/linked-effects.js";
@@ -24,14 +24,33 @@ describe("Surge against Electrical (Characters pp. 105, 134)", () => {
     expect(noTraitEffects().electrical).toBeUndefined();
   });
 
-  it("knocks out a victim with Electrical on a critical hit, and leaves any other hit to the GM", () => {
-    expect(surgeEffect({ surge: true, electrical: true, criticalHit: true })).toBe("shortCircuit");
-    expect(surgeEffect({ surge: true, electrical: true, criticalHit: false })).toBe("gmDecides");
+  it("knocks out a victim with Electrical on a critical hit", () => {
+    expect(surgeEffect({ surge: true, electrical: true, criticalHit: true, injury: 1, maxHp: 10 })).toBe("shortCircuit");
+  });
+
+  /**
+   * Basic Set Revised p. 105: electronics and characters with Electrical "that
+   * take over 1/3 HP from this attack must roll vs. HT".
+   */
+  it("calls for a HT roll only past a third of the victim's HP", () => {
+    expect(surgeEffect({ surge: true, electrical: true, criticalHit: false, injury: 4, maxHp: 10 })).toBe("htRoll");
+    expect(surgeEffect({ surge: true, electrical: true, criticalHit: false, injury: 3, maxHp: 10 })).toBe("belowThird");
+    // Exactly a third is not "over" a third.
+    expect(overOneThirdHp(4, 12)).toBe(false);
+    expect(overOneThirdHp(5, 12)).toBe(true);
+    expect(overOneThirdHp(1, 0)).toBe(false);
+  });
+
+  /** "Failure means being disabled for seconds equal to margin of failure; critical failure, until repaired." */
+  it("disables for the margin of failure in seconds, or until repaired on a critical failure", () => {
+    expect(surgeDisabled({ success: true, criticalFailure: false, margin: 3 })).toEqual({ kind: "none" });
+    expect(surgeDisabled({ success: false, criticalFailure: false, margin: 4 })).toEqual({ kind: "seconds", seconds: 4 });
+    expect(surgeDisabled({ success: false, criticalFailure: true, margin: 9 })).toEqual({ kind: "untilRepaired" });
   });
 
   it("does nothing without Surge, or to somebody without Electrical", () => {
-    expect(surgeEffect({ surge: false, electrical: true, criticalHit: true })).toBeNull();
-    expect(surgeEffect({ surge: true, electrical: false, criticalHit: true })).toBeNull();
+    expect(surgeEffect({ surge: false, electrical: true, criticalHit: true, injury: 9, maxHp: 10 })).toBeNull();
+    expect(surgeEffect({ surge: true, electrical: false, criticalHit: true, injury: 9, maxHp: 10 })).toBeNull();
   });
 });
 

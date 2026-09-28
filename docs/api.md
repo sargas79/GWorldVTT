@@ -2462,10 +2462,12 @@ Two fields a module may read (since 1.62.0):
   applies a Surge blow to a character with it, and the card's Critical hit
   box is ticked (the critical tables switch shows it), the victim
   short-circuits: the token gets `unconscious`, on top of the blow's other
-  effects, and the card says so. Any other Surge hit on such a character
-  only gets a note that what the surge disables is the GM's call, since
-  p. 105 gives no roll or number for it, and nothing is done to a victim
-  without Electrical. What a surge does to electronics, a vehicle or
+  effects, and the card says so. Since 1.163.0 (Characters p. 105),
+  any other Surge hit that takes more than a third of the character's
+  maximum HP has the victim roll vs. HT (a `surge`-tagged attribute roll):
+  failure disables it for the margin of failure in seconds, a critical failure
+  until repaired, and the card says which; a lesser hit needs no roll. Nothing
+  is done to a victim without Electrical. What a surge does to electronics, a vehicle or
   another machine is left to the GM too; a module that has a rule for it
   reads `IncomingDamage.surge` in the damage hooks.
 - **Tight-beam burning** (since 1.97.0; Campaigns pp. 399, 408, 433-434): a
