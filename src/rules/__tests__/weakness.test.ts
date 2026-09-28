@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { weaknessDice, weaknessOf } from "../weakness.js";
+import { mayBePerAttack, weaknessAttackDice, weaknessDice, weaknessOf } from "../weakness.js";
 
 /** Characters p. 161. */
 describe("reading a Weakness", () => {
@@ -44,5 +44,21 @@ describe("what exposure costs", () => {
     expect(weaknessDice(variable, 4, "shielded")).toBe(2);
     expect(weaknessDice(variable, 4, "intense")).toBe(8);
     expect(weaknessDice(sun, 4, "intense")).toBe(4);
+  });
+});
+
+/** Characters p. 161: "1d per minute* ... * Or per attack, for things useful as attacks." */
+describe("a Weakness read per attack", () => {
+  it("is offered only at 1d per minute", () => {
+    expect(mayBePerAttack({ intervalMinutes: 1 })).toBe(true);
+    expect(mayBePerAttack({ intervalMinutes: 5 })).toBe(false);
+    expect(mayBePerAttack({ intervalMinutes: 30 })).toBe(false);
+  });
+
+  it("costs one die per attack", () => {
+    expect(weaknessAttackDice({ intervalMinutes: 1 }, 3)).toBe(3);
+    expect(weaknessAttackDice({ intervalMinutes: 1 }, 2.9)).toBe(2);
+    expect(weaknessAttackDice({ intervalMinutes: 1 }, -1)).toBe(0);
+    expect(weaknessAttackDice({ intervalMinutes: 5 }, 3)).toBe(0);
   });
 });

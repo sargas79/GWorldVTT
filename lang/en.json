@@ -4234,6 +4234,8 @@
       "ExposedHint": "Apply exposure to what this Weakness is to. One 1d per interval, straight off HP (or FP for Fatigue Only), regardless of DR (Characters p. 161).",
       "Title": "Weakness: {source}",
       "MinutesPrompt": "Minutes exposed",
+      "AttacksPrompt": "Attacks (1d each)",
+      "AttacksHint": "Only for things useful as attacks: 1d per minute may instead be 1d per attack (Characters p. 161). Leave at 0 for ordinary exposure.",
       "IntensityPrompt": "Exposure",
       "Intensity": {
         "normal": "Ordinary",
@@ -4242,6 +4244,7 @@
       },
       "Apply": "Apply",
       "Exposure": "{minutes} min. exposed",
+      "Attacks": "{attacks} attacks",
       "Dice": "{dice}d",
       "LostHp": "{points} HP lost",
       "LostFp": "{points} FP lost",
