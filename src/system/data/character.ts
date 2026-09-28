@@ -115,6 +115,7 @@ import { supportEffect, supportOf, type Support } from "../../rules/accessories.
 import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalties.js";
 import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { powersOf } from "../../rules/powers.js";
+import { sessionPools } from "../../rules/bonus-points.js";
 import { suitedLevel,
   defaultCreditPoints,
   effectiveSkillLevel,
@@ -670,6 +671,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     label: string;
     source: string;
   };
+  declare session: { impulseSpent: number; foresightUsed: number };
   declare points: {
     starting: number;
     disadvantageLimit: number;
@@ -830,6 +832,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           }),
           { required: true, initial: () => [] },
         ),
+      }),
+
+      /**
+       * What a game session has used of the traits that renew each session
+       * (Basic Set Revised pp. 326-327): Impulse Points spent, which come
+       * back one at a time, and the retroactive actions Foresight has
+       * been used for. "Start a session" on the sheet wears both down.
+       */
+      session: new fields.SchemaField({
+        impulseSpent: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+        foresightUsed: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
       }),
 
       /**
@@ -1988,8 +2001,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       });
       skillBonusTotals.set(item, bonusLines.total);
       const credit = resolved?.credit ?? 0;
+      // Jack of All Trades adds to a roll at an attribute default, and only
+      // while no points are in the skill (Revised p. 327).
+      const jackBonus = resolved?.fromDefault && attributeDefaults.length && !(Number(sys.points) > 0)
+        ? traits.jackOfAllTrades
+        : 0;
       sys.derived = {
-        level: resolved?.level ?? null,
+        level: resolved ? resolved.level + jackBonus : null,
         fromDefault: resolved?.fromDefault ?? true,
         relativeLevel: relativeLevelForPoints(sys.points + credit, sys.difficulty),
         // What the best default is worth toward buying the skill up
@@ -2422,7 +2440,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           : { level: own + penalty, atDefault: false };
       }
       const level = listed
-        ? defaultLevelFrom(listed.defaults, attributeScore, (other) => this.skillLevelByName(other))
+        ? defaultLevelFrom(listed.defaults, attributeScore, (other) => this.skillLevelByName(other), traits.jackOfAllTrades)
         : null;
       const best = improved === null ? level : Math.max(level ?? improved, improved);
       return { level: best === null ? null : best + penalty, atDefault: best !== null };
@@ -3535,6 +3553,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         carousing: this.skillLevelByName("Carousing") ?? (attrs.HT ?? 10) - 4,
       },
       traitEffects: traits,
+      // Impulse Points and Foresight, from the traits and what the session has used.
+      sessionPools: sessionPools({
+        impulseMax: traits.impulsePoints,
+        impulseSpent: this.session?.impulseSpent ?? 0,
+        foresightMax: traits.foresight,
+        foresightUsed: this.session?.foresightUsed ?? 0,
+      }),
       // The suit worn that DX and DX-based rolls are held to (Characters p. 192).
       environmentSuit,
       magic: { ...magic, mana, items: magicItems },

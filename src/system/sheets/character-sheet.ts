@@ -216,8 +216,8 @@ import { openCampaignTerms } from "../campaign.js";
 import { DRESS_STATES } from "../../rules/cinematic.js";
 import { awardsNewestFirst, nextSessionLabel, withAward, type PointAward } from "../../rules/character-points.js";
 import { exposeToWeakness } from "../weakness.js";
-import { requestGuidance } from "../bonus-points.js";
-import { activeSpellActionsFor, anyPointPools, registeredPointPools } from "../roll-extensions.js";
+import { requestGuidance, spendingInPlay, startSession, useForesight } from "../bonus-points.js";
+import { activeSpellActionsFor, registeredPointPools } from "../roll-extensions.js";
 import { SENSES } from "../../rules/senses.js";
 import {
   handleDamageAction,
@@ -572,6 +572,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       fightOffSwarm: GWorldCharacterSheet.#onFightOffSwarm,
       castSpell: GWorldCharacterSheet.#onCastSpell,
       requestGuidance: GWorldCharacterSheet.#onRequestGuidance,
+      useForesight: GWorldCharacterSheet.#onUseForesight,
+      startSession: GWorldCharacterSheet.#onStartSession,
       maintainSpell: GWorldCharacterSheet.#onMaintainSpell,
       dropSpell: GWorldCharacterSheet.#onDropSpell,
       toggleConcentrating: GWorldCharacterSheet.#onToggleConcentrating,
@@ -787,7 +789,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       isGM: game.user?.isGM === true,
       // Spending points on outcomes, and the pools add-on modules registered for it.
       pointSpending: {
-        inPlay: anyPointPools(),
+        inPlay: spendingInPlay(actor),
         pools: registeredPointPools(actor, "buySuccess"),
       },
       // Controls edited in place carry ids built from this, so the redraw
@@ -1444,6 +1446,16 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
   /** Asks the GM for a piece of player guidance (Campaigns p. 347). */
   static async #onRequestGuidance(this: GWorldCharacterSheet) {
     await requestGuidance(this.actor);
+  }
+
+  /** Uses one of the session's Foresight actions (Basic Set Revised p. 326). */
+  static async #onUseForesight(this: GWorldCharacterSheet) {
+    await useForesight(this.actor);
+  }
+
+  /** Starts a session: an Impulse Point back and Foresight renewed (pp. 326-327). */
+  static async #onStartSession(this: GWorldCharacterSheet) {
+    await startSession(this.actor);
   }
 
   #activeSpellId(target: HTMLElement): string | null {

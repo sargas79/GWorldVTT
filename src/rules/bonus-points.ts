@@ -55,8 +55,60 @@ export const FLESH_WOUND_POINTS = 1;
 /** Where points come from. */
 export type PointSource =
   | { kind: "unspent" }
+  /** The character's Impulse Points (Basic Set Revised p. 327), which pay before character points. */
+  | { kind: "impulse" }
   /** A pool an add-on module registered: the registration, and the pool's id within it. */
   | { kind: "pool"; pool: string; id: string };
 
 /** What points are being spent on. */
 export type PointUse = "buySuccess" | "fleshWound" | "guidance";
+
+/** What a session has left of Impulse Points and Foresight (Basic Set Revised pp. 326-327). */
+export interface SessionPools {
+  impulseMax: number;
+  impulse: number;
+  foresightMax: number;
+  foresight: number;
+}
+
+/**
+ * The pools that renew each session, from the traits and what has been used.
+ * Nobody can spend more Impulse Points than they have, and each Foresight
+ * level is one use a session.
+ */
+export function sessionPools(held: {
+  impulseMax: number;
+  impulseSpent: number;
+  foresightMax: number;
+  foresightUsed: number;
+}): SessionPools {
+  const impulseMax = Math.max(0, Math.floor(held.impulseMax));
+  const foresightMax = Math.max(0, Math.floor(held.foresightMax));
+  return {
+    impulseMax,
+    impulse: Math.max(0, impulseMax - Math.max(0, held.impulseSpent)),
+    foresightMax,
+    foresight: Math.max(0, foresightMax - Math.max(0, held.foresightUsed)),
+  };
+}
+
+/**
+ * How a cost is met when Impulse Points may pay it: as many Impulse Points as
+ * there are, never below none, and character points for any shortfall
+ * (Basic Set Revised p. 327). `short` is what neither could cover.
+ */
+export function impulsePayment(
+  cost: number,
+  impulse: number,
+  unspent: number,
+): { impulse: number; unspent: number; short: number } {
+  const fromImpulse = Math.min(Math.max(0, cost), Math.max(0, impulse));
+  const rest = Math.max(0, cost) - fromImpulse;
+  const fromUnspent = Math.min(rest, Math.max(0, unspent));
+  return { impulse: fromImpulse, unspent: fromUnspent, short: rest - fromUnspent };
+}
+
+/** At the start of a session anyone below their full Impulse Points regains one (p. 327). */
+export function impulseAfterSessionStart(spent: number): number {
+  return Math.max(0, spent - 1);
+}

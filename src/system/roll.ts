@@ -184,6 +184,7 @@ import { facingAgainstTarget } from "./attack-arc.js";
 import { POSTURE_EFFECTS } from "../rules/posture.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
 import { gunslingerAccuracy, gunslingerWeapon, type GunslingerWeapon } from "../rules/gunslinger.js";
+import { heroicAimBonus, heroicArcherWeapon, type HeroicArcherWeapon } from "../rules/heroic-archer.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
 import { rollMalediction } from "./malediction.js";
 import { COMPLEMENTARY_SOURCE, pendingModifierLines, removePendingModifier, spendPendingModifiers } from "./pending-modifiers.js";
@@ -216,6 +217,12 @@ export interface RollModifier {
    * `riding` (weapon skill to hit, not the lower of it and Riding).
    */
   gunslinger?: "accuracy" | "moveAndAttack" | "closeCombat" | "driving" | "riding";
+  /**
+   * On a `heroicArcher` line (since 1.166.0), what Heroic Archer did:
+   * `accuracy` (the bow's Acc without an Aim), `aim` (the extra second of
+   * aim) or `moveAndAttack` / `closeCombat` (Bulk ignored).
+   */
+  heroicArcher?: "accuracy" | "aim" | "moveAndAttack" | "closeCombat";
   /** On a `dualWeapon` line, the hand rolled: `primary` or `off` (since 1.153.0). */
   hand?: "primary" | "off";
   /** On a `strikeAtWeapon` line, the id of the foe's item struck at (since 1.153.0). */
@@ -765,7 +772,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   // A roll that can be bought up with points (Campaigns p. 347)
   // remembers what it was, and an attack that missed remembers the defense
   // card it would have posted on a hit.
-  const successRoll = spendingInPlay() && actor?.uuid
+  const successRoll = spendingInPlay(actor) && actor?.uuid
     ? {
         [SYSTEM_ID]: {
           successRoll: {
@@ -1029,6 +1036,14 @@ export function weaponFromDataset(actor: any, dataset: Record<string, unknown>) 
       skill: String(dataset.rollSkill ?? ""),
       twoHanded: dataset.twoHanded === "1" || dataset.twoHanded === true,
     }),
+    // A Heroic Archer's bow (Basic Set Revised p. 327; since 1.166.0), with
+    // the cinematic switch on.
+    heroicArcher: isRuleOn("heroicArcher")
+      ? heroicArcherWeapon({
+          heroicArcher: actor?.system?.derived?.traitEffects?.heroicArcher === true,
+          skill: String(dataset.rollSkill ?? ""),
+        })
+      : null,
     damageType: String(dataset.damageType ?? "cr") as DamageType,
     accuracy: n("accuracy"),
     // Telescopic Vision is a scope of its own, the better of the two counting (Characters p. 92).
@@ -3811,6 +3826,8 @@ export function rangedModifiers(
     maxRange?: number;
     /** A Gunslinger's gun (Characters p. 58; since 1.163.0). */
     gunslinger?: GunslingerWeapon | null;
+    /** A Heroic Archer's bow (Basic Set Revised p. 327; since 1.166.0). */
+    heroicArcher?: HeroicArcherWeapon | null;
   },
 ): RollModifier[] {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
@@ -3899,8 +3916,19 @@ export function rangedModifiers(
   // instead of adding Acc (Characters p. 58): the line stays, at nothing, to say so.
   const gunslinger = weapon.gunslinger ?? null;
   let gunslingerWaived = false;
+  // A Heroic Archer does the same with a bow (Revised p. 327).
+  const heroic = weapon.heroicArcher ?? null;
+  let heroicWaived = false;
   if (situation !== "normal") {
-    if (gunslinger) {
+    if (heroic && !gunslinger) {
+      heroicWaived = true;
+      modifiers.push({
+        label: L(situation === "moveAndAttack" ? "HeroicArcherMoveAndAttack" : "HeroicArcherCloseCombat"),
+        value: 0,
+        key: "heroicArcher",
+        heroicArcher: situation,
+      });
+    } else if (gunslinger) {
       gunslingerWaived = true;
       modifiers.push({
         label: L(situation === "moveAndAttack" ? "GunslingerMoveAndAttack" : "GunslingerCloseCombat"),
@@ -4080,6 +4108,16 @@ export function rangedModifiers(
         }
       }
     }
+  }
+  // A Heroic Archer's bow gives its Acc without an Aim maneuver, and another
+  // +1 or +2 for one or two seconds of it (Revised p. 327); a Move and Attack
+  // or close combat ignores Bulk in its place.
+  if (heroic && !gunslinger && !heroicWaived) {
+    if (!accuracyClaimed && weapon.accuracy !== 0) {
+      modifiers.push({ label: L("HeroicArcherAccuracy"), value: weapon.accuracy, key: "heroicArcher", heroicArcher: "accuracy" });
+    }
+    const extra = deliberatelyAimed ? heroicAimBonus(weapon.aim?.turns ?? 0) : 0;
+    if (extra !== 0) modifiers.push({ label: L("HeroicArcherAim"), value: extra, key: "heroicArcher", heroicArcher: "aim" });
   }
   if (laserBonus !== 0) modifiers.push({ label: L("LaserSight"), value: laserBonus, key: "laser" });
   // A laser sight alone, with nothing aimed, is a targeting system too.

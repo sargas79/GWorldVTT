@@ -3628,6 +3628,27 @@ Two fields a module may read (since 1.62.0):
   assesses those penalties; `rules.gunslingerAccuracy`,
   `rules.halvePenaltyInFavour` and `rules.isGunslingerSkill` are the pieces.
 
+- **Addendum 1 traits** (since 1.166.0; Basic Set Revised pp. 325-327).
+  `traitEffects` gains `jackOfAllTrades` (0 to 3, the bonus to a roll at an
+  attribute default for a skill with no points in it, on the skill's
+  `derived.level` and the weapon defaults), `impulsePoints` and `foresight`
+  (the levels held), and `heroicArcher` (true, or false). A character's
+  `derived.sessionPools` is `{ impulseMax, impulse, foresightMax, foresight }`,
+  what a session has left, from `system.session.impulseSpent` and
+  `system.session.foresightUsed`; "Start a session" on the sheet regains one
+  Impulse Point and renews Foresight. Impulse Points are a pool
+  that spending on outcomes draws on (`{ kind: "impulse" }`), which pays
+  first and makes up a shortfall from unspent points, and they put spending on
+  outcomes in play for that character. An Injury Tolerance whose name or
+  modifiers say "Damage Reduction 4" (or /4) divides the injury after DR and
+  wounding, rounded up to at least 1, unless "Cosmic, Rounds down" is among its
+  modifiers; the tolerance carries `damageDivisor` and `roundsDown`, and
+  `rules.reducedInjury(injury, tolerance)` is the arithmetic. With the
+  `heroicArcher` cinematic switch on, a Bow attack's modifiers gain lines keyed
+  `heroicArcher` (`heroicArcher`: `accuracy`, `aim`, `moveAndAttack` or
+  `closeCombat`); `rules.quickReadyPenalty`, `heroicAimBonus` and
+  `heroicHalvedPenalty` are the pieces.
+
 `combat.hooks` lists every hook's name.
 
 ## The party

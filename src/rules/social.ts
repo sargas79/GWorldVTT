@@ -145,11 +145,16 @@ export function reactionSources(traits: readonly SocialTrait[]): ReactionSource[
   return capReputations(out);
 }
 
-/** The ten standard Talents, each worth its levels from those who notice (p. 89). */
+/** The standard Talents, each worth its levels from those who notice (p. 89). */
 const TALENT_REACTION: Readonly<Record<string, true>> = {
   "animal friend": true, artificer: true, "business acumen": true, "gifted artist": true,
   "green thumb": true, healer: true, "mathematical ability": true, "musical ability": true,
   outdoorsman: true, "smooth operator": true,
+  // The Revised edition's ten more (Addendum 1, pp. 325-326); Craftiness has
+  // none, "the entire point is that people don't know you're sneaky".
+  "born entertainer": true, "born to be wired": true, "born war-leader": true,
+  "circuit sense": true, "driver's reflexes": true, "natural athlete": true,
+  "natural scientist": true, "social scientist": true, "street-smart": true,
 };
 
 const REPUTATION_CAP = 4;

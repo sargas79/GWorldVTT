@@ -17,6 +17,9 @@
  *   imp and pi++ x1/2, pi+ x1/3, pi x1/5, pi- x1/10.
  * - **Diffuse**: a swarm or a cloud, with none of those either. Impaling and
  *   piercing do at most 1 point a hit, and anything else at most 2.
+ * - **Damage Reduction** (Basic Set Revised p. 325): after DR and wounding,
+ *   the injury is divided by 2 to 100 and more, rounded up, with a least
+ *   injury of 1 HP -- unless the trait is Cosmic, Rounds down.
  */
 
 import type { HitLocation } from "./hit-locations.js";
@@ -32,6 +35,10 @@ export interface InjuryTolerance {
   noHead: boolean;
   noNeck: boolean;
   noVitals: boolean;
+  /** The divisor of Damage Reduction, or 0 for a body without it. */
+  damageDivisor: number;
+  /** Cosmic, Rounds down: the divided injury rounds down and may reach 0. */
+  roundsDown: boolean;
 }
 
 export function noInjuryTolerance(): InjuryTolerance {
@@ -45,11 +52,13 @@ export function noInjuryTolerance(): InjuryTolerance {
     noHead: false,
     noNeck: false,
     noVitals: false,
+    damageDivisor: 0,
+    roundsDown: false,
   };
 }
 
 /** The kinds, by the word the book and GCA use for each. */
-const KINDS: ReadonlyArray<[RegExp, keyof InjuryTolerance]> = [
+const KINDS: ReadonlyArray<[RegExp, Exclude<keyof InjuryTolerance, "damageDivisor" | "roundsDown">]> = [
   [/\bunliving\b/i, "unliving"],
   [/\bhomogen(?:e)?ous\b/i, "homogenous"],
   [/\bdiffuse\b/i, "diffuse"],
@@ -60,6 +69,21 @@ const KINDS: ReadonlyArray<[RegExp, keyof InjuryTolerance]> = [
   [/\bno neck\b/i, "noNeck"],
   [/\bno vitals\b/i, "noVitals"],
 ];
+
+const DAMAGE_REDUCTION = /damage reduction[^\d]{0,8}(\d+)/i;
+const COSMIC_ROUNDS_DOWN = /cosmic.*rounds? down/i;
+
+/**
+ * The injury a blow does to a body with Damage Reduction, once DR and the
+ * wounding modifier have been applied (p. 325). Rounded up with a least
+ * injury of 1 HP, or rounded down and possibly none for Cosmic, Rounds down.
+ * A body without it, or an injury of 0, is left alone.
+ */
+export function reducedInjury(injury: number, tolerance: InjuryTolerance): number {
+  const divisor = tolerance.damageDivisor;
+  if (divisor <= 1 || injury <= 0) return injury;
+  return tolerance.roundsDown ? Math.floor(injury / divisor) : Math.max(1, Math.ceil(injury / divisor));
+}
 
 /**
  * Reads the kinds named in a trait's name and its modifiers.
@@ -78,6 +102,11 @@ export function injuryToleranceFrom(
   const found = { ...into };
   for (const name of names) {
     for (const [pattern, kind] of KINDS) if (pattern.test(name)) found[kind] = true;
+    // "Damage Reduction 4", "Damage Reduction /4" or "Damage Reduction (DR /4)":
+    // the divisor is the number after the words; the largest of several holds.
+    const reduction = DAMAGE_REDUCTION.exec(name);
+    if (reduction) found.damageDivisor = Math.max(found.damageDivisor, Number(reduction[1]));
+    if (COSMIC_ROUNDS_DOWN.test(name)) found.roundsDown = true;
   }
   if (found.homogenous || found.diffuse) {
     found.noBlood = true;

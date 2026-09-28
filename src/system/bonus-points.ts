@@ -13,6 +13,8 @@ import { SYSTEM_ID } from "./constants.js";
 import { anyPointPools, payFromPointPool, registeredPointPools } from "./roll-extensions.js";
 import {
   guidanceCost,
+  impulsePayment,
+  impulseAfterSessionStart,
   purchasableSteps,
   type GuidanceLevel,
   type OutcomeStep,
@@ -36,11 +38,21 @@ interface SourceOption {
 
 /** The pools a character has for a use, with what each holds and whether the GM must agree. */
 export function sourcesFor(actor: any, use: PointUse, roll: { skill?: string } = {}): SourceOption[] {
-  // Pools add-on modules registered join unspent points.
+  // Pools add-on modules registered join unspent points, and so do Impulse Points.
   const pools = registeredPointPools(actor, use, roll);
-  if (pools.length === 0) return [];
+  const impulse = impulsePoolOf(actor);
+  if (pools.length === 0 && impulse.impulseMax === 0) return [];
   const out: SourceOption[] = [];
   const unspent = Number(actor.system?.derived?.points?.unspent ?? 0) || 0;
+  // Impulse Points pay first, and character points make up any shortfall
+  // (Basic Set Revised p. 327), so what they can cover is both together.
+  if (impulse.impulseMax > 0) {
+    out.push({
+      key: "impulse", name: L("ImpulseName"), source: { kind: "impulse" },
+      label: F("Impulse", { value: impulse.impulse, max: impulse.impulseMax }),
+      available: impulse.impulse + Math.max(0, unspent), gmCheck: false,
+    });
+  }
   out.push({ key: "unspent", name: L("UnspentName"), source: { kind: "unspent" }, label: F("Unspent", { value: unspent }), available: Math.max(0, unspent), gmCheck: false });
   for (const pool of pools) {
     out.push({
@@ -53,6 +65,12 @@ export function sourcesFor(actor: any, use: PointUse, roll: { skill?: string } =
     });
   }
   return out;
+}
+
+/** A character's Impulse Points and Foresight uses, as prepared. */
+function impulsePoolOf(actor: any): { impulseMax: number; impulse: number } {
+  const held = actor?.system?.derived?.sessionPools;
+  return { impulseMax: Number(held?.impulseMax ?? 0) || 0, impulse: Number(held?.impulse ?? 0) || 0 };
 }
 
 /**
@@ -70,6 +88,17 @@ export async function spendPoints(
 ): Promise<boolean> {
   if (!actor?.isOwner && !game.user?.isGM) return false;
   if (source.kind === "pool") return payFromPointPool(actor, source, amount, note, use, roll);
+  if (source.kind === "impulse") {
+    // As many Impulse Points as there are, then character points for the rest.
+    const unspent = Number(actor.system?.derived?.points?.unspent ?? 0) || 0;
+    const paid = impulsePayment(amount, impulsePoolOf(actor).impulse, unspent);
+    if (paid.short > 0) return false;
+    const update: Record<string, unknown> = {};
+    if (paid.impulse > 0) update["system.session.impulseSpent"] = (Number(actor.system?.session?.impulseSpent ?? 0) || 0) + paid.impulse;
+    if (paid.unspent > 0) update["system.points.awards"] = [...(actor.system?.points?.awards ?? []), { points: -paid.unspent, note, at: Date.now() }];
+    if (Object.keys(update).length) await actor.update(update);
+    return true;
+  }
   const awards = [...(actor.system?.points?.awards ?? []), { points: -amount, note, at: Date.now() }];
   await actor.update({ "system.points.awards": awards });
   return true;
@@ -135,9 +164,21 @@ export interface SuccessRollFlag {
   bought?: string;
 }
 
-/** Whether points can be spent on outcomes at all: while a module's pool is in play. */
-export function spendingInPlay(): boolean {
-  return anyPointPools();
+/**
+ * Whether points can be spent on outcomes at all: while a module's pool is in
+ * play, or for a character with Impulse Points (Basic Set Revised p. 327).
+ */
+export function spendingInPlay(actor?: any): boolean {
+  return anyPointPools() || impulsePoolOf(actor).impulseMax > 0;
+}
+
+/** Starts a session for a character: one Impulse Point back, and Foresight renewed (pp. 326-327). */
+export async function startSession(actor: any): Promise<void> {
+  if (!actor?.isOwner && !game.user?.isGM) return;
+  await actor.update({
+    "system.session.impulseSpent": impulseAfterSessionStart(Number(actor.system?.session?.impulseSpent ?? 0) || 0),
+    "system.session.foresightUsed": 0,
+  });
 }
 
 /** Whether a roll of this kind is a roll in combat, where a critical cannot be bought. */
@@ -150,11 +191,11 @@ export function isCombatRoll(actor: any, kind: string): boolean {
 /** Offers to buy a success roll up, to whoever owns the character who rolled it. */
 export async function addBuySuccessControls(message: any, html: HTMLElement): Promise<void> {
   const flag = message?.getFlag?.(SYSTEM_ID, "successRoll") as SuccessRollFlag | undefined;
-  if (!flag || flag.bought || !spendingInPlay()) return;
+  if (!flag || flag.bought) return;
   const root = html.querySelector<HTMLElement>(".gworld-chat");
   if (!root || root.querySelector("[data-gworld-buy]")) return;
   const actor: any = await fromUuid(flag.actorUuid).catch(() => null);
-  if (!actor?.isOwner) return;
+  if (!actor?.isOwner || !spendingInPlay(actor)) return;
   const steps = purchasableSteps(flag.step, { combat: flag.combat });
   if (!steps.length) return;
   const row = document.createElement("div");
@@ -219,7 +260,7 @@ export async function payForFleshWound(actor: any, cost: number): Promise<boolea
 
 /** Asks the GM for a plausible addition to the scene, paid from a pool the player names. */
 export async function requestGuidance(actor: any): Promise<void> {
-  if (!spendingInPlay() || !actor?.isOwner) return;
+  if (!spendingInPlay(actor) || !actor?.isOwner) return;
   const sources = sourcesFor(actor, "guidance");
   if (!sources.length) {
     ui.notifications?.warn(L("NoSources"));
@@ -301,4 +342,21 @@ async function settleGuidance(message: any, flag: any, level: GuidanceLevel | nu
   }
   const content = String(message.content ?? "").replace(/<\/div>\s*$/, `<div class="gc-result ${level ? "success" : "failure"}">${foundry.utils.escapeHTML(text)}</div></div>`);
   await message.update({ content, [`flags.${SYSTEM_ID}.guidance.settled`]: true });
+}
+
+/** Uses one of a character's Foresight actions this session (Basic Set Revised p. 326), and says so. */
+export async function useForesight(actor: any): Promise<boolean> {
+  if (!actor?.isOwner && !game.user?.isGM) return false;
+  const left = Number(actor.system?.derived?.sessionPools?.foresight ?? 0) || 0;
+  if (left <= 0) {
+    ui.notifications?.warn(L("NoForesight"));
+    return false;
+  }
+  await actor.update({ "system.session.foresightUsed": (Number(actor.system?.session?.foresightUsed ?? 0) || 0) + 1 });
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${foundry.utils.escapeHTML(F("ForesightUsed", { name: String(actor.name ?? "") }))}</span></div></div>`,
+  });
+  return true;
 }
