@@ -1714,7 +1714,7 @@
     },
     "Hint": {
       "OverBudget": "Spent past the starting budget.",
-      "DisadvantageLimit": "A rule of thumb, not a hard cap. Disadvantages and quirks both count.",
+      "DisadvantageLimit": "A rule of thumb, not a hard cap: hold disadvantages to -50 points (Characters p. 11), more in a high-powered game. Disadvantages and quirks both count.",
       "MultimillionaireCap": "The highest level of Multimillionaire the campaign allows (Characters p. 25). Blank: no cap.",
       "Languages": "Accented is -1 to skills that depend on language. One native language is free: tick Native on it.",
       "GMOnly": "visible to the GM only",
