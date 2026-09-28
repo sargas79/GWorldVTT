@@ -55,6 +55,7 @@ import {
 import { existingIds as existingSpellIds, parseSpells } from "./parse-gdf-spells.mjs";
 import { needsSpecialty } from "./specified-traits.mjs";
 import { learnable } from "./learnable-traits.mjs";
+import { currentLevelNames, renamedTrait } from "./renamed-traits.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -500,7 +501,7 @@ function parseLevelNames(value) {
   return levels.some((n) => n !== "") ? levels : [];
 }
 
-function parseTraits(recs, reject, note, source) {
+export function parseTraits(recs, reject, note, source) {
   // Advantages and disadvantages are separate compendia, but they are one
   // body of records in the source and share a name space: Wealth is both.
   const ids = existingIds(source.outDir, "advantages", "disadvantages");
@@ -519,8 +520,13 @@ function parseTraits(recs, reject, note, source) {
 
     // GCA asks which core skill Ritual Magery boosts and writes the answer
     // into the name; the trait the book prices is Ritual Magery (p. 242).
-    const bare = entryName(nameOf(r), siblings.get(r.section), { supplement: isSupplement(source) })
+    const named = entryName(nameOf(r), siblings.get(r.section), { supplement: isSupplement(source) })
       .replace(/^Ritual Magery \(\[skill\]\)$/, "Ritual Magery");
+    // A file from before the Basic Set's Revised edition (2025) calls
+    // Heteronomy by its old name and cites the page the old edition printed it
+    // on; the Basic Set's records take the new name and page.
+    const renamed = source?.basic === true ? renamedTrait(named) : null;
+    const bare = renamed?.to ?? named;
     if (PLACEHOLDER.test(bare)) { reject(bare, "name is a GCA placeholder"); continue; }
     // Checked before the advantage/disadvantage clash below, which would
     // otherwise keep the record under a qualified name.
@@ -562,7 +568,8 @@ function parseTraits(recs, reject, note, source) {
       note(`${name}: priced for ${priced} levels, capped there rather than at ${cap}`);
     }
 
-    const levelNames = parseLevelNames(f.get("levelnames"));
+    const parsedLevels = parseLevelNames(f.get("levelnames"));
+    const levelNames = source?.basic === true ? currentLevelNames(bare, parsedLevels) : parsedLevels;
 
     // An advantage that is an attack carries its attack, as a weapon does.
     const attack = traitAttackModes(f);
@@ -598,7 +605,7 @@ function parseTraits(recs, reject, note, source) {
         meleeModes: [],
         rangedModes: attack.rangedModes,
         description: "",
-        reference: reference(f.get("page"), source.prefix, source.book),
+        reference: reference(renamed ? `${bookPrefix(source.prefix)}${renamed.page}` : f.get("page"), source.prefix, source.book),
       },
     });
   }

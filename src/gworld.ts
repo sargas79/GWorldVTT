@@ -60,7 +60,7 @@ import { GWorldVehicleSheet } from "./system/sheets/vehicle-sheet.js";
 import { READY_HOOK, createApi, warnIncompatibleModules } from "./system/api.js";
 import { registerCombatStateHooks } from "./system/combat-extensions.js";
 import { registerProcedureHooks } from "./system/procedure-extensions.js";
-import { configureDeprecatedData, migrateContainers, migrateLearnableTraits, registerMigrationSettings, warnUncoveredData } from "./system/migration.js";
+import { configureDeprecatedData, migrateContainers, migrateLearnableTraits, migrateRenamedTraits, registerMigrationSettings, warnUncoveredData } from "./system/migration.js";
 import { closeRuleRegistration, openRuleRegistration, registerRule, registerRuleGroup } from "./system/rule-registry.js";
 import { registerSettings } from "./system/settings.js";
 import { migratePartyCampaignTerms } from "./system/campaign.js";
@@ -254,6 +254,8 @@ Hooks.once("ready", () => {
     await migrateLearnableTraits();
     // Containers taken from the compendium before it said which gear is one (API 1.161.0).
     await migrateContainers();
+    // Slave Mentality is Heteronomy, and the Crippling levels Overwhelming, in the Revised edition.
+    await migrateRenamedTraits();
   })().catch((error) => console.error("gworld | a world migration failed", error));
   // Characters' journal entries left loose in the sidebar, into their folders
   // (#887). Not a recorded step, so it runs whatever became of the steps above.

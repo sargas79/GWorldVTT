@@ -46,6 +46,7 @@ import {
   techniqueDefaults,
   techniqueRebasing,
   traitAttackModes,
+  parseTraits,
 } from "../../../tools/parse-gdf.mjs";
 import { nameOf, records } from "../../../tools/gdf.mjs";
 
@@ -1138,5 +1139,43 @@ describe("the equipment a data file's modes make", () => {
     expect(rejects).toHaveLength(1);
     expect(rejects[0]).toMatch(/^Vest Test: split DR footnote and TL6 disagree: Vest Test has dr\(6\/2\), the high-tech footnote/);
     expect(rejects[0]).toMatch(/techlvl\(6\)/);
+  });
+});
+
+/**
+ * A data file written before the Basic Set, Fourth Edition Revised (2025)
+ * calls Heteronomy "Slave Mentality" and cites p. 154, and names the top level
+ * of three disadvantages "Crippling". The Basic Set's records take the new
+ * names and the new page, so an old file still builds the current pack.
+ */
+describe("a data file from before the Revised edition", () => {
+  const text = [
+    "[DISADVANTAGES]",
+    '"Slave Mentality", -40, page(B154), cat(Mental)',
+    '"Shyness", -5/-10/-20, upto(3), levelnames(Mild, Severe, Crippling), page(B154)',
+    '"Bad Temper", -10, page(B124)',
+    '"Heteronomy", -40, page(B138)',
+  ].join("\n");
+  const build = (basic: boolean, book: string, prefix: string) => {
+    const dir = mkdtempSync(join(tmpdir(), "gdf-renamed-"));
+    try {
+      return parseTraits(records(text), () => {}, () => {}, { prefix, book, outDir: dir, overlap: () => {}, basicIds: null, basic });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  };
+
+  it("files Slave Mentality under Heteronomy, on the page the Revised edition gives", () => {
+    const [heteronomy, ...rest] = build(true, "Basic Set: Characters", "B");
+    expect(heteronomy?.name).toBe("Heteronomy");
+    expect(heteronomy?.system.reference).toBe("Basic Set: Characters p. 138");
+    expect(heteronomy?.system.points).toBe(-40);
+    expect(rest.map((trait) => trait.name)).toEqual(["Shyness", "Bad Temper"]);
+  });
+
+  it("renames the Crippling level of Shyness, and only that", () => {
+    const shyness = build(true, "Basic Set: Characters", "B").find((trait) => trait.name === "Shyness");
+    expect(shyness?.system.levelNames).toEqual(["Mild", "Severe", "Overwhelming"]);
+    expect(shyness?.system.reference).toBe("Basic Set: Characters p. 154");
   });
 });

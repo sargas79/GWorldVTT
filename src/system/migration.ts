@@ -23,6 +23,7 @@ import { SYSTEM_ID } from "./constants.js";
 import { everyActor } from "./every-actor.js";
 import { OPTIONAL_RULES_KEY } from "./optional-rules.js";
 import { learnableByName } from "../../tools/learnable-traits.mjs";
+import { currentLevelNames, renamedTrait, type TraitRename } from "../rules/trait-renames.js";
 
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
 
@@ -509,6 +510,52 @@ export async function migrateContainers(): Promise<MigrationResult> {
   }
   const result = await saveEach(entries, game.i18n.localize("GWORLD.Migration.Containers"));
   if (result.failed === 0) await recordMigration(SYSTEM_ID, CONTAINERS_STEP);
+  return { skipped: false, ...result };
+}
+
+/** The system's step that renamed the traits the Revised edition renamed. */
+export const RENAMED_TRAITS_STEP = "revised-trait-names";
+
+/** The reference the compendium gave a trait before the Revised edition moved it. */
+function oldReference(rename: TraitRename): string {
+  return `Basic Set: Characters p. ${rename.oldPage}`;
+}
+
+/**
+ * Renames what the Basic Set, Fourth Edition Revised renamed (since API 1.164.0):
+ * Slave Mentality is Heteronomy (Characters p. 138), and the top level of
+ * Shyness, Flashbacks and Neurological Disorder is Overwhelming, not Crippling.
+ * A trait on a sheet, in the world or in an unlocked compendium takes the new
+ * name (and the new page, where it still cites the old one), a template's
+ * entries for it are renamed, and the level names each trait carries are
+ * replaced. A trait the GM has renamed to something else is left as it is. The
+ * step is recorded only when every save succeeded.
+ */
+export async function migrateRenamedTraits(): Promise<MigrationResult> {
+  const none = { skipped: false, changed: 0, failed: 0 };
+  if (!game.user?.isGM) return none;
+  if (hasMigrated(SYSTEM_ID, RENAMED_TRAITS_STEP)) return { ...none, skipped: true };
+  const entries: Array<{ save: (changes: object[]) => Promise<unknown>; change: object }> = [];
+  for (const { item, save } of await itemsEverywhere()) {
+    const source = item?._source?.system ?? {};
+    const change: Record<string, unknown> = {};
+    if (item?.type === "trait") {
+      const rename = renamedTrait(item.name);
+      if (rename) {
+        change.name = rename.to;
+        if (source.reference === oldReference(rename)) change["system.reference"] = `Basic Set: Characters p. ${rename.page}`;
+      }
+      const levels: string[] = Array.isArray(source.levelNames) ? source.levelNames : [];
+      const renamedLevels = currentLevelNames(item.name, levels);
+      if (renamedLevels.some((level, index) => level !== levels[index])) change["system.levelNames"] = renamedLevels;
+    } else if (item?.type === "template" && Array.isArray(source.entries)) {
+      const named = source.entries.map((entry: any) => (entry?.itemType === "trait" && renamedTrait(entry.name) ? { ...entry, name: renamedTrait(entry.name)!.to } : entry));
+      if (named.some((entry: unknown, index: number) => entry !== source.entries[index])) change["system.entries"] = named;
+    }
+    if (Object.keys(change).length > 0) entries.push({ save, change: { _id: item.id, ...change } });
+  }
+  const result = await saveEach(entries, game.i18n.localize("GWORLD.Migration.RenamedTraits"));
+  if (result.failed === 0) await recordMigration(SYSTEM_ID, RENAMED_TRAITS_STEP);
   return { skipped: false, ...result };
 }
 

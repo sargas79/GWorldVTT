@@ -260,3 +260,71 @@ describe("migrateContainers", () => {
     expect(w.embeddedUpdates).toEqual([]);
   });
 });
+
+/** Slave Mentality is Heteronomy, and the Crippling levels are Overwhelming (Basic Set Revised). */
+describe("migrateRenamedTraits", () => {
+  const trait = (id: string, name: string, system: Record<string, unknown> = {}) => ({
+    id, uuid: `Actor.a1.Item.${id}`, type: "trait", name, _source: { system },
+  });
+  const OLD = "Basic Set: Characters p. 154";
+
+  it("renames the trait and its page, and the top level of the three, on sheets and in the world, once", async () => {
+    const api = await load();
+    const w = world();
+    (w.loose as any).type = "trait";
+    (w.loose as any).name = "Slave Mentality";
+    (w.loose as any)._source = { system: { reference: OLD, levelNames: [] } };
+    w.actor.items = [
+      trait("t1", "Slave Mentality", { reference: OLD }),
+      // The GM's own wording of the page is left alone.
+      trait("t2", "slave mentality", { reference: "House rules" }),
+      trait("t3", "Shyness", { levelNames: ["Mild", "Severe", "Crippling"] }),
+      trait("t4", "Flashbacks", { levelNames: ["Mild", "Severe", "Crippling"] }),
+      trait("t5", "Neurological Disorder", { levelNames: ["Mild", "Severe", "Crippling"] }),
+      trait("t6", "Shyness", { levelNames: ["Mild", "Severe", "Overwhelming"] }),
+      // Another trait with a level of that name is not one the book renamed.
+      trait("t7", "House Rule", { levelNames: ["Crippling"] }),
+      trait("t8", "Heteronomy", { reference: "Basic Set: Characters p. 138" }),
+      { id: "s1", uuid: "Actor.a1.Item.s1", type: "skill", name: "Slave Mentality", _source: { system: {} } },
+      {
+        id: "m1", uuid: "Actor.a1.Item.m1", type: "template", name: "Zombie",
+        _source: { system: { entries: [
+          { name: "Slave Mentality", itemType: "trait", points: -40 },
+          { name: "Slave Mentality", itemType: "skill", points: 1 },
+          { name: "Unfazeable", itemType: "trait", points: 15 },
+        ] } },
+      },
+    ] as any;
+    expect(await api.migrateRenamedTraits()).toEqual({ skipped: false, changed: 7, failed: 0 });
+    expect(w.looseUpdates.flat()).toEqual([{ _id: "i1", name: "Heteronomy", "system.reference": "Basic Set: Characters p. 138" }]);
+    expect(w.embeddedUpdates.flat()).toEqual([
+      { _id: "t1", name: "Heteronomy", "system.reference": "Basic Set: Characters p. 138" },
+      { _id: "t2", name: "Heteronomy" },
+      { _id: "t3", "system.levelNames": ["Mild", "Severe", "Overwhelming"] },
+      { _id: "t4", "system.levelNames": ["Mild", "Severe", "Overwhelming"] },
+      { _id: "t5", "system.levelNames": ["Mild", "Severe", "Overwhelming"] },
+      {
+        _id: "m1",
+        "system.entries": [
+          { name: "Heteronomy", itemType: "trait", points: -40 },
+          { name: "Slave Mentality", itemType: "skill", points: 1 },
+          { name: "Unfazeable", itemType: "trait", points: 15 },
+        ],
+      },
+    ]);
+    expect(api.hasMigrated("gworld", api.RENAMED_TRAITS_STEP)).toBe(true);
+    expect(await api.migrateRenamedTraits()).toEqual({ skipped: true, changed: 0, failed: 0 });
+  });
+
+  it("stays unrecorded when a save fails, and leaves a player's world alone", async () => {
+    const api = await load();
+    const w = world();
+    w.actor.items = [trait("t1", "Slave Mentality", { reference: OLD })] as any;
+    w.actor.updateEmbeddedDocuments.mockRejectedValueOnce(new Error("nope"));
+    expect(await api.migrateRenamedTraits()).toEqual({ skipped: false, changed: 0, failed: 1 });
+    expect(api.hasMigrated("gworld", api.RENAMED_TRAITS_STEP)).toBe(false);
+
+    (globals.game as any).user.isGM = false;
+    expect(await api.migrateRenamedTraits()).toEqual({ skipped: false, changed: 0, failed: 0 });
+  });
+});

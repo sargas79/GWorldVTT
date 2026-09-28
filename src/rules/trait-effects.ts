@@ -22,6 +22,7 @@ import { injuryToleranceFrom, noInjuryTolerance, type InjuryTolerance } from "./
 import { radiationToleranceFrom } from "./radiation.js";
 import { isTalent } from "./talents.js";
 import { isSocialTrait } from "./social.js";
+import { currentTraitName } from "./trait-renames.js";
 import { fragileKindsIn, unionOfFragile, type FragileKind } from "./fragile.js";
 
 /** What a character's traits do to the rolls this system makes. */
@@ -60,8 +61,8 @@ export interface TraitEffects {
   ambidextrous: boolean;
   /** Influence rolls fail against them outright (Indomitable, Characters p. 60). */
   indomitable: boolean;
-  /** Intimidation fails against them outright (Unfazeable, Characters p. 95). */
-  slaveMentality: boolean;
+  /** Influence rolls against them win outright (Heteronomy, Characters p. 138). */
+  heteronomy: boolean;
   /**
    * Electrical (Characters p. 134; since API 1.155.0): open to attacks that
    * affect only electrical things, Surge among them, and knocked out by a
@@ -272,7 +273,7 @@ export function noTraitEffects(): TraitEffects {
     aquatic: false,
     ambidextrous: false,
     indomitable: false,
-    slaveMentality: false,
+    heteronomy: false,
     attributes: { ST: 0, DX: 0, IQ: 0, HT: 0 },
     strikingSt: 0,
     liftingSt: 0,
@@ -405,10 +406,11 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   ambidexterity: () => ({ ambidextrous: true }),
 
   // "You cannot be affected by Influence rolls" (Characters p. 60), and its
-  // opposite: "you win automatically against those with Slave Mentality"
-  // (Campaigns p. 359).
+  // opposite: "you win automatically against those with Heteronomy"
+  // (Campaigns p. 359; called Slave Mentality before the Revised edition, and
+  // still read under that name).
   indomitable: () => ({ indomitable: true }),
-  "slave mentality": () => ({ slaveMentality: true }),
+  heteronomy: () => ({ heteronomy: true }),
   // "A critical hit from an electrical attack causes you to 'short-circuit',
   // rendering you unconscious" (Characters p. 134).
   electrical: () => ({ electrical: true }),
@@ -599,7 +601,7 @@ const RADIATION_TOLERANCE = "radiation tolerance";
  * advantages, and only one of them helps you jump.
  */
 function matchName(name: string): string {
-  return name.trim().toLowerCase();
+  return currentTraitName(name.trim()).toLowerCase();
 }
 
 /**
@@ -768,7 +770,7 @@ export function addTraitEffects(total: TraitEffects, applied: Partial<TraitEffec
   total.aquatic ||= applied.aquatic ?? false;
   total.ambidextrous ||= applied.ambidextrous ?? false;
   total.indomitable ||= applied.indomitable ?? false;
-  total.slaveMentality ||= applied.slaveMentality ?? false;
+  total.heteronomy ||= applied.heteronomy ?? false;
   if (applied.electrical) total.electrical = true;
 
   total.shockMultiplier = Math.max(total.shockMultiplier, applied.shockMultiplier ?? 1);
