@@ -2462,7 +2462,7 @@ Two fields a module may read (since 1.62.0):
   applies a Surge blow to a character with it, and the card's Critical hit
   box is ticked (the critical tables switch shows it), the victim
   short-circuits: the token gets `unconscious`, on top of the blow's other
-  effects, and the card says so. Since 1.163.0 (Characters p. 105),
+  effects, and the card says so. Since 1.165.0 (Characters p. 105),
   any other Surge hit that takes more than a third of the character's
   maximum HP has the victim roll vs. HT (a `surge`-tagged attribute roll):
   failure disables it for the margin of failure in seconds, a critical failure
@@ -3529,7 +3529,7 @@ Two fields a module may read (since 1.62.0):
 - **Treating poison and illness** (since 1.77.0; Campaigns pp. 439, 443):
   `actors.treatPoison(patient, id, { treatment?, bonus?, skill?, healer?, techLevel?, label?,
   modifier? })` treats a dose as the sheet's Treat button does. `treatment` is one of the book's
-  (`induceVomiting`, `medical`, `antidote`; since 1.163.0 the Revised edition's
+  (`induceVomiting`, `medical`, `antidote`; since 1.165.0 the Revised edition's
   "obsolete, ineffective, harmful" `suckWound` is gone, and a call naming it does nothing and
   returns 0), rolled at the treater's First Aid or
   Physician (`skill`, else `healer`'s better of the two, else the patient's; nobody with either
@@ -3685,7 +3685,7 @@ that are world settings rather than anything on an actor:
   disadvantageLimit, multimillionaireCap }`: the terms every player character
   is made on (Characters pp. 10-11, 22, 25), as the GM set them in the system
   settings or on a party's Campaign tab, each null where left blank. Since
-  1.163.0 `multimillionaireCap` is the highest level of Multimillionaire the
+  1.165.0 `multimillionaireCap` is the highest level of Multimillionaire the
   campaign allows (Characters p. 25): null is uncapped, and a level bought
   beyond it is worth no more starting wealth than the cap (0 stops at Filthy
   Rich); it is also `actor.system.derived.campaign.multimillionaireCap`. A term that is set
