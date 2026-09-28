@@ -477,7 +477,6 @@ export async function promptForTreatment(treater: any): Promise<{
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Treatment")}</span>
         <select name="treatment" style="width:240px">
-          <option value="suckWound">${L("Treatment_suckWound")}</option>
           <option value="induceVomiting">${L("Treatment_induceVomiting")}</option>
           <option value="medical">${L("Treatment_medical")}</option>
           <option value="antidote">${L("Treatment_antidote")}</option>

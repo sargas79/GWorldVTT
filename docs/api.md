@@ -3527,7 +3527,9 @@ Two fields a module may read (since 1.62.0):
 - **Treating poison and illness** (since 1.77.0; Campaigns pp. 439, 443):
   `actors.treatPoison(patient, id, { treatment?, bonus?, skill?, healer?, techLevel?, label?,
   modifier? })` treats a dose as the sheet's Treat button does. `treatment` is one of the book's
-  (`suckWound`, `induceVomiting`, `medical`, `antidote`), rolled at the treater's First Aid or
+  (`induceVomiting`, `medical`, `antidote`; since 1.163.0 the Revised edition's
+  "obsolete, ineffective, harmful" `suckWound` is gone, and a call naming it does nothing and
+  returns 0), rolled at the treater's First Aid or
   Physician (`skill`, else `healer`'s better of the two, else the patient's; nobody with either
   fails), with `bonus` the antidote's own. Leave `treatment` out for a module's own drug or
   device: its `bonus` stands to the HT rolls to resist, with a roll at `skill` + `modifier` only

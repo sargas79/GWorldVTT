@@ -2491,7 +2491,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (!id) return;
 
     // An illness is treated with antibiotics and a physician's care, not by
-    // sucking a wound or inducing vomiting (p. 443).
+    // inducing vomiting (p. 443).
     const dose = activePoisons(this.actor).find((d) => d.id === id);
     if (dose?.illness) {
       const I = (key: string) => game.i18n.localize(`GWORLD.Illness.${key}`);
