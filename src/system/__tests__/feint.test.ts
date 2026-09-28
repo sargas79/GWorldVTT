@@ -88,6 +88,44 @@ describe("remembering a feint", () => {
     expect(await consumeFeint(attacker)).toBe(-3);
   });
 
+  /**
+   * Revised p. 365: "if you Feint and somehow make multiple attacks next turn,
+   * the feint applies to them all."
+   */
+  it("applies to every attack made on the turn it is used", async () => {
+    const attacker = actor();
+    targeting([], { id: "Combat.1", round: 3 });
+    await recordFeint(attacker, "Actor.foe", -3);
+
+    targeting(["Actor.foe"], { id: "Combat.1", round: 4 });
+    expect(await consumeFeint(attacker)).toBe(-3);
+    expect(await consumeFeint(attacker)).toBe(-3);
+    expect(await consumeFeint(attacker)).toBe(-3);
+  });
+
+  it("is over on the turn after that, once it has been used", async () => {
+    const attacker = actor();
+    targeting([], { id: "Combat.1", round: 3 });
+    await recordFeint(attacker, "Actor.foe", -3);
+
+    targeting(["Actor.foe"], { id: "Combat.1", round: 4 });
+    await consumeFeint(attacker);
+    targeting(["Actor.foe"], { id: "Combat.1", round: 5 });
+    expect(await consumeFeint(attacker)).toBe(0);
+    expect(attacker.getFlag(SYSTEM_ID, "feint")).toBeUndefined();
+  });
+
+  it("gives an attack at somebody else nothing, and the next at the feinted foe still has it", async () => {
+    const attacker = actor();
+    targeting([], { id: "Combat.1", round: 3 });
+    await recordFeint(attacker, "Actor.foe", -3);
+
+    targeting(["Actor.bystander"], { id: "Combat.1", round: 4 });
+    expect(await consumeFeint(attacker)).toBe(0);
+    targeting(["Actor.foe"], { id: "Combat.1", round: 4 });
+    expect(await consumeFeint(attacker)).toBe(-3);
+  });
+
   it("is worthless once the fight has moved on", async () => {
     const attacker = actor();
     targeting([], { id: "Combat.1", round: 3 });

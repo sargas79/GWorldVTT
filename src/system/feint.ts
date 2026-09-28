@@ -9,13 +9,11 @@
  * defense card is drawn on the defender's screen, not the attacker's.
  *
  * A flag on the attacker's own actor does both. It also expires the way the
- * rule does: "A Feint is good for one second", so the next attack that actor
- * makes spends it, whether or not it is aimed at the foe who was feinted --
- * and a fight that moves on without that attack leaves it behind.
- *
- * Not handled: All-Out Attack (Double), where "the feint applies to both
- * attacks". The second attack here spends nothing, because the first already
- * did, so that combination needs the GM to apply the penalty by hand.
+ * rule does: "A Feint is good for one second", so it is spent on the turn the
+ * actor next attacks -- "if you Feint and somehow make multiple attacks next
+ * turn, the feint applies to them all" (Revised p. 365) -- and a fight that
+ * moves on without that attack leaves it behind. Outside a fight, where
+ * nothing counts turns, the next attack spends it.
  */
 
 import { SYSTEM_ID } from "./constants.js";
@@ -33,6 +31,8 @@ interface PendingFeint {
   /** The combat and round it was made in, when it was made during one. */
   combat?: string;
   round?: number;
+  /** The round the first attack spent it in; every attack that round gets it too. */
+  spentRound?: number;
 }
 
 /**
@@ -90,15 +90,28 @@ export async function clearFeint(attacker: any): Promise<void> {
  * Spends a pending feint on the attack being rolled now.
  *
  * Returns the penalty when the attack is aimed at the foe who was feinted, and
- * zero otherwise -- but clears it either way, because the feint was good for
- * the one turn and this was it.
+ * zero otherwise. In a fight the feint is good for the whole of the turn it
+ * was first used on, so a second attack that turn (All-Out Attack (Double),
+ * Extra Attack, a Rapid Strike) has it too, and it is cleared by the first
+ * attack made on a later turn. With no fight running the first attack clears it.
  */
 export async function consumeFeint(attacker: any): Promise<number> {
   const pending = attacker?.getFlag?.(SYSTEM_ID, FEINT_FLAG) as PendingFeint | undefined;
   if (!pending?.target) return 0;
 
-  await clearFeint(attacker);
-  if (!stillGood(pending)) return 0;
+  const now = nowInCombat();
+  const timed = now !== null && pending.combat !== undefined && pending.round !== undefined;
+  if (!stillGood(pending) || (timed && pending.spentRound !== undefined && pending.spentRound !== now.round)) {
+    await clearFeint(attacker);
+    return 0;
+  }
+  if (timed && attacker?.isOwner) {
+    if (pending.spentRound === undefined) {
+      await attacker.setFlag(SYSTEM_ID, FEINT_FLAG, { ...pending, spentRound: now.round } satisfies PendingFeint);
+    }
+  } else {
+    await clearFeint(attacker);
+  }
 
   const aimedAt = targetedTokens().some(
     (token: any) => String(token?.actor?.uuid ?? "") === pending.target,
