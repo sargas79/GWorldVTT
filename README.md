@@ -93,10 +93,6 @@ Other scripts: `npm run watch`, `npm run typecheck`, `npm run lint`,
   heading on the page it had in the two volumes, so those citations stay
   correct. Text that exists only in the Revised edition (its preface and the
   addenda on pp. 324-334, 337-342, 566 and 570-578, and its new boxes on
-  retained pages) cites `Basic Set Revised p. 571`. The Basic Set, Fourth Edition Revised keeps every
-  heading on the page it had in the two volumes, so those citations stay
-  correct. Text that exists only in the Revised edition (its preface and the
-  addenda on pp. 324-334, 337-342, 566 and 570-578, and its new boxes on
   retained pages) cites `Basic Set Revised p. 571`.
 - Generic features that any book's data can use, such as Talents with their
   own skill lists, attacks on advantages, and the GCA parser.
