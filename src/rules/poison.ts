@@ -20,7 +20,7 @@ export type PoisonDelivery =
   | "contact"
   /** Swallowed. */
   | "digestive"
-  /** Carried in on a piercing or impaling weapon that did damage. */
+  /** Carried in on a cutting, piercing or impaling weapon that did damage (p. 437). */
   | "followUp"
   /** Breathed into the lungs. */
   | "respiratory"
