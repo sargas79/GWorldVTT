@@ -31,12 +31,13 @@ export function extraArmBonus(arms: number): number {
 /**
  * Whether a grappled character can still walk away (p. 370).
  *
- * "If you grapple a foe of more than twice your ST, you do not prevent him from
- * moving away -- you're just extra encumbrance for him!" -- so the grappler has
- * to be at least half the victim's ST to hold them at all.
+ * "If you grapple a foe of twice your ST or more, you do not prevent him from
+ * moving away -- you're just extra encumbrance for him!" (the 2004 printing said
+ * "more than twice", so exactly twice used to hold) -- so the grappler needs
+ * more than half the victim's ST to hold them at all.
  */
 export function preventsMovement(grapplerSt: number, victimSt: number): boolean {
-  return victimSt <= grapplerSt * 2;
+  return victimSt < grapplerSt * 2;
 }
 
 /** What holds a grappled character in place, for the break-free contest. */
