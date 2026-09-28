@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { collisionDamage, collisionVelocity, overrunDamage } from "../collisions.js";
 import { lethalShock, lethalShockModifier, nonlethalShock, shockHeartAttack } from "../electricity.js";
-import { catchingFire, FIRE_DAMAGE, ignites, prolongedContactTarget } from "../fire.js";
+import { burnsLikeFire, catchingFire, FIRE_DAMAGE, ignites, prolongedContactTarget, setsThingsAlight } from "../fire.js";
 import { dailyMiles, marchingFatiguePerHour } from "../hiking.js";
 import {
   protectedDose, radiationEffect, radiationRow, radiationToleranceFrom, remainingDose,
@@ -137,6 +137,22 @@ describe("fire", () => {
     // Flammable materials touching a candle flame: two up, 6 or less.
     expect(prolongedContactTarget("flammable", 0)).toBe(6);
     expect(prolongedContactTarget("flammable", 3)).toBeNull();
+  });
+});
+
+/** Revised p. 433: "Electrical damage is burning and can definitely start fires!" */
+describe("electrical damage as fire", () => {
+  it("sets things alight, as an incendiary attack does", () => {
+    expect(setsThingsAlight({ surge: true })).toBe(true);
+    expect(setsThingsAlight({ incendiary: true })).toBe(true);
+    expect(setsThingsAlight({})).toBe(false);
+  });
+
+  it("counts as fire to something Fragile whatever its damage type", () => {
+    expect(burnsLikeFire({ type: "fat", surge: true })).toBe(true);
+    expect(burnsLikeFire({ type: "burn" })).toBe(true);
+    expect(burnsLikeFire({ type: "cr", explosive: true })).toBe(true);
+    expect(burnsLikeFire({ type: "cr" })).toBe(false);
   });
 });
 

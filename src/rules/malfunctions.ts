@@ -130,8 +130,23 @@ export function mayExplode(techLevel: number): boolean {
   return techLevel <= 4;
 }
 
-/** What a weapon that blows up does to whoever was holding it (p. 407). */
+/** What a firearm that blows up does to whoever was holding it (p. 407). */
 export const EXPLOSION_DAMAGE = { dice: 1, adds: 2, type: "cr ex", fragmentation: 2 } as const;
+
+/**
+ * What a weapon that blows up does, by what it is (Revised p. 407):
+ *
+ * "A TL3 or TL4 firearm may blow up in the gunner's face, inflicting 1d+2 [2d]
+ * cr ex. A TL3 or TL4 grenade or weapon that fires an explosive warhead does
+ * its usual explosive damage instead. TL5+ weapons do not explode."
+ *
+ * `firearm` is the fixed 1d+2 [2d] cr ex; `usual` is the weapon's own
+ * explosive damage; null is a weapon that does not explode.
+ */
+export function explosionOf(options: { techLevel: number; explosive: boolean }): "firearm" | "usual" | null {
+  if (!mayExplode(options.techLevel)) return null;
+  return options.explosive ? "usual" : "firearm";
+}
 
 /**
  * Whether a revolver simply carries on after a misfire (p. 407).

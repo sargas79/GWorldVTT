@@ -25,7 +25,7 @@
 import { rapidFireHits, suppressionSkillCap, suppressionZones, SPREAD_FIRE_MIN_RATE_OF_FIRE, MULTIPLE_ZONES_MIN_RATE_OF_FIRE } from "../rules/ranged.js";
 import { inShape, segmentCrossesShape, type ModifierArea, type Point } from "../rules/modifier-areas.js";
 import { randomHitLocation } from "../rules/hit-locations.js";
-import { aimBonus } from "../rules/aim.js";
+import { aimBonus, cappedTargetingBonus } from "../rules/aim.js";
 import { scopeBonus } from "../rules/accessories.js";
 import { SYSTEM_ID } from "./constants.js";
 import { isRuleOn } from "./optional-rules.js";
@@ -224,7 +224,7 @@ export async function fireSuppression(actor: any, button: HTMLElement, item: any
   const turnsAimed = aimTurnsOf(actor);
   const aiming = aimBonus({
     turnsAimed,
-    accuracy: weapon.accuracy + scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: turnsAimed, fixed: weapon.scopeFixed }),
+    accuracy: weapon.accuracy + cappedTargetingBonus(weapon.accuracy, scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: turnsAimed, fixed: weapon.scopeFixed })),
     braced: weapon.aim.braced,
   });
   const mountedByDefault = data.mount === "mounted" && data.offMount !== "1";

@@ -23,6 +23,7 @@
 
 import { sceneAreaLines } from "./modifier-areas.js";
 import { SYSTEM_ID } from "./constants.js";
+import { endAttackedThisTurn } from "./feint.js";
 import { isFightingRoll, noteFought } from "./combat-participation.js";
 import { everyActor } from "./every-actor.js";
 import { pendingModifierLines, spendPendingModifiers } from "./pending-modifiers.js";
@@ -1414,6 +1415,9 @@ export function registerProcedureHooks(setSystemCondition: (actor: any, id: stri
 
     if (!game.user?.isGM) return;
     const round = Number(combat?.round) || 0;
+    // An unbalanced weapon that attacked, or feinted, is free to parry again
+    // once its wielder's next turn begins (Characters p. 269, Campaigns p. 365).
+    void endAttackedThisTurn(combat?.combatant?.actor);
     for (const combatant of combat?.combatants ?? []) {
       void expireConditions(combatant.actor, { round, ownTurnStarted: combatant.id === combat?.combatant?.id }, setSystemCondition);
     }

@@ -46,7 +46,7 @@ import { equipmentUseLines, toolFor } from "./tech-level.js";
 import { aimStateOf, aimTargetLines, aimTurnsOf, loseAim } from "./aim.js";
 import { clearZenShot, zenLine, zenShotFor, type ZenShot } from "./zen.js";
 import { evaluateBonusFor } from "./evaluate.js";
-import { aimBonus } from "../rules/aim.js";
+import { aimBonus, cappedTargetingBonus } from "../rules/aim.js";
 import {
   scopeBonus,
   laserSight,
@@ -148,7 +148,7 @@ import {
   type WeaponTarget,
 } from "./weapon-damage.js";
 import { announceShots, shotsReady, shotsSourceOf, spendShots, type ShotsTally } from "./ammunition.js";
-import { malfunctionOf, malfunctionWithHooks, setMalfunction, type MalfunctionReport } from "./malfunctions.js";
+import { explosionLine, malfunctionOf, malfunctionWithHooks, setMalfunction, type MalfunctionReport } from "./malfunctions.js";
 import { strikingPart } from "../rules/hurting-yourself.js";
 import type { DamageType } from "../rules/types.js";
 
@@ -1127,7 +1127,7 @@ async function rollMalfunction(
   attackRoll: number,
   weapon: NonNullable<SuccessRollOptions["malfunction"]>,
   actor: any,
-): Promise<(MalfunctionReport & { roll: any }) | null> {
+): Promise<(MalfunctionReport & { roll: any; explosion: string }) | null> {
   if (!malfunctioned({ roll: attackRoll, malfunctionNumber: weapon.number })) return null;
 
   const roll = new Roll("3d6");
@@ -1149,7 +1149,7 @@ async function rollMalfunction(
   if (!report) return null;
   // A weapon left out of action stays so until it is cleared.
   if (report.jams && weapon.item?.isOwner) await setMalfunction(weapon.item, { kind: report.kind, label: report.label, modeIndex: modeIndex ?? 0 });
-  return { ...report, roll };
+  return { ...report, roll, explosion: report.explodes ? explosionLine(weapon.item, modeIndex, weapon.techLevel, actor) : "" };
 }
 
 /**
@@ -3381,7 +3381,11 @@ export async function promptForRangedAttack(options: {
   // reduces your bonus by a like amount" (Campaigns p. 411). A +6 scope after
   // one second of aiming is worth +1, not +6, which is what this used to give.
   const turnsAimed = options.aim?.turns ?? 0;
-  const scope = scopeBonus({ bonus: options.scopeBonus, secondsAimed: turnsAimed, fixed: options.scopeFixed === true });
+  // A scope, like any targeting system, is worth no more than the base Acc.
+  const scope = cappedTargetingBonus(
+    options.accuracy,
+    scopeBonus({ bonus: options.scopeBonus, secondsAimed: turnsAimed, fixed: options.scopeFixed === true }),
+  );
   const aiming = aimBonus({
     turnsAimed,
     accuracy: options.accuracy + scope,
@@ -3978,6 +3982,29 @@ export function rangedModifiers(
   // so a listener that clears the lock-on knows which line to take away.
   const lockedOn = guidance === "homing" && input.lockedOn === true;
   const onlyLockedOn = lockedOn && !accuracyApplies({ guidance, aimed: deliberatelyAimed, secondsInFlight: flight.seconds });
+  // A laser sight: "If you can see your own aiming dot, you get +1 to hit",
+  // aimed or not, out to its range -- the weapon's 1/2D where none is given
+  // (p. 411). Beyond that the dot is too dispersed to see.
+  const laserBonus = input.laser?.on
+    ? laserSight({ rangeYards: effectiveRange, halfDamageRange: weapon.halfDamageRange ?? 0 }).toHit
+    : 0;
+  // "The sum of Acc and all bonuses from targeting systems can never exceed
+  // twice the base Acc" (Revised p. 372): the scope, the laser sight and a
+  // vehicle's targeting system together are worth no more than the base Acc.
+  // Extra seconds of Aim and bracing are not targeting systems. Shown as a cut
+  // off the total, so the card still says what each part was worth.
+  const targetingCapLine = (targetingTotal: number): number => {
+    const kept = cappedTargetingBonus(weapon.accuracy, targetingTotal);
+    if (kept >= targetingTotal) return 0;
+    modifiers.push({
+      label: game.i18n.format("GWORLD.Ranged.TargetingCap", { acc: weapon.accuracy }),
+      value: kept - targetingTotal,
+      key: "targetingCap",
+    });
+    return kept - targetingTotal;
+  };
+  let targetingCut = 0;
+  let targetingChecked = false;
   const accuracyClaimed = accuracyApplies({ guidance, aimed: deliberatelyAimed, secondsInFlight: flight.seconds, lockedOn });
   if (accuracyClaimed) {
     // Aimed on the sheet: Accuracy, the second and third turns, the bracing.
@@ -4008,10 +4035,12 @@ export function rangedModifiers(
     // targeting systems, and bracing) cannot exceed the SR of a moving vehicle
     // unless the sights or mount are stabilized" (p. 469). Shown as a cut off
     // the total, so the card still says what each part was worth.
+    const targeting = vehicle && vehicle.targetingTl > 0 ? targetingSystemBonus(vehicle.targetingTl) : 0;
+    if (vehicle && targeting !== 0) modifiers.push({ label: L("TargetingSystem"), value: targeting });
+    targetingCut = targetingCapLine(scopeShare + targeting + laserBonus);
+    targetingChecked = true;
     if (vehicle) {
-      const targeting = vehicle.targetingTl > 0 ? targetingSystemBonus(vehicle.targetingTl) : 0;
-      if (targeting !== 0) modifiers.push({ label: L("TargetingSystem"), value: targeting });
-      const total = aiming.accuracy + aiming.extraTurns + aiming.braced + targeting;
+      const total = aiming.accuracy + aiming.extraTurns + aiming.braced + targeting + targetingCut;
       const capped = cappedAimBonus({
         bonus: total,
         stabilityRating: vehicle.stabilityRating,
@@ -4052,13 +4081,9 @@ export function rangedModifiers(
       }
     }
   }
-  // A laser sight: "If you can see your own aiming dot, you get +1 to hit",
-  // aimed or not, out to its range -- the weapon's 1/2D where none is given
-  // (p. 411). Beyond that the dot is too dispersed to see.
-  if (input.laser?.on) {
-    const dot = laserSight({ rangeYards: effectiveRange, halfDamageRange: weapon.halfDamageRange ?? 0 });
-    if (dot.toHit !== 0) modifiers.push({ label: L("LaserSight"), value: dot.toHit, key: "laser" });
-  }
+  if (laserBonus !== 0) modifiers.push({ label: L("LaserSight"), value: laserBonus, key: "laser" });
+  // A laser sight alone, with nothing aimed, is a targeting system too.
+  if (!targetingChecked && laserBonus !== 0) targetingCapLine(laserBonus);
 
   const rapidFire = rapidFireBonus(input.shots ?? 1);
   if (rapidFire !== 0) modifiers.push({ label: L("RapidFire"), value: rapidFire });
@@ -5215,7 +5240,7 @@ export function applyLockOn(
     return;
   }
   if (modifiers.some((line) => line.key === "accuracy")) return;
-  const scope = scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: 1, fixed: weapon.scopeFixed === true });
+  const scope = cappedTargetingBonus(weapon.accuracy, scopeBonus({ bonus: weapon.scopeBonus, secondsAimed: 1, fixed: weapon.scopeFixed === true }));
   const value = weapon.accuracy + scope;
   if (value === 0) return;
   const scopeShare = Math.max(0, Math.min(scope, value));

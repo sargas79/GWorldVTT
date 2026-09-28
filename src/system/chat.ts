@@ -20,12 +20,13 @@ import { applyDamageToShield, consumeShieldNote, noteShieldTookIt } from "./shie
 import { attackOptionsFromEntries, rollDamage, rollSuccess, type AttackWeaponFlag } from "./roll.js";
 import { currentTargets, ownsATokenOnScene } from "./targets.js";
 import {
-  BLAST_PLACEMENTS, blastAt, blastPlacementOf, contactCoverDr, fragmentationLabel, fragmentationStrikes,
+  BLAST_PLACEMENTS, blastAt, blastPlacementOf, collateralInjury, contactCoverDr, fragmentationLabel, fragmentationStrikes,
   type BlastPlacement, type FragmentationSpec,
 } from "../rules/explosions.js";
 import { criticalEntry, criticalHitTableFor, isUnarmedSkill } from "../rules/criticals.js";
 import { healthRollScore } from "./attributes.js";
 import { surgeDisabled, surgeEffect, type SurgeDisabled, type SurgeEffect } from "../rules/surge.js";
+import { burnsLikeFire, setsThingsAlight } from "../rules/fire.js";
 import { BLOCKS_PER_TURN, acrobaticDefenseModifier, bareHandedParryModifier, mayTryAcrobatic, blockableAttack, canParryFlail, flailDefenseModifier, masterHalvesParry, multipleParryPenalty, parriedLimbStrikeModifier, thrownParryModifier } from "../rules/defenses.js";
 import { getCombatState, setCombatState } from "./combat-extensions.js";
 import { rollKnockdown } from "./knockdown.js";
@@ -464,9 +465,12 @@ async function applyFromCard(options: {
     return;
   }
 
-  // "Use torso armor to determine DR against explosion damage" (p. 414),
-  // whatever part of them happened to be nearest.
-  const struck: HitLocation = blast && !blast.direct ? "torso" : hitLocation;
+  // "Work out DR against explosion damage as explained in Large-Area Injury
+  // (p. 400)" (p. 414): a victim the blast did not strike takes a large-area
+  // injury, a torso hit against the average DR of the torso and the least
+  // protected exposed location, whatever part of them happened to be nearest.
+  const collateral = blast ? collateralInjury(blast, hitLocation) : null;
+  const struck: HitLocation = collateral ? (collateral.hitLocation as HitLocation) : hitLocation;
 
   // One roll on the table, applied to everyone the blow lands on: a critical is
   // something the attacker did, not something each victim rolls separately.
@@ -529,7 +533,7 @@ async function applyFromCard(options: {
     // in the figure for a contact blast, and an internal one is worked out at
     // the vitals, through no DR, at x3.
     ...(placement ? { blastPlacement: placement } : {}),
-    ...(options.largeArea ? { largeArea: true } : {}),
+    ...(options.largeArea || collateral?.largeArea ? { largeArea: true } : {}),
     // Yards from the blast's centre, for the damage hooks (since API 1.63.0).
     ...(flag.explosive ? { blastDistance: Math.max(0, distanceYards) } : {}),
   };
@@ -631,7 +635,8 @@ async function applyFromCard(options: {
       // effect that can ignite volatile material", and Campaigns p. 433 counts
       // incendiary damage with burning for what it takes to set things alight.
       // The clothes are the volatile material a victim is wearing.
-      if (result.incendiary) {
+      // Electrical damage is burning and can start fires (Revised p. 433).
+      if (setsThingsAlight({ incendiary: result.incendiary, surge: flag.surge })) {
         // A tight-beam burn counts a tenth of its damage (p. 434).
         await catchFire({ actor, basicBurningDamage: incoming.basicDamage, tightBeam: incoming.tightBeam === true });
       }
@@ -644,7 +649,7 @@ async function applyFromCard(options: {
           kinds: fragile,
           injury: result.injury,
           majorWound: result.consequences.majorWound === true,
-          burningOrExplosive: incoming.type === "burn" || flag.explosive === true || result.incendiary === true,
+          burningOrExplosive: burnsLikeFire({ type: incoming.type, explosive: flag.explosive, incendiary: result.incendiary, surge: flag.surge }),
           vitals: result.hitLocation === "vitals",
         });
         const who = { uuid: String(actor.uuid ?? ""), name: String(actor.name ?? "") };

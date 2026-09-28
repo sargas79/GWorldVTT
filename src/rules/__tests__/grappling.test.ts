@@ -27,8 +27,9 @@ describe("taking hold of somebody (Campaigns p. 370)", () => {
   });
 
   /** "you do not prevent him from moving away -- you're just extra encumbrance" */
-  it("cannot hold somebody more than twice its own ST", () => {
-    expect(preventsMovement(10, 20)).toBe(true);
+  it("cannot hold somebody of twice its own ST or more", () => {
+    expect(preventsMovement(10, 19)).toBe(true);
+    expect(preventsMovement(10, 20)).toBe(false);
     expect(preventsMovement(10, 21)).toBe(false);
     expect(preventsMovement(20, 10)).toBe(true);
   });

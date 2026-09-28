@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { SYSTEM_ID } from "../constants.js";
-import { clearFeint, consumeFeint, feintDefenseScore, recordFeint } from "../feint.js";
+import { parryWeaponRows } from "../combat-extensions.js";
+import { clearFeint, consumeFeint, endAttackedThisTurn, feintDefenseScore, feintUsesUnbalancedWeapon, noteFeintedWith, recordFeint } from "../feint.js";
 
 const globals = globalThis as Record<string, unknown>;
 
@@ -83,6 +84,44 @@ describe("remembering a feint", () => {
     targeting([], { id: "Combat.1", round: 3 });
     await recordFeint(attacker, "Actor.foe", -3);
 
+    targeting(["Actor.foe"], { id: "Combat.1", round: 4 });
+    expect(await consumeFeint(attacker)).toBe(-3);
+  });
+
+  /**
+   * Revised p. 365: "if you Feint and somehow make multiple attacks next turn,
+   * the feint applies to them all."
+   */
+  it("applies to every attack made on the turn it is used", async () => {
+    const attacker = actor();
+    targeting([], { id: "Combat.1", round: 3 });
+    await recordFeint(attacker, "Actor.foe", -3);
+
+    targeting(["Actor.foe"], { id: "Combat.1", round: 4 });
+    expect(await consumeFeint(attacker)).toBe(-3);
+    expect(await consumeFeint(attacker)).toBe(-3);
+    expect(await consumeFeint(attacker)).toBe(-3);
+  });
+
+  it("is over on the turn after that, once it has been used", async () => {
+    const attacker = actor();
+    targeting([], { id: "Combat.1", round: 3 });
+    await recordFeint(attacker, "Actor.foe", -3);
+
+    targeting(["Actor.foe"], { id: "Combat.1", round: 4 });
+    await consumeFeint(attacker);
+    targeting(["Actor.foe"], { id: "Combat.1", round: 5 });
+    expect(await consumeFeint(attacker)).toBe(0);
+    expect(attacker.getFlag(SYSTEM_ID, "feint")).toBeUndefined();
+  });
+
+  it("gives an attack at somebody else nothing, and the next at the feinted foe still has it", async () => {
+    const attacker = actor();
+    targeting([], { id: "Combat.1", round: 3 });
+    await recordFeint(attacker, "Actor.foe", -3);
+
+    targeting(["Actor.bystander"], { id: "Combat.1", round: 4 });
+    expect(await consumeFeint(attacker)).toBe(0);
     targeting(["Actor.foe"], { id: "Combat.1", round: 4 });
     expect(await consumeFeint(attacker)).toBe(-3);
   });
@@ -185,5 +224,63 @@ describe("what a foe rolls against a feint", () => {
 
   it("survives an actor with nothing on it", () => {
     expect(feintDefenseScore({}).score).toBe(10);
+  });
+});
+
+
+/** Revised p. 365: "if you Feint with an unbalanced weapon, you cannot parry with it, exactly as if you had used it to attack." */
+describe("feinting with an unbalanced weapon", () => {
+  function fighter(attacked = false) {
+    const updates: Array<Record<string, unknown>> = [];
+    const conditions = { attackedThisTurn: attacked };
+    return {
+      updates,
+      isOwner: true,
+      system: {
+        conditions,
+        derived: {
+          melee: [
+            { itemId: "axe", modeIndex: 0, name: "Axe", unbalanced: true },
+            { itemId: "rapier", modeIndex: 0, name: "Rapier", unbalanced: false },
+          ],
+        },
+      },
+      update: async (data: Record<string, unknown>) => {
+        updates.push(data);
+        if ("system.conditions.attackedThisTurn" in data) conditions.attackedThisTurn = Boolean(data["system.conditions.attackedThisTurn"]);
+      },
+    };
+  }
+
+  it("knows which weapons are unbalanced", () => {
+    const actor = fighter();
+    expect(feintUsesUnbalancedWeapon(actor, "axe", 0)).toBe(true);
+    expect(feintUsesUnbalancedWeapon(actor, "rapier", 0)).toBe(false);
+    expect(feintUsesUnbalancedWeapon(actor, "axe", 1)).toBe(false);
+    expect(feintUsesUnbalancedWeapon(actor, undefined, undefined)).toBe(false);
+  });
+
+  it("marks the fighter as having attacked, which takes the axe out of the parry", async () => {
+    const actor = fighter();
+    expect(await noteFeintedWith(actor, "axe", 0)).toBe(true);
+    expect(actor.system.conditions.attackedThisTurn).toBe(true);
+    const rows = actor.system.derived.melee;
+    expect(parryWeaponRows(actor, rows, actor.system.conditions.attackedThisTurn).map((row) => row.name)).toEqual(["Rapier"]);
+  });
+
+  it("leaves a balanced weapon's parry alone", async () => {
+    const actor = fighter();
+    expect(await noteFeintedWith(actor, "rapier", 0)).toBe(false);
+    expect(actor.updates).toEqual([]);
+    expect(actor.system.conditions.attackedThisTurn).toBe(false);
+  });
+
+  it("frees the weapon again when the next turn begins", async () => {
+    const actor = fighter(true);
+    await endAttackedThisTurn(actor);
+    expect(actor.system.conditions.attackedThisTurn).toBe(false);
+    const idle = fighter(false);
+    await endAttackedThisTurn(idle);
+    expect(idle.updates).toEqual([]);
   });
 });

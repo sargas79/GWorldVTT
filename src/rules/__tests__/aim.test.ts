@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { BRACED_BONUS, MAX_EXTRA_AIM_TURNS, aimBonus } from "../aim.js";
+import { BRACED_BONUS, MAX_EXTRA_AIM_TURNS, aimBonus, cappedTargetingBonus } from "../aim.js";
 
 /** Aim (GURPS Basic Set: Campaigns p. 364). */
 describe("aimBonus", () => {
@@ -29,5 +29,20 @@ describe("aimBonus", () => {
 
   it("never claims a negative Accuracy", () => {
     expect(aimBonus({ turnsAimed: 2, accuracy: -1 }).total).toBe(1);
+  });
+});
+
+/** Revised p. 372: "The sum of Acc and all bonuses from targeting systems can never exceed twice the base Acc." */
+describe("cappedTargetingBonus", () => {
+  it("lets the systems add up to the base Acc and no more", () => {
+    expect(cappedTargetingBonus(2, 4)).toBe(2);
+    expect(cappedTargetingBonus(2, 2)).toBe(2);
+    expect(cappedTargetingBonus(2, 1)).toBe(1);
+    expect(cappedTargetingBonus(5, 3)).toBe(3);
+  });
+
+  it("gives nothing on a weapon with no Acc, or for a negative bonus", () => {
+    expect(cappedTargetingBonus(0, 3)).toBe(0);
+    expect(cappedTargetingBonus(3, -1)).toBe(0);
   });
 });

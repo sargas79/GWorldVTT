@@ -116,6 +116,25 @@ export function slamDamage(hitPoints: number, velocityYards: number): SlamDamage
   return { dice: raw - whole >= 0.5 ? whole + 1 : whole, modifier: 0 };
 }
 
+/**
+ * What the skill a slam was rolled with adds to the slammer's damage (Revised
+ * p. 371): "You add any damage bonuses for skill (Brawling or Sumo Wrestling)
+ * or All-Out Attack (Strong); your foe does not."
+ *
+ * Brawling at DX+2 or better adds +1 per die (Characters p. 182); Sumo
+ * Wrestling adds +1 per die at DX+1 and +2 at DX+2 or better "when you slam or
+ * shove" (p. 222). The dice are the slam's own, and a slam of a fraction of a
+ * die counts as one. Any other skill, DX included, adds nothing.
+ */
+export function slamSkillBonus(skill: string, level: number, dx: number, dice: number): number {
+  const above = level - dx;
+  const perDie =
+    skill === "Brawling" ? (above >= 2 ? 1 : 0)
+    : skill === "Sumo Wrestling" ? (above >= 2 ? 2 : above >= 1 ? 1 : 0)
+    : 0;
+  return perDie * Math.max(1, Math.floor(dice));
+}
+
 /** Who ends up on the ground after a slam. */
 export type SlamOutcome =
   | "attackerKnocksDown"

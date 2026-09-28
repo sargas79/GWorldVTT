@@ -260,19 +260,28 @@ export type MoveDirection = "forward" | "sideways" | "backward";
  * Returns null when the posture forbids ordinary movement: sitting cannot move
  * at all, and lying down spends everything to shift one hex, neither of which
  * is a per-hex cost the caller can add up.
+ *
+ * Flyers and swimmers (Revised p. 387) pay "nothing extra for posture,
+ * footing, or obstructed ground": with `flyingOrSwimming` those three are
+ * left out, and only the direction of travel is priced. Their vertical and
+ * diagonal moves are `flightMoveCost`'s (1 and 1.5 movement points a yard).
  */
 export function hexMovementCost(options: {
   direction: MoveDirection;
+  /** Flying or swimming: no charge for posture, obstructions or bad footing. */
+  flyingOrSwimming?: boolean;
   posture?: string;
   /** Minor obstructions in the hex being entered. */
   obstructions?: number;
   /** Treacherous ground or stairs, each +1 per hex. */
   badFooting?: boolean;
 }): number | null {
+  const base = options.direction === "forward" ? 1 : 2;
+  if (options.flyingOrSwimming) return base;
+
   const posture = POSTURE_COST[options.posture ?? "standing"];
   if (posture === null || posture === undefined) return null;
 
-  const base = options.direction === "forward" ? 1 : 2;
   const obstructions = Math.max(0, options.obstructions ?? 0);
   return base + posture + obstructions + (options.badFooting ? 1 : 0);
 }

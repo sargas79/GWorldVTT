@@ -11,6 +11,7 @@ import {
   evadeModifier,
   maxDeception,
   slamDamage,
+  slamSkillBonus,
   slamOutcome,
 } from "../attack-options.js";
 
@@ -205,5 +206,31 @@ describe("slams, tackles, pounces, shield rushes and shoves (pp. 371-372)", () =
     const { shoveDamage } = await import("../attack-options.js");
     expect(shoveDamage({ dice: 1, adds: -2 }, false)).toEqual({ dice: 1, adds: -2 });
     expect(shoveDamage({ dice: 2, adds: 1 }, true)).toEqual({ dice: 2, adds: -1 });
+  });
+});
+
+/** Revised p. 371: "You add any damage bonuses for skill (Brawling or Sumo Wrestling) or All-Out Attack (Strong); your foe does not." */
+describe("the damage bonus of the skill a slam is rolled with", () => {
+  it("adds +1 per die for Brawling at DX+2, and nothing below it", () => {
+    expect(slamSkillBonus("Brawling", 12, 10, 3)).toBe(3);
+    expect(slamSkillBonus("Brawling", 13, 10, 3)).toBe(3);
+    expect(slamSkillBonus("Brawling", 11, 10, 3)).toBe(0);
+  });
+
+  it("adds +1 per die for Sumo Wrestling at DX+1 and +2 per die at DX+2", () => {
+    expect(slamSkillBonus("Sumo Wrestling", 10, 10, 2)).toBe(0);
+    expect(slamSkillBonus("Sumo Wrestling", 11, 10, 2)).toBe(2);
+    expect(slamSkillBonus("Sumo Wrestling", 12, 10, 2)).toBe(4);
+    expect(slamSkillBonus("Sumo Wrestling", 14, 10, 2)).toBe(4);
+  });
+
+  it("counts a slam of a fraction of a die as one die", () => {
+    expect(slamSkillBonus("Sumo Wrestling", 12, 10, 1)).toBe(2);
+  });
+
+  it("adds nothing for DX, Jumping or Shield", () => {
+    expect(slamSkillBonus("DX", 14, 14, 3)).toBe(0);
+    expect(slamSkillBonus("Jumping", 16, 10, 3)).toBe(0);
+    expect(slamSkillBonus("Shield", 16, 10, 3)).toBe(0);
   });
 });

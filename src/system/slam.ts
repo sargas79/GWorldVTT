@@ -20,7 +20,7 @@ import { damageDistance, rollDamage, rollSuccess } from "./roll.js";
 import { callCombatHook, COMBAT_HOOKS } from "./combat-extensions.js";
 import { targetedTokens, withTargets } from "./targets.js";
 import { attributeOf } from "./attributes.js";
-import { shoveDamage, slamDamage, slamOutcome, slamSkills, slamToHit, type SlamKind } from "../rules/attack-options.js";
+import { shoveDamage, slamDamage, slamOutcome, slamSkillBonus, slamSkills, slamToHit, type SlamKind } from "../rules/attack-options.js";
 import { knockback, strongAttackDamageBonus } from "../rules/maneuvers.js";
 import { formatDiceAdds, parseDiceAdds, toRollFormula } from "../rules/dice.js";
 import { normalizeSkillName } from "../rules/skills.js";
@@ -215,11 +215,15 @@ export async function slamOrShove(actor: any, kind: "slam" | "shove"): Promise<v
   if (hits.length === 0) return;
 
   if (kind === "shove") return shove(actor, prep, label, hits, foesWanted);
-  return slam(actor, prep, label, hits, foesWanted, asked.velocity);
+  return slam(actor, prep, label, hits, foesWanted, asked.velocity, variant === null);
 }
 
-async function slam(actor: any, prep: SlamPreparation, label: string, hits: any[], foesWanted: number, velocity: number): Promise<void> {
+async function slam(actor: any, prep: SlamPreparation, label: string, hits: any[], foesWanted: number, velocity: number, own: boolean): Promise<void> {
   const mine = slamDamage(Number(actor.system?.hp?.max ?? 0), velocity);
+  // "You add any damage bonuses for skill (Brawling or Sumo Wrestling) or
+  // All-Out Attack (Strong); your foe does not" (p. 371). A module's slam
+  // says what its own bonus is.
+  const skillBonus = own ? slamSkillBonus(prep.skill.name, prep.skill.level, attributeOf(actor, "DX"), mine.dice) : 0;
   const strong = actor?.system?.maneuver === "allOutAttack" && actor.system.allOutAttackOption === "strong"
     ? strongAttackDamageBonus(mine.dice)
     : 0;
@@ -230,6 +234,7 @@ async function slam(actor: any, prep: SlamPreparation, label: string, hits: any[
     damageType: "cr",
     modifiers: [
       ...(prep.damageBonus ? [{ label, value: Number(prep.damageBonus) }] : []),
+      ...(skillBonus ? [{ label: prep.skill.name, value: skillBonus }] : []),
       ...(strong ? [{ label: game.i18n.localize("GWORLD.Maneuver.AllOutAttackOption.strong"), value: strong }] : []),
     ],
     source: "slam",

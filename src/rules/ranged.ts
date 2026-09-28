@@ -285,7 +285,7 @@ export interface SprayTarget {
  *
  * Each target is its own rapid-fire attack at the shots aimed at it. Swinging
  * the weapon from one to the next wastes shots -- one a yard between targets
- * more than a yard apart, two a yard above RoF 16 -- and costs +1 Recoil for
+ * more than a yard apart, two a yard at RoF 16 or more -- and costs +1 Recoil for
  * the second target, +2 for the third, and so on. The shots aimed and wasted
  * together cannot come to more than the Rate of Fire.
  *
@@ -305,7 +305,7 @@ export function sprayingFire(options: {
   problem: "rateOfFire" | "targets" | "tooManyShots" | "noShots" | null;
 } {
   const rateOfFire = Math.max(1, Math.floor(options.rateOfFire) || 1);
-  const perYard = rateOfFire > 16 ? 2 : 1;
+  const perYard = rateOfFire >= 16 ? 2 : 1;
   const recoil = Math.max(1, Math.floor(options.recoil) || 1);
   const attacks = options.targets.map((target, index) => {
     const yards = index === 0 ? 0 : Math.max(0, Math.round(Number(target.yardsFromPrevious) || 0));

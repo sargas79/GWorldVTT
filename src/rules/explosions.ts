@@ -57,8 +57,10 @@ export const COLLATERAL_DIVISOR_PER_YARD = 3;
  *   - The armour divisor does not apply. A shaped charge at (10) strips the DR
  *     of what it hits; everyone nearby gets their full DR against the blast.
  *
- * A third is the caller's to honour: "Use torso armor to determine DR against
- * explosion damage", whatever part of them was nearest.
+ * A third is the caller's to honour: "Work out DR against explosion damage as
+ * explained in Large-Area Injury (p. 400)" -- the average of the torso's DR
+ * and the least protected exposed location's, rather than the torso's alone as
+ * the 2004 printing had it. See `collateralInjury`.
  */
 export interface BlastEffect {
   /** Damage this victim takes before DR. */
@@ -106,6 +108,17 @@ export function blastPlacementOf(value: unknown): BlastPlacement | null {
  */
 export function contactCoverDr(options: { torsoDr: number; hp: number }): number {
   return Math.max(0, Math.floor(Number(options.torsoDr) || 0)) + Math.max(0, Math.floor(Number(options.hp) || 0));
+}
+
+/**
+ * How the blast lands on a victim it did not strike (p. 414): "Work out DR
+ * against explosion damage as explained in Large-Area Injury (p. 400)", so it
+ * is a large-area injury -- a torso hit whose DR is the average of the torso
+ * and the least protected exposed location. The one the attack struck takes it
+ * where it was aimed, as any blow.
+ */
+export function collateralInjury(blast: { direct: boolean }, hitLocation: string): { hitLocation: string; largeArea: boolean } {
+  return blast.direct ? { hitLocation, largeArea: false } : { hitLocation: "torso", largeArea: true };
 }
 
 export function blastAt(options: {

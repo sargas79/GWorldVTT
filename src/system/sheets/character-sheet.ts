@@ -149,8 +149,9 @@ import { drMetByAttack, traitsOf, wornArmor } from "../damage.js";
 import { afflictionDrBonus } from "../../rules/affliction-resistance.js";
 import { afflictionLocation, applyAfflictionEffects } from "../afflictions.js";
 import { peekCalledShot } from "../called-shot.js";
-import { feintDefenseScore, recordFeint } from "../feint.js";
+import { feintDefenseScore, noteFeintedWith, recordFeint } from "../feint.js";
 import { facingChangeAtEndOfMove, facingChangeCost, hexMovementCost } from "../../rules/tactical.js";
+import { flightMoveCost } from "../../rules/mounted.js";
 import { CompendiumPicker } from "../apps/compendium-picker.js";
 import { SYSTEM_ID } from "../constants.js";
 import { SKILL_ORDER } from "../settings.js";
@@ -361,6 +362,14 @@ function tacticalPanel(system: any, derived: any) {
     // (p. 387): a 60-degree turn, a 120, and turning right round.
     turnCosts: [1, 2, 3].map((sides) => facingChangeCost(0, sides as 0 | 1 | 2 | 3 | 4 | 5)),
     handedness: system.handedness ?? "right",
+    // Flyers and swimmers pay a point a yard up or along and a point and a half
+    // on the diagonal, and nothing extra for posture, footing or obstructions
+    // (Revised p. 387).
+    flying: {
+      level: hexMovementCost({ direction: "forward", flyingOrSwimming: true }),
+      vertical: flightMoveCost({ horizontal: 0, vertical: 1 }),
+      diagonal: flightMoveCost({ horizontal: 1, vertical: 1 }),
+    },
   };
 }
 
@@ -1948,6 +1957,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       // their best of several things, and the card should say which it was.
       defender: { actor: foe, base: defense.score, note: defense.source },
     });
+
+    // "If you Feint with an unbalanced weapon, you cannot parry with it,
+    // exactly as if you had used it to attack" (p. 365), whether or not the
+    // Feint worked.
+    await noteFeintedWith(this.actor, item?.id, mode?.index);
 
     // A module may take the result over; otherwise it is the Basic Set's feint.
     const record = feintResultRecorded({ feinter: this.actor, foe, result });

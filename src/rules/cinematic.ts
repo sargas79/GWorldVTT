@@ -157,24 +157,20 @@ export const DRESS_STATES: readonly Dress[] = ["clothed", "bares", "skimpy", "nu
  *
  * "PCs with Attractive or better appearance can get a bonus to active defenses
  * simply by undressing! Any outfit that bares legs, chest, or midriff is +1.
- * Just a loincloth or skimpy swimwear is +2. Topless females get an extra +1.
- * Total nudity gives no further bonus to defense."
+ * Just a loincloth or skimpy swimwear is +2. Total nudity gives no further
+ * bonus to defense." (The 2004 printing also gave topless females an extra +1;
+ * the Revised edition removed it.)
  *
- * The extra point the book gives a bare chest is a flag of its own rather than
- * anything read off the sheet: what a character is wearing is the player's to
- * say, and it is not something to be inferred.
+ * What a character is wearing is the player's to say, and it is not something
+ * to be inferred from the sheet.
  */
 export function nudityDefenseBonus(options: {
   dress: Dress;
   /** Levels of the Appearance advantage. Attractive is 1, and nothing below counts. */
   appearance: number;
-  /** The book's extra +1 for a bare chest. */
-  topless?: boolean;
 }): number {
   if (options.appearance < 1) return 0;
-  const base = options.dress === "clothed" ? 0 : options.dress === "bares" ? 1 : 2;
-  if (base === 0) return 0;
-  return base + (options.topless ? 1 : 0);
+  return options.dress === "clothed" ? 0 : options.dress === "bares" ? 1 : 2;
 }
 
 /**
