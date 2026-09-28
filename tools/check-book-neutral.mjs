@@ -34,51 +34,13 @@ const EXTENSIONS = /\.(ts|mts|js|mjs|hbs|html|json|css)$/;
  * before a page. A series takes its number: "Monster Hunters 1 p. 23".
  */
 const OTHER_BOOKS = [
-  "Martial Arts",
-  "Monster Hunters",
-  "Magic",
-  "Thaumatology",
-  "Powers",
-  "Psionic Powers",
-  "Psis",
-  "Low-Tech",
-  "High-Tech",
-  "Ultra-Tech",
-  "Bio-Tech",
-  "Fantasy-Tech",
-  "Fantasy",
-  "Dungeon Fantasy",
-  "Dungeon Fantasy RPG",
-  "Action",
-  "Horror",
-  "Supers",
-  "Space",
-  "Spaceships",
-  "Mass Combat",
-  "Tactical Shooting",
-  "Gun Fu",
-  "Loadouts",
-  "Power-Ups",
-  "Social Engineering",
-  "Infinite Worlds",
-  "Banestorm",
-  "Mysteries",
-  "Zombies",
-  "Vehicles",
-  "Crusades",
-  "Transhuman Space",
-  "Traveller",
-  "Discworld",
-  "Pyramid",
-  "Sorcery",
-  "Ritual Path Magic",
-  "Template Toolkit",
-  "How to Be a GURPS GM",
-  "Alphabet Arcane",
-  "Boardroom and Curia",
-  "City Stats",
-  "Hot Spots",
-  "Adaptations",
+  "Martial Arts", "Monster Hunters", "Magic", "Thaumatology", "Powers", "Psionic Powers", "Psis",
+  "Low-Tech", "High-Tech", "Ultra-Tech", "Bio-Tech", "Fantasy-Tech", "Fantasy", "Dungeon Fantasy",
+  "Dungeon Fantasy RPG", "Action", "Horror", "Supers", "Space", "Spaceships", "Mass Combat",
+  "Tactical Shooting", "Gun Fu", "Loadouts", "Power-Ups", "Social Engineering", "Infinite Worlds",
+  "Banestorm", "Mysteries", "Zombies", "Vehicles", "Crusades", "Transhuman Space", "Traveller",
+  "Discworld", "Pyramid", "Sorcery", "Ritual Path Magic", "Template Toolkit", "How to Be a GURPS GM",
+  "Alphabet Arcane", "Boardroom and Curia", "City Stats", "Hot Spots", "Adaptations",
 ];
 
 const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -139,8 +101,7 @@ for (const dir of SCOPE) {
     const text = readFileSync(path, "utf8");
     for (const { number, line, joined } of joinedLines(text)) {
       for (const name of MODULE_NAMES) {
-        if (name.test(line))
-          problems.push(`${file}:${number}: names an add-on module: ${line.trim().slice(0, 140)}`);
+        if (name.test(line)) problems.push(`${file}:${number}: names an add-on module: ${line.trim().slice(0, 140)}`);
       }
       const cited = CITATION.exec(joined);
       // A citation that starts on the next line is reported there.
@@ -158,17 +119,13 @@ for (const dir of SCOPE) {
 for (const exception of EXCEPTIONS) {
   for (const file of exception.files) {
     if (!used.has(`${exception.issue}:${file}`)) {
-      problems.push(
-        `tools/check-book-neutral.mjs: the exception for #${exception.issue} lists ${file}, which no longer cites that book; remove it`,
-      );
+      problems.push(`tools/check-book-neutral.mjs: the exception for #${exception.issue} lists ${file}, which no longer cites that book; remove it`);
     }
   }
 }
 
 if (problems.length > 0) {
-  console.error(
-    `The system must stay book-neutral (see "What belongs in the system" in the README).\n`,
-  );
+  console.error(`The system must stay book-neutral (see "What belongs in the system" in the README).\n`);
   for (const problem of problems) console.error(`  ${problem}`);
   console.error(`\n${problems.length} problem(s).`);
   process.exit(1);
