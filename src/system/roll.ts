@@ -25,6 +25,15 @@ import {
 import { consumeTurnedBlade, recordTurnedBlade } from "./turned-blade.js";
 import { consumePulledBlow, pulledFormula, recordPulledBlow } from "./pulled-blow.js";
 import { isRuleOn } from "./optional-rules.js";
+import {
+  contactShot,
+  readRevisedRanged,
+  revisedRangedFields,
+  revisedRangedLines,
+  simplifiedRange,
+  simplifiedRangeOn,
+  type RevisedRangedInput,
+} from "./revised-ranged.js";
 import { normalizeDamage, rolledDice } from "./modifying-dice.js";
 import { rollBreakdown, signed, type RollBreakdown } from "./roll-breakdown.js";
 import { damageDice, damageDiceRow } from "./damage-dice.js";
@@ -3549,6 +3558,7 @@ export async function promptForRangedAttack(options: {
       </label>
       ${vehicleFields}
       ${mountFields}
+      ${revisedRangedFields(rateOfFire)}
       ${attackOptionFields(addonContext)}
       <div data-roll-breakdown></div>
     </div>`;
@@ -3585,6 +3595,7 @@ export async function promptForRangedAttack(options: {
       cover: cover as CoverApproach | "none",
       calledShot,
       aimed,
+      revised: readRevisedRanged(form),
       dual: readDualWeapon(form),
       weaponStrike: form?.querySelector<HTMLSelectElement>('select[name="weaponStrike"]')?.value ?? "",
       lockedOn: form?.querySelector<HTMLInputElement>('input[name="lockedOn"]')?.checked ?? false,
@@ -3740,6 +3751,8 @@ interface RangedInput {
   laser?: { on: boolean; targetSees: boolean } | null;
   /** True where a homing weapon's seeker has locked on, which is worth its Acc (since 1.128.0). */
   lockedOn?: boolean;
+  /** The Revised edition's optional ranged rules, from the dialog's extra fields (since 1.182.0). */
+  revised?: RevisedRangedInput | null;
 }
 
 /** What firing from a vehicle adds to a shot. */
@@ -3909,13 +3922,22 @@ export function rangedModifiers(
   }
   // In close combat the speed/range penalty is dropped and Bulk stands in its
   // place: the target is right there, and the weapon is in the way.
-  if (speedRange !== 0 && situation !== "closeCombat" && steering.range) {
+  // Simplified Range (Revised p. 577) reads a band in place of the table's range.
+  const banded = simplifiedRangeOn() ? simplifiedRange(seenRange) : null;
+  const rangeValue = banded ? banded.penalty : speedRange;
+  if (banded && banded.penalty !== 0 && situation !== "closeCombat" && steering.range) {
+    modifiers.push({
+      label: game.i18n.format("GWORLD.RevisedRanged.Band", { band: game.i18n.localize(`GWORLD.RevisedRanged.Bands.${banded.band}`) }),
+      value: banded.penalty,
+      key: "speedRange",
+    });
+  } else if (!banded && speedRange !== 0 && situation !== "closeCombat" && steering.range) {
     modifiers.push({
       label:
         seenRange === input.range
           ? L("SpeedRange")
           : game.i18n.format("GWORLD.Ranged.SpeedRangeUphill", { yards: seenRange }),
-      value: speedRange,
+      value: rangeValue,
       key: "speedRange",
     });
   }
@@ -3951,7 +3973,9 @@ export function rangedModifiers(
   // A Heroic Archer does the same with a bow (Revised p. 327).
   const heroic = weapon.heroicArcher ?? null;
   let heroicWaived = false;
-  if (situation !== "normal") {
+  // A close-contact shot against an unresisting target never takes Bulk (Revised p. 576).
+  const contact = contactShot(input.revised);
+  if (situation !== "normal" && !(contact && input.revised?.unresisting)) {
     if (heroic && !gunslinger) {
       heroicWaived = true;
       modifiers.push({
@@ -4042,7 +4066,8 @@ export function rangedModifiers(
   // bonus." So a steered shot with a journey ahead of it is aimed whether the
   // firer took the maneuver or not -- but only the maneuver buys the extra
   // turns and the bracing, which is why those stay behind the checkbox.
-  const deliberatelyAimed = input.aimed && mayAim;
+  // A close-contact shot gets no bonus from Acc, sights or aiming (Revised p. 576).
+  const deliberatelyAimed = input.aimed && mayAim && !contact;
   // A homing weapon that has locked on gets its Acc as if it had aimed (since
   // API 1.128.0). Where nothing else would have given it, the line says so,
   // so a listener that clears the lock-on knows which line to take away.
@@ -4051,7 +4076,7 @@ export function rangedModifiers(
   // A laser sight: "If you can see your own aiming dot, you get +1 to hit",
   // aimed or not, out to its range -- the weapon's 1/2D where none is given
   // (p. 411). Beyond that the dot is too dispersed to see.
-  const laserBonus = input.laser?.on
+  const laserBonus = input.laser?.on && !contact
     ? laserSight({ rangeYards: effectiveRange, halfDamageRange: weapon.halfDamageRange ?? 0 }).toHit
     : 0;
   // "The sum of Acc and all bonuses from targeting systems can never exceed
@@ -4071,7 +4096,7 @@ export function rangedModifiers(
   };
   let targetingCut = 0;
   let targetingChecked = false;
-  const accuracyClaimed = accuracyApplies({ guidance, aimed: deliberatelyAimed, secondsInFlight: flight.seconds, lockedOn });
+  const accuracyClaimed = !contact && accuracyApplies({ guidance, aimed: deliberatelyAimed, secondsInFlight: flight.seconds, lockedOn });
   if (accuracyClaimed) {
     // Aimed on the sheet: Accuracy, the second and third turns, the bracing.
     // Aimed by the checkbox alone: Accuracy, as one turn's aim is worth.
@@ -4160,6 +4185,9 @@ export function rangedModifiers(
   if (laserBonus !== 0) modifiers.push({ label: L("LaserSight"), value: laserBonus, key: "laser" });
   // A laser sight alone, with nothing aimed, is a targeting system too.
   if (!targetingChecked && laserBonus !== 0) targetingCapLine(laserBonus);
+
+  // The Revised edition's optional lines: close contact, non-combat bonuses, striking around armour.
+  for (const line of revisedRangedLines(input.revised)) modifiers.push(line);
 
   const rapidFire = rapidFireBonus(input.shots ?? 1);
   if (rapidFire !== 0) modifiers.push({ label: L("RapidFire"), value: rapidFire });

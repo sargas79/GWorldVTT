@@ -72,6 +72,8 @@ export interface ArmorPiece {
    * would be saying two different things about the same spot.
    */
   drByLocation?: ReadonlyArray<{ locations: readonly HitLocation[]; dr: number }>;
+  /** n in 6 chance of protecting a hit (Basic Set Revised p. 576); absent or 6 is full coverage. */
+  coverage?: number | null;
   /** Footwear's DR on the underside of the foot (Characters p. 283), met by a blow from below. */
   soleDr?: number | null;
 }

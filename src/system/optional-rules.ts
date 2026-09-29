@@ -87,6 +87,13 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     // edition's addendum, so off unless the table wants them.
     { key: "finerHitLocations", reference: "Basic Set Revised p. 566", default: false },
     { key: "chestAbdomenSplit", reference: "Basic Set Revised p. 566", default: false },
+    // Optional rules for ranged combat (Addendum 4), all off.
+    { key: "closeContactShots", reference: "Basic Set Revised p. 576", default: false },
+    { key: "partialCoverage", reference: "Basic Set Revised p. 576", default: false },
+    { key: "nonCombatBonuses", reference: "Basic Set Revised p. 576", default: false },
+    { key: "trickyShooting", reference: "Basic Set Revised p. 577", default: false },
+    { key: "simplifiedRange", reference: "Basic Set Revised p. 577", default: false },
+    { key: "largeTargetDamage", reference: "Basic Set Revised p. 577", default: false },
   ],
   injury: [
     { key: "hitLocations", reference: "Campaigns p. 398", default: true },

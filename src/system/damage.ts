@@ -17,6 +17,7 @@
 import { isMissingPart, withChestCoverage } from "../rules/revised-hit-locations.js";
 import { parseVulnerability, worstVulnerability, type Vulnerability } from "../rules/vulnerability.js";
 import { type ArmorPiece } from "../rules/armor.js";
+import { rollPartialCoverage, withLargeTarget } from "./revised-ranged.js";
 import { bluntTraumaInjury } from "../rules/layered-armor.js";
 import { ablativeLoss, drAgainst, drFromBelow, hardenedAgainst, remainingDr, drLostAfterWear } from "../rules/armor.js";
 import { criticalDr } from "../rules/criticals.js";
@@ -365,6 +366,7 @@ export function wornArmor(actor: any): ArmorPiece[] {
       drLost: Number(item.system?.drLost ?? 0) || 0,
       forceField: item.system?.forceField === true,
       soleDr: typeof item.system?.soleDr === "number" ? item.system.soleDr : null,
+      coverage: typeof item.system?.coverage === "number" ? item.system.coverage : 6,
     }));
 }
 
@@ -431,7 +433,9 @@ export function resolveDamageAgainst(actor: any, incoming: IncomingDamage): Appl
   // step it down either.
   const internal = blastPlacementOf(damage.blastPlacement) === "internal";
 
-  const worn = withChestCoverage(wornArmor(actor), damage.addonLocation, isRuleOn("chestAbdomenSplit")) as ArmorPiece[];
+  const chested = withChestCoverage(wornArmor(actor), damage.addonLocation, isRuleOn("chestAbdomenSplit")) as ArmorPiece[];
+  // Hitting 'Em Where It Hurts (Revised p. 576): one 1d roll for the partly armoured location.
+  const worn = rollPartialCoverage(chested, damage.hitLocation).worn;
   const arc = isRuleOn("frontArmor") ? (damage.arc ?? null) : null;
   const { naturalDr, lines, layers } = armourAt(actor, damage, damage.hitLocation, traits, worn, arc);
 
@@ -892,7 +896,7 @@ function resolvePlaced(actor: any, damage: IncomingDamage, context: {
     // which is the one place the pipeline already knows how to drop it all.
     ...(hardened.ignoresDr ? { critical: { ...(critical ?? {}), ignoreDr: true } } : {}),
     // A body that is not flesh is hurt as its substance allows.
-    ...(hasInjuryTolerance(traits.injuryTolerance) ? { tolerance: traits.injuryTolerance } : {}),
+    ...(hasInjuryTolerance(traits.injuryTolerance) ? { tolerance: withLargeTarget(traits.injuryTolerance, actor) } : {}),
     // And a Vulnerability multiplies what penetrates, before the wounding modifier.
     vulnerability: vulnerable.multiplier,
   });
@@ -1346,7 +1350,7 @@ export async function takeInjury(actor: any, options: TakeInjuryOptions): Promis
     ...(type ? { type } : {}),
     maxHp,
     limbs: { arms: 2 + traits.extraArms, legs: 2 + traits.extraLegs },
-    ...(hasInjuryTolerance(traits.injuryTolerance) ? { tolerance: traits.injuryTolerance } : {}),
+    ...(hasInjuryTolerance(traits.injuryTolerance) ? { tolerance: withLargeTarget(traits.injuryTolerance, actor) } : {}),
     ...(overrides && overrides.woundingModifier !== null ? { woundingOverride: overrides.woundingModifier } : {}),
     ...(threshold !== undefined ? { cripplingThreshold: threshold } : {}),
   });

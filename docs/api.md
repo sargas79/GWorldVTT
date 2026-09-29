@@ -4327,3 +4327,24 @@ runs again on the next load. Each helper returns
   the day's-end roll is the GM's call (no check that the day was free of new hardship), the
   rolls for supernatural powers and the Physician (Psychiatric) hint on the injuries chapter are
   not wired, and the permanent-disadvantage overflow is reported, not added as a trait.
+- **Optional ranged rules** (since 1.182.0; Basic Set Revised pp. 576-577). Switches, all off, in
+  the combat group: `closeContactShots`, `partialCoverage`, `nonCombatBonuses`, `trickyShooting`,
+  `simplifiedRange`, `largeTargetDamage`. Each adds fields to the ranged attack dialog or changes a
+  figure, and adds lines keyed `closeContact`, `nonCombat`, `strikeAround`, `prediction` and
+  `rapidStrike` to the roll (Simplified Range keeps the key `speedRange` on its band line). Close
+  contact drops Acc, sights, aim and a laser's bonus, and Bulk for an unresisting target. Armour
+  gains `system.coverage` (integer 1-6, default 6, the n of "n in 6"; also `ArmorPiece.coverage`,
+  the field the add-on's packs write): with `partialCoverage` on, `resolveDamageAgainst` rolls 1d
+  once per hit for the partly armoured location, coverage of several pieces added, and pieces
+  that fail to protect give no DR. With `largeTargetDamage` on, an Unliving or Homogenous target
+  wounds by its `system.sm` on the p. 577 table (`InjuryTolerance.largeTargetSm`).
+  `rules.closeContactShot`, `nonCombatBonus`, `combinedCoverage`, `coverageProtects`,
+  `strikeAroundPenalty`, `mayDodgeFirearm`, `evasiveBonuses`, `rangedRapidStrikeAllowed`,
+  `splitRateOfFire`, `bandForYards`, `bandPenalty`, `shiftBand`, `largeTargetRow` and
+  `largeTargetWounding` are the pure pieces. Not done: Restricted Dodge Against Firearms (the
+  evasive-movement declaration and defense gate) and Ranged Feint are rules only, with no maneuver
+  option or defense hook; Prediction Shot and Ranged Rapid Strike add their to-hit line but do not
+  lower the target's Dodge, split RoF between two targets or forbid Dual-Weapon Attack in the
+  flow; Simplified Range reads the band from the measured range, with no Move shift of bands
+  between turns; the coverage roll is made when damage is resolved (a preview re-rolls), and the
+  armour sheet has no coverage field yet; the add-on's own rules are not retired.
