@@ -26,6 +26,7 @@ import {
 import {
   catchingFire, FIRE_DAMAGE, ignites, prolongedContactTarget, type FireExposure, type Flammability,
 } from "../rules/fire.js";
+import { travelMultiplier, type TerrainType } from "../rules/vision-corrections.js";
 import { isSkilledMarcher } from "./extra-effort-extras.js";
 import { marchingMilesPerMove } from "../rules/extra-effort-extras.js";
 import { dailyMiles, marchingFatiguePerHour, type Terrain, type TravelWeather } from "../rules/hiking.js";
@@ -245,6 +246,8 @@ export async function hike(options: {
    */
   hot?: boolean;
   modifier: number;
+  /** A terrain type of Terrain Types Redux, its average travel multiplier for the ground (switch `terrainTypes`; since API 1.180.0). */
+  biome?: TerrainType | "";
 }): Promise<void> {
   const { actor } = options;
   if (!mayChange(actor)) return;
@@ -263,6 +266,7 @@ export async function hike(options: {
     weather: options.weather,
     enhancedMove: Number(derived.traitEffects?.enhancedMove) || 1,
     hikingSuccess: outcome.success,
+    ...(options.biome && isRuleOn("terrainTypes") ? { terrainMultiplier: travelMultiplier(options.biome) } : {}),
     // Humping, Tramping, and Yomping: 4 x Move a day, or 6 with a skilled guide (Revised p. 572).
     ...(isRuleOn("realisticMarching") ? { milesPerMove: marchingMilesPerMove(isSkilledMarcher([actor])) } : {}),
   });

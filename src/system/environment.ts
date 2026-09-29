@@ -14,6 +14,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { syncHealthConditions } from "./conditions.js";
 import { applyFatigue } from "./fatigue.js";
+import { applyFrostbite } from "./vision-corrections.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
 import { procedureRoll, wornClothing } from "./procedure-extensions.js";
 import { normalizeSkillName } from "../rules/skills.js";
@@ -182,6 +183,9 @@ export async function rollExposure(options: {
     reason: "exposure",
     details: { heat, temperatureF: options.temperatureF, heatStroke: cost.heatStroke },
   });
+
+  // Frostbite (Basic Set Revised p. 574, switch `frostbite`): 1 HP on each exposed location per FP lost to cold.
+  if (!heat && pools.fpLost > 0) await applyFrostbite(actor, pools.fpLost);
 
   await post(actor, {
     heat,

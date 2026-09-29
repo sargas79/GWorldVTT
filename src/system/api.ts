@@ -26,6 +26,7 @@
  *      and every part of the API may be used.
  */
 
+import { visionApi } from "./vision-corrections.js";
 import { applyHardship, buyOffHardship, clinicianSkillOf, mentalOf, recoverStress, rollDerangementDayEnd } from "./stress.js";
 import { combiningSt, isSkilledMarcher, postCombiningSt, powerEffortFp, rollPowerExtraEffort, tradeFatigueForBonus } from "./extra-effort-extras.js";
 import { currentBad, endHamClause, hamClauseOf, invokeHamClause, setBad, unstattedNpcSkill } from "./task-rules.js";
@@ -115,7 +116,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.179.0";
+export const API_VERSION = "1.180.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -908,6 +909,8 @@ export interface GWorldApi {
   readonly effort: typeof effortApi;
   /** Stress and Derangement (since 1.179.0). */
   readonly mental: typeof mentalApi;
+  /** Terrain, illumination, vision, frostbite and the horizon (since 1.180.0). */
+  readonly vision: typeof visionApi;
   /** The GM Screen (since 1.157.0): open it, roll on its tables, add a module's tables, lists and tabs. */
   readonly gmScreen: typeof gmScreenApi;
   /** Containers (since 1.159.0): which items are containers, what is in one, and putting gear in or taking it out. */
@@ -1124,6 +1127,7 @@ export function createApi(): GWorldApi {
     social: socialApi,
     effort: effortApi,
     mental: mentalApi,
+    vision: visionApi,
     gmScreen: gmScreenApi,
     containers: containersApi,
     hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK, partyChanged: PARTY_CHANGED_HOOK, campaignChanged: CAMPAIGN_CHANGED_HOOK }),

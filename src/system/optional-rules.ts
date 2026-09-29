@@ -87,6 +87,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     // edition's addendum, so off unless the table wants them.
     { key: "finerHitLocations", reference: "Basic Set Revised p. 566", default: false },
     { key: "chestAbdomenSplit", reference: "Basic Set Revised p. 566", default: false },
+    // A Vision roll decides whether a very small or very distant attacker is seen coming (Addendum 4).
+    { key: "visionRollsInCombat", reference: "Basic Set Revised pp. 574-575", default: false },
   ],
   injury: [
     { key: "hitLocations", reference: "Campaigns p. 398", default: true },
@@ -103,6 +105,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     // Rule", and switching it on changes figures every player already knows
     // from their sheet, so it starts switched off.
     { key: "modifyingDiceAdds", reference: "Characters p. 269", default: false },
+    // 1 HP on each exposed hit location per FP lost to cold, "in a harshly realistic campaign" (Addendum 4).
+    { key: "frostbite", reference: "Basic Set Revised p. 574", default: false },
   ],
   rolls: [
     { key: "regularContests", reference: "Campaigns p. 349", default: true },
@@ -155,6 +159,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "collisions", reference: "Campaigns pp. 430-432", default: true },
     { key: "electricity", reference: "Campaigns pp. 432-433", default: true },
     { key: "fire", reference: "Campaigns pp. 433-434", default: true },
+    // The quick terrain table for foraging, Tracking and daily travel (Addendum 4).
+    { key: "terrainTypes", reference: "Basic Set Revised p. 573", default: false },
     { key: "radiation", reference: "Campaigns pp. 435-436", default: true },
     { key: "vehicles", reference: "Campaigns pp. 462-468", default: true },
     // The vehicle moves on its operator's turn, and plows ahead without them.
