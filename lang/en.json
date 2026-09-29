@@ -592,6 +592,10 @@
           "Name": "Close combat",
           "Hint": "Sharing a hex: only a weapon that reaches close is any use there."
         },
+        "closeCombatAnyWeapon": {
+          "Name": "Any weapon in close combat",
+          "Hint": "A weapon without a C reach may fight in close combat at -4 skill for each yard of reach, swing damage -1 a yard, and Parry from the reduced skill. Off unless the GM allows it."
+        },
         "slams": {
           "Name": "Slams",
           "Hint": "Run into someone. Damage comes off how fast you were going."
@@ -627,6 +631,86 @@
         "complementarySkills": {
           "Name": "Complementary skills",
           "Hint": "Roll a skill that helps another: +2 to -2 on the next roll of the skill it assists, discarded from the roll dialog if the GM rules it out."
+        },
+        "wildcardBonus": {
+          "Name": "Bonuses for wildcard skills",
+          "Hint": "A positive relative level with a wildcard skill also works as a bonus to what the GM judges related to it. A button on the wildcard holds the bonus for the next roll of a category the GM picks (Basic Set Revised p. 333)."
+        },
+        "pullingRank": {
+          "Name": "Pulling Rank",
+          "Hint": "Rank as an effective Patron: a Rank trait with the organization’s Patron value gets an Assistance roll, 3d against a number that rises with Rank (Basic Set Revised pp. 337-341)."
+        },
+        "expandedInfluence": {
+          "Name": "Expanded Influence Rolls",
+          "Hint": "An Influence roll gives a reaction by the margin of the Quick Contest, from Disastrous to Excellent, instead of only Good or Bad (Basic Set Revised p. 571)."
+        },
+        "basicAbstractDifficulty": {
+          "Name": "Basic Abstract Difficulty",
+          "Hint": "One penalty from 0 to -10, set in the system settings or per scene, on the rolls of tasks; an NPC without a sheet has skill 10 + BAD (Basic Set Revised p. 578)."
+        },
+        "powerExtraEffort": {
+          "Name": "Extra effort with powers",
+          "Hint": "A Will roll at -1 per 5% (at most 100%) to push a power past its limit, plus the power’s Talent; a flat 1 FP a use or a minute (Basic Set Revised pp. 571-572)."
+        },
+        "godlikeExtraEffort": {
+          "Name": "Godlike Extra Effort",
+          "Hint": "Spend more than 1 FP on extra effort, multiplying the bonus effect by the FP spent and ignoring the maximum (Basic Set Revised p. 572)."
+        },
+        "fatigueForSkill": {
+          "Name": "Trading Fatigue for Skill and Resistance",
+          "Hint": "1 FP per +1, up to +4, on a success roll or a contested resistance, with no Will roll (Basic Set Revised p. 572)."
+        },
+        "stressAndDerangement": {
+          "Name": "Stress and Derangement",
+          "Hint": "Track mental hardship: Stress (temporary) and Derangement (lasting) from failed Fright Checks, ordinary or sanity-blasting (Basic Set Revised pp. 572-573)."
+        },
+        "stressRollPenalties": {
+          "Name": "Stress penalties to rolls",
+          "Hint": "Stress/2 to self-control rolls, steady-hand skills and HT rolls against disease, less Fearlessness (Basic Set Revised p. 573)."
+        },
+        "derangementRollPenalties": {
+          "Name": "Derangement penalties to rolls",
+          "Hint": "Derangement/2 to Influence rolls and rolls to show sanity (Basic Set Revised p. 573)."
+        },
+        "realisticMarching": {
+          "Name": "Realistic marching",
+          "Hint": "A day’s march is 8 hours, or 12 with a skilled guide, at half the Move an hour: 4 or 6 x Move miles, in place of 10 x Move (Basic Set Revised p. 572)."
+        },
+        "terrainTypes": {
+          "Name": "Terrain types",
+          "Hint": "The quick terrain table: named terrains for a hike’s travel speed and for foraging rolls (Basic Set Revised p. 573)."
+        },
+        "frostbite": {
+          "Name": "Frostbite",
+          "Hint": "1 HP on each exposed hit location per FP lost to cold; gloves and a face covering prevent it (Basic Set Revised p. 574)."
+        },
+        "visionRollsInCombat": {
+          "Name": "Vision rolls in combat",
+          "Hint": "A Vision roll decides whether a very small or distant attacker is seen coming; failure leaves no active defense (Basic Set Revised pp. 574-575)."
+        },
+        "closeContactShots": {
+          "Name": "Close-Contact Shots",
+          "Hint": "A gun touching or pressed to the target: +4 with All-Out Attack (Determined), +4 pressed, no Acc or aim, the target may parry (Basic Set Revised p. 576)."
+        },
+        "partialCoverage": {
+          "Name": "Hitting ’Em Where It Hurts",
+          "Hint": "Armour covering n in 6 of a location protects on a 1d roll of n or less; attackers may strike around it at a penalty (Basic Set Revised p. 576)."
+        },
+        "nonCombatBonuses": {
+          "Name": "Non-Combat Bonuses",
+          "Hint": "Up to +10 to shoot in favourable, low-pressure conditions (Basic Set Revised p. 576)."
+        },
+        "trickyShooting": {
+          "Name": "Tricky Shooting",
+          "Hint": "Prediction Shot (Deceptive Attack) and Ranged Rapid Strike (-6, two targets, RoF 2+) with ranged weapons (Basic Set Revised p. 577)."
+        },
+        "simplifiedRange": {
+          "Name": "Simplified Range",
+          "Hint": "Five range bands, Close 0, Short -3, Medium -7, Long -11, Extreme -15, replace the Size and Speed/Range Table's range (Basic Set Revised p. 577)."
+        },
+        "largeTargetDamage": {
+          "Name": "Piercing and impaling vs. large targets",
+          "Hint": "Unliving and Homogenous targets take piercing and impaling by their size modifier (Basic Set Revised p. 577)."
         },
         "teamEfforts": {
           "Name": "Team efforts",
@@ -820,6 +904,38 @@
           "Name": "Tech-level modifiers",
           "Hint": "A technological skill used with gear of another tech level takes a penalty: -1 per TL of difference for a DX-based skill such as Guns; by the table for an IQ-based one, steep for gear ahead of the skill (impossible at four TLs) and gentler for older gear. Weapon attacks and the tools carried for a skill take it (Characters p. 168)."
         },
+        "finerHitLocations": {
+          "Name": "Finer hit locations",
+          "Hint": "Ear, nose, jaw, spine, pelvis, joints and veins/arteries to aim at, the skull and face aimed at from behind, crushing at the vitals, and a 1d on a random hit that may turn it into the vitals, the spine, a joint or the veins. Bodies without the part take the blow on the location it belongs to (Basic Set Revised p. 566)."
+        },
+        "chestAbdomenSplit": {
+          "Name": "Chest and abdomen",
+          "Hint": "The torso is split into chest (9-10 on the random table) and abdomen, which replaces the groin at 11. Armour listing the chest protects only there (Basic Set Revised p. 566)."
+        },
+        "allOutSlams": {
+          "Name": "All-Out Attack slams",
+          "Hint": "An All-Out Attack (Determined, Feint or Strong) that slams may travel a full Move, forward only. Double allows another melee attack before the slam, at half Move (Basic Set Revised p. 575)."
+        },
+        "allOutConcentrate": {
+          "Name": "All-Out Concentrate",
+          "Hint": "A maneuver for +1 to the skill or spell concentrated on, with no active defense and a step; a distraction takes Will-2 (Basic Set Revised p. 575)."
+        },
+        "mentalDefense": {
+          "Name": "Mental Defense",
+          "Hint": "An All-Out Defense option: +2 to rolls to resist supernatural attacks until the next turn, active defenses unchanged (Basic Set Revised p. 575)."
+        },
+        "committedAttack": {
+          "Name": "Committed Attack",
+          "Hint": "A maneuver between Attack and All-Out Attack: Determined +2 to hit or Strong +1 damage, up to two steps, other defenses at -2, and some defenses lost (Basic Set Revised pp. 575-576)."
+        },
+        "defensiveAttack": {
+          "Name": "Defensive Attack",
+          "Hint": "A maneuver between Attack and All-Out Defense: -2 damage or -1 a die, and +1 to Parry or Block (Basic Set Revised p. 576)."
+        },
+        "flatSignatureGear": {
+          "Name": "Flat-cost Signature Gear",
+          "Hint": "Signature Gear becomes a 1-point perk: plot protection against permanent loss for each item you flag as Signature Gear, of any value, however it was acquired. It no longer buys goods with starting wealth (Basic Set Revised p. 342)."
+        },
         "familiarity": {
           "Name": "Familiarity",
           "Hint": "A technological skill takes -2 with an item its user is not familiar with; eight hours of practice make it familiar. A character's familiarities are marked from the attack preview on the Combat tab. Off by default, since until the list is kept every weapon counts as unfamiliar (Characters p. 169)."
@@ -859,6 +975,10 @@
         "cannonFodder": {
           "Name": "Cannon fodder",
           "Hint": "Minor NPCs fail every defense, never go all out, and drop the moment anything gets through their DR (Campaigns p. 417)."
+        },
+        "simplifiedResources": {
+          "Name": "Simplified resources",
+          "Hint": "Ammunition is not counted for heroes until the party is cut off, someone ditches it or they are captured; toggle a weapon to count its shots (Basic Set Revised p. 578)."
         },
         "infiniteAmmunition": {
           "Name": "Infinite ammunition",
@@ -1098,6 +1218,7 @@
       "SpendLess": "Take back the last step of points",
       "NoDefault": "No default",
       "BoughtUpFromDefault": "Bought up from its default: the default counts toward the points spent",
+      "NotYetAvailable": "Not yet available: this skill first exists at {first} and the campaign is at TL{tl} (Basic Set Revised p. 341). The GM decides.",
       "RaisedByTalent": "Raised +{bonus} by a Talent",
       "RaisedByTalents": "Raised +{bonus} by {talents}",
       "Trained": "skills trained",
@@ -1428,6 +1549,8 @@
       "SelfControl9Hint": "Resisted on a 9 or less: one and a half times the printed value.",
       "SelfControl12Hint": "Resisted on a 12 or less. The book's standard, and the one number that leaves the printed value alone.",
       "SelfControl15Hint": "Resisted on a 15 or less, so the disadvantage is worth half the printed value.",
+      "SelfControlNA": "N/A (no roll, ×2.5)",
+      "SelfControlNAHint": "For an Affliction's Disadvantage enhancement, a Temporary Disadvantage, or a being that always behaves one way: no self-control roll, and 2.5 times the printed value, fractions dropped.",
       "SelfControlStandard": "— standard",
       "DescriptionHint": "Show the full description",
       "ShowLess": "Show less",
@@ -1602,7 +1725,7 @@
       "Quality": "Quality",
       "QualityHint": "The grade it was bought in (Characters p. 274). Changing it reprices the weapon from its list price.",
       "Material": "Material",
-      "MaterialHint": "What the blade is made of (p. 275): stone, bronze and iron take no fine bonus and break as cheap against better metal; obsidian cuts a point deeper but shatters; plastic is half the weight at twice the price and no better than good; silver is priced by its own paragraph.",
+      "MaterialHint": "What the blade is made of (p. 275): stone, bronze and iron take no fine bonus and break as cheap against better metal; obsidian cuts a point deeper but shatters; plastic is half the weight at twice the price and no better than good; silver adds a multiple of the good-quality price (19x solid, 2x coated) and cannot be fine or very fine.",
       "WeaponClass": "Priced as",
       "WeaponClassHint": "The class its quality is priced in: swords ×4 for fine, cutting weapons ×10, crushing ×3, firearms ×2, bows ×4.",
       "ListCost": "List price",
@@ -1747,6 +1870,13 @@
       "MarginOfSuccess": "Margin of success",
       "MarginOfFailure": "Margin of failure",
       "TooLowToAttempt": "{label}: effective {effective} is below 3, so the roll cannot be attempted."
+    },
+    "Perks": {
+      "BondLine": "Bond: {item}",
+      "FeintTitle": "Feint with",
+      "FeintChoose": "Skill to Feint with",
+      "FeintWeapon": "The weapon's skill",
+      "FeintOk": "Feint"
     },
     "Ranged": {
       "NotEnoughShots": "{name} needs {needed} shots for that and has {ready}.",
@@ -1934,6 +2064,7 @@
       "FromTraits": "From the sheet",
       "When": {
         "attracted": "from those attracted to your sex",
+        "fancied": "from those who fancy the look",
         "knowing": "from those who know of it",
         "respectful": "from those in your culture who respect Status",
         "pitying": "from those who might feel pity",
@@ -2097,7 +2228,38 @@
       "arm": "Arm",
       "leg": "Leg",
       "hand": "Hand",
-      "foot": "Foot"
+      "foot": "Foot",
+      "chest": "Chest"
+    },
+    "RevisedHitLocation": {
+      "ear": "Ear",
+      "nose": "Nose",
+      "jaw": "Jaw",
+      "chest": "Chest",
+      "abdomen": "Abdomen",
+      "spineTorso": "Spine",
+      "spineNeck": "Spine (neck)",
+      "pelvis": "Pelvis",
+      "jointArm": "Joint (arm)",
+      "jointLeg": "Joint (leg)",
+      "jointHand": "Joint (hand)",
+      "jointFoot": "Joint (foot)",
+      "veinsArm": "Veins/arteries (arm)",
+      "veinsLeg": "Veins/arteries (leg)",
+      "veinsNeck": "Veins/arteries (neck)"
+    },
+    "RevisedWound": {
+      "EarSliced": "Ear: {lost} injury lost, no special effect",
+      "EarRemoved": "The ear is cut off: a major wound, and Appearance drops a level (Basic Set Revised p. 566)",
+      "NoseBroken": "Broken nose: a major wound to the face, and No Sense of Smell/Taste until it heals",
+      "NoseLopped": "The nose is lopped off: a major wound, and injury beyond it is lost",
+      "NoseRemoved": "The nose is cut off: a major wound, and Appearance drops two levels for good",
+      "SpineCrippled": "The spine is crippled: knocked down and stunned, Bad Back (Severe) and Lame (Paraplegic); roll twice to recover, once to avoid each lasting",
+      "NeckBroken": "A broken neck: knocked down and stunned, and Quadriplegic; roll to recover from it lasting or permanent",
+      "PelvisBroken": "The pelvis gives out: the victim falls, cannot stand, and fights only sitting or lying, Lame (Missing Legs) until healed",
+      "JointCrippled": "The joint is crippled; recovery rolls are at -2",
+      "VeinsBleedOut": "GM's ruling: a failed HT roll to avoid death means bleeding to death, with no Mortal Wounds rolls",
+      "Decapitation": "GM's ruling: a failed HT roll to avoid death from a cut to the neck means decapitation"
     },
     "Maneuver": {
       "AddonOptions": "Options",
@@ -2117,6 +2279,9 @@
       "allOutDefense": "All-Out Defense",
       "concentrate": "Concentrate",
       "wait": "Wait",
+      "committedAttack": "Committed Attack",
+      "defensiveAttack": "Defensive Attack",
+      "allOutConcentrate": "All-Out Concentrate",
       "Increased": "Increased Defense",
       "Double": "Double Defense",
       "Option": "AOD Option",
@@ -2173,6 +2338,7 @@
         "LockDamage": "Crushing damage equal to the margin, less DR {dr}: {damage}",
         "ShockOnly": "The arm is crippled: no more damage, but shock and stunning as if hurt",
         "WrenchDamage": "Swing crushing {damage}, x{wounding} wounding, through DR {dr}",
+        "BrokenNeck": "Finer hit locations: injury over HP breaks the neck outright, and the victim is Quadriplegic (Basic Set Revised p. 566)",
         "HoldFails": "The hold does nothing this turn",
         "LockHolds": "Keeping it is +{bonus} in the Contest; the victim defends at {penalty}",
         "FlexibleIgnored": "Flexible armour (DR {dr}) is no use against a hold",
@@ -2432,7 +2598,29 @@
       "Flurry": "Flurry of Blows",
       "MightyBlows": "Mighty Blows",
       "NoFatigue": "Not enough FP for {what} ({cost} FP).",
-      "NotStBased": "Mighty Blows adds nothing to damage that is not ST-based."
+      "NotStBased": "Mighty Blows adds nothing to damage that is not ST-based.",
+      "PowerAction": "Power extra effort",
+      "PowerHint": "Push a power past its limit: a Will roll, plus the power’s Talent (Basic Set Revised pp. 571-572)",
+      "PowerTitle": "Extra effort with a power",
+      "Talent": "Power’s Talent",
+      "GodlikeFp": "FP to spend (each multiplies the bonus)",
+      "PowerSuccess": "Gains +{percent}% effect.",
+      "PowerCriticalSuccess": "Gains +{percent}% effect, and it costs no FP.",
+      "PowerFailure": "The ability works as it would have without extra effort.",
+      "PowerCriticalFailure": "The task fails automatically. {natural}",
+      "PowerNaturalEighteen": "On an 18, it critically fails.",
+      "TradeAction": "Trade FP for a bonus",
+      "TradeHint": "1 FP per +1, up to +4, held for the next roll; no Will roll (Basic Set Revised p. 572)",
+      "TradeTitle": "Trading Fatigue",
+      "TradeFor": "Bonus for",
+      "TradeSkill": "the next skill roll",
+      "TradeAttack": "the next attack",
+      "TradeResistance": "the next resistance roll",
+      "TradeFp": "FP to trade (+1 each, at most +4)",
+      "TradeSkillLine": "Fatigue traded for skill",
+      "TradeResistanceLine": "Fatigue traded for resistance",
+      "TradeHeld": "+{bonus} held for the next roll.",
+      "CombiningSt": "{count} combined: Basic Lift {bl} lb., effective ST {st}."
     },
     "Feats": {
       "Hint": "Jumping, lifting, running, swimming and throwing, from ST, Basic Lift and Move.",
@@ -2623,6 +2811,11 @@
       "Where": "Take hold of",
       "Label": "{skill} to grapple {foe}",
       "OneTarget": "Target exactly one foe to grapple.",
+      "ArmedWith": "Armed with",
+      "BareHands": "Bare hands",
+      "Armed": "Armed Grapple",
+      "NeedsReady": "A one-handed weapon other than a cloak needs both hands on it first: a Ready maneuver.",
+      "WeaponBusy": "{weapon} holds the foe and can neither attack nor defend until you let go.",
       "NotGrappled": "Nobody is holding on to you.",
       "NotInOne": "Not in a grapple.",
       "MustBeHolding": "Only the one doing the holding can try that.",
@@ -2907,7 +3100,9 @@
       "ChinkTorso": "Chink in torso armour",
       "ChinkOther": "Chink elsewhere",
       "MissByOne": "missed by 1: hits the {location} instead",
-      "NotFromBehind": "The eye can only be aimed at from the front or sides"
+      "NotFromBehind": "The eye can only be aimed at from the front or sides",
+      "SkullFromBehind": "Skull from behind: -5, not -7 (Basic Set Revised p. 566)",
+      "FaceFromBehind": "Face from behind: -7, not -5 (Basic Set Revised p. 566)"
     },
     "Disarm": {
       "Action": "Disarm",
@@ -3553,9 +3748,24 @@
       "vehicle": "Vehicle",
       "misc": "Miscellaneous"
     },
+    "StampKick": {
+      "Balance": "DX to stay on balance after a missed Stamp Kick",
+      "NoRetreat": "{name} is off balance and cannot retreat until their next turn."
+    },
+    "AcrobaticStand": {
+      "Label": "Acrobatic Stand",
+      "Ask": "Roll Acrobatic Stand to rise, rather than change posture without a roll?",
+      "standsAsStep": "On your feet as a step.",
+      "standsAsManeuver": "On your feet as one Change Posture maneuver.",
+      "sits": "You end up sitting.",
+      "staysDown": "You stay down, and the turn is wasted.",
+      "falls": "You fall down."
+    },
     "Natural": {
       "punch": "Punch",
       "kick": "Kick",
+      "headButt": "Head Butt",
+      "stampKick": "Stamp Kick",
       "bite": "Bite",
       "claw": "Claw",
       "striker": "Striker"
@@ -4097,7 +4307,40 @@
       "fine": "Fine (+2)",
       "best": "Best at this TL"
     },
+    "CostFactor": {
+      "fine": "Fine",
+      "fineHint": "A fine suit of armor or shield: +9 CF and weight x3/4 (Revised p. 342).",
+      "balanced": "Balanced",
+      "balancedHint": "+1 to skill with a melee or thrown weapon or shield, or +1 Acc with a muscle-powered missile weapon: +4 CF (Revised p. 342).",
+      "cuttingEdge": "Cutting-edge",
+      "cuttingEdgeHint": "Made of the latest materials: weight x2/3 for +1 CF. Anything but armor or weapons (Revised p. 342).",
+      "signature": "Signature Gear",
+      "signatureHint": "One of your Signature Gear items: a 1-point perk that protects it from permanent loss by the plot, whatever it is worth (Basic Set Revised p. 342).",
+      "disguised": "Disguised",
+      "disguisedHint": "Resembles something else of similar shape; finding the hidden function takes a Search roll: +4 CF (Revised p. 342).",
+      "rugged": "Rugged",
+      "ruggedHint": "Shockproof and waterproof: +2 HT, DR x2 and weight x1.2 for +1 CF. Anything but armor or weapons (Revised p. 342).",
+      "presentation": "Presentation",
+      "presentationHint": "+1, +2 or +3 to reactions from buyers and anyone impressed, for +1, +4 or +9 CF (Revised p. 342).",
+      "good": "Good quality",
+      "goodEquipment": "Good-quality equipment",
+      "fineEquipment": "Fine-quality equipment",
+      "cheap": "Cheap",
+      "veryFine": "Very fine",
+      "plastic": "Plastic",
+      "silver": "Silver",
+      "wood": "Wood",
+      "iron": "Iron",
+      "mirrored": "Silver-coated shield",
+      "none": "Composition",
+      "Total": "total CF {total}, cost x{multiplier}",
+      "Reactions": "Reactions +{bonus}.",
+      "Skill": "+{bonus} to skill.",
+      "Accuracy": "+{bonus} Acc.",
+      "RuggedEffect": "+{ht} HT and DR x2."
+    },
     "ShieldComposition": {
+      "mirrored": "Silver-coated (mirrored) shield",
       "wood": "Wood (as the table lists it)",
       "iron": "Iron (TL3+)",
       "plastic": "Plastic riot shield (TL7+)",
@@ -4170,6 +4413,10 @@
       "CannonFodderHint": "A mook: fails every defense roll, never takes All-Out Attack, and collapses the moment any damage gets through their DR. Nobody keeps track of their HP (Campaigns p. 417).",
       "CannonFodderDefense": "Cannon fodder: automatically fails",
       "Collapses": "{name} goes down."
+    },
+    "EnergyReserve": {
+      "Name": "ER ({origin})",
+      "Hint": "Energy Reserve: pays the FP costs of {origin} abilities and nothing else. It recharges 1 every 10 minutes (slower with Slow Recharge, not at all by itself with Special Recharge), whatever the character does; low ER has none of the effects of low FP (Basic Set Revised p. 326)."
     },
     "BonusPoints": {
       "Title": "Points to spend",
@@ -4579,6 +4826,296 @@
       "Traits": "Hard to Subdue, Fit",
       "Out": "{name} falls unconscious",
       "TurnStart": "{name} is at 0 HP or less: roll HT to stay conscious, unless this turn is Do Nothing with no defense rolls."
+    },
+    "Alternative": {
+      "Heading": "Alternative abilities",
+      "Set": "Alternative set",
+      "SetPlaceholder": "Name of the set, blank for none",
+      "Slots": "Slots",
+      "PointPowered": "Point-powered",
+      "NoReactionBonus": "No reaction bonus",
+      "FieldHint": "Abilities that share a set name are alternatives: the dearest, as many as there are slots, cost full price and the rest a fifth, rounded up. Point-powered abilities cost a fifth and are inert until points are spent to use them. Tick No reaction bonus on a Talent whose reaction bonus the GM replaced (Basic Set Revised pp. 324-325).",
+      "Billed": "Billed",
+      "TagOn": "on",
+      "TagOff": "off",
+      "TagDisabled": "disabled",
+      "RowHint": "An alternative ability of {group}.",
+      "PoweredOn": "powered",
+      "PoweredOff": "inert",
+      "PoweredHint": "A character point-powered ability: inert until points are spent to use it.",
+      "DisabledLabel": "Disabled (the whole set is off)",
+      "DisabledNote": "Something disabled an ability of this set, so none of them is available until it recovers.",
+      "FrozenLabel": "Running for a duration (can't be swapped out)",
+      "SwapNote": "Changing what fills a slot takes a Ready maneuver; from one attack to another it is free.",
+      "Ready": "Ready this ability",
+      "ReadyHint": "Swap it into a slot of its set.",
+      "Use": "Spend points to use",
+      "UseHint": "1 point when the use fits the scene perfectly, 2 when believable, 3 up to the ability's cost when showing off. Impulse Points pay first.",
+      "End": "End use",
+      "EndHint": "The scene or turn is over and the ability is inert again.",
+      "Disabled": "That set is disabled, so none of its abilities can be readied.",
+      "Frozen": "Every slot holds an ability still running for its duration.",
+      "Already": "That ability is already in a slot.",
+      "SwappedReady": "{actor} takes a Ready maneuver to switch to {ability}.",
+      "SwappedFree": "{actor} switches attacks to {ability} as a free action.",
+      "NoPoints": "Not enough Impulse Points or unspent character points.",
+      "SpendNote": "Used {ability}",
+      "PoweredUsed": "{actor} spends {points} point(s) to use {ability}.",
+      "PromptTitle": "Use {ability}",
+      "PromptHint": "How well the use suits the story: 1 point if it fits the scene perfectly, 2 if believable, 3 up to the ability's cost for showing off.",
+      "PromptPoints": "Points",
+      "Spend": "Spend",
+      "Inert": {
+        "off": "not in a slot of its alternative set",
+        "disabled": "its alternative set is disabled",
+        "unpowered": "no points spent to use it"
+      }
+    },
+    "Vision": {
+      "Biome": "Terrain type",
+      "Terrain_generic": "Generic ground",
+      "Terrain_arctic": "Arctic",
+      "Terrain_desert": "Desert",
+      "Terrain_island": "Island/Beach",
+      "Terrain_jungle": "Jungle",
+      "Terrain_mountain": "Mountain",
+      "Terrain_plains": "Plains",
+      "Terrain_swampland": "Swampland",
+      "Terrain_woodlands": "Woodlands",
+      "Terrain_bank": "Bank",
+      "Terrain_deepOceanVent": "Deep Ocean Vent",
+      "Terrain_reef": "Reef",
+      "Terrain_tropicalLagoon": "Tropical Lagoon",
+      "Terrain_freshWaterLake": "Fresh-Water Lake",
+      "Terrain_riverStream": "River/Stream",
+      "Terrain_openOcean": "Open Ocean",
+      "Terrain_saltWaterSea": "Salt-Water Sea",
+      "Forage": "Foraging in {terrain}: modifier {modifier}.",
+      "Saw": "{name} sees the attack coming (Vision {target}, rolled {roll}).",
+      "Missed": "{name} does not see the attack coming (Vision {target}, rolled {roll}): no active defense.",
+      "Frostbitten": "{name} suffers frostbite: {hp} HP ({where})."
+    },
+    "MoreManeuvers": {
+      "Slam": "Slam: full Move, forward only",
+      "SlamRefused": "Only Determined, Feint, Strong or Double may slam",
+      "CommittedKind": "Committed Attack",
+      "SecondStep": "Second step (-2 to hit)",
+      "CommittedWith": "Attacking with",
+      "DefensiveBenefit": "Defensive benefit",
+      "MentalDefense": "Mental Defense (+2 to resist supernatural attacks)",
+      "MentalDefenseLine": "Mental Defense",
+      "DeterminedLine": "Committed Attack (Determined)",
+      "SecondStepLine": "Second step",
+      "GrappleLine": "Defensive Attack: a grab or grapple",
+      "NoRetreat": "A Committed Attack forbids a retreat",
+      "Kind": {
+        "determined": "Determined: +2 to hit",
+        "strong": "Strong: +1 damage (or +1 per two dice)"
+      },
+      "With": {
+        "hand": "A hand: no parry with it",
+        "shield": "A shield or cloak: no block",
+        "kick": "A kick: no dodge"
+      },
+      "Benefit": {
+        "parry": "+1 to Parry (one weapon)",
+        "block": "+1 to Block (balanced weapon)",
+        "sameWeapon": "Parry with the unbalanced weapon that attacked"
+      },
+      "Refuses": {
+        "parry": "A Committed Attack: no parry with the attacking hand",
+        "block": "A Committed Attack: no block with the attacking shield",
+        "dodge": "A Committed Attack with a kick: no dodge"
+      }
+    },
+    "RevisedRanged": {
+      "CloseContact": "Close-Contact Shot",
+      "Contact": "Gun",
+      "ContactNone": "Not in contact",
+      "ContactTouching": "Touching",
+      "ContactPressed": "Pressed against target",
+      "AllOutDetermined": "All-Out Attack (Determined)",
+      "ContactBraced": "Held against the target a turn (bracing)",
+      "Unresisting": "Target cannot resist (no Bulk)",
+      "NonCombat": "Non-combat bonuses",
+      "NoRiskSelf": "No risk to self",
+      "NoRiskOthers": "No risk to others",
+      "NoStake": "No political or military stake",
+      "RangeSpeedKnown": "Range and speed known",
+      "TargetIsPerson": "Target is a person (no pressure bonuses)",
+      "Environment": "Environment (0 to 4)",
+      "StrikeAround": "Strike around partial armour",
+      "StrikeNone": "No",
+      "Prediction": "Prediction Shot levels (Dodge only)",
+      "RangedRapidStrike": "Ranged Rapid Strike (two targets)",
+      "LineContact": "Close-contact shot: no Acc or aim",
+      "LineAllOut": "Close contact: All-Out Attack (Determined) +4, not +1",
+      "LinePressed": "Gun pressed against the target",
+      "LineBraced": "Bracing",
+      "LineTargetDefends": "Target defends at +{bonus}, and the runaround -2 is cancelled",
+      "LineNonCombat": "Non-combat bonuses",
+      "LineStrikeAround": "Striking around {n}/6 armour",
+      "LinePrediction": "Prediction Shot (target's Dodge -{levels})",
+      "LineRapid": "Ranged Rapid Strike",
+      "Band": "Range band: {band}",
+      "Bands": {
+        "close": "Close",
+        "short": "Short",
+        "medium": "Medium",
+        "long": "Long",
+        "extreme": "Extreme"
+      }
+    },
+    "Stress": {
+      "Stress": "Stress",
+      "Derangement": "Derangement",
+      "Hint": "Temporary jitters, held up to -Will ({limit}); beyond it becomes Derangement. Bleeds off 1 per 10 minutes of rest (Basic Set Revised p. 573).",
+      "DerangementHint": "Lasting mental harm, held up to -Will ({limit}); beyond it becomes points of permanent mental disadvantages (Basic Set Revised p. 573).",
+      "Kind": "Kind of Fright Check",
+      "KindOrdinary": "Ordinary (Stress; the Unfazeable are immune)",
+      "KindSanity": "Sanity-blasting (Derangement; Unfazeable +8)",
+      "Gained": "{name} takes {amount} {what}: Stress {stress}, Derangement {derangement}.",
+      "Permanent": "{points} points now become permanent mental disadvantages.",
+      "Recovered": "{name} sheds {shed} Stress; {stress} left.",
+      "Indulgence": "An indulgence (dance, drink, massage): 1 more Stress",
+      "DayEnd": "Day’s end (Derangement)",
+      "DayEndHint": "A Will roll to shed 1 Derangement, with a clinician’s help (Basic Set Revised p. 573)",
+      "DayEndTitle": "Derangement at day’s end",
+      "ClinicianSkill": "Clinician’s skill (Psychology (Clinical) or Physician (Psychiatric); 0 for none)",
+      "DayEndCard": "{name} rolls Will (target {target}): {roll}. Sheds {shed}; Derangement {derangement}.",
+      "TherapyHelped": "The clinician (skill {skill}) rolls {roll}: 1 more Derangement is shed.",
+      "TherapyFailed": "The clinician (skill {skill}) rolls {roll}: no help.",
+      "BuyOff": "Buy off Stress or Derangement",
+      "BuyOffHint": "A point of a new mental disadvantage removes 2 Derangement or all Stress (Basic Set Revised p. 573)",
+      "BuyOffTitle": "Buy off hardship",
+      "BuyOffTarget": "Remove",
+      "BuyOffPoints": "Points of new mental disadvantages",
+      "Cured": "{name} is eased: Stress {stress}, Derangement {derangement}.",
+      "Line": "Stress",
+      "DerangementLine": "Derangement"
+    },
+    "Tasks": {
+      "Ham": "Ham Clause",
+      "HamHint": "Play this disadvantage up for the scene: -1 to every success roll per -5 points of it (Basic Set Revised p. 570).",
+      "HamEnd": "End Ham Clause",
+      "HamEndHint": "The scene is over; the penalty ends. It also ends with the battle.",
+      "HamInvoked": "{name} plays up {trait}: {penalty} to every success roll this scene.",
+      "HamLine": "Ham Clause ({trait})",
+      "BadLine": "Basic Abstract Difficulty",
+      "BadSetting": "Basic Abstract Difficulty",
+      "BadSettingHint": "The penalty, 0 to -10, on every task while the rule is on; a scene may set its own (Basic Set Revised p. 578)."
+    },
+    "PullingRank": {
+      "PatronValue": "Patron value",
+      "PatronValueHint": "A Rank trait only: the hypothetical Patron value of the organization, 10 to 30 points, which the character never pays. It sets the Rank an Assistance roll needs.",
+      "Roll": "Assistance roll",
+      "RollHint": "Ask the organization for aid: 3d against the Assistance Rolls Table number for this Rank.",
+      "Reset": "New adventure",
+      "ResetHint": "Start the count of previous Assistance Rolls over.",
+      "NoPatronValue": "Give the Rank trait a Patron value and a cost per level first.",
+      "DialogTitle": "Assistance roll: {name}",
+      "DialogHint": "Patron value {value}, {cost} points a level: key Rank {key}, base roll {base} at the Rank held.",
+      "Aid": "Aid asked for",
+      "RankUsed": "Rank used",
+      "RankHint": "Your own Rank; a group’s highest (+1 with a leader of higher Rank); or a preauthorizing NPC’s.",
+      "InWorld": "In-world appropriateness",
+      "Meta": "Meta-game appropriateness",
+      "Innate": "Aid’s own modifier",
+      "Previous": "Previous requests this adventure",
+      "Reputation": "Reputation with the organization",
+      "PersonToPerson": "Made person to person (Charisma, Smooth Operator)",
+      "ControlRating": "Local CR (License, Shipping)",
+      "LegalityClass": "Item LC (License, Shipping)",
+      "Night": "At night (Warrant)",
+      "Returned": "For show, to be returned (Cash)",
+      "TechLevel": "TL (Facilities)",
+      "Auto": {
+        "charisma": "Charisma {value}",
+        "smoothOperator": "Smooth Operator {value}",
+        "complementary": "Complementary skill held: {value}"
+      },
+      "Label": "{name}: {aid}",
+      "Title": "Assistance roll",
+      "TooLow": "Target {target}: under 3, no attempt is possible.",
+      "Line": {
+        "inWorld": "In-world appropriateness",
+        "meta": "Meta-game appropriateness",
+        "innate": "Type of assistance",
+        "previous": "Previous requests",
+        "charisma": "Charisma",
+        "smoothOperator": "Smooth Operator",
+        "reputation": "Reputation",
+        "complementary": "Complementary skill"
+      },
+      "Outcome": {
+        "aid": "The aid asked for arrives.",
+        "aidComplicated": "The aid comes with a minor downside, or a benefit other than the one asked for.",
+        "none": "No aid.",
+        "noneDrawback": "Nothing, or an unpredictable benefit outweighed by a major drawback.",
+        "disciplinary": "No aid, and disciplinary action.",
+        "disaster": "Disaster."
+      },
+      "Figure": {
+        "cash": "Up to ${amount}.",
+        "consultation": "Contact Group at skill {skill}.",
+        "facilities": "Equipment bonus {bonus}.",
+        "generalized": "Complementary bonus: {crit} on a critical success, {success} on a success, -1 on a failure, -2 on a critical failure.",
+        "people": "Up to {count} people, skills 1d+9.",
+        "warrantDay": "Ready in 1d hours.",
+        "warrantNight": "Ready in 1d+8 hours."
+      },
+      "Type": {
+        "anyAssistance": "Any Assistance Available",
+        "bailout": "Bailout",
+        "cash": "Cash",
+        "consultation": "Consultation",
+        "coverUp": "Cover-Up",
+        "disappearance": "Disappearance",
+        "entryClearance": "Entry Clearance",
+        "evacuation": "Evacuation",
+        "facilities": "Facilities",
+        "falseId": "False ID",
+        "files": "Files",
+        "fireSupport": "Fire Support",
+        "gear": "Gear",
+        "generalizedAssistance": "Generalized Assistance",
+        "insertionExtraction": "Insertion/Extraction",
+        "introduction": "Introduction",
+        "invitation": "Invitation",
+        "license": "License",
+        "muscle": "Muscle",
+        "recordsSearch": "Records Search",
+        "safehouse": "Safehouse",
+        "shipping": "Shipping",
+        "technicalMeans": "Technical Means",
+        "theCavalry": "The Cavalry",
+        "transportation": "Transportation",
+        "warrant": "Warrant"
+      }
+    },
+    "Wildcard": {
+      "Action": "Wildcard bonus",
+      "Title": "{skill}: wildcard bonus",
+      "Hint": "Holds the wildcard's positive relative level ({level}) as a bonus for the next related roll.",
+      "Category": "Bonus to",
+      "Skill": "Skill rolled",
+      "SkillPlaceholder": "Blank for an attribute roll",
+      "Halve": "Halve the bonus (under three dice, active defenses, a large group, direct damage)",
+      "Grant": "Hold the bonus",
+      "Line": "{skill} wildcard ({category})",
+      "Held": "{value} held from {skill} for the next related roll.",
+      "Categories": {
+        "noSkill": "Rolls with no skill",
+        "advantage": "Related advantages",
+        "resist": "Resisting covered skills",
+        "hazard": "Hazards while using it",
+        "reaction": "Reactions and Influence",
+        "penalty": "Offsetting penalties",
+        "accuracy": "Accuracy",
+        "damage": "ST and damage",
+        "healing": "HP healed",
+        "others": "Another's roll"
+      }
     },
     "Complementary": {
       "Action": "Complementary roll",
@@ -5230,6 +5767,8 @@
         "checks": "Fright"
       },
       "Column": {
+        "Who": "Who",
+        "Fraction": "Fraction",
         "Roll": "Roll",
         "Effect": "Effect",
         "Score": "Score",
@@ -5499,6 +6038,29 @@
           "Title": "Throwing Distance",
           "Summary": "How far something can be thrown, by its weight against Basic Lift.",
           "Note": "Divide the weight by the thrower's Basic Lift and read the row at or above it: the distance in yards is ST times the modifier. Nothing over {max}×BL can be thrown."
+        },
+        "peopleSucceed": {
+          "Title": "How Many People Succeed",
+          "Summary": "The fraction of a large group who succeed or fail at a target number.",
+          "Succeed": "Succeed",
+          "Fail": "Fail",
+          "Note": "Apply the fraction and round down; the rest have the opposite result, and under 1 person means all do. A target under 3 counts as 3. For a Contest, roll the attacker once and take the margin off the group’s resistance (never under 3)."
+        },
+        "collectiveSkill": {
+          "Title": "Collective Skill",
+          "Summary": "The effective score when only one of a big group must succeed.",
+          "Note": "The columns are the number of people; use the lower size when between two, and 16 over 500. Roll once against the score, or as a Quick Contest."
+        },
+        "abstractDifficulty": {
+          "Title": "Basic Abstract Difficulty",
+          "Summary": "One penalty for the scene, and the quick ways to modify a roll.",
+          "Current": "This scene",
+          "CurrentOff": "Off, or 0. Switch it on in the rules to set a penalty from 0 to -10 in the system settings.",
+          "CurrentText": "{bad} on tasks; an NPC without a sheet has effective skill {skill}.",
+          "Suggest": "A suggestion",
+          "SuggestText": "A known enemy group’s points as an Enemy, divided by 4, dropping fractions.",
+          "Quick": "Quick-and-dirty modifiers",
+          "QuickText": "-1 per complication and per intensifier, +1 per favourable qualifier: a slimy, twisting, smoke-obscured path is {example}."
         },
         "coverDr": {
           "Title": "Cover DR",

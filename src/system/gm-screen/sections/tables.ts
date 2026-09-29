@@ -25,6 +25,14 @@ import {
 } from "../../../rules/physical.js";
 import { WALLS } from "../../../rules/structures.js";
 import { successChances } from "../../../rules/success.js";
+import {
+  COLLECTIVE_SIZES,
+  abstractNpcSkill,
+  collectiveRow,
+  groupFraction,
+  quickAndDirtyModifier,
+} from "../../../rules/tasks-and-feats.js";
+import { currentBad } from "../../task-rules.js";
 import { percent, rollsOf, signed, span } from "../format.js";
 import type { BuildContext, GmSectionContent, GmSectionDef } from "../types.js";
 import { K, partKey, section } from "./shared.js";
@@ -209,6 +217,98 @@ export const TABLES_SECTIONS: readonly GmSectionDef[] = [
       ],
       notes: [t(`${K}.Section.throwingDistance.Note`, { max: MAX_THROWABLE_MULTIPLE })],
     }),
+  }),
+  section({
+    id: "peopleSucceed",
+    tab: "tables",
+    cite: "pp. B570-B571",
+    build: ({ t }) => {
+      const rows = [];
+      for (let target = 3; target <= 18; target += 1) {
+        const row = groupFraction(target);
+        rows.push({
+          cells: [
+            String(target),
+            t(`${K}.Section.peopleSucceed.${row.of === "succeed" ? "Succeed" : "Fail"}`),
+            `1/${row.divisor}`,
+          ],
+        });
+      }
+      return {
+        parts: [
+          {
+            content: {
+              kind: "table",
+              columns: [t(`${K}.Column.Score`), t(`${K}.Column.Who`), t(`${K}.Column.Fraction`)],
+              rows,
+            },
+          },
+        ],
+        notes: [t(`${K}.Section.peopleSucceed.Note`)],
+      };
+    },
+  }),
+  section({
+    id: "collectiveSkill",
+    tab: "tables",
+    cite: "p. B571",
+    build: ({ t }) => {
+      const rows = [];
+      for (let target = 3; target <= 11; target += 1) {
+        rows.push({
+          cells: [target === 11 ? "11+" : String(target), ...collectiveRow(target).map(String)],
+        });
+      }
+      return {
+        parts: [
+          {
+            content: {
+              kind: "table",
+              columns: [t(`${K}.Column.Score`), ...COLLECTIVE_SIZES.map(String)],
+              rows,
+              centered: COLLECTIVE_SIZES.map((_, i) => i + 1),
+            },
+          },
+        ],
+        notes: [t(`${K}.Section.collectiveSkill.Note`)],
+      };
+    },
+  }),
+  section({
+    id: "abstractDifficulty",
+    tab: "tables",
+    cite: "pp. B570, B578",
+    build: ({ t }) => {
+      const bad = currentBad();
+      return {
+        parts: [
+          {
+            content: {
+              kind: "rules",
+              items: [
+                {
+                  term: t(partKey("abstractDifficulty", "Current")),
+                  text: t(partKey("abstractDifficulty", bad === 0 ? "CurrentOff" : "CurrentText"), {
+                    bad: signed(bad),
+                    skill: abstractNpcSkill(bad),
+                  }),
+                },
+                {
+                  term: t(partKey("abstractDifficulty", "Suggest")),
+                  text: t(partKey("abstractDifficulty", "SuggestText")),
+                },
+                {
+                  term: t(partKey("abstractDifficulty", "Quick")),
+                  text: t(partKey("abstractDifficulty", "QuickText"), {
+                    example: signed(quickAndDirtyModifier({ complications: 3 })),
+                  }),
+                },
+              ],
+            },
+          },
+        ],
+      };
+    },
   }),
   section({
     id: "coverDr",

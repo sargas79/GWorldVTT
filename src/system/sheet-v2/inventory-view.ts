@@ -15,7 +15,7 @@ import { byName } from "../sort.js";
  */
 export const BODY_AREAS = [
   { key: "head", locations: ["skull", "face", "eye", "neck"] },
-  { key: "torso", locations: ["torso", "vitals", "groin"] },
+  { key: "torso", locations: ["torso", "vitals", "groin", "chest"] },
   { key: "arms", locations: ["arm"] },
   { key: "hands", locations: ["hand"] },
   { key: "legs", locations: ["leg"] },

@@ -19,6 +19,8 @@ import { buyGear, isGear, unitPrice } from "../shopping.js";
 import { chooseTechniqueSkill, isOpenTechniqueData } from "../open-techniques.js";
 import { SYSTEM_ID } from "../constants.js";
 import { summarise } from "../item-summary.js";
+import { worldCampaignTerms } from "../campaign.js";
+import { firstTlLabel, skillAvailableAt, firstTechLevel } from "../../rules/skill-availability.js";
 import { addonItemSummary, pickerIndexFields } from "../data-extensions.js";
 import { sourceCollections } from "../compendium-sources.js";
 import { listPage } from "../list-page.js";
@@ -60,6 +62,8 @@ const INDEX_FIELDS = [
   "system.colleges",
   "system.classes",
   "system.energy",
+  // The first TL a skill exists at (Basic Set Revised p. 341), to grey it before the campaign has reached it.
+  "system.firstTl",
 ];
 
 /** One row in the list. */
@@ -335,8 +339,17 @@ export class CompendiumPicker extends HandlebarsApplicationMixin(ApplicationV2) 
     const amount = kind ? snapAmount(item, this.#amounts.get(entry.uuid) ?? 1, held) : 1;
     const ceiling = kind === "levels" ? levelCeiling(item) : null;
     const cost = kind ? previewCost(item, amount) : null;
+    // A skill that does not yet exist at the character's (or campaign's) TL is
+    // greyed and says why, never hidden or refused (Revised p. 341).
+    const tl = this.#actor?.system?.tl ?? worldCampaignTerms().tl;
+    const tooEarly = entry.type === "skill" && !skillAvailableAt(entry.name, tl, entry.system?.firstTl);
+    const first = tooEarly ? firstTechLevel(entry.name, entry.system?.firstTl) : null;
     return {
       ...entry,
+      tooEarly,
+      tooEarlyNote: first === null
+        ? ""
+        : game.i18n.format("GWORLD.Skill.NotYetAvailable", { first: firstTlLabel(first), tl }),
       added: this.#added.has(entry.uuid),
       amountKind: kind,
       amount,

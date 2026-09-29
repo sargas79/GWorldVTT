@@ -11,6 +11,7 @@
  * rules change.
  */
 
+import { revisedLocation, woundNotes as revisedNotes } from "../rules/revised-hit-locations.js";
 import { SYSTEM_ID } from "./constants.js";
 import { applyDamageToActor, takeInjury, traitsOf, type AppliedDamage, type IncomingDamage } from "./damage.js";
 import { isUndoable, undoDamage, type DamageTransaction } from "./damage-undo.js";
@@ -758,6 +759,8 @@ async function applyFromCard(options: {
         : "",
       // A Surge blow on somebody with Electrical (since API 1.155.0).
       surgeNote: surgeNote(surged.get(result)),
+      // What a finer hit location did beyond its injury (Basic Set Revised p. 566).
+      woundNotes: revisedWoundNotes(result, flag.damageType),
       shortCircuit: surged.get(result)?.effect === "shortCircuit" || surged.get(result)?.disabled?.kind === "untilRepaired",
     })),
   });
@@ -2409,4 +2412,20 @@ function addRulesLinks(html: HTMLElement): void {
       void RulesSettings.open();
     });
   }
+}
+
+/** The lasting outcomes of a blow at one of the finer hit locations, worded for the card. */
+function revisedWoundNotes(result: AppliedDamage, damageType: DamageType): Array<{ text: string; grave: boolean }> {
+  if (result.costsFatigue || !isRuleOn("finerHitLocations")) return [];
+  return revisedNotes({
+    row: revisedLocation(result.addonLocation)?.key ?? null,
+    hitLocation: result.hitLocation,
+    type: damageType,
+    injury: result.injury,
+    uncappedInjury: result.uncappedInjury,
+    maxHp: result.max,
+    majorWound: result.consequences.majorWound === true,
+    crippled: result.crippled,
+    deathCheck: result.consequences.deathCheckRequired === true,
+  }).map((note) => ({ text: game.i18n.format(`GWORLD.RevisedWound.${note.key}`, note.data ?? {}), grave: note.grave === true }));
 }

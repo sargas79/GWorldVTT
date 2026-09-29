@@ -32,6 +32,39 @@
           <div class="v2-bar v2-bar-fp"><span style="width: {{v2.vitals.fp.percent}}%"></span></div>
           {{#if v2.vitals.fp.tired}}<span class="v2-pool-status v2-bad">{{v2.vitals.fp.statusLabel}}</span>{{/if}}
         </div>
+        {{!-- Stress and Derangement, "mental FP and HP" (Basic Set Revised pp. 572-573). --}}
+        {{#if v2.vitals.mental}}
+        <div class="v2-pool" data-tooltip="{{localize 'GWORLD.Stress.Hint' limit=v2.vitals.mental.limit}}">
+          <div class="v2-pool-head">
+            <span class="v2-pool-name">{{localize "GWORLD.Stress.Stress"}}</span>
+            <span class="v2-pool-value">
+              {{> "gworld.stepper" name="system.stress" value=system.stress step=1
+                  label=(localize "GWORLD.Stress.Stress") editable=editable}}
+              <span>/ {{v2.vitals.mental.limit}}</span>
+            </span>
+          </div>
+        </div>
+        <div class="v2-pool" data-tooltip="{{localize 'GWORLD.Stress.DerangementHint' limit=v2.vitals.mental.limit}}">
+          <div class="v2-pool-head">
+            <span class="v2-pool-name">{{localize "GWORLD.Stress.Derangement"}}</span>
+            <span class="v2-pool-value">
+              {{> "gworld.stepper" name="system.derangement" value=system.derangement step=1
+                  label=(localize "GWORLD.Stress.Derangement") editable=editable}}
+              <span>/ {{v2.vitals.mental.limit}}</span>
+            </span>
+          </div>
+        </div>
+        {{/if}}
+        {{!-- Energy Reserves, one to an origin (Basic Set Revised p. 326). --}}
+        {{#each system.derived.reserves as |reserve|}}
+        <div class="v2-pool" data-tooltip="{{localize 'GWORLD.EnergyReserve.Hint' origin=reserve.origin}}">
+          <div class="v2-pool-head">
+            <span class="v2-pool-name">{{localize "GWORLD.EnergyReserve.Name" origin=reserve.origin}}</span>
+            <span class="v2-pool-value">{{reserve.value}} <span class="v2-muted">/ {{reserve.max}}</span></span>
+          </div>
+          <div class="v2-bar v2-bar-fp"><span style="width: {{percent reserve.value reserve.max}}%"></span></div>
+        </div>
+        {{/each}}
         <div class="v2-stat-pair">
           <div class="v2-stat">
             <span class="v2-stat-label">{{localize "GWORLD.Secondary.Move"}}</span>

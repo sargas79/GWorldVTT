@@ -58,6 +58,13 @@ import { gearGroupOf } from "../gear-groups.js";
 import { legalityClassOf, legalityNote } from "../legality.js";
 import { isRuleOn } from "../optional-rules.js";
 import { promptForComplementary, rollComplementary } from "../complementary.js";
+import { endPointPowered, promptPointPowered, readyAlternative } from "../alternative-abilities.js";
+import { alternativeKey } from "../../rules/alternative-abilities.js";
+import { grantWildcardBonus } from "../wildcard-bonus.js";
+import { canInvokeHamClause, endHamClause, hamClauseOf, invokeHamClause } from "../task-rules.js";
+import { isAssistanceRank, resetAssistanceCount, rollAssistance } from "../pulling-rank.js";
+import { isWildcardSkill } from "../../rules/skills.js";
+import { firstTechLevel, firstTlLabel, skillAvailableAt } from "../../rules/skill-availability.js";
 import { armorByArea, asGearSort, canStow, readiedItems, sortGear, type GearSort } from "../sheet-v2/inventory-view.js";
 import {
   asProgressionMode,
@@ -121,6 +128,14 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2ViewPortrait: GWorldCharacterSheetV2.#onViewPortrait,
       v2PostItem: GWorldCharacterSheetV2.#onPostItem,
       v2Complementary: GWorldCharacterSheetV2.#onComplementary,
+      v2WildcardBonus: GWorldCharacterSheetV2.#onWildcardBonus,
+      v2ReadyAlternative: GWorldCharacterSheetV2.#onReadyAlternative,
+      v2AssistanceRoll: GWorldCharacterSheetV2.#onAssistanceRoll,
+      v2AssistanceReset: GWorldCharacterSheetV2.#onAssistanceReset,
+      v2HamClause: GWorldCharacterSheetV2.#onHamClause,
+      v2HamClauseEnd: GWorldCharacterSheetV2.#onHamClauseEnd,
+      v2UsePointPowered: GWorldCharacterSheetV2.#onUsePointPowered,
+      v2EndPointPowered: GWorldCharacterSheetV2.#onEndPointPowered,
       v2EditPortrait: GWorldCharacterSheetV2.#onEditPortrait,
       v2RollPlain: GWorldCharacterSheetV2.#onRollPlain,
       v2Retreat: GWorldCharacterSheetV2.#onRetreat,
@@ -419,6 +434,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         // The equipment's own figures: what the book prints and the player looks for.
         stats: gearStatistics({ type: item.type, system: item.system, objectStats: item.type === "shield" ? objectStats(item) : null }, attacks, localize),
         legality: legalityNote(legalityClassOf(item)),
+        signature: isRuleOn("flatSignatureGear") && item.system?.signature === true,
         vehicle: s.category === "vehicle" && isRuleOn("vehicles"),
         // Whether the character knows this make (Characters p. 169), for any
         // equipment, vehicles included, where the rule is on (since API 1.102.0).
@@ -999,12 +1015,18 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         attribute,
         difficulty: system.difficulty,
         techLevel: system.techLevel,
+        // A skill taken before it exists (Revised p. 341): advice, shown as a warning.
+        earlyWarning: skillAvailableAt(String(item.name ?? ""), actor.system?.tl, system.firstTl)
+          ? ""
+          : game.i18n.format("GWORLD.Skill.NotYetAvailable", { first: firstTlLabel(firstTechLevel(String(item.name ?? ""), system.firstTl) ?? 0), tl: actor.system?.tl }),
         points,
         level,
         trained: points > 0,
         rollable: level !== null && (points > 0 || system.derived?.hasDefault === true),
         boughtUpFromDefault: system.derived?.boughtUpFromDefault === true,
         pinned: pinned.has(String(item.id)),
+        // A wildcard's positive relative level, for the bonus rule (Revised p. 333).
+        wildcardLevel: isWildcardSkill(String(item.name ?? "")) && typeof level === "number" ? Math.max(0, level - (scoreOf(attribute) ?? level)) : 0,
         descriptionHtml: await this.enriched(system.description, item),
         reference: system.reference ?? "",
         bonusLines: system.derived?.bonusLines ?? [],
@@ -1103,7 +1125,10 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const rows = await Promise.all([...actor.items].filter((i: any) => i.type === "trait").map(async (item: any) => {
       const system = item.system ?? {};
       const category = order.includes(system.category) ? system.category : "advantage";
-      const total = Number(system.totalPoints ?? system.points ?? 0) || 0;
+      const listed = Number(system.totalPoints ?? system.points ?? 0) || 0;
+      // An ability of an alternative set is billed at a fifth unless it is among the dearest (Revised p. 324).
+      const billedAs = (context.derived?.alternativeSets ?? []).flatMap((set: any) => set.members ?? []).find((m: any) => m.id === String(item.id));
+      const total = billedAs && listed > 0 ? Number(billedAs.billed) : listed;
       const levels = Number(system.levels ?? 0) || 0;
       const mechanics = mechanicsOf({
         name: String(item.name ?? ""),
@@ -1132,6 +1157,13 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         modifiers: system.modifiers ?? [],
         reactionModifier: Number(system.reactionModifier ?? 0) || 0,
         selfControl: system.selfControl ?? null,
+        alternative: alternativeViewOf(item, context.derived?.alternativeSets ?? []),
+        assistanceRank: isRuleOn("pullingRank") && isAssistanceRank(item),
+        // A disadvantage the player may play up for the scene (Revised p. 570), and the one invoked.
+        hamClause: canInvokeHamClause(item) && hamClauseOf(actor)?.trait !== String(item.name ?? ""),
+        hamClauseActive: hamClauseOf(actor)?.trait === String(item.name ?? ""),
+        pointPowered: system.pointPowered === true,
+        pointPoweredActive: system.pointPoweredActive === true,
         weakness: weaknessOf({ name: String(item.name ?? "") }) !== null,
         applied: isReadTrait(String(item.name ?? ""), system.talentSkills ?? []),
         // What the trait is of, where the book makes the player say, shown
@@ -1247,6 +1279,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
           tired: fatigue !== "fresh",
           statusLabel: fatigue === "fresh" ? "" : L(fatigue === "veryTired" ? "GWORLD.Health.VeryTired" : `GWORLD.Health.${fatigue}`),
         },
+        // Stress and Derangement, beside FP (Basic Set Revised pp. 572-573); null with the rule off.
+        mental: isRuleOn("stressAndDerangement") ? { stress: system.stress ?? 0, derangement: system.derangement ?? 0, limit: derived.will ?? 0 } : null,
         move: derived.move,
         basicMove: derived.basicMove,
         basicSpeed: derived.basicSpeed,
@@ -1783,6 +1817,64 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     });
   }
 
+  /** Holds a wildcard skill's positive relative level as a bonus for the GM's category (Basic Set Revised p. 333). */
+  static async #onWildcardBonus(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    const level = item?.system?.derived?.level;
+    if (!item || item.type !== "skill" || typeof level !== "number") return;
+    const attribute = String(item.system?.attribute ?? "DX");
+    const derived: any = this.actor.system?.derived ?? {};
+    const score = attribute === "Will" ? Number(derived.will) : attribute === "Per" ? Number(derived.per) : Number(derived.attributes?.[attribute]);
+    if (!Number.isFinite(score)) return;
+    await grantWildcardBonus(this.actor, { name: String(item.name ?? ""), relativeLevel: level - score });
+  }
+
+  /** Makes an Assistance Roll from a Rank trait with a Patron value (Basic Set Revised pp. 337-339). */
+  static async #onAssistanceRoll(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    if (item) await rollAssistance(this.actor, item);
+  }
+
+  /** Invokes a disadvantage for the scene: -1 to every success roll per -5 points of it (Revised p. 570). */
+  static async #onHamClause(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    if (item) await invokeHamClause(this.actor, item);
+  }
+
+  /** Ends the Ham Clause. */
+  static async #onHamClauseEnd(this: GWorldCharacterSheetV2) {
+    await endHamClause(this.actor);
+  }
+
+  /** Starts the count of previous Assistance Rolls over, for a new adventure. */
+  static async #onAssistanceReset(this: GWorldCharacterSheetV2) {
+    await resetAssistanceCount(this.actor);
+  }
+
+  /** Readies an alternative ability into its set's slot: a Ready maneuver, or free between attacks (p. 324). */
+  static async #onReadyAlternative(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    if (item) await readyAlternative(this.actor, item);
+  }
+
+  /** Spends points to use a character point-powered ability (p. 325). */
+  static async #onUsePointPowered(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    if (item) await promptPointPowered(this.actor, item);
+  }
+
+  /** Ends the use of a point-powered ability: it is inert again. */
+  static async #onEndPointPowered(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    if (item) await endPointPowered(this.actor, item);
+  }
+
   /** Opens the character's portrait full size, where a GM can show it to the players. */
   static #onViewPortrait(this: GWorldCharacterSheetV2) {
     const actor = this.actor;
@@ -1821,4 +1913,21 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
 /** A stable key for one attack mode, for selecting it on the sheet. */
 export function attackKey(atk: { itemId?: unknown; modeIndex?: unknown; derivedMode?: unknown; name?: unknown }, ranged: boolean): string {
   return [ranged ? "r" : "m", String(atk.itemId ?? ""), String(atk.modeIndex ?? ""), String(atk.derivedMode ?? ""), String(atk.name ?? "")].join(":");
+}
+
+
+/** What a trait's detail panel says of its alternative set: its slots, what is on and what it is billed (Revised p. 324). */
+function alternativeViewOf(item: any, sets: ReadonlyArray<any>) {
+  const group = String(item.system?.alternativeGroup ?? "").trim();
+  if (!group) return null;
+  const set = sets.find((s) => s.key === alternativeKey(group));
+  const member = set?.members?.find((m: any) => m.id === String(item.id));
+  return {
+    group,
+    slots: Number(item.system?.alternativeSlots ?? 1) || 1,
+    on: set?.active?.includes(String(item.id)) === true,
+    disabled: set?.disabled === true,
+    frozen: item.system?.alternativeFrozen === true,
+    billed: member ? Number(member.billed) : null,
+  };
 }

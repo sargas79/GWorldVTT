@@ -18,7 +18,7 @@ describe("the self-control dropdown's options", () => {
   it("puts None first, ahead of the numbers", () => {
     // The bug this replaces: keyed "6", "9", "12", "15" and "", an object
     // iterates its integer-like keys first and None came last.
-    expect(order(null)).toEqual(["", "6", "9", "12", "15"]);
+    expect(order(null)).toEqual(["", "6", "9", "12", "15", "0"]);
   });
 
   it("selects None for a trait with no self-control roll", () => {
@@ -26,6 +26,10 @@ describe("the self-control dropdown's options", () => {
     // why the order above matters: None now, 6 before.
     expect(chosen(null)).toBe("");
     expect(chosen(undefined)).toBe("");
+  });
+
+  it("offers N/A last and selects it for 0 (Revised p. 328)", () => {
+    expect(chosen(0)).toBe("0");
   });
 
   it("selects the number a trait actually holds", () => {
@@ -46,7 +50,7 @@ describe("the self-control dropdown's options", () => {
     // None prices at x1, so an unrecognised value lands on the multiplier that
     // changes nothing rather than on one nobody chose.
     expect(chosen(7)).toBe("");
-    expect(chosen(0)).toBe("");
+    expect(chosen(-1)).toBe("");
   });
 
   it("marks 12 as the standard for a disadvantage, and nothing else", () => {

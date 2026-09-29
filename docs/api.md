@@ -3794,7 +3794,7 @@ The ids, tab by tab (parts in brackets):
 | Tab | Ids |
 |---|---|
 | Criticals | `criticalHit`, `criticalHeadBlow`, `criticalMiss`, `unarmedCriticalMiss` |
-| Tables | `attributeSkillLevels` (`attributeLevels`, `successChances`), `thrownDamage`, `throwingDistance`, `coverDr` (`coverShots`, `coverWalls`) |
+| Tables | `attributeSkillLevels` (`attributeLevels`, `successChances`), `thrownDamage`, `throwingDistance`, `peopleSucceed`, `collectiveSkill`, `abstractDifficulty`, `coverDr` (`coverShots`, `coverWalls`) |
 | Wounds | `hitLocations`, `shock`, `knockback`, `majorWound`, `knockdownStunning`, `effectsOfStun`, `cripplingInjury`, `mortalWounds`, `bleeding` |
 | Melee | `meleeAttackModifiers`, `activeDefenseModifiers`, `lostHitPoints`, `lostFatiguePoints`, `criticals`, `rulesOf` (`ruleOf14`, `ruleOf16`, `ruleOf20`) |
 | Ranged | `rangedAttackModifiers`, `sizeSpeedRange`, `dodgeBlockParry`, `woundingModifiers`, `firstAid`, `naturalRecovery`, `unconsciousness` |
@@ -4045,3 +4045,370 @@ Each step is recorded in the world under the module once every document it
 touched has saved, so it runs once. A step with a failure isn't recorded and
 runs again on the next load. Each helper returns
 `{ skipped, changed, failed }`, and a long step reports its progress.
+
+- **Energy Reserve** (since 1.167.0; Basic Set Revised p. 326). A trait
+  "Energy Reserve" taken with a specialty for its origin (Magical, Psionic,
+  Chi, a power's name) is a pool of that origin; `derived.reserves` lists
+  `{ key, origin, max, value, interval }` for each (two of one origin are one
+  reserve), from `system.session.reserves`, which holds what each has spent
+  and the seconds counted toward its next point. `interval` is 600 seconds
+  unless Slow Recharge (1 ER/hour or 1 ER/day) says otherwise, and null where
+  Special Recharge (energy theft only) means nothing recharges it by itself.
+  `spendFatigue(actor, fp, { origin })` and the system's own spell costs
+  (`origin: "magical"`) draw on a reserve of that origin before FP, leaving
+  the FP chart only what it could not cover; the result gains `reserveLost`.
+  `api.reserves` has `list(actor)`, `charge(actor, origin, cost)` (resolves to
+  `{ reserve, rest }`), `drain(actor, reserveOrigin, powerOrigin, amount)`
+  (only a power of the same origin depletes it) and `restore(actor, origin,
+  amount)`. The world clock recharges every reserve on `updateWorldTime`. The
+  sheet shows each reserve beside FP. `rules.energyReserves`,
+  `rules.payFromReserve`, `rules.rechargeReserve`, `rules.drainsReserve` and
+  `rules.originKey` are the pieces. Extra effort with an ability of an origin
+  and Costs Fatigue are for the module that owns the ability, which charges
+  through `spendFatigue` with `origin`.
+
+- **The Revised perks** (since 1.168.0; Basic Set Revised pp. 328-329). Each
+  perk that names what it is for is read from its specialty into
+  `derived.perks`: `dabbler` (skill to bonus, from a specialty written
+  "Biology, Chemistry, Physics +2, Mathematics (Applied) +3", eight choices,
+  never past what a point buys), `cuttingEdge` (skill to levels of TL above
+  personal, which `skillTechLevel` takes as its fourth argument), `offHand`,
+  `improvised`, `bonds`, `feintSkills`, `strongbow`, `classicFeatures`,
+  `permits`, `noNuisance`, `specialExercises`, `controllable` and `shticks`.
+  Wired: Dabbler on a skill at an attribute default; Cutting-Edge Training in
+  the tech-level line of an attack; Off-Hand Training in place of Ambidexterity
+  for that skill's Dual-Weapon Attack; Improvised Weapons waiving the
+  improvised-weapon penalty of an unarmed technique; Weapon Bond and Equipment
+  Bond as a `bond` line (+1) on an attack with the item named in the specialty;
+  Strongbow lowering the ST a bow is held against by 1 (Bow at DX+1) or 2
+  (DX+2); Classic Features as a `fancied` reaction source; Alternative Feints
+  as a choice of skill when Feint is clicked. `rules.perksOf`,
+  `rules.dabblerChoices`, `rules.dabblerGain`, `rules.strongbowAllowance`,
+  `rules.needsPermit`, `rules.nuisanceRollsWaived`,
+  `rules.maximumWithSpecialExercises` and `rules.controllableTarget` are the
+  pieces; the last four are not yet read by a roll. The Off-Hand Weapon
+  Training technique stays in the pack, its reference saying the perk replaces
+  it.
+
+- **The Revised modifiers and Self-Control "N/A"** (since 1.169.0; Basic Set
+  Revised pp. 328-332). The modifiers pack carries Affects Others, Costs Hit
+  Points (and its per-second and converted-FP forms), Fixed Duration, Game
+  Time, Hard to Use, Reliable, Maximum, Minimum and Reduced Duration, the
+  Requires Roll modifiers (attribute, Quick Contest, skill, Active Defense),
+  Switchable and the power modifiers (Biological, Chi, Cosmic, Divine, Magical,
+  Moral, Nature, Psionic, Spirit, Super, Superscience). Wired:
+  `derived.abilityRolls` lists, for each trait carrying Hard to Use, Reliable,
+  a Requires roll or Costs Hit Points, `{ id, name, bonus, penalty,
+  talentBarred, conflict, needs, hpCost, hpCostPerSecond }` -- Reliable's
+  bonus and Hard to Use's penalty (which bars a power Talent), each Requires
+  roll with its target (a Requires Active Defense Roll's is DX/2 + 3, +1 Combat
+  Reflexes) and the HP a use takes; `actors.spendHitPoints(actor, hp, { reason
+  })` charges Costs Hit Points and resolves to `{ hpLost, hp, reason }`;
+  `gworld.afflictionEffect` gets `margin` read as 3 for an item with Fixed
+  Duration and `durationDivisor` for Reduced Duration (1 for none); a trait
+  whose modifier is one of the power modifiers is a power of that origin in
+  `derived.powers` unless it names one already. Self-Control "N/A" is a
+  `selfControl` of 0 (no roll, 2.5 times the cost, fractions dropped before
+  modifiers), offered by the item sheet's selector. `rules.abilityRollModifiers`,
+  `abilityRollTotal`, `requiresRollOf`, `requiredRolls`, `activeDefenseRollTarget`,
+  `costsHitPointsPercent`, `costsHitPointsCost`, `durationMargin`,
+  `reducedDurationPercent`, `maximumDurationPercent`, `minimumDurationPercent`,
+  `gameTimeUses`, `affectsOthersPercent`, `eitherOrPercent`,
+  `disadvantageLimitation`, `powerModifierOrigin` and `natureTechPenalty` are
+  the pieces. The either/or and limitations-on-disadvantages rules are text
+  for a module's journal; `eitherOrPercent` and `disadvantageLimitation` only
+  work out their sums.
+
+- **Alternative Abilities, point-powered abilities and wildcard bonuses**
+  (since 1.170.0; Basic Set Revised pp. 324-325, 333). A trait carries
+  `alternativeGroup` (the set's name, blank for none), `alternativeSlots`,
+  `alternativeActive`, `alternativeDisabled` and `alternativeFrozen`, plus
+  `pointPowered`, `pointPoweredActive` and `noReactionBonus` (a Talent whose
+  reaction bonus the GM replaced). `rules.alternativeBilling(members)` maps each
+  ability of a set to what it is billed (full price for the dearest, as many as
+  the slots; a fifth, rounded up, for the rest); `rules.alternativeSets`,
+  `alternativeUsable` and `swapAlternative` give a set's state and what bringing
+  an ability in takes (a Ready, free between attacks, refused for a disabled or
+  frozen set); `pointPoweredCost`, `pointPoweredUse` and `pointPoweredCeiling`
+  price a point-powered ability and its uses (1, 2, or 3 up to its cost);
+  `wildcardBonus` is a wildcard's positive relative level, halved where the book
+  halves it. Wired: the ledger bills a set as above, an ability out of its slot
+  or in a disabled set, and a point-powered one nobody paid to use, count for
+  nothing (listed in `derived.traitsOutOfPlay`), `derived.alternativeSets` lists
+  `{ key, slots, disabled, free, active, members: [{ id, billed }] }`, the trait's
+  panel offers Ready, Spend points to use (Impulse Points, then character
+  points) and End use, and the optional `wildcardBonus` rule (off) puts a button
+  on a wildcard skill that holds its bonus as a pending modifier of source
+  `wildcard`. Not done: a Link between alternatives is not refused, and the
+  wildcard bonus is held for the GM's category rather than added by each roll's
+  own dialog.
+
+- **New techniques** (since 1.171.0; Basic Set Revised pp. 333-334). Records for
+  Acrobatic Stand, Armed Grapple (Cloak, and any melee weapon), Close Combat,
+  Evade (Acrobatics, Judo), Head Butt, Stamp Kick (Brawling, Karate) and Wrench
+  Arm and Wrench Leg (ST-4). `rules.acrobaticStand`, `acrobaticStandModifier`,
+  `armedGrapple`, `closeCombatPenalty`, `closeCombatDamageModifier`,
+  `closeCombatBulk`, `evadeBase`, `headButtDamage`, `headButtSelfInjury`,
+  `stampKickDamage`, `stampKickTarget`, `stampKickMiss` and `wrenchLevel` are the
+  figures. Wired: a natural attack row for Head Butt (`naturalKey: "headButt"`,
+  striking the skull for Hurting Yourself) and Stamp Kick (`"stampKick"`, the
+  foot), each rolled at the better of the technique and its default; a missed
+  Stamp Kick rolls DX; the Evade technique replaces DX in the evade contest;
+  changing posture to standing offers an Acrobatic Stand roll; an armed grapple
+  takes the weapon out of play (flag `armedGrapple`, the item's id) until the
+  hold ends; Neck Snap, Wrench Arm and Wrench Leg roll at the better of ST-4 and
+  their technique; the combat switch `closeCombatAnyWeapon` (off) lets a weapon
+  without a C reach fight in close combat at -4 skill per yard of reach (the
+  technique buys half back), swing damage -1 per yard and Parry from the reduced
+  skill, and Close Combat levels buy off a ranged weapon's Bulk. Not done: a
+  parried Head Butt hurting the butter's face and a Stamp Kick's target
+  restriction are pure rules only, not enforced on the cards.
+- **Pulling Rank** (since 1.172.0; Basic Set Revised pp. 337-341). A Rank trait
+  takes `system.patronValue` (10-30, never paid) beside its `pointsPerLevel`;
+  the modifier record Capricious Assistance (-50%, Rank group) is in the addendum
+  modifiers. `rules.baseAssistanceRoll`, `keyRank`, `assistanceLines`,
+  `assistanceTarget`, `assistanceOutcome` (with the Capricious ladder), `rankUsed`,
+  `rankCostPerLevel`, `costWithinTables`, `patronRangeForCost`, `ASSISTANCE_TYPES`
+  and the numeric rows (`cashAmount`, `cashModifier`, `consultationSkill`,
+  `facilitiesBonus`, `generalizedAssistanceBonus`, `responderCount`,
+  `licenseModifier`, `warrantHours`, `muscleSkill`) are the figures. Wired behind
+  the rules switch `pullingRank` (rolls group, off): an "Assistance roll" button on
+  a Rank trait that has a Patron value opens a dialog (aid type, Rank used,
+  appropriateness, previous requests counted in the actor flag `assistanceRolls`,
+  Reputation, Charisma and Smooth Operator from the sheet), rolls the target as a
+  skill roll tagged `assistance` (skill `Assistance Roll`, so a complementary
+  bonus held for that master skill applies and Luck is honoured as for any skill
+  roll) and posts a card with the outcome ladder and the aid's figures. Not done:
+  the aid itself (money, people, equipment) is reported, never handed over; the
+  two tables are recommendations, not enforced on the item sheet; Buying Success
+  is the roll dialog's own.
+- **Tech Level and Skill Availability** (since 1.173.0; Basic Set Revised p. 341).
+  A skill record takes `system.firstTl` (integer or null; TL^ is 12): the first
+  tech level it exists at, stamped on 130 skill and specialty records.
+  `rules.firstTechLevel(name, recorded?)` reads the record's figure, else the
+  book's list by specialty then skill (`rules.FIRST_TL` is the table);
+  `rules.skillAvailableAt(name, tl, recorded?)` is true when the list says
+  nothing or no TL is known, and `rules.firstTlLabel` writes "TL7" or "TL^".
+  Advice only, with no switch: the compendium picker greys a skill above the
+  character's TL (the campaign's when no actor) with a tooltip, and the skills
+  tab shows a warning tag on one already taken; nothing is refused.
+- **Cost factors for equipment modifiers** (since 1.174.0; Basic Set Revised pp. 342, 275).
+  Every priced field is a cost factor (CF): final cost is list x (1 + total CF), the
+  total never below -0.8; weight effects multiply, stat adjustments add.
+  `rules.pricingOf(fields)` returns `{ factors, total, costMultiplier, weightFactor,
+  effects }` for a `PricedFields` (kind `weapon`, `tool`, `armor` or `shield`, with
+  quality, material, composition, equipmentQuality and the modifier fields);
+  `rules.totalCostFactor`, `priceFromCostFactors`, `cfFromMultiple`,
+  `cfFromPercentOfList`, `cfFromPercentAdded`, `presentationCostFactor`,
+  `MODIFIER_CF`, `MODIFIER_WEIGHT` and `COST_FACTOR_FLOOR` are the pieces, and
+  `rules.qualityCostFactor` and `silverCostFactor` read the Basic Set's grade and
+  silver prices as CFs. Silver is a surcharge on the good-quality price (solid +19,
+  coated +2, bullets +49), and a silver weapon, coated or solid, is good or cheap
+  at best (`maxQualityFor`): fine, very fine and silver are mutually exclusive.
+  New calculated fields: equipment `balanced`, `cuttingEdge`, `disguised`,
+  `rugged` (Booleans) and `presentation` (0-3, +1/+4/+9 CF); armor `fine`,
+  `disguised`, `presentation`; shield `fine`, `balanced`, `disguised`,
+  `presentation`, and the composition `mirrored` (silver-coated, +6 CF). The item
+  sheet reprices cost and weight from `listCost` and `listWeight` when any of them
+  changes, adding the CFs instead of multiplying, and shows the sum and the stat
+  effects (reactions, +1 skill or Acc, +2 HT and DR x2 for rugged). The stat
+  effects are shown, not applied to rolls. Modules that price their own Balanced,
+  Cutting-Edge, Disguised or Rugged fields should read these and `pricingOf`.
+- **Flat-cost Signature Gear** (since 1.175.0; Basic Set Revised p. 342). The rules
+  switch `flatSignatureGear` (equipment group, off): Signature Gear becomes a 1-point
+  perk whose count is the number of gear items flagged. Equipment and armor items
+  take `system.signature` (Boolean, revived from the field earlier releases migrated
+  away; its deprecated-data entry is gone). With the switch on the trait's levels
+  are the count of flagged items and the point audit bills a point each (a flag with
+  no Signature Gear trait held is billed anyway, as an advantage), the money tab's
+  budget line is hidden (`derived.wealth.signatureGearPoints` is 0) and the item sheet
+  and gear row show the flag. Off, the levels buy goods worth 50% of starting wealth
+  per point as before. `rules.isSignatureGearName`, `flaggedSignatureItems`,
+  `flatSignatureGearCost`, `flatSignatureBilling` and `SIGNATURE_PERK_POINTS` are the
+  pure pieces. Not done: the plot protection is the GM's to honour; the system
+  neither enforces nor rolls it.
+- **The missing hit locations** (since 1.176.0; Basic Set Revised p. 566). The rules
+  switches `finerHitLocations` and `chestAbdomenSplit` (combat group, off). The system
+  registers its own rows through `registerHitLocation` as `gworld.<key>`: `ear`,
+  `nose`, `jaw`, `chest`, `abdomen`, `spineTorso`, `spineNeck`, `pelvis`, `jointArm`,
+  `jointLeg`, `jointHand`, `jointFoot`, `veinsArm`, `veinsLeg` and `veinsNeck`, each
+  offered while its switch is on and each a part of the Basic Set location it names.
+  The registration takes three additions. `cripplingDivisor` and
+  `majorWoundKnockdown` may be functions of the damage type, and `majorWound({ type,
+  injury, uncappedInjury, maxHp })` returns true to make the wound a major one, false to
+  keep a crippling from counting as one, or null to leave it. Armour takes a new
+  coverage value `chest` (protects the chest only; it counts as the torso while the
+  split is off). Also under the switch: crushing may aim at the vitals, the skull is -5
+  and the face -7 aimed at from behind, the random hit rolls its 1d (face to nose or
+  skull, neck to veins or spine, torso to vitals or spine, limbs to veins or joints,
+  hands and feet to joints) and splits the torso, and a body without the part takes the
+  blow on the location it belongs to (`InjuryTolerance` gains `invertebrate`, `noLegs`
+  and `noManipulators`, read from those traits). The damage card names ear and nose
+  lost, a broken nose, a crippled spine or broken neck, a pelvis that gives out, a
+  crippled joint, and the GM's rulings on the veins and a cut neck; a neck snap says
+  the neck breaks over HP. `rules.REVISED_LOCATIONS`, `refineRandomHit`, `woundNotes`,
+  `isMissingPart`, `withChestCoverage`, `fromBehindAdjustment` and `neckSnapBreaksNeck`
+  are the pure pieces. Not done: a tight-beam burn is not told from other burning when
+  aiming or on a random hit, so `burn` counts as tight-beam for the rows that take it
+  and the random refinements leave it out; the outcomes are on the card and are not
+  written to the character as traits; extra limbs do not change a joint's threshold;
+  a miss by one at the ear, nose, jaw, spine or pelvis lands on the torso whether or not
+  the split is on.
+- **Tasks and feats** (since 1.177.0; Basic Set Revised pp. 570-571, 578). Switches
+  `expandedInfluence` and `basicAbstractDifficulty` (rolls group, off). Ham Clause needs
+  no switch: a disadvantage's row on the sheet has a button that keeps it as an actor
+  flag, and every success roll of the actor (through `successRollModifiers`, a line
+  labelled "Ham Clause") takes -1 per -5 points or fraction of it until the button
+  ends it or the combat is deleted. `social.hamClause(actor)` reads it,
+  `social.invokeHamClause(actor, item)` and `social.endHamClause(actor)` set and end it.
+  With Expanded Influence Rolls on, an Influence roll's reaction is the margin of the
+  Quick Contest read on the table (excellent 8+, very good 5-7, good 1-4, neutral on a
+  tie, poor -1 to -2, bad -3 to -4, very bad -5 to -7, disastrous -8 or worse); an
+  automatic result and lost specious intimidation keep the standard outcome.
+  Basic Abstract Difficulty is a world setting (0 to -10, `basicAbstractDifficulty`)
+  with a scene flag of the same name overriding it; with the switch on it is one line,
+  "Basic Abstract Difficulty", on every task roll (not an attack or a defense, nor the
+  player's side of a Contest against an opponent with no actor).
+  `social.basicAbstractDifficulty(scene?)`, `social.setBasicAbstractDifficulty(value,
+  scene?)` and `social.unstattedNpcSkill(scene?)` (10 + |BAD|) read and set it. The GM
+  screen's Tables tab gains "How Many People Succeed", "Collective Skill" and "Basic
+  Abstract Difficulty" (with the quick-and-dirty rule and the suggestion).
+  `rules.hamClausePenalty`, `quickAndDirtyModifier`, `groupFraction`, `groupOutcome`,
+  `adjustedResistance`, `collectiveScore`, `expandedInfluenceReaction`, `clampBad`,
+  `abstractNpcSkill` and `suggestedBad` are the pure pieces. Not done: BAD does not
+  remove the detailed situational modifiers the automation adds (it is one more line;
+  the GM turns the others off), the roll dialog does not show BAD apart from its line,
+  the "critical for 8 or more" option of Expanded Influence is the GM's, and there is
+  no button for the unstatted NPC's roll (the GM screen states its skill).
+- **Extra effort extras** (since 1.178.0; Basic Set Revised pp. 571-572). Switches (rolls
+  group, off): `powerExtraEffort`, `godlikeExtraEffort`, `fatigueForSkill`; and in the
+  activities group `realisticMarching`. With `powerExtraEffort` on, the sheet's "Power
+  extra effort" button asks the increase, the power's Talent (and, with Godlike on, the FP
+  to spend) and rolls Will at -1 per 5% (at most 100%, no cap under Godlike), +5 motivated,
+  plus Talent, with no penalty for missing FP; the FP (1 a roll, or the Godlike multiple) are
+  paid after the roll and a critical success is free. `effort.rollPower(options)` does the
+  same, `effort.powerFp(fp?)` gives the price for an attack or defense rolled instead of
+  Will. `fatigueForSkill` adds a "Trade FP for a bonus" button and `effort.tradeFatigue({
+  actor, fp, kind })` (`skill`, `attack` or `resistance`): 1 FP per +1 up to +4, held as a
+  pending bonus for the next matching roll. `party.combiningSt(actors)` gives the summed
+  Basic Lift and effective ST (the square root of 5 x total BL, rounded up), and
+  `party.postCombiningSt(actors)` says so in chat. `realisticMarching` makes a hike's miles 4 x
+  Move, or 6 x Move when the marcher has Hiking, Soldier, Survival or Professional Skill
+  (Trail Guide) (`effort.isSkilledMarcher(actors)`). `rules.COMBAT_EXTRAS`, `extrasOverCap`,
+  `giantStepAllowed`, `greatLungeAllowed`, `heroicChargeAllowed`, `rapidRecoveryAllowed`,
+  `powerEffortTarget`, `powerEffortCost`, `godlikeEffect`, `fatigueForSkillBonus`,
+  `combinedBasicLift`, `combinedStrength`, `marchingHours`, `marchingSpeed` and
+  `marchingMilesPerMove` are the pure pieces (`dailyMiles` takes `milesPerMove`). Not done: the
+  four combat options (Giant Step, Great Lunge, Heroic Charge, Rapid Recovery) and the cap of one
+  offensive and one defensive a turn are rules only, not yet in the maneuver flow (the add-on's
+  Martial Arts options still serve); the fatigue trades are a sheet button holding a bonus, not
+  spinners inside the roll and resistance dialogs; Combining ST has no button on the Party sheet.
+- **Stress and Derangement** (since 1.179.0; Basic Set Revised pp. 572-573). Switch
+  `stressAndDerangement` (rolls group, off) with sub-options `stressRollPenalties` and
+  `derangementRollPenalties` (off). A character gains `system.stress` and
+  `system.derangement`, counts of 0 or more (the book's "-3 Stress" is 3), shown beside FP on
+  the overview and editable there, each limited to Will. The Fright Check dialog asks the kind:
+  ordinary (Unfazeable is immune; a failure adds 1 Stress, a critical failure 3) or
+  sanity-blasting (Unfazeable gets +8; a failure adds 1 Derangement, a critical failure 3). Every
+  Fright Check takes -(Stress + Derangement)/2 rounded against the character. Stress past
+  Will becomes Derangement, and Derangement past Will is reported as points of permanent
+  mental disadvantages. Resting (the sheet's Rest, `restForFatigue`) sheds 1 Stress per 10
+  minutes, plus 1 for an indulgence (a checkbox). "Day's end (Derangement)" rolls Will to shed 1
+  Derangement, +1 with a clinician of skill 12 or better, whose own roll sheds another; "Buy off"
+  removes all Stress or 2 Derangement per point of a new mental disadvantage. The optional
+  penalties are a line on the roll: Stress/2 (less Fearlessness, never a bonus) on
+  self-control rolls, Explosives and Surgery, and HT rolls against disease; Derangement/2 on
+  Influence rolls. `mental.of(actor)`, `add(actor, { kind, amount })`, `recover(actor, { minutes,
+  indulgence })`, `dayEnd({ actor, clinicianSkill })`, `buyOff(actor, { points, target })` and
+  `clinicianSkill(actor)`; `rules.addHardship`, `frightHardship`, `stressFrightPenalty`,
+  `stressRecovered`, `stressRollPenalty`, `derangementRollPenalty`, `derangementRecoveryTarget` and
+  `cureByPoints` are the pure pieces. `roll.frightCheck` still rolls an ordinary check. Not done:
+  no rest hook for time passing outside the Rest button (the world clock does not bleed Stress off),
+  the day's-end roll is the GM's call (no check that the day was free of new hardship), the
+  rolls for supernatural powers and the Physician (Psychiatric) hint on the injuries chapter are
+  not wired, and the permanent-disadvantage overflow is reported, not added as a trait.
+- **Terrain, illumination, vision, frostbite and the horizon** (since 1.180.0; Basic Set
+  Revised pp. 573-575). Switches: `terrainTypes` (activities), `frostbite` (injury) and
+  `visionRollsInCombat` (combat), all off. With `terrainTypes` on, the sheet's hike prompt
+  offers a terrain type and `hike({ biome })` uses its average travel multiplier in place of
+  the four generic grounds (`dailyMiles` takes `terrainMultiplier`). `vision.forageModifier({
+  actor, terrain, average, exceptional })` rolls (2d-7, 1d-7, 2d-6...) or averages the foraging
+  modifier of a terrain or aquatic terrain and says it in chat. With `frostbite` on, a failed
+  roll against the cold that costs FP also costs 1 HP per FP on every hit location no worn armor
+  or clothing piece covers (`vision.exposedOf(actor)`, `vision.applyFrostbite(actor, fp)`). With
+  `visionRollsInCombat` on, `vision.rollCombatVision({ actor, attackerSm, rangePenalty, other,
+  fromConcealment })` rolls Vision (with +10 for plain sight, none after the first shot from
+  concealment) against an SM -10 or smaller attacker or a range penalty of -10 or worse, and
+  says whether the defender sees the attack coming. `vision.signalRange(smA, smB)`,
+  `signalVisionBonus` and `plainSightBonus` are the Visual Signals and In Plain Sight figures.
+  Pure pieces under `rules`: `TERRAIN_TYPES`, `foragingModifier`, `trackingModifier`,
+  `travelMultiplier`, `arcticTravelFor`, `AQUATIC_FORAGING`, `ILLUMINATION_LEVELS`,
+  `illuminationPenalty`, `pointSourcePenalty`, `adaptationMinutes`, `plainSightBonus`,
+  `combatVision`, `concealedAttackDefense`, `exposedLocations`, `frostbiteDamage`,
+  `HORIZON_TABLE`, `horizonMiles`, `horizonMilesForHeight`, `signalRange`. Not done: no
+  foraging or Tracking button on the sheet, Tracking's terrain modifier is not added to the
+  Tracking roll, the illumination levels are not a picker in the attack dialog, plain sight is
+  not a checkbox on a Vision roll (there is no Vision prompt), `rollCombatVision` is not called
+  by the defense flow (a module or the GM calls it), frostbite is charged as one HP sum and
+  does not cripple a location, the Horizon Table is not yet on the GM screen, and the add-on's
+  `frostbite` is not retired here.
+- **More maneuvers** (since 1.181.0; Basic Set Revised pp. 575-576). Five combat-group switches,
+  each off: `allOutSlams`, `allOutConcentrate`, `mentalDefense`, `committedAttack`,
+  `defensiveAttack`. `system.maneuver` may now be `committedAttack`, `defensiveAttack` or
+  `allOutConcentrate` (a step each; Committed and Defensive attack, All-Out Concentrate allows no
+  defense). The choices each asks for are maneuver options under the system's own module id
+  `gworld` (`gworld.slam`, `gworld.committedKind`, `gworld.committedStep`, `gworld.committedWith`,
+  `gworld.defensiveBenefit`, `gworld.mentalDefense`), kept and drawn like a module's.
+  All-Out Attack with `gworld.slam` ticked gets a full Move (`gworld.maneuverAllowances` still has
+  the last word). Committed Attack: Determined +2 to hit, a second step -2, Strong +1 damage or +1
+  per two dice for ST-based melee, every defense at -2, and the defense the attack used refused on
+  the defense card (parry with the hand, block with the shield, dodge after a kick), never a
+  retreat. Defensive Attack: -2 damage or -1 a die, +1 to Parry or to Block as chosen, or the
+  unbalanced weapon that attacked parries again (`gworld.parryWeapons` sees it as not excluded),
+  and a grab or grapple (an attack that does no damage) gives the target +1 on its defenses.
+  All-Out Concentrate is +1 to skill and spell rolls, which makes the distraction roll Will-2;
+  Mental Defense is +2 on resistance rolls while All-Out Defense is the maneuver.
+  `registerManeuverOption` and `registerManeuver` stay for other books. Not done: the +1 of
+  All-Out Concentrate is on every skill and spell roll (the GM removes it from others) and does
+  not check that the maneuver was held for the whole task; the second step's count and the
+  Defensive kick's +2 on falling rolls are not enforced; the defense buttons' figures do not show
+  the -2 or +1 (the roll's lines do); Double's extra melee attack before a slam is the ordinary
+  second All-Out Attack.
+- **Optional ranged rules** (since 1.182.0; Basic Set Revised pp. 576-577). Switches, all off, in
+  the combat group: `closeContactShots`, `partialCoverage`, `nonCombatBonuses`, `trickyShooting`,
+  `simplifiedRange`, `largeTargetDamage`. Each adds fields to the ranged attack dialog or changes a
+  figure, and adds lines keyed `closeContact`, `nonCombat`, `strikeAround`, `prediction` and
+  `rapidStrike` to the roll (Simplified Range keeps the key `speedRange` on its band line). Close
+  contact drops Acc, sights, aim and a laser's bonus, and Bulk for an unresisting target. Armour
+  gains `system.coverage` (integer 1-6, default 6, the n of "n in 6"; also `ArmorPiece.coverage`,
+  the field the add-on's packs write): with `partialCoverage` on, `resolveDamageAgainst` rolls 1d
+  once per hit for the partly armoured location, coverage of several pieces added, and pieces
+  that fail to protect give no DR. With `largeTargetDamage` on, an Unliving or Homogenous target
+  wounds by its `system.sm` on the p. 577 table (`InjuryTolerance.largeTargetSm`).
+  `rules.closeContactShot`, `nonCombatBonus`, `combinedCoverage`, `coverageProtects`,
+  `strikeAroundPenalty`, `mayDodgeFirearm`, `evasiveBonuses`, `rangedRapidStrikeAllowed`,
+  `splitRateOfFire`, `bandForYards`, `bandPenalty`, `shiftBand`, `largeTargetRow` and
+  `largeTargetWounding` are the pure pieces. Not done: Restricted Dodge Against Firearms (the
+  evasive-movement declaration and defense gate) and Ranged Feint are rules only, with no maneuver
+  option or defense hook; Prediction Shot and Ranged Rapid Strike add their to-hit line but do not
+  lower the target's Dodge, split RoF between two targets or forbid Dual-Weapon Attack in the
+  flow; Simplified Range reads the band from the measured range, with no Move shift of bands
+  between turns; the coverage roll is made when damage is resolved (a preview re-rolls), and the
+  armour sheet has no coverage field yet; the add-on's own rules are not retired.
+
+- **Simplified Resources and batteries** (since 1.183.0; Basic Set Revised p. 578). Switch
+  `simplifiedResources` (equipment group, off). With it on, a character's ranged weapons stop
+  counting shots (the same way Infinite Ammunition does, though weapons still malfunction) until a
+  weapon's `ammoTracked` flag is set. `game.gworld.api.simplifiedResources` has `isTracked(item)`,
+  `setTracked(item, bool)`, `cutOff(actor)` (the party is cut off, the character ditched the
+  ammunition or was captured: every ranged weapon counts shots again) and `tally(...)`, the cost and
+  weight of five reloads (`reloads`) and their containers. The pure rules are under `rules`:
+  `reloadTally`, `sparesPerDay` and `daysOfPower` (a day for every gizmo, one more per $3 and 1 lb
+  at TL6-8 or $10 and 0.5 lb at TL9+), `trackedRegardless` (explosives, fine and magical ammunition
+  are always tracked), the `BATTERY_TYPES` and `CELL_TYPES` tables, and `substituteCount` and
+  `substituteUptime`, the substitution of one size for another (x10 or /10 per line, x2 or /2 per
+  TL). The thirteen records (six batteries T to VL, seven power cells AA to F) are in the Equipment
+  compendium; a rechargeable battery costs five times as much. Not done: no sheet toggle for
+  `ammoTracked` (the API and the flag only), nothing yet calls `daysOfPower` for gadgets, and
+  explosive or fine ammunition in a weapon is not detected, so a weapon holding it should be set
+  tracked by hand. The add-on's six battery items are for the add-on to drop.

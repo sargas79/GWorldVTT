@@ -33,27 +33,28 @@ import {
   WEAPON_MATERIALS,
   availableQualities,
   gradeAfterMaterial,
-  materialCostMultiplier,
-  materialWeightMultiplier,
   qualityCostMultiplier,
   shieldComposition,
 } from "../../rules/weapon-quality.js";
+import { pricingOf, type PricedFields, type PricedKind } from "../../rules/cost-factors.js";
 import {
   AMMUNITION_TYPES,
   ammunitionCost,
   availableAmmunition,
   calibreOf,
 } from "../../rules/ammunition.js";
-import {
-  EQUIPMENT_QUALITIES,
-  equipmentQualityCost,
-  type EquipmentQuality,
-} from "../../rules/wealth.js";
+import { EQUIPMENT_QUALITIES } from "../../rules/wealth.js";
 
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 
 const TEMPLATE_ROOT = `systems/${SYSTEM_ID}/templates/item`;
+
+/** The fields that price an item (Revised p. 342): changing one reprices it from the list price. */
+const PRICING_FIELDS = [
+  "quality", "material", "equipmentQuality", "composition", "fine", "balanced", "cuttingEdge",
+  "disguised", "presentation", "rugged",
+];
 
 /** Types that live in an inventory and so carry quantity, weight and cost. */
 const PHYSICAL_TYPES = new Set(["equipment", "armor", "shield"]);
@@ -213,7 +214,9 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     if (item.type === "equipment" || item.type === "shield") {
       const facts = weaponFacts(item);
       const tl = Number(item.system?.tl) || 3;
-      const grades = availableQualities(facts.weaponClass, tl);
+      // Fine, very fine and silver are mutually exclusive (Revised p. 342).
+      const grades = availableQualities(facts.weaponClass, tl)
+        .filter((q) => gradeAfterMaterial(q, facts.material) === q);
       // "Assume that ammo cost is $20 times this weight" (Characters p. 278).
       const reloads = ((item.system as any).rangedModes ?? []).map((m: any) =>
         Number(m.reloadWeight) > 0 ? ammunitionCost(Number(m.reloadWeight)) : null);
@@ -235,6 +238,38 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
           && rollsToKeepWorking(objectState(facts.hp - (Number((item.system as any).hpLost) || 0), facts.hp)),
         showQuality: item.type === "equipment" && isRuleOn("weaponQuality"),
         showObject: isRuleOn("weaponBreakage") && facts.hp > 0,
+      };
+    }
+
+    // The cost factors the item carries and what they come to (Revised p. 342).
+    if (item.type === "equipment" || item.type === "armor" || item.type === "shield") {
+      const kind = this.#pricedKind();
+      const names = kind === "armor" ? ["fine"]
+        : kind === "shield" ? ["fine", "balanced"]
+        : kind === "weapon" ? ["balanced"]
+        : ["cuttingEdge", "rugged"];
+      // Flat-cost Signature Gear (Revised p. 342): the flag lives on the gear.
+      if (item.type !== "shield" && isRuleOn("flatSignatureGear")) names.push("signature");
+      context.costChecks = [...names, "disguised"].map((name) => ({
+        name,
+        label: `GWORLD.CostFactor.${name}`,
+        hint: `GWORLD.CostFactor.${name}Hint`,
+        checked: Boolean((item.system as any)[name]),
+      }));
+      const pricing = pricingOf(this.#pricedFields(kind, item.system));
+      context.costFactors = pricing.factors.length === 0 ? null : {
+        lines: pricing.factors.map((line) => ({
+          label: `GWORLD.CostFactor.${line.key}`,
+          cf: line.cf > 0 ? `+${line.cf}` : String(line.cf),
+        })),
+        total: pricing.total > 0 ? `+${pricing.total}` : String(pricing.total),
+        multiplier: pricing.costMultiplier,
+        weight: pricing.weightFactor,
+        reactions: pricing.effects.reactions,
+        skill: pricing.effects.skill,
+        accuracy: pricing.effects.accuracy,
+        ht: pricing.effects.ht,
+        rugged: pricing.effects.drFactor > 1,
       };
     }
 
@@ -395,6 +430,8 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       ],
       hitLocations: [
         "torso", "skull", "eye", "face", "neck", "vitals", "groin", "arm", "leg", "hand", "foot",
+        // Armour over the chest and not the abdomen (Basic Set Revised p. 566).
+        "chest",
       ],
       // How a piece of armour is spent as it stops damage (Characters p. 47).
       ablative: ["none", "ablative", "semiAblative"],
@@ -491,6 +528,76 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
    */
   static readonly CHECKBOX_GROUPS = ["system.locations", "system.drSplitAppliesTo", "system.classes"];
 
+  /** What kind of thing this item is priced as: a weapon with grades, a tool, armor or a shield. */
+  #pricedKind(): PricedKind {
+    if (this.item.type === "armor") return "armor";
+    if (this.item.type === "shield") return "shield";
+    return weaponFacts(this.item).skill !== "" ? "weapon" : "tool";
+  }
+
+  /** The fields that price the item, read from a system object with another laid over it. */
+  #pricedFields(kind: PricedKind, base: any, over: any = {}): PricedFields {
+    const read = (key: string) => (over[key] !== undefined ? over[key] : base[key]);
+    return {
+      kind,
+      tl: Number(read("tl")) || 3,
+      weaponClass: weaponFacts(this.item).weaponClass,
+      quality: read("quality"),
+      material: read("material"),
+      composition: read("composition"),
+      equipmentQuality: read("equipmentQuality"),
+      fine: Boolean(read("fine")),
+      balanced: Boolean(read("balanced")),
+      cuttingEdge: Boolean(read("cuttingEdge")),
+      disguised: Boolean(read("disguised")),
+      presentation: Number(read("presentation")) || 0,
+      rugged: Boolean(read("rugged")),
+    };
+  }
+
+  /** Reprices the item from its list price when a field that prices it has changed. */
+  #reprice(data: Record<string, any>): void {
+    const current = this.item.system as any;
+    const kind = this.#pricedKind();
+    const changed = PRICING_FIELDS.some((key) =>
+      data.system[key] !== undefined && String(data.system[key]) !== String(current[key]));
+    if (!changed) return;
+
+    // What the material allows is a fact about the material, so the grade
+    // is held to it whether or not the weapon has a price to work from:
+    // "blades cannot exceed good quality" in plastic (Characters p. 275), and
+    // a silver weapon is good or cheap (Revised p. 342).
+    if (kind === "weapon") {
+      const quality = data.system.quality ?? current.quality;
+      const graded = gradeAfterMaterial(quality, data.system.material ?? current.material);
+      if (graded !== quality) data.system.quality = graded;
+    }
+
+    const before = pricingOf(this.#pricedFields(kind, current));
+    const after = pricingOf(this.#pricedFields(kind, current, data.system));
+
+    // The basic price is the list price where one is kept, and otherwise worked
+    // back out of what the item costs now, so changing a modifier twice does not
+    // compound. A weapon with no list price is left alone.
+    const listCost = Number(current.listCost) || 0;
+    const basic = listCost > 0
+      ? listCost
+      : kind === "weapon" ? 0 : (Number(current.cost) || 0) / (before.costMultiplier || 1);
+    if (basic > 0) {
+      data.system.listCost = Math.round(basic * 100) / 100;
+      data.system.cost = Math.round(basic * after.costMultiplier * 100) / 100;
+    }
+
+    if (after.weightFactor !== before.weightFactor) {
+      const listWeight = Number(current.listWeight) || 0;
+      const baseWeight = listWeight > 0 ? listWeight : (Number(current.weight) || 0) / (before.weightFactor || 1);
+      if (baseWeight > 0) {
+        data.system.listWeight = Math.round(baseWeight * 100) / 100;
+        data.system.weight = Math.round(baseWeight * after.weightFactor * 100) / 100;
+      }
+    }
+  }
+
   override _processFormData(event: Event | null, form: HTMLFormElement, formData: object): object {
     const data = super._processFormData(event, form, formData) as Record<string, any>;
 
@@ -514,63 +621,24 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       data.system[key] = merged;
     }
 
-    // A change of grade or material reprices the weapon from its list price
-    // (Characters pp. 274-275): what it costs is a fact about the grade, not a
-    // second thing to type. A weapon with no list price is left alone.
-    if (this.item.type === "equipment" && data.system) {
-      const current = this.item.system as any;
-      const quality = data.system.quality ?? current.quality;
-      const material = data.system.material ?? current.material;
-      const listCost = Number(data.system.listCost ?? current.listCost) || 0;
-      const changed = quality !== current.quality || material !== current.material;
-      // What the material allows is a fact about the material, so the grade
-      // is held to it whether or not the weapon has a price to work from:
-      // "blades cannot exceed good quality" in plastic (Characters p. 275).
-      const graded = gradeAfterMaterial(quality, material);
-      if (changed && graded !== quality) data.system.quality = graded;
-      if (changed && listCost > 0) {
-        const facts = weaponFacts(this.item);
-        const tl = Number(data.system.tl ?? current.tl) || 3;
-        const grade = qualityCostMultiplier(facts.weaponClass, graded, tl) ?? 1;
-        data.system.cost = Math.round(listCost * grade * materialCostMultiplier(material));
-        const listWeight = Number(current.listWeight ?? current.weight) || 0;
-        if (listWeight > 0) data.system.weight = Math.round(listWeight * materialWeightMultiplier(material) * 100) / 100;
-      }
+    // A change of grade, material or any equipment modifier reprices the item
+    // from its list price (Characters pp. 274-275, 287, 345; Revised p. 342):
+    // list x (1 + total cost factor), floored at -0.8. What it costs is a fact
+    // about its modifiers, not a second thing to type.
+    if (data.system && (this.item.type === "equipment" || this.item.type === "armor" || this.item.type === "shield")) {
+      this.#reprice(data);
     }
 
-    // Equipment grade reprices a tool from its basic price (Campaigns p. 345):
-    // "good" is five times basic and "fine" twenty. The basic price is the
-    // list price where one is kept, and otherwise worked back out of what the
-    // item costs at the grade it is at now, so changing grade twice does not
-    // compound. "Best" is not sold, so it leaves the price alone.
-    if (this.item.type === "equipment" && data.system?.equipmentQuality !== undefined) {
-      const current = this.item.system as any;
-      const was = String(current.equipmentQuality ?? "basic") as EquipmentQuality;
-      const now = String(data.system.equipmentQuality) as EquipmentQuality;
-      const toMultiple = equipmentQualityCost(now);
-      if (now !== was && toMultiple !== null) {
-        const fromMultiple = equipmentQualityCost(was) ?? 1;
-        const basic = Number(current.listCost) || Math.round((Number(current.cost) || 0) / fromMultiple);
-        if (basic > 0) {
-          data.system.listCost = basic;
-          data.system.cost = Math.round(basic * toMultiple);
-        }
-      }
-    }
-
-    // A shield is priced the same way off what it is made of (p. 287).
+    // A shield's composition also moves its DR and HP (p. 287); the price and
+    // weight are the cost factors' above.
     if (this.item.type === "shield" && data.system) {
       const current = this.item.system as any;
       const composition = data.system.composition ?? current.composition;
       if (composition !== current.composition) {
         const effect = shieldComposition(composition);
-        const listCost = Number(current.listCost ?? current.cost) || 0;
-        const listWeight = Number(current.listWeight ?? current.weight) || 0;
         const listDr = Number(current.dr) || 0;
         const listHp = current.hp === null ? null : Number(current.hp) || 0;
         const wasEffect = shieldComposition(current.composition ?? "wood");
-        if (listCost > 0) data.system.cost = Math.round(listCost * effect.costFactor);
-        if (listWeight > 0) data.system.weight = Math.round(listWeight * effect.weightFactor * 100) / 100;
         data.system.dr = Math.max(0, listDr - wasEffect.drBonus + effect.drBonus);
         if (listHp !== null) data.system.hp = Math.round((listHp / wasEffect.hpFactor) * effect.hpFactor);
       }

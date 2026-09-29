@@ -7,6 +7,7 @@
  * those rules are defined.
  */
 
+import { fromBehindAdjustment } from "../rules/revised-hit-locations.js";
 import { outcomeStep } from "../rules/bonus-points.js";
 import { skillEncumbrancePenalty } from "../rules/physical.js";
 import { isCombatRoll, spendingInPlay } from "./bonus-points.js";
@@ -24,6 +25,15 @@ import {
 import { consumeTurnedBlade, recordTurnedBlade } from "./turned-blade.js";
 import { consumePulledBlow, pulledFormula, recordPulledBlow } from "./pulled-blow.js";
 import { isRuleOn } from "./optional-rules.js";
+import {
+  contactShot,
+  readRevisedRanged,
+  revisedRangedFields,
+  revisedRangedLines,
+  simplifiedRange,
+  simplifiedRangeOn,
+  type RevisedRangedInput,
+} from "./revised-ranged.js";
 import { normalizeDamage, rolledDice } from "./modifying-dice.js";
 import { rollBreakdown, signed, type RollBreakdown } from "./roll-breakdown.js";
 import { damageDice, damageDiceRow } from "./damage-dice.js";
@@ -177,13 +187,17 @@ import {
   steeringDuty,
   type Guidance,
 } from "../rules/guided.js";
+import { committedRefusal, moreManeuverDamageLines } from "./more-maneuvers.js";
 import { MOVE_AND_ATTACK_PENALTY, WILD_SWING_SKILL_CAP, allOutAttackBonus, stopThrustBonus, strongAttackDamageBonus, wildSwingPenalty, type AllOutAttackOption } from "../rules/maneuvers.js";
 import { flailKind, type FlailKind } from "../rules/defenses.js";
-import { canTargetFromArc, missByOneHitsTorso } from "../rules/hit-locations.js";
+import { canTargetFromArc, missByOneHitsTorso, type HitLocation } from "../rules/hit-locations.js";
 import { facingAgainstTarget } from "./attack-arc.js";
 import { POSTURE_EFFECTS } from "../rules/posture.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
 import { gunslingerAccuracy, gunslingerWeapon, type GunslingerWeapon } from "../rules/gunslinger.js";
+import { noPerks, offHandWaived } from "../rules/addendum-perks.js";
+import { closeCombatBulk } from "../rules/addendum-techniques.js";
+import { techniqueLevelsBoughtByPrefix } from "./technique-lookup.js";
 import { heroicAimBonus, heroicArcherWeapon, type HeroicArcherWeapon } from "../rules/heroic-archer.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
 import { rollMalediction } from "./malediction.js";
@@ -882,7 +896,10 @@ export function standingRollLines(actor: any, options: {
 
   // A retreat the sheet chose for this defense, a line of its own on the card
   // as it is on a defense rolled from an attack (GWorldVTT #877).
-  const retreat = rollType === "dodge" || rollType === "parry" || rollType === "block" ? Number(options.retreat) || 0 : 0;
+  // A Committed Attack forbids one (Revised p. 576).
+  const retreat = (rollType === "dodge" || rollType === "parry" || rollType === "block") && !committedRefusal(actor, "retreat")
+    ? Number(options.retreat) || 0
+    : 0;
   if (retreat > 0) lines.push({ label: game.i18n.localize("GWORLD.Tactical.Retreat"), value: retreat });
 
   // Something has temporarily knocked an attribute down (p. 421). It comes off
@@ -1044,6 +1061,7 @@ export function weaponFromDataset(actor: any, dataset: Record<string, unknown>) 
           skill: String(dataset.rollSkill ?? ""),
         })
       : null,
+    closeCombatLevels: techniqueLevelsBoughtByPrefix(actor, "Close Combat"),
     damageType: String(dataset.damageType ?? "cr") as DamageType,
     accuracy: n("accuracy"),
     // Telescopic Vision is a scope of its own, the better of the two counting (Characters p. 92).
@@ -1920,7 +1938,7 @@ async function rollAction(
           effectiveSkill: base + equipmentShift,
           // Two pistols at once (Campaigns p. 417; since 1.153.0).
           dualWeaponTechnique: Number(actor?.system?.derived?.techniques?.dualWeaponAttack) || 0,
-          ambidextrous: actor?.system?.derived?.traitEffects?.ambidextrous === true,
+          ambidextrous: actor?.system?.derived?.traitEffects?.ambidextrous === true || offHandWaived(actor?.system?.derived?.perks ?? noPerks(), String(target.dataset.rollSkill ?? "")),
           offHandTraining: Number(actor?.system?.derived?.techniques?.offHandWeaponTraining) || 0,
           // A shot at the one foe's weapon, to break it (Campaigns p. 400; since 1.153.0).
           // Not for an explosive or fragmenting row, whose blast a blow to the item would lose.
@@ -1953,7 +1971,7 @@ async function rollAction(
         damageType: (target.dataset.damageType ?? "cr") as DamageType,
         mounted: actor?.system?.mounted === true && isRuleOn("mountedCombat"),
         dualWeaponTechnique: Number(actor?.system?.derived?.techniques?.dualWeaponAttack) || 0,
-        ambidextrous: actor?.system?.derived?.traitEffects?.ambidextrous === true,
+        ambidextrous: actor?.system?.derived?.traitEffects?.ambidextrous === true || offHandWaived(actor?.system?.derived?.perks ?? noPerks(), String(target.dataset.rollSkill ?? "")),
         offHandTraining: Number(actor?.system?.derived?.techniques?.offHandWeaponTraining) || 0,
         eyes: eyesOf(actor),
         // "C, 1" and "1, 2" both reach as far as their last number does.
@@ -2020,6 +2038,17 @@ async function rollAction(
   if (aimedShot && (!canTargetFromArc(aimedShot.hitLocation, aimedArc) || !registeredLocationAllowsArc(aimedShot.addonLocation, aimedArc))) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.CalledShot.NotFromBehind"));
     return null;
+  }
+  // From behind the skull is -5 rather than -7, and the face -7 rather than
+  // -5 (Basic Set Revised p. 566).
+  if (aimedShot && !aimedShot.addonLocation && isRuleOn("finerHitLocations")) {
+    const adjustment = fromBehindAdjustment(aimedShot.hitLocation as HitLocation, aimedArc);
+    if (adjustment !== 0) {
+      modifiers.push({
+        label: game.i18n.localize(adjustment > 0 ? "GWORLD.CalledShot.SkullFromBehind" : "GWORLD.CalledShot.FaceFromBehind"),
+        value: adjustment,
+      });
+    }
   }
 
   if (melee && melee.fatigue > 0) {
@@ -2497,6 +2526,20 @@ async function rollAction(
       dropped: droppedLines,
       add: (spray?.index ?? 0) > 0,
     });
+  }
+
+  // A stamp kick that misses stomps the ground: "make a DX roll to avoid ending
+  // up off balance and unable to retreat until your next turn" (Revised p. 334).
+  if (rollType === "attack" && target.dataset.naturalKey === "stampKick" && outcome && !outcome.success) {
+    const balance = await rollSuccess({
+      actor,
+      base: Number(actor?.system?.derived?.attributes?.DX) || 10,
+      label: game.i18n.localize("GWORLD.StampKick.Balance"),
+      kind: "skill",
+      skill: "DX",
+      tags: ["stampKick", "DX"],
+    });
+    if (balance && !balance.success) ui.notifications?.warn(game.i18n.format("GWORLD.StampKick.NoRetreat", { name: String(actor?.name ?? "") }));
   }
 
   // A shot at a random location behind cover (p. 407): "For shots that hit a
@@ -3519,6 +3562,7 @@ export async function promptForRangedAttack(options: {
       </label>
       ${vehicleFields}
       ${mountFields}
+      ${revisedRangedFields(rateOfFire)}
       ${attackOptionFields(addonContext)}
       <div data-roll-breakdown></div>
     </div>`;
@@ -3555,6 +3599,7 @@ export async function promptForRangedAttack(options: {
       cover: cover as CoverApproach | "none",
       calledShot,
       aimed,
+      revised: readRevisedRanged(form),
       dual: readDualWeapon(form),
       weaponStrike: form?.querySelector<HTMLSelectElement>('select[name="weaponStrike"]')?.value ?? "",
       lockedOn: form?.querySelector<HTMLInputElement>('input[name="lockedOn"]')?.checked ?? false,
@@ -3710,6 +3755,8 @@ interface RangedInput {
   laser?: { on: boolean; targetSees: boolean } | null;
   /** True where a homing weapon's seeker has locked on, which is worth its Acc (since 1.128.0). */
   lockedOn?: boolean;
+  /** The Revised edition's optional ranged rules, from the dialog's extra fields (since 1.182.0). */
+  revised?: RevisedRangedInput | null;
 }
 
 /** What firing from a vehicle adds to a shot. */
@@ -3828,6 +3875,8 @@ export function rangedModifiers(
     gunslinger?: GunslingerWeapon | null;
     /** A Heroic Archer's bow (Basic Set Revised p. 327; since 1.166.0). */
     heroicArcher?: HeroicArcherWeapon | null;
+    /** Levels bought in Close Combat, which buy back Bulk in close combat (Revised p. 334; since 1.171.0). */
+    closeCombatLevels?: number;
   },
 ): RollModifier[] {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
@@ -3877,13 +3926,22 @@ export function rangedModifiers(
   }
   // In close combat the speed/range penalty is dropped and Bulk stands in its
   // place: the target is right there, and the weapon is in the way.
-  if (speedRange !== 0 && situation !== "closeCombat" && steering.range) {
+  // Simplified Range (Revised p. 577) reads a band in place of the table's range.
+  const banded = simplifiedRangeOn() ? simplifiedRange(seenRange) : null;
+  const rangeValue = banded ? banded.penalty : speedRange;
+  if (banded && banded.penalty !== 0 && situation !== "closeCombat" && steering.range) {
+    modifiers.push({
+      label: game.i18n.format("GWORLD.RevisedRanged.Band", { band: game.i18n.localize(`GWORLD.RevisedRanged.Bands.${banded.band}`) }),
+      value: banded.penalty,
+      key: "speedRange",
+    });
+  } else if (!banded && speedRange !== 0 && situation !== "closeCombat" && steering.range) {
     modifiers.push({
       label:
         seenRange === input.range
           ? L("SpeedRange")
           : game.i18n.format("GWORLD.Ranged.SpeedRangeUphill", { yards: seenRange }),
-      value: speedRange,
+      value: rangeValue,
       key: "speedRange",
     });
   }
@@ -3919,7 +3977,9 @@ export function rangedModifiers(
   // A Heroic Archer does the same with a bow (Revised p. 327).
   const heroic = weapon.heroicArcher ?? null;
   let heroicWaived = false;
-  if (situation !== "normal") {
+  // A close-contact shot against an unresisting target never takes Bulk (Revised p. 576).
+  const contact = contactShot(input.revised);
+  if (situation !== "normal" && !(contact && input.revised?.unresisting)) {
     if (heroic && !gunslinger) {
       heroicWaived = true;
       modifiers.push({
@@ -3937,7 +3997,13 @@ export function rangedModifiers(
         gunslinger: situation,
       });
     } else {
-      modifiers.push({ label: L("Bulk"), value: bulkPenalty(weapon.bulk, situation), key: "bulk", situation });
+      const bulk = bulkPenalty(weapon.bulk, situation);
+      modifiers.push({
+        label: L("Bulk"),
+        value: situation === "closeCombat" ? closeCombatBulk(bulk, weapon.closeCombatLevels ?? 0) : bulk,
+        key: "bulk",
+        situation,
+      });
     }
   }
 
@@ -4004,7 +4070,8 @@ export function rangedModifiers(
   // bonus." So a steered shot with a journey ahead of it is aimed whether the
   // firer took the maneuver or not -- but only the maneuver buys the extra
   // turns and the bracing, which is why those stay behind the checkbox.
-  const deliberatelyAimed = input.aimed && mayAim;
+  // A close-contact shot gets no bonus from Acc, sights or aiming (Revised p. 576).
+  const deliberatelyAimed = input.aimed && mayAim && !contact;
   // A homing weapon that has locked on gets its Acc as if it had aimed (since
   // API 1.128.0). Where nothing else would have given it, the line says so,
   // so a listener that clears the lock-on knows which line to take away.
@@ -4013,7 +4080,7 @@ export function rangedModifiers(
   // A laser sight: "If you can see your own aiming dot, you get +1 to hit",
   // aimed or not, out to its range -- the weapon's 1/2D where none is given
   // (p. 411). Beyond that the dot is too dispersed to see.
-  const laserBonus = input.laser?.on
+  const laserBonus = input.laser?.on && !contact
     ? laserSight({ rangeYards: effectiveRange, halfDamageRange: weapon.halfDamageRange ?? 0 }).toHit
     : 0;
   // "The sum of Acc and all bonuses from targeting systems can never exceed
@@ -4033,7 +4100,7 @@ export function rangedModifiers(
   };
   let targetingCut = 0;
   let targetingChecked = false;
-  const accuracyClaimed = accuracyApplies({ guidance, aimed: deliberatelyAimed, secondsInFlight: flight.seconds, lockedOn });
+  const accuracyClaimed = !contact && accuracyApplies({ guidance, aimed: deliberatelyAimed, secondsInFlight: flight.seconds, lockedOn });
   if (accuracyClaimed) {
     // Aimed on the sheet: Accuracy, the second and third turns, the bracing.
     // Aimed by the checkbox alone: Accuracy, as one turn's aim is worth.
@@ -4122,6 +4189,9 @@ export function rangedModifiers(
   if (laserBonus !== 0) modifiers.push({ label: L("LaserSight"), value: laserBonus, key: "laser" });
   // A laser sight alone, with nothing aimed, is a targeting system too.
   if (!targetingChecked && laserBonus !== 0) targetingCapLine(laserBonus);
+
+  // The Revised edition's optional lines: close contact, non-combat bonuses, striking around armour.
+  for (const line of revisedRangedLines(input.revised)) modifiers.push(line);
 
   const rapidFire = rapidFireBonus(input.shots ?? 1);
   if (rapidFire !== 0) modifiers.push({ label: L("RapidFire"), value: rapidFire });
@@ -4972,6 +5042,11 @@ export async function handleDamageAction(
       value: strongAttackDamageBonus(parseDiceAdds(damageFormula)?.dice ?? 0),
     });
   }
+
+  // Committed Attack (Strong) and Defensive Attack (Revised pp. 575-576).
+  modifiers.push(...moreManeuverDamageLines(
+    actor, parseDiceAdds(damageFormula)?.dice ?? 0, target.dataset.melee === "1", target.dataset.stBased === "1",
+  ));
 
   // Damage a module's option chosen at the attack added.
   modifiers.push(...(await consumeAddonDamage(actor)));

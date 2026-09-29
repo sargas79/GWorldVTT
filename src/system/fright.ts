@@ -25,6 +25,8 @@ import { resolveSuccess } from "../rules/success.js";
 import { traitsOf } from "./damage.js";
 import { procedureRoll } from "./procedure-extensions.js";
 import { postRefusal } from "./roll.js";
+import { applyHardship, mentalOf, stressOn } from "./stress.js";
+import { UNFAZEABLE_SANITY_BONUS, frightHardship, stressFrightPenalty, type FrightKind } from "../rules/stress.js";
 
 const FRIGHT_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/fright.hbs`;
 
@@ -54,6 +56,8 @@ export function frightTarget(
 export async function rollFrightCheck(options: {
   actor: any;
   modifier: number;
+  /** With Stress and Derangement on: an ordinary check, or a sanity-blasting one (Revised p. 572). */
+  kind?: FrightKind;
 }): Promise<{ effect: string; total: number } | null> {
   const result = await rollFrightCheckOutcome(options);
   return result && !result.success && result.effect ? { effect: result.effect, total: result.total } : null;
@@ -70,13 +74,21 @@ export async function rollFrightCheckOutcome(options: {
   modifier: number;
   tags?: string[];
   attack?: any;
+  /** With Stress and Derangement on: an ordinary check, or a sanity-blasting one (Revised p. 572). */
+  kind?: FrightKind;
 }): Promise<{ success: boolean; margin: number; effect: string | null; total: number } | null> {
-  const { actor, modifier } = options;
+  const { actor } = options;
   const traits = traitsOf(actor);
+  const mental = stressOn();
+  const kind: FrightKind = mental && options.kind === "sanity" ? "sanity" : "ordinary";
+  // Stress and Derangement pull every Fright Check down by half of both, rounded against the character.
+  const state = mentalOf(actor);
+  const modifier = options.modifier + (mental ? stressFrightPenalty(state.stress, state.derangement) : 0);
 
   // "Unfazeable characters don't make Fright Checks!" -- so none is made, and
   // saying so is the whole answer.
-  if (traits.unfazeable) {
+  // A sanity-blasting check gives the Unfazeable only +8 (Revised p. 572).
+  if (traits.unfazeable && kind === "ordinary") {
     ui.notifications?.info(
       game.i18n.format("GWORLD.Fright.Unfazeable", { name: String(actor?.name ?? "") }),
     );
@@ -92,7 +104,7 @@ export async function rollFrightCheckOutcome(options: {
   const target = frightTarget(
     will,
     modifier + hooked.added.reduce((total, line) => total + line.value, 0),
-    traits.frightCheck,
+    traits.frightCheck + (traits.unfazeable && kind === "sanity" ? UNFAZEABLE_SANITY_BONUS : 0),
   );
   if (hooked.refusal !== null) {
     ui.notifications?.warn(hooked.refusal);
@@ -145,6 +157,11 @@ export async function rollFrightCheckOutcome(options: {
     content,
     rolls: table ? [check, table] : [check],
   });
+
+  // A failure costs 1 Stress (or Derangement, for a sanity-blasting check), 3 on a critical failure.
+  if (mental && !outcome.success) {
+    await applyHardship(actor, { kind, amount: frightHardship({ criticalFailure: outcome.criticalFailure }) });
+  }
 
   return { success: outcome.success, margin: outcome.margin, effect: entry?.effect ?? null, total };
 }

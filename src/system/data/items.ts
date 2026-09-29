@@ -11,6 +11,7 @@ import {
   traitPoints,
   traitLevelName,
 } from "../../rules/traits.js";
+import { pointPoweredCost } from "../../rules/alternative-abilities.js";
 import type { Enchantment } from "../../rules/enchanting.js";
 import { AMMUNITION_TYPES, ammunitionFitOfName, type AmmunitionType } from "../../rules/ammunition.js";
 import { EQUIPMENT_QUALITIES, type EquipmentQuality } from "../../rules/wealth.js";
@@ -261,6 +262,15 @@ export class TraitData extends foundry.abstract.TypeDataModel {
   declare levelNames: string[];
   declare maxLevels: number;
   declare reactionModifier: number;
+  declare noReactionBonus: boolean;
+  declare patronValue: number;
+  declare alternativeGroup: string;
+  declare alternativeSlots: number;
+  declare alternativeActive: boolean;
+  declare alternativeDisabled: boolean;
+  declare alternativeFrozen: boolean;
+  declare pointPowered: boolean;
+  declare pointPoweredActive: boolean;
   declare modifiers: Array<{ name: string; value: number }>;
   declare selfControl: number | null;
   declare talentSkills: string[];
@@ -312,7 +322,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
         nullable: true,
         integer: true,
         initial: null,
-        choices: [6, 9, 12, 15],
+        choices: [0, 6, 9, 12, 15],
       }),
       /** Flat point cost, used when the trait has no levels. */
       points: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
@@ -378,6 +388,36 @@ export class TraitData extends foundry.abstract.TypeDataModel {
         initial: 0,
       }),
       /**
+       * A Talent whose reaction bonus the GM replaced with another benefit, or
+       * with none (Basic Set Revised pp. 324-325): it gives no reaction bonus.
+       */
+      noReactionBonus: new fields.BooleanField({ required: true, initial: false }),
+      /**
+       * The Patron value of the organization behind a Rank trait, 10 to 30, or 0 for none
+       * (Basic Set Revised p. 337). Never paid: it sets how much Rank an Assistance Roll needs.
+       */
+      patronValue: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+      /**
+       * The alternative set this ability belongs to (Basic Set Revised p. 324),
+       * blank for none. The dearest abilities of a set pay full price, the rest a
+       * fifth; the slots are how many of them work at once.
+       */
+      alternativeGroup: new fields.StringField({ required: true, blank: true, initial: "" }),
+      alternativeSlots: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 1, min: 1 }),
+      /** In one of its set's slots. */
+      alternativeActive: new fields.BooleanField({ required: true, initial: false }),
+      /** Burned out, crippled, neutralized or drained: the whole set is off. */
+      alternativeDisabled: new fields.BooleanField({ required: true, initial: false }),
+      /** Running for a duration that hasn't expired, so it can't be swapped out. */
+      alternativeFrozen: new fields.BooleanField({ required: true, initial: false }),
+      /**
+       * A character point-powered ability (Basic Set Revised p. 325): a fifth of
+       * the cost, inert until points are spent to use it.
+       */
+      pointPowered: new fields.BooleanField({ required: true, initial: false }),
+      /** Invoked: points were spent, and it works until the scene or turn ends. */
+      pointPoweredActive: new fields.BooleanField({ required: true, initial: false }),
+      /**
        * The skills a Talent adds its level to (Characters pp. 89-91), one name
        * each; a specialty matches its base skill. Empty for every other
        * trait. A Talent from another book is only known this way; one of the
@@ -417,7 +457,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
 
   /** Total character points this trait costs, counting levels, modifiers and self-control. */
   get totalPoints(): number {
-    return traitPoints({
+    const cost = traitPoints({
       points: this.points,
       levels: this.levels,
       pointsPerLevel: this.pointsPerLevel,
@@ -425,6 +465,8 @@ export class TraitData extends foundry.abstract.TypeDataModel {
       modifiers: (this.modifiers ?? []).map((m) => Number(m.value) || 0),
       selfControl: this.selfControl ?? null,
     });
+    // Built normally, divided by 5 and rounded up (Basic Set Revised p. 325).
+    return this.pointPowered ? pointPoweredCost(cost) : cost;
   }
 
   /** The net of the modifiers, as a percentage, for showing beside the cost. */
@@ -446,6 +488,7 @@ export class SkillData extends foundry.abstract.TypeDataModel {
   declare bonus: number;
   declare defaults: Array<{ from: "attribute" | "skill"; attribute: SkillAttribute; skill: string; modifier: number }>;
   declare techLevel: string;
+  declare firstTl: number | null;
   declare studyHours: number;
   declare derived: { level: number | null; relativeLevel: number | null; fromDefault: boolean; defaultCredit?: number; boughtUpFromDefault?: boolean };
 
@@ -508,6 +551,12 @@ export class SkillData extends foundry.abstract.TypeDataModel {
       ),
       /** Set for skills marked /TL, recording which tech level was learned. */
       techLevel: new fields.StringField({ required: true, blank: true, initial: "" }),
+      /**
+       * The tech level at which the skill first exists (Basic Set Revised
+       * p. 341); TL^ is 12. Null when the list does not cover it. Advice: a
+       * skill taken earlier is warned about, never refused.
+       */
+      firstTl: new fields.NumberField({ required: true, nullable: true, integer: true, min: 0, initial: null }),
       /**
        * Hours of study banked toward the next character point (Characters
        * p. 292): what is left over once the whole points have gone in.
@@ -1246,6 +1295,21 @@ function rangedModeField() {
  * quarterstaff can swing or thrust, under either Staff or Two-Handed Sword.
  * Modes model that directly instead of forcing duplicate items.
  */
+/**
+ * The equipment modifiers of Basic Set Revised p. 342 that an item can carry
+ * as calculated fields. Each is a cost factor on the price, so they add rather
+ * than multiply; the item sheet reprices from the list price when one changes.
+ */
+function costModifierFields(names: ReadonlyArray<"fine" | "balanced" | "cuttingEdge" | "disguised" | "rugged" | "presentation">) {
+  const out: Record<string, any> = {};
+  for (const name of names) {
+    out[name] = name === "presentation"
+      ? new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0, max: 3 })
+      : new fields.BooleanField({ initial: false });
+  }
+  return out;
+}
+
 export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare container: boolean;
   declare capacity: number;
@@ -1279,6 +1343,12 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare weaponClass: WeaponClass;
   declare listCost: number;
   declare listWeight: number;
+  declare balanced: boolean;
+  declare cuttingEdge: boolean;
+  declare disguised: boolean;
+  declare presentation: number;
+  declare rugged: boolean;
+  declare signature: boolean;
   declare hpLost: number;
   declare missedMaintenance: number;
   declare complexity: number;
@@ -1371,6 +1441,12 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
        */
       wheelchair: new fields.BooleanField({ initial: false }),
       /**
+       * Marked as Signature Gear under the flat-cost variant (Basic Set
+       * Revised p. 342): a 1-point perk giving plot protection to this item,
+       * whatever it is worth. Read only with the `flatSignatureGear` switch on.
+       */
+      signature: new fields.BooleanField({ initial: false }),
+      /**
        * The grade it was bought in (GURPS Basic Set: Characters p. 274). The
        * tables' prices buy good quality through TL6; a finer weapon cuts
        * deeper, shoots straighter and breaks less, a cheap one the reverse.
@@ -1412,6 +1488,8 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
       listCost: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       /** The table's weight, before what it is made of. */
       listWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+      // Balanced, Cutting-Edge, Disguised, Presentation and Rugged (Revised p. 342), each a cost factor.
+      ...costModifierFields(["balanced", "cuttingEdge", "disguised", "presentation", "rugged"]),
       /**
        * Damage the weapon has taken (Campaigns p. 483): struck at, or worn.
        * Against the HP its weight gives it, this says whether it still works.
@@ -1467,6 +1545,10 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   declare enchantments: Enchantment[];
   declare listCost: number;
   declare listWeight: number;
+  declare fine: boolean;
+  declare disguised: boolean;
+  declare presentation: number;
+  declare signature: boolean;
   declare dr: number;
   declare drSplit: number | null;
   declare drSplitAppliesTo: DamageType[];
@@ -1483,6 +1565,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   declare ablative: "none" | "ablative" | "semiAblative";
   declare drLost: number;
   declare forceField: boolean;
+  declare coverage: number;
   declare quantity: number;
   declare weight: number;
   declare cost: number;
@@ -1497,6 +1580,10 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       /** The table's price and weight, before what it is made of. */
       listCost: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       listWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+      // Fine armor (+9 CF, weight x3/4), Disguised and Presentation (Revised p. 342).
+      ...costModifierFields(["fine", "disguised", "presentation"]),
+      /** Marked as Signature Gear under the flat-cost variant (Basic Set Revised p. 342). */
+      signature: new fields.BooleanField({ initial: false }),
       dr: new fields.NumberField({
         required: true,
         nullable: false,
@@ -1543,7 +1630,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
           initial: "torso",
           choices: [
             "torso", "skull", "eye", "face", "neck",
-            "vitals", "groin", "arm", "leg", "hand", "foot",
+            "vitals", "groin", "arm", "leg", "hand", "foot", "chest",
           ],
         }),
         { required: true, initial: () => [] },
@@ -1614,7 +1701,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
               required: true, nullable: false, blank: false, initial: "torso",
               choices: [
                 "torso", "skull", "eye", "face", "neck",
-                "vitals", "groin", "arm", "leg", "hand", "foot",
+                "vitals", "groin", "arm", "leg", "hand", "foot", "chest",
               ],
             }),
             { required: true, initial: () => [] },
@@ -1650,6 +1737,14 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
        * everything, the eyes included.
        */
       forceField: new fields.BooleanField({ initial: false }),
+      /**
+       * Partial coverage (Basic Set Revised p. 576): the n of "n in 6" chance the
+       * armour protects a hit on the locations it covers. 6 is full coverage.
+       * Read only while the `partialCoverage` switch is on.
+       */
+      coverage: new fields.NumberField({
+        required: true, nullable: false, integer: true, initial: 6, min: 1, max: 6,
+      }),
     };
   }
 }
@@ -1665,6 +1760,10 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
   declare composition: ShieldComposition;
   declare listCost: number;
   declare listWeight: number;
+  declare fine: boolean;
+  declare balanced: boolean;
+  declare disguised: boolean;
+  declare presentation: number;
   declare skill: string;
   declare meleeModes: unknown[];
   declare quantity: number;
@@ -1715,6 +1814,8 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
       /** The table's price and weight, before what it is made of. */
       listCost: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       listWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+      // Fine (+9 CF, weight x3/4), Balanced, Disguised and Presentation (Revised p. 342).
+      ...costModifierFields(["fine", "balanced", "disguised", "presentation"]),
       skill: new fields.StringField({ required: true, blank: true, initial: "Shield" }),
       /**
        * Bashing someone with the shield (GURPS Basic Set: Characters p. 273).

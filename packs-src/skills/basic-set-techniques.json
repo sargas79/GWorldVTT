@@ -357,7 +357,7 @@
       "points": 0,
       "maxRelativeToPrerequisite": 0,
       "description": "",
-      "reference": "Basic Set: Characters p. 230"
+      "reference": "Basic Set: Characters p. 230; replaced by Off-Hand Training, Basic Set Revised p. 329"
     }
   },
   {
@@ -646,6 +646,183 @@
       "maxRelativeToPrerequisite": 0,
       "description": "",
       "reference": "Basic Set: Characters p. 233"
+    }
+  },
+  {
+    "_id": "710da28197313fc4",
+    "name": "Acrobatic Stand",
+    "type": "technique",
+    "system": {
+      "difficulty": "A",
+      "prerequisite": "Acrobatics",
+      "defaultModifier": -6,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 333"
+    }
+  },
+  {
+    "_id": "37b7e652421466bc",
+    "name": "Armed Grapple (Cloak)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Cloak",
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 334"
+    }
+  },
+  {
+    "_id": "7d31fb1889a05375",
+    "name": "Armed Grapple",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "",
+      "defaultModifier": -2,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 334",
+      "skillFamilies": [
+        "melee"
+      ]
+    }
+  },
+  {
+    "_id": "3135ed63550b578e",
+    "name": "Close Combat",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "",
+      "defaultModifier": -4,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 334",
+      "skillFamilies": [
+        "melee",
+        "ranged"
+      ]
+    }
+  },
+  {
+    "_id": "e15555ad121bdaeb",
+    "name": "Evade (Acrobatics)",
+    "type": "technique",
+    "system": {
+      "difficulty": "A",
+      "prerequisite": "Acrobatics",
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 5,
+      "description": "",
+      "reference": "Basic Set: Characters p. 334"
+    }
+  },
+  {
+    "_id": "23b17801dd8308da",
+    "name": "Evade (Judo)",
+    "type": "technique",
+    "system": {
+      "difficulty": "A",
+      "prerequisite": "Judo",
+      "defaultModifier": 0,
+      "points": 0,
+      "maxRelativeToPrerequisite": 5,
+      "description": "",
+      "reference": "Basic Set: Characters p. 334"
+    }
+  },
+  {
+    "_id": "2def5945efbb6b4a",
+    "name": "Head Butt (Brawling)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Brawling",
+      "defaultModifier": -1,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 334"
+    }
+  },
+  {
+    "_id": "6d235f9d052a4363",
+    "name": "Head Butt (Karate)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Karate",
+      "defaultModifier": -1,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 334"
+    }
+  },
+  {
+    "_id": "953cfad02fe22142",
+    "name": "Stamp Kick (Brawling)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Brawling",
+      "defaultModifier": -3,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 334"
+    }
+  },
+  {
+    "_id": "4978d1b586e6979d",
+    "name": "Stamp Kick (Karate)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "Karate",
+      "defaultModifier": -3,
+      "points": 0,
+      "maxRelativeToPrerequisite": 0,
+      "description": "",
+      "reference": "Basic Set: Characters p. 334"
+    }
+  },
+  {
+    "_id": "dbba439caaddbd7c",
+    "name": "Wrench Arm (ST)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "",
+      "defaultModifier": -4,
+      "points": 0,
+      "maxRelativeToPrerequisite": 3,
+      "description": "",
+      "reference": "Basic Set: Characters p. 334",
+      "defaultFrom": "ST"
+    }
+  },
+  {
+    "_id": "ed3ed29e9ff1caaa",
+    "name": "Wrench Leg (ST)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "",
+      "defaultModifier": -4,
+      "points": 0,
+      "maxRelativeToPrerequisite": 3,
+      "description": "",
+      "reference": "Basic Set: Characters p. 334",
+      "defaultFrom": "ST"
     }
   }
 ]

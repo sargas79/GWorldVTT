@@ -25,6 +25,10 @@ import {
   opportunityFirePenalty,
 } from "../../rules/attack-options.js";
 import { slamOrShove } from "../slam.js";
+import { ARMED_GRAPPLE_FLAG } from "../grappling.js";
+import { armedGrapple, evadeBase, type StandFrom } from "../../rules/addendum-techniques.js";
+import { canAcrobaticStand, rollAcrobaticStand } from "../acrobatic-stand.js";
+import { techniqueLevelByPrefix } from "../technique-lookup.js";
 import {
   CLIMBS,
   climb,
@@ -33,8 +37,11 @@ import {
   liftingSkillCapacity,
   maximumDrag,
 } from "../../rules/physical.js";
+import { chooseFeintSkill } from "../alternative-feints.js";
 import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
+import { buyOffHardship, clinicianSkillOf, rollDerangementDayEnd, stressOn } from "../stress.js";
+import { rollPowerExtraEffort, tradeFatigueForBonus } from "../extra-effort-extras.js";
 import { rollFall } from "../falling.js";
 import { rollBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
@@ -188,6 +195,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
+import { moreManeuverChoices } from "../more-maneuvers.js";
 import { allOutAttackOptionsFor, feintModifiers, registeredManeuvers } from "../combat-extensions.js";
 import { evaluateBonusFor } from "../evaluate.js";
 import { setCondition } from "../conditions.js";
@@ -464,6 +472,10 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       contest: GWorldCharacterSheet.#onContest,
       frightCheck: GWorldCharacterSheet.#onFrightCheck,
       extraEffort: GWorldCharacterSheet.#onExtraEffort,
+      powerExtraEffort: GWorldCharacterSheet.#onPowerExtraEffort,
+      derangementDayEnd: GWorldCharacterSheet.#onDerangementDayEnd,
+      buyOffHardship: GWorldCharacterSheet.#onBuyOffHardship,
+      tradeFatigue: GWorldCharacterSheet.#onTradeFatigue,
       climb: GWorldCharacterSheet.#onClimb,
       swim: GWorldCharacterSheet.#onSwim,
       throwObject: GWorldCharacterSheet.#onThrow,
@@ -876,6 +888,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           label: game.i18n.localize(`GWORLD.Maneuver.${key}`),
           selected: system.maneuver === key,
         })),
+        // The addendum's, while their switches are on (Basic Set Revised pp. 575-576).
+        ...moreManeuverChoices(String(system.maneuver ?? "")),
         // A module's maneuvers, where it offers them to this character -- and
         // the one they are on, even if it no longer would, so the select says
         // what is actually stored.
@@ -1282,7 +1296,24 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const posture = this.element.querySelector<HTMLSelectElement>("select[data-posture-select]");
     posture?.addEventListener("change", () => {
       if (!POSTURES.includes(posture.value as Posture)) return;
-      void this.actor.update({ "system.posture": posture.value });
+      void (async () => {
+        const from = String(this.actor.system?.posture ?? "standing");
+        // Standing on a roll of Acrobatic Stand, where the character has it (Revised p. 333).
+        if (canAcrobaticStand(this.actor, from, posture.value)) {
+          const wanted = await foundry.applications.api.DialogV2.confirm({
+            window: { title: game.i18n.localize("GWORLD.AcrobaticStand.Label") },
+            content: `<p>${game.i18n.localize("GWORLD.AcrobaticStand.Ask")}</p>`,
+          });
+          if (wanted) {
+            const stood = await rollAcrobaticStand(this.actor, from as StandFrom);
+            if (stood) {
+              await this.actor.update({ "system.posture": stood.posture });
+              return;
+            }
+          }
+        }
+        await this.actor.update({ "system.posture": posture.value });
+      })();
     });
 
     // The same filter serves the Skills tab and the Magic tab: a hundred
@@ -1896,7 +1927,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       }),
       first: {
         actor: this.actor,
-        base: attributeOf(this.actor, "DX"),
+        // The Evade technique replaces DX (Basic Set Revised p. 334; since API 1.171.0).
+        base: evadeBase(attributeOf(this.actor, "DX"), techniqueLevelByPrefix(this.actor, "Evade")),
         modifiers: [{ label: game.i18n.localize("GWORLD.Evade.Action"), value: modifier }],
       },
       second: { actor: foe, base: attributeOf(foe, "DX") },
@@ -1957,14 +1989,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     }
     const evaluated = evaluateBonusFor(this.actor);
 
+    // Alternative Feints: a non-combat skill may stand in for the weapon's (Revised p. 328).
+    const feintBasis = await chooseFeintSkill(this.actor, base, String(target.dataset.rollLabel ?? ""));
+    if (!feintBasis) return;
+
     const defense = feintDefenseScore(foe);
     const result = await rollFeint({
       label: game.i18n.format("GWORLD.Feint.Label", {
-        weapon: target.dataset.rollLabel ?? "",
+        weapon: feintBasis.skill || (target.dataset.rollLabel ?? ""),
         foe: String(foe.name),
       }),
       // A Feint takes what Evaluate maneuvers before it earned (Campaigns p. 364).
-      feinter: { actor: this.actor, base, modifiers: [...(evaluated ? [{ label: game.i18n.localize("GWORLD.Maneuver.evaluate"), value: evaluated }] : []), ...added.modifiers] },
+      feinter: { actor: this.actor, base: feintBasis.base, modifiers: [...(evaluated ? [{ label: game.i18n.localize("GWORLD.Maneuver.evaluate"), value: evaluated }] : []), ...added.modifiers] },
       // Naming what they rolled against matters here: the rule lets them roll
       // their best of several things, and the card should say which it was.
       defender: { actor: foe, base: defense.score, note: defense.source },
@@ -2038,7 +2074,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
     // Asked before the dialog rather than after it: someone who makes no Fright
     // Check should not be asked how frightening the thing was.
-    if (traitsOf(this.actor).unfazeable) {
+    // (Sanity-blasting checks, under Stress and Derangement, are made even by the Unfazeable.)
+    if (traitsOf(this.actor).unfazeable && !stressOn()) {
       ui.notifications?.info(
         game.i18n.format("GWORLD.Fright.Unfazeable", { name: String(this.actor.name) }),
       );
@@ -2052,7 +2089,22 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (modifier === null) return;
 
-    await rollFrightCheck({ actor: this.actor, modifier });
+    // Two kinds under Stress and Derangement (Basic Set Revised p. 572).
+    let kind: "ordinary" | "sanity" = "ordinary";
+    if (stressOn()) {
+      const chosen = await promptForChoice({
+        title: game.i18n.localize("GWORLD.Fright.Title"),
+        label: game.i18n.localize("GWORLD.Stress.Kind"),
+        options: [
+          { value: "ordinary", label: game.i18n.localize("GWORLD.Stress.KindOrdinary") },
+          { value: "sanity", label: game.i18n.localize("GWORLD.Stress.KindSanity") },
+        ],
+      });
+      if (chosen === null) return;
+      if (chosen === "sanity") kind = "sanity";
+    }
+
+    await rollFrightCheck({ actor: this.actor, modifier, kind });
   }
 
   /**
@@ -2079,6 +2131,91 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       percentIncrease: asked.percentIncrease,
       motivated: asked.motivated,
     });
+  }
+
+  /** Extra effort with a power (Basic Set Revised pp. 571-572): a Will roll plus the power's Talent. */
+  static async #onPowerExtraEffort(this: GWorldCharacterSheet) {
+    if (!isRuleOn("powerExtraEffort")) return;
+    const asked = await promptForExtraEffort();
+    if (asked === null) return;
+    const talent = await promptForNumber({
+      title: game.i18n.localize("GWORLD.ExtraEffort.PowerTitle"),
+      label: game.i18n.localize("GWORLD.ExtraEffort.Talent"),
+      initial: 0,
+    });
+    if (talent === null) return;
+    let fpSpent = 1;
+    if (isRuleOn("godlikeExtraEffort")) {
+      const fp = await promptForNumber({
+        title: game.i18n.localize("GWORLD.ExtraEffort.PowerTitle"),
+        label: game.i18n.localize("GWORLD.ExtraEffort.GodlikeFp"),
+        initial: 1,
+      });
+      if (fp === null) return;
+      fpSpent = Math.max(1, fp);
+    }
+    await rollPowerExtraEffort({
+      actor: this.actor,
+      percentIncrease: asked.percentIncrease,
+      motivated: asked.motivated,
+      talent,
+      fpSpent,
+    });
+  }
+
+  /** The day's end for Derangement (Basic Set Revised p. 573): a Will roll, and a clinician's help where there is one. */
+  static async #onDerangementDayEnd(this: GWorldCharacterSheet) {
+    if (!stressOn()) return;
+    const clinician = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Stress.DayEndTitle"),
+      label: game.i18n.localize("GWORLD.Stress.ClinicianSkill"),
+      initial: clinicianSkillOf(this.actor) ?? 0,
+    });
+    if (clinician === null) return;
+    await rollDerangementDayEnd({ actor: this.actor, ...(clinician > 0 ? { clinicianSkill: clinician } : {}) });
+  }
+
+  /** Buys off Stress or Derangement with the points of a new mental disadvantage (Basic Set Revised p. 573). */
+  static async #onBuyOffHardship(this: GWorldCharacterSheet) {
+    if (!stressOn()) return;
+    const target = await promptForChoice({
+      title: game.i18n.localize("GWORLD.Stress.BuyOffTitle"),
+      label: game.i18n.localize("GWORLD.Stress.BuyOffTarget"),
+      options: [
+        { value: "stress", label: game.i18n.localize("GWORLD.Stress.Stress") },
+        { value: "derangement", label: game.i18n.localize("GWORLD.Stress.Derangement") },
+      ],
+    });
+    if (target !== "stress" && target !== "derangement") return;
+    const points = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Stress.BuyOffTitle"),
+      label: game.i18n.localize("GWORLD.Stress.BuyOffPoints"),
+      initial: 1,
+    });
+    if (points === null) return;
+    await buyOffHardship(this.actor, { points, target });
+  }
+
+  /** Trading Fatigue for Skill or Resistance (Basic Set Revised p. 572): 1 FP per +1, up to +4, held for the next roll. */
+  static async #onTradeFatigue(this: GWorldCharacterSheet) {
+    if (!isRuleOn("fatigueForSkill")) return;
+    const kind = await promptForChoice({
+      title: game.i18n.localize("GWORLD.ExtraEffort.TradeTitle"),
+      label: game.i18n.localize("GWORLD.ExtraEffort.TradeFor"),
+      options: [
+        { value: "skill", label: game.i18n.localize("GWORLD.ExtraEffort.TradeSkill") },
+        { value: "attack", label: game.i18n.localize("GWORLD.ExtraEffort.TradeAttack") },
+        { value: "resistance", label: game.i18n.localize("GWORLD.ExtraEffort.TradeResistance") },
+      ],
+    });
+    if (kind !== "skill" && kind !== "attack" && kind !== "resistance") return;
+    const fp = await promptForNumber({
+      title: game.i18n.localize("GWORLD.ExtraEffort.TradeTitle"),
+      label: game.i18n.localize("GWORLD.ExtraEffort.TradeFp"),
+      initial: 1,
+    });
+    if (fp === null) return;
+    await tradeFatigueForBonus({ actor: this.actor, fp, kind });
   }
 
   /**
@@ -2231,7 +2368,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const asked = await promptForRest();
     if (!asked) return;
 
-    await restForFatigue({ actor: this.actor, minutes: asked.minutes, meal: asked.meal });
+    await restForFatigue({ actor: this.actor, minutes: asked.minutes, meal: asked.meal, ...(asked.indulgence ? { indulgence: true } : {}) });
   }
 
   /**
@@ -2299,11 +2436,26 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const victim = targets[0]?.actor;
     if (!victim) return;
 
-    const asked = await promptForGrapple();
+    // Armed Grapple (Revised p. 334): any melee weapon on the sheet may take hold.
+    const weapons = ((this.actor.system?.derived?.melee ?? []) as any[])
+      .filter((row) => row.itemId && row.usable !== false && row.skillLevel !== null)
+      .map((row) => ({ id: String(row.itemId), label: `${row.name}${row.mode ? ` (${row.mode})` : ""}`, skill: String(row.skillName ?? ""), row }));
+    const asked = await promptForGrapple(weapons);
     if (!asked) return;
 
-    const skill = grapplingSkill(this.actor);
-    const base = skill?.level ?? attributeOf(this.actor, "DX");
+    const held = weapons.find((w) => w.id === asked.armed) ?? null;
+    let skill = grapplingSkill(this.actor);
+    let base = skill?.level ?? attributeOf(this.actor, "DX");
+    if (held) {
+      // The technique where the character has it; otherwise the weapon's skill
+      // at -2, or unpenalized Cloak (Revised p. 334).
+      const cloak = /cloak/i.test(held.skill);
+      const armed = armedGrapple({ cloak, oneHanded: !held.row.twoHanded, bothHandsOnIt: held.row.twoHanded === true });
+      const learned = techniqueLevelByPrefix(this.actor, "Armed Grapple");
+      skill = { name: game.i18n.localize("GWORLD.Grapple.Armed"), level: learned ?? Number(held.row.skillLevel) + armed.penalty };
+      base = skill.level;
+      if (armed.needsReady) ui.notifications?.info(game.i18n.localize("GWORLD.Grapple.NeedsReady"));
+    }
 
     // "+1 to hit when you grapple per +1 SM advantage you have over your
     // target" (Campaigns p. 402) -- which the sheet knows without being asked.
@@ -2344,6 +2496,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       hands: asked.hands,
       hitLocation: asked.hitLocation,
     });
+    // "While using your weapon to grapple, you can neither attack nor defend
+    // with it": the weapon is out of play until the grapple ends.
+    if (held) {
+      await this.actor.setFlag(SYSTEM_ID, ARMED_GRAPPLE_FLAG, held.id);
+      ui.notifications?.info(game.i18n.format("GWORLD.Grapple.WeaponBusy", { weapon: held.label }));
+    }
   }
 
   /**

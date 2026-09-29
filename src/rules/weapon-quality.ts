@@ -103,6 +103,15 @@ export function qualityCostMultiplier(cls: WeaponClass, quality: WeaponQuality, 
   }
 }
 
+/**
+ * The same price as a cost factor (Revised p. 342): "multiple - 1", so fine
+ * fencing is +3 CF and a cheap blade -0.6 CF. Null where the grade is not sold.
+ */
+export function qualityCostFactor(cls: WeaponClass, quality: WeaponQuality, tl: number): number | null {
+  const multiple = qualityCostMultiplier(cls, quality, tl);
+  return multiple === null ? null : Math.round((multiple - 1) * 100) / 100;
+}
+
 /** The grades a weapon of this class can be bought in. */
 export function availableQualities(cls: WeaponClass, tl: number): WeaponQuality[] {
   return WEAPON_QUALITIES.filter((q) => qualityCostMultiplier(cls, q, tl) !== null);
@@ -152,11 +161,13 @@ export function qualityDamageBonus(
 
 /**
  * The best grade a blade of this material can be made in (p. 275): plastic
- * "cannot exceed good quality (and are often cheap)". Null where the book
- * sets no ceiling.
+ * "cannot exceed good quality (and are often cheap)". Silver keeps the same
+ * ceiling: "fine, very fine, and solid silver are mutually exclusive"
+ * (Revised p. 342), so a silver weapon, coated or solid, is good or cheap.
+ * Null where the book sets no ceiling.
  */
 export function maxQualityFor(material: WeaponMaterial): WeaponQuality | null {
-  return material === "plastic" ? "good" : null;
+  return material === "plastic" || material === "silver" || material === "silverCoated" ? "good" : null;
 }
 
 /**
@@ -171,8 +182,9 @@ export function gradeAfterMaterial(quality: WeaponQuality, material: WeaponMater
 }
 
 /**
- * What the material does to the price (p. 275): plastic is "double cost",
- * solid silver twenty times list and coated or edged three times.
+ * What the material does to the price alone (p. 275): plastic is "double
+ * cost" (+1 CF), silver a surcharge on the good-quality price (see
+ * silverCostFactor). The item sheet adds these as cost factors, not products.
  */
 export function materialCostMultiplier(material: WeaponMaterial): number {
   if (material === "plastic") return 2;
@@ -269,10 +281,10 @@ export function materialArmorDivisor(material: WeaponMaterial, type: DamageType)
  * have x1/2 weight but otherwise identical statistics. Shield composition
  * never affects DB."
  *
- * "none" is for a shield that is not made of anything the table lists -- a
+ * "mirrored" is a silver-coated shield (Revised p. 342: +6 CF). "none" is for a shield that is not made of anything the table lists -- a
  * field projected from a device, say -- and changes nothing (since API 1.63.0).
  */
-export const SHIELD_COMPOSITIONS = ["wood", "iron", "plastic", "none"] as const;
+export const SHIELD_COMPOSITIONS = ["wood", "iron", "plastic", "mirrored", "none"] as const;
 export type ShieldComposition = (typeof SHIELD_COMPOSITIONS)[number];
 
 export interface ShieldCompositionEffect {
@@ -290,6 +302,9 @@ export function shieldComposition(composition: ShieldComposition): ShieldComposi
       return { costFactor: 5, weightFactor: 2, drBonus: 3, hpFactor: 2, minTl: 3 };
     case "plastic":
       return { costFactor: 1, weightFactor: 0.5, drBonus: 0, hpFactor: 1, minTl: 7 };
+    // A silver-coated ("mirrored") shield: +6 CF, otherwise the wooden shield's statistics (Revised p. 342).
+    case "mirrored":
+      return { costFactor: 7, weightFactor: 1, drBonus: 0, hpFactor: 1, minTl: 1 };
     default:
       return { costFactor: 1, weightFactor: 1, drBonus: 0, hpFactor: 1, minTl: 0 };
   }
@@ -307,11 +322,26 @@ export function silverCoatedWounding(multiplier: number): number {
   return multiplier;
 }
 
-/** What silver costs (p. 275): solid x20, coated or edged x3, bullets x50. */
-export function silverCostMultiplier(material: WeaponMaterial, bullets = false): number {
-  if (material === "silver") return bullets ? 50 : 20;
-  if (material === "silverCoated") return 3;
-  return 1;
+/**
+ * What silver adds to the price, in cost factors (Revised pp. 275, 342): "add
+ * 19x the price of a good-quality weapon" for solid, 2x for coated or edged,
+ * 49x for bullets. The addition is a multiple of the good-quality price, not
+ * of the item's own (the Basic Set's old x20, x3 and x50 multiplied that).
+ */
+export function silverCostFactor(material: WeaponMaterial, bullets = false): number {
+  if (material === "silver") return bullets ? 49 : 19;
+  if (material === "silverCoated") return 2;
+  return 0;
+}
+
+/**
+ * The multiple of list price a silver weapon costs: the good-quality price
+ * plus the surcharge, so (1 + CF) times the good-quality price. That is the
+ * list price itself through TL6; at TL7+, where good quality is a fraction of
+ * it (p. 274), pass that as `goodMultiple`.
+ */
+export function silverCostMultiplier(material: WeaponMaterial, bullets = false, goodMultiple = 1): number {
+  return goodMultiple * (1 + silverCostFactor(material, bullets));
 }
 
 /**

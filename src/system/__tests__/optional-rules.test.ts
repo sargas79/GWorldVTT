@@ -61,7 +61,9 @@ describe("the rule catalogue", () => {
     // Modifying Dice + Adds is headed "Optional Rule" (Characters p. 269), and
     // changes every damage figure a player already knows. Study of attributes
     // is a GM's option, not a book rule (Characters pp. 290, 292).
-    expect(off.sort()).toEqual(["bleeding", "damageToShields", "familiarity", "modifyingDiceAdds", "studyAttributes"]);
+    // The wildcard bonus is headed "optionally" (Basic Set Revised p. 333).
+    // Pulling Rank is a workaround the book offers for hierarchical organizations (p. 337).
+    expect(off.sort()).toEqual(["allOutConcentrate", "allOutSlams", "basicAbstractDifficulty", "bleeding", "chestAbdomenSplit", "closeCombatAnyWeapon", "closeContactShots", "committedAttack", "damageToShields", "defensiveAttack", "derangementRollPenalties", "expandedInfluence", "familiarity", "fatigueForSkill", "finerHitLocations", "flatSignatureGear", "frostbite", "godlikeExtraEffort", "largeTargetDamage", "mentalDefense", "modifyingDiceAdds", "nonCombatBonuses", "partialCoverage", "powerExtraEffort", "pullingRank", "realisticMarching", "simplifiedRange", "simplifiedResources", "stressAndDerangement", "stressRollPenalties", "studyAttributes", "terrainTypes", "trickyShooting", "visionRollsInCombat", "wildcardBonus"]);
   });
 
   /**

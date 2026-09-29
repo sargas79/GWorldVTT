@@ -96,8 +96,12 @@ export function modifiedPoints(
   modifiers: readonly number[],
   selfControl: number | null = null,
 ): number {
-  const control = selfControl === null ? 1 : (SELF_CONTROL_MULTIPLIERS[selfControl] ?? 1);
-  const scaled = base * control * (1 + netModifier(modifiers) / 100);
+  // "N/A": 2.5 times the listed cost, "drop fractions" -- before the modifiers.
+  const naBase = selfControl === SELF_CONTROL_NA
+    ? (base < 0 ? -Math.floor(-base * SELF_CONTROL_NA_MULTIPLIER + 1e-9) : Math.floor(base * SELF_CONTROL_NA_MULTIPLIER + 1e-9))
+    : null;
+  const control = selfControl === null || naBase !== null ? 1 : (SELF_CONTROL_MULTIPLIERS[selfControl] ?? 1);
+  const scaled = (naBase ?? base) * control * (1 + netModifier(modifiers) / 100);
   return scaled < 0 ? -Math.ceil(-scaled - 1e-9) : Math.ceil(scaled - 1e-9);
 }
 
@@ -223,6 +227,18 @@ export function traitLevelCeiling(trait: {
 export const SELF_CONTROL_NUMBERS: readonly number[] = Object.freeze([6, 9, 12, 15]);
 
 /**
+ * The fifth level, "N/A" (Basic Set Revised p. 328): for a disadvantage taken
+ * as an Affliction's Disadvantage enhancement, a Temporary Disadvantage, or by a
+ * being that always behaves one way. It has no roll to make, so it is stored as
+ * 0, which the roll buttons already read as "no number". Cost x2.5, fractions
+ * dropped.
+ */
+export const SELF_CONTROL_NA = 0;
+
+/** The multiplier of Self-Control "N/A" (Revised p. 328). */
+export const SELF_CONTROL_NA_MULTIPLIER = 2.5;
+
+/**
  * The number a disadvantage takes when a self-control roll is turned on.
  *
  * 12 is the book's standard -- "roll against 12 or less" is the wording most
@@ -263,7 +279,7 @@ export function selfControlChoices(
   options: { category?: string } = {},
 ): SelfControlChoice[] {
   const current = selfControl === null || selfControl === undefined ? null : Number(selfControl);
-  const known = current !== null && SELF_CONTROL_NUMBERS.includes(current);
+  const known = current !== null && (SELF_CONTROL_NUMBERS.includes(current) || current === SELF_CONTROL_NA);
   const disadvantage = options.category === "disadvantage";
 
   return [
@@ -281,5 +297,12 @@ export function selfControlChoices(
       selected: known && current === number,
       standard: disadvantage && number === DEFAULT_SELF_CONTROL,
     })),
+    {
+      value: String(SELF_CONTROL_NA),
+      label: "GWORLD.Trait.SelfControlNA",
+      hint: "GWORLD.Trait.SelfControlNAHint",
+      selected: known && current === SELF_CONTROL_NA,
+      standard: false,
+    },
   ];
 }

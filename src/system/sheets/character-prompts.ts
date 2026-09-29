@@ -7,6 +7,7 @@
 
 import { tacticalOnScene } from "../settings.js";
 import { isRuleOn } from "../optional-rules.js";
+import { TERRAIN_ORDER, type TerrainType } from "../../rules/vision-corrections.js";
 import { attackArc } from "../../rules/tactical.js";
 import { type Entanglement } from "../entangling.js";
 import { type Victim } from "../unarmed-techniques.js";
@@ -56,6 +57,7 @@ import type { AtmosphereHazard, HazardStrength } from "../../rules/atmosphere.js
 import type { PressureSupport } from "../../rules/pressure.js";
 import { unconditionalReaction, type ReactionSource } from "../../rules/social.js";
 import { currentTargets } from "../targets.js";
+import { stressOn } from "../stress.js";
 
 /**
  * Which way the mover is coming at the foe, for the evade modifiers.
@@ -1745,14 +1747,17 @@ export async function promptForHike(
   hot = false,
 ): Promise<{
   hours: number; terrain: "veryBad" | "bad" | "average" | "good";
-  weather: "fair" | "rain" | "snow" | "deepSnow" | "ice"; hot: boolean; modifier: number;
+  weather: "fair" | "rain" | "snow" | "deepSnow" | "ice"; hot: boolean; modifier: number; biome?: TerrainType | "";
 } | null> {
+  // Terrain Types Redux (Revised p. 573): a named terrain in place of the generic ground.
+  const biomes: Array<[string, string]> = [["", game.i18n.localize("GWORLD.Vision.Terrain_generic")], ...TERRAIN_ORDER.map((k): [string, string] => [k, game.i18n.localize(`GWORLD.Vision.Terrain_${k}`)])];
   const terrains: Array<[string, string]> = (["average", "good", "bad", "veryBad"] as const).map((k) => [k, HZ(`Terrain.${k}`)]);
   const weathers: Array<[string, string]> = (["fair", "rain", "snow", "deepSnow", "ice"] as const).map((k) => [k, HZ(`Weather.${k}`)]);
   return hazardPrompt(
     HZ("Hike"),
     hazardField("hours", HZ("HoursMarched"), 8, 'min="0"') +
       hazardSelect("terrain", HZ("TerrainLabel"), terrains) +
+      (isRuleOn("terrainTypes") ? hazardSelect("biome", game.i18n.localize("GWORLD.Vision.Biome"), biomes) : "") +
       hazardSelect("weather", HZ("WeatherLabel"), weathers) +
       hazardCheck("hot", HZ("HotDay"), hot) +
       hazardField("modifier", game.i18n.localize("GWORLD.Chat.Modifier"), 0),
@@ -1762,6 +1767,7 @@ export async function promptForHike(
       weather: (str(form, "weather") || "fair") as "fair" | "rain" | "snow" | "deepSnow" | "ice",
       hot: ticked(form, "hot"),
       modifier: num(form, "modifier"),
+      biome: (str(form, "biome") || "") as TerrainType | "",
     }),
   );
 }
@@ -2577,10 +2583,12 @@ export async function promptForDisarm(actor: any, foe: any): Promise<{
  * Both change what follows -- two hands are a far better grip than one, and only
  * a hold on the neck can be turned into a choke.
  */
-export async function promptForGrapple(): Promise<{
+export async function promptForGrapple(weapons: Array<{ id: string; label: string; skill: string }> = []): Promise<{
   hands: number;
   hitLocation: string;
   modifier: number;
+  /** The weapon the grapple is made with (Revised p. 334), or "" for bare hands. */
+  armed: string;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Grapple.${key}`);
 
@@ -2603,6 +2611,12 @@ export async function promptForGrapple(): Promise<{
         <select name="where" style="width:120px">${options}</select>
       </label>
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("ArmedWith")}</span>
+        <select name="armed" style="width:160px"><option value="">${L("BareHands")}</option>${weapons
+          .map((w) => `<option value="${foundry.utils.escapeHTML(w.id)}">${foundry.utils.escapeHTML(w.label)}</option>`)
+          .join("")}</select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
         <input type="number" name="modifier" value="0" step="1" style="width:90px">
       </label>
@@ -2618,6 +2632,7 @@ export async function promptForGrapple(): Promise<{
           hitLocation:
             form?.querySelector<HTMLSelectElement>('select[name="where"]')?.value ?? "torso",
           modifier: num("modifier"),
+          armed: form?.querySelector<HTMLSelectElement>('select[name="armed"]')?.value ?? "",
         };
       },
     },
@@ -2634,8 +2649,10 @@ export async function promptForGrapple(): Promise<{
  * to regain one extra FP if you eat a decent meal while resting" is their call,
  * and a long rest is not the same thing as a fed one.
  */
-export async function promptForRest(): Promise<{ minutes: number; meal: boolean } | null> {
+export async function promptForRest(): Promise<{ minutes: number; meal: boolean; indulgence?: boolean } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Recovery.${key}`);
+  // With Stress on, an indulgence (dance, drink, massage) erases 1 more (Basic Set Revised p. 573).
+  const stressed = stressOn();
 
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Rest") },
@@ -2648,6 +2665,10 @@ export async function promptForRest(): Promise<{ minutes: number; meal: boolean 
         <input type="checkbox" name="meal">
         <span>${L("MealHint")}</span>
       </label>
+      ${stressed ? `<label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="indulgence">
+        <span>${game.i18n.localize("GWORLD.Stress.Indulgence")}</span>
+      </label>` : ""}
     </div>`,
     ok: {
       label: game.i18n.localize("GWORLD.Chat.Roll"),
@@ -2657,6 +2678,7 @@ export async function promptForRest(): Promise<{ minutes: number; meal: boolean 
           minutes:
             Number(form?.querySelector<HTMLInputElement>('input[name="minutes"]')?.value ?? 0) || 0,
           meal: form?.querySelector<HTMLInputElement>('input[name="meal"]')?.checked ?? false,
+          indulgence: form?.querySelector<HTMLInputElement>('input[name="indulgence"]')?.checked ?? false,
         };
       },
     },

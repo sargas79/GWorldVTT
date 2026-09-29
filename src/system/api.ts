@@ -26,6 +26,10 @@
  *      and every part of the API may be used.
  */
 
+import { visionApi } from "./vision-corrections.js";
+import { applyHardship, buyOffHardship, clinicianSkillOf, mentalOf, recoverStress, rollDerangementDayEnd } from "./stress.js";
+import { combiningSt, isSkilledMarcher, postCombiningSt, powerEffortFp, rollPowerExtraEffort, tradeFatigueForBonus } from "./extra-effort-extras.js";
+import { currentBad, endHamClause, hamClauseOf, invokeHamClause, setBad, unstattedNpcSkill } from "./task-rules.js";
 import { gmScreenApi } from "./gm-screen/api.js";
 import { containersApi } from "./container-moves.js";
 import * as rules from "../rules/index.js";
@@ -55,7 +59,8 @@ import type { ControlRating, LegalityClass } from "../rules/legality.js";
 import { currentControlRating, legalityClassOf } from "./legality.js";
 import { surprise, undoKnockdown } from "./knockdown.js";
 import { rollFall } from "./falling.js";
-import { restoreFatigue, spendFatigueFor } from "./fatigue.js";
+import { restoreFatigue, spendFatigueFor, spendHitPointsFor } from "./fatigue.js";
+import { chargeReserve, drainReserve, reservesOf, restoreReserve } from "./reserves.js";
 import { changeTrait, type TraitChanged } from "./trait-change.js";
 import { stopTowing, tow } from "./towing.js";
 import { cripple, crippledParts, healCrippled, settleCrippling, treatCrippled, type CrippledDuration, type CrippledPart } from "./crippling.js";
@@ -106,12 +111,13 @@ import { addPendingModifier, pendingModifiers, removePendingModifier, type Pendi
 import { applyItemDamage, type ItemDamaged } from "./item-damage.js";
 import { normalizeDamage } from "./modifying-dice.js";
 import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
+import { simplifiedResourcesApi } from "./simplified-resources.js";
 
 /**
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.166.0";
+export const API_VERSION = "1.183.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -250,8 +256,45 @@ const actors = {
    * here: the cost is not itemized), or null for a user who can't change
    * the actor or an amount that isn't a positive number.
    */
-  spendFatigue(actor: any, fp: number, options: { reason?: string; details?: Record<string, unknown>; exertion?: boolean } = {}) {
+  spendFatigue(actor: any, fp: number, options: { reason?: string; details?: Record<string, unknown>; exertion?: boolean; origin?: string } = {}) {
     return spendFatigueFor(actor, fp, options);
+  },
+
+  /**
+   * Takes hit points off an actor for an ability with Costs Hit Points (Basic
+   * Set Revised p. 330; since 1.169.0): `rules.costsHitPointsCost(modifiers)`
+   * reads the cost from the trait. Resolves to `{ hpLost, hp, reason }`, or
+   * null for a user who can't change the actor or an amount that isn't a
+   * positive number.
+   */
+  spendHitPoints(actor: any, hp: number, options: { reason?: string } = {}) {
+    return spendHitPointsFor(actor, hp, options);
+  },
+
+  /**
+   * Energy Reserves (Basic Set Revised p. 326; since 1.167.0). `list(actor)`
+   * gives `{ key, origin, max, value, interval }` for each reserve a character
+   * has (`interval` in seconds, null where only energy theft refills it);
+   * `charge(actor, origin, cost)` takes what the reserve of that origin holds
+   * of a cost of FP and resolves to `{ reserve, rest }`, the rest for the
+   * caller to charge as FP (`spendFatigue` does the same with its `origin`
+   * option); `drain(actor, reserveOrigin, powerOrigin, amount)` is a hostile
+   * power depleting a reserve, which only one of the same origin does; and
+   * `restore(actor, origin, amount)` gives points back.
+   */
+  reserves: {
+    list(actor: any) {
+      return reservesOf(actor);
+    },
+    charge(actor: any, origin: string, cost: number) {
+      return chargeReserve(actor, origin, cost);
+    },
+    drain(actor: any, reserveOrigin: string, powerOrigin: string, amount: number) {
+      return drainReserve(actor, reserveOrigin, powerOrigin, amount);
+    },
+    restore(actor: any, origin: string, amount: number) {
+      return restoreReserve(actor, origin, amount);
+    },
   },
 
   /**
@@ -863,6 +906,14 @@ export interface GWorldApi {
   readonly world: typeof worldApi;
   /** Social rolls (since 1.103.0): the skills the Influence roll offers. */
   readonly social: typeof socialApi;
+  /** Extra effort with powers and FP traded for a bonus (since 1.178.0). */
+  readonly effort: typeof effortApi;
+  /** Simplified Resources: ammunition tracked or not, the reload tally (since 1.183.0). */
+  readonly simplifiedResources: typeof simplifiedResourcesApi;
+  /** Stress and Derangement (since 1.179.0). */
+  readonly mental: typeof mentalApi;
+  /** Terrain, illumination, vision, frostbite and the horizon (since 1.180.0). */
+  readonly vision: typeof visionApi;
   /** The GM Screen (since 1.157.0): open it, roll on its tables, add a module's tables, lists and tabs. */
   readonly gmScreen: typeof gmScreenApi;
   /** Containers (since 1.159.0): which items are containers, what is in one, and putting gear in or taking it out. */
@@ -962,7 +1013,16 @@ const hazardsApi = Object.freeze({
 });
 
 /** The social namespace (since 1.103.0): a module's Influence skills (Campaigns p. 359). */
-const socialApi = Object.freeze({ registerInfluenceSkill });
+const socialApi = Object.freeze({
+  registerInfluenceSkill,
+  // Tasks and feats (since 1.177.0; Basic Set Revised pp. 570, 578).
+  hamClause: hamClauseOf,
+  invokeHamClause,
+  endHamClause,
+  basicAbstractDifficulty: (scene?: any) => currentBad(scene),
+  setBasicAbstractDifficulty: setBad,
+  unstattedNpcSkill: (scene?: any) => unstattedNpcSkill(scene),
+});
 
 /**
  * The areas namespace (since 1.63.0): smoke, fog, a field that blinds a sense.
@@ -995,7 +1055,28 @@ const magic = Object.freeze({ ...magicApi, postResistance, manaLevel });
 const partyApi = Object.freeze({
   of: partyOf, membersOf, campaignTerms: actorCampaignTerms, addMembers, removeMember,
   awardRecipients: awardRecipientsOf, awardPoints: awardPartyPoints,
+  // Combining ST (since 1.178.0; Basic Set Revised p. 572): a group's Basic Lift and effective ST.
+  combiningSt, postCombiningSt,
 });
+
+/**
+ * The extra-effort namespace (since 1.178.0; Basic Set Revised pp. 571-572):
+ * extra effort with powers, FP traded for a bonus, and the marching skill test.
+ * The pure rules are under `rules` (`powerEffortTarget`, `godlikeEffect`,
+ * `fatigueForSkillBonus`, `extrasOverCap`, `marchingHours`...).
+ */
+/**
+ * The mental-hardship namespace (since 1.179.0; Basic Set Revised pp. 572-573):
+ * Stress and Derangement, when the `stressAndDerangement` switch is on.
+ * `of(actor)` reads them; `add` adds one kind, `recover` takes Stress off for
+ * rest, `dayEnd` rolls the day's-end Will roll, and `buyOff` spends points of a
+ * new mental disadvantage. The pure rules are under `rules`.
+ */
+const mentalApi = Object.freeze({
+  of: mentalOf, add: applyHardship, recover: recoverStress, dayEnd: rollDerangementDayEnd, buyOff: buyOffHardship, clinicianSkill: clinicianSkillOf,
+});
+
+const effortApi = Object.freeze({ rollPower: rollPowerExtraEffort, powerFp: powerEffortFp, tradeFatigue: tradeFatigueForBonus, isSkilledMarcher });
 
 /**
  * The world namespace (since 1.77.0): the campaign's Control Rating (Campaigns
@@ -1047,6 +1128,10 @@ export function createApi(): GWorldApi {
     party: partyApi,
     world: worldApi,
     social: socialApi,
+    effort: effortApi,
+    mental: mentalApi,
+    vision: visionApi,
+    simplifiedResources: simplifiedResourcesApi,
     gmScreen: gmScreenApi,
     containers: containersApi,
     hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK, partyChanged: PARTY_CHANGED_HOOK, campaignChanged: CAMPAIGN_CHANGED_HOOK }),

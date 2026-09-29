@@ -10,8 +10,11 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { isRuleOn } from "./optional-rules.js";
+import { techniqueLevelByPrefix } from "./technique-lookup.js";
 import { rollQuickContest } from "./contest.js";
 import { resolveSuccess } from "../rules/success.js";
+import { improvisedWaived, noPerks } from "../rules/addendum-perks.js";
 import { swingDamage } from "../rules/damage.js";
 import { formatDiceAdds } from "../rules/dice.js";
 import {
@@ -125,7 +128,13 @@ export async function useTechnique(options: {
     const strength = Number(actor.system?.attributes?.ST ?? 10) || 10;
     const attack =
       technique === "neckSnap"
-        ? strength + NECK_SNAP_PENALTY
+        ? Math.max(
+            strength + NECK_SNAP_PENALTY,
+            techniqueLevelByPrefix(
+              actor,
+              options.location === "arm" ? "Wrench Arm" : options.location === "leg" ? "Wrench Leg" : "Neck Snap",
+            ) ?? -Infinity,
+          )
         : lockAttack({ judo: levelOf(actor, "Judo"), wrestling: levelOf(actor, "Wrestling"), strength });
 
     const result = await rollQuickContest({
@@ -163,6 +172,9 @@ export async function useTechnique(options: {
           },
           grave: true,
         });
+        // With the finer hit locations, a neck snap that injures over HP
+        // breaks the neck outright (Basic Set Revised p. 566).
+        if ((options.location || "neck") === "neck" && isRuleOn("finerHitLocations")) notes.push({ key: "BrokenNeck", grave: true });
       }
     } else {
       notes.push({ key: "HoldFails" });
@@ -184,7 +196,8 @@ export async function useTechnique(options: {
     return;
   }
 
-  const clumsy = improvisedPenalty(options.clumsiness);
+  // Improvised Weapons: the penalty is ignored for the skill the perk names (Revised p. 328).
+  const clumsy = improvisedWaived(actor.system?.derived?.perks ?? noPerks(), aim.skill) ? 0 : improvisedPenalty(options.clumsiness);
   const target = aim.target + clumsy;
   const roll = new Roll("3d6");
   await roll.evaluate();

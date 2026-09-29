@@ -23,6 +23,7 @@
 
 import { thrustDamage } from "./damage.js";
 import { addModifier } from "./dice.js";
+import { HEAD_BUTT_UNTRAINED_PENALTY, headButtDamage, stampKickDamage } from "./addendum-techniques.js";
 import type { DamageType, DiceAdds } from "./types.js";
 
 /** The kick's to-hit penalty (Characters p. 271). */
@@ -39,6 +40,10 @@ export interface NaturalAttackInput {
   skills: Partial<Record<"Brawling" | "Boxing" | "Karate", number>>;
   /** True while the character wears boots, which add +1 to a kick (Characters p. 271). */
   boots?: boolean;
+  /** Levels of the Head Butt and Stamp Kick techniques, where the character has them (Revised p. 334). */
+  techniques?: { headButt?: number | null; stampKick?: number | null };
+  /** True while a rigid helm is worn: a head butt does +1 (Revised p. 334). */
+  rigidHelm?: boolean;
 }
 
 /** The unarmed skills that hit harder with training, and from what level. */
@@ -88,7 +93,7 @@ export function weaponUnarmedBonus(options: {
 }
 
 export interface NaturalAttack {
-  key: "punch" | "kick" | "bite" | "claw" | "striker";
+  key: "punch" | "kick" | "bite" | "claw" | "striker" | "headButt" | "stampKick";
   /** The skill the level came from, or "DX" when none applies. */
   skillName: string;
   /** The number to roll against, penalty included. */
@@ -128,6 +133,30 @@ export function naturalAttacks(input: NaturalAttackInput): NaturalAttack[] {
   const bonus = (chosen: { name: string; level: number }) =>
     unarmedDamageBonusPerDie(chosen.name, chosen.level, dx) * thrust.dice;
 
+  // Head Butt (Brawling-1 or Karate-1) and Stamp Kick (Brawling-3 or Karate-3),
+  // Revised p. 334. Anyone may butt: without either skill it is DX-2 and thrust-2.
+  const trainedStrike = best([["Brawling", skills.Brawling], ["Karate", skills.Karate]], -Infinity);
+  const trained = trainedStrike.level !== -Infinity;
+  const butt = trained ? trainedStrike.level - 1 : dx + HEAD_BUTT_UNTRAINED_PENALTY;
+  const headButt: NaturalAttack = {
+    key: "headButt",
+    skillName: trained ? trainedStrike.name : "DX",
+    skillLevel: Math.max(butt, input.techniques?.headButt ?? -Infinity),
+    damage: headButtDamage(thrust, { trained, helm: input.rigidHelm === true, skillBonus: trained ? bonus(trainedStrike) : 0 }),
+    reach: "C",
+    canParry: false,
+  };
+  const stamp: NaturalAttack[] = trained
+    ? [{
+        key: "stampKick",
+        skillName: trainedStrike.name,
+        skillLevel: Math.max(trainedStrike.level - 3, input.techniques?.stampKick ?? -Infinity),
+        damage: stampKickDamage(thrust, bonus(trainedStrike)),
+        reach: "C, 1",
+        canParry: false,
+      }]
+    : [];
+
   return [
     {
       key: "punch",
@@ -146,6 +175,8 @@ export function naturalAttacks(input: NaturalAttackInput): NaturalAttack[] {
       reach: "C, 1",
       canParry: false,
     },
+    headButt,
+    ...stamp,
   ];
 }
 

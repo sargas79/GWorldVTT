@@ -796,6 +796,7 @@
   text-transform: uppercase;
   vertical-align: middle;
 }
+.gworld.v2 .v2-tag-warn { background: var(--v2-warn-soft, #f3e3b8); color: var(--v2-warn, #7a5200); }
 .gworld.v2 .v2-tag-steel { background: var(--v2-steel-soft); color: var(--v2-steel-deep); }
 .gworld.v2 .v2-steel { color: var(--v2-steel); }
 .gworld.v2 .v2-off { display: none !important; }

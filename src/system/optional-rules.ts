@@ -67,6 +67,9 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "rapidFire", reference: "Campaigns p. 373", default: true },
     { key: "opportunityFire", reference: "Campaigns p. 390", default: true },
     { key: "closeCombat", reference: "Campaigns p. 391", default: true },
+    // The GM may let a weapon without a "C" reach fight in close combat, at
+    // -4 a yard of reach (the Close Combat technique buys half of it back).
+    { key: "closeCombatAnyWeapon", reference: "Basic Set Revised p. 334", default: false },
     { key: "slams", reference: "Campaigns p. 371", default: true },
     { key: "grappling", reference: "Campaigns p. 370", default: true },
     { key: "evading", reference: "Campaigns p. 368", default: true },
@@ -80,6 +83,25 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "trampling", reference: "Campaigns p. 404", default: true },
     { key: "picks", reference: "Campaigns p. 405", default: true },
     { key: "swarms", reference: "Campaigns p. 461", default: true },
+    // "Combat-heavy campaigns benefit from more hit locations": the Revised
+    // edition's addendum, so off unless the table wants them.
+    { key: "finerHitLocations", reference: "Basic Set Revised p. 566", default: false },
+    { key: "chestAbdomenSplit", reference: "Basic Set Revised p. 566", default: false },
+    // A Vision roll decides whether a very small or very distant attacker is seen coming (Addendum 4).
+    { key: "visionRollsInCombat", reference: "Basic Set Revised pp. 574-575", default: false },
+    // More maneuvers (Addendum 4): each its own switch, off.
+    { key: "allOutSlams", reference: "Basic Set Revised p. 575", default: false },
+    { key: "allOutConcentrate", reference: "Basic Set Revised p. 575", default: false },
+    { key: "mentalDefense", reference: "Basic Set Revised p. 575", default: false },
+    { key: "committedAttack", reference: "Basic Set Revised pp. 575-576", default: false },
+    { key: "defensiveAttack", reference: "Basic Set Revised p. 576", default: false },
+    // Optional rules for ranged combat (Addendum 4), all off.
+    { key: "closeContactShots", reference: "Basic Set Revised p. 576", default: false },
+    { key: "partialCoverage", reference: "Basic Set Revised p. 576", default: false },
+    { key: "nonCombatBonuses", reference: "Basic Set Revised p. 576", default: false },
+    { key: "trickyShooting", reference: "Basic Set Revised p. 577", default: false },
+    { key: "simplifiedRange", reference: "Basic Set Revised p. 577", default: false },
+    { key: "largeTargetDamage", reference: "Basic Set Revised p. 577", default: false },
   ],
   injury: [
     { key: "hitLocations", reference: "Campaigns p. 398", default: true },
@@ -96,6 +118,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     // Rule", and switching it on changes figures every player already knows
     // from their sheet, so it starts switched off.
     { key: "modifyingDiceAdds", reference: "Characters p. 269", default: false },
+    // 1 HP on each exposed hit location per FP lost to cold, "in a harshly realistic campaign" (Addendum 4).
+    { key: "frostbite", reference: "Basic Set Revised p. 574", default: false },
   ],
   rolls: [
     { key: "regularContests", reference: "Campaigns p. 349", default: true },
@@ -106,6 +130,22 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     // standard rules: a skill that helps another, and a party rolling as one.
     { key: "complementarySkills", reference: "Basic Set Revised p. 206", default: true },
     { key: "teamEfforts", reference: "Basic Set Revised p. 185", default: true },
+    // A wildcard skill's positive relative level as a bonus to related rolls.
+    { key: "wildcardBonus", reference: "Basic Set Revised p. 333", default: false },
+    // Rank as an effective Patron: Assistance Rolls (Addendum 2). Optional, an organization's help by dice.
+    { key: "pullingRank", reference: "Basic Set Revised p. 337", default: false },
+    // Influence rolls giving the whole Reaction Table by margin, not Good or Bad (Addendum 4).
+    { key: "expandedInfluence", reference: "Basic Set Revised p. 571", default: false },
+    // One penalty for the scene instead of detailed modifiers; 10 + |BAD| for NPCs without a sheet (Addendum 4).
+    { key: "basicAbstractDifficulty", reference: "Basic Set Revised p. 578", default: false },
+    // Extra Effort Extras (Addendum 4): powers, Godlike, and FP traded for skill and resistance.
+    { key: "powerExtraEffort", reference: "Basic Set Revised pp. 571-572", default: false },
+    { key: "godlikeExtraEffort", reference: "Basic Set Revised p. 572", default: false },
+    { key: "fatigueForSkill", reference: "Basic Set Revised p. 572", default: false },
+    // Stress and Derangement (Addendum 4): mental FP and HP, off; the penalties are the book's optional reads.
+    { key: "stressAndDerangement", reference: "Basic Set Revised pp. 572-573", default: false },
+    { key: "stressRollPenalties", reference: "Basic Set Revised p. 573", default: false },
+    { key: "derangementRollPenalties", reference: "Basic Set Revised p. 573", default: false },
   ],
   activities: [
     { key: "physicalActivities", reference: "Campaigns pp. 349-355", default: true },
@@ -127,9 +167,13 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "socialBackground", reference: "Characters pp. 23-24", default: true },
     { key: "sleep", reference: "Campaigns pp. 426-427", default: true },
     { key: "hiking", reference: "Campaigns pp. 351, 426", default: true },
+    // 8 or 12 hours a day at half the Move an hour, in place of 10 x Move miles (Addendum 4).
+    { key: "realisticMarching", reference: "Basic Set Revised p. 572", default: false },
     { key: "collisions", reference: "Campaigns pp. 430-432", default: true },
     { key: "electricity", reference: "Campaigns pp. 432-433", default: true },
     { key: "fire", reference: "Campaigns pp. 433-434", default: true },
+    // The quick terrain table for foraging, Tracking and daily travel (Addendum 4).
+    { key: "terrainTypes", reference: "Basic Set Revised p. 573", default: false },
     { key: "radiation", reference: "Campaigns pp. 435-436", default: true },
     { key: "vehicles", reference: "Campaigns pp. 462-468", default: true },
     // The vehicle moves on its operator's turn, and plows ahead without them.
@@ -159,6 +203,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "weaponBreakage", reference: "Campaigns pp. 376, 400, 485", default: true },
     // Shots counted off, Ready maneuvers to put them back, crossbow cocking.
     { key: "reloading", reference: "Campaigns p. 373", default: true },
+    // Five reloads tallied up front; ammunition uncounted until the party is cut off (Addendum 4).
+    { key: "simplifiedResources", reference: "Basic Set Revised p. 578", default: false },
     // Hollow-point, armour-piercing, bodkin points, silver.
     { key: "ammunitionTypes", reference: "Characters pp. 276, 279", default: true },
     // The bruise a mace leaves through mail that stopped it.
@@ -178,6 +224,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "familiarity", reference: "Characters p. 169", default: false },
     // Mending what is broken, and the sand that breaks it.
     { key: "repairs", reference: "Campaigns pp. 484-485", default: true },
+    // Signature Gear as a 1-point perk on one flagged item, not a budget of goods.
+    { key: "flatSignatureGear", reference: "Basic Set Revised p. 342", default: false },
   ],
   // "Shamelessly unrealistic and strictly optional, but can be fun in
   // larger-than-life games!" -- the book's own words, and the reason every one

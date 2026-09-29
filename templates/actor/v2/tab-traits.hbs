@@ -42,6 +42,8 @@
                   <span class="v2-row-name">
                     {{row.displayName}}{{#if row.lacksSpecialty}} <span class="v2-tag v2-tag-bad" data-tooltip="{{localize 'GWORLD.Trait.SpecialtyHint'}}">{{localize "GWORLD.Trait.Unspecified"}}</span>{{/if}}{{#if row.levelled}} <span class="v2-levels">{{row.levels}}{{#if row.levelName}} &middot; {{row.levelName}}{{/if}}</span>{{/if}}
                     {{#if row.applied}}<span class="v2-tag v2-tag-steel" data-tooltip="{{localize 'GWORLD.Trait.AppliedHint'}}">{{localize "GWORLD.Trait.Applied"}}</span>{{/if}}
+                    {{#if row.alternative}}<span class="v2-tag {{#if row.alternative.on}}v2-tag-steel{{else}}v2-tag-bad{{/if}}" data-tooltip="{{localize 'GWORLD.Alternative.RowHint' group=row.alternative.group}}">{{#if row.alternative.disabled}}{{localize "GWORLD.Alternative.TagDisabled"}}{{else if row.alternative.on}}{{localize "GWORLD.Alternative.TagOn"}}{{else}}{{localize "GWORLD.Alternative.TagOff"}}{{/if}}</span>{{/if}}
+                    {{#if row.pointPowered}}<span class="v2-tag {{#if row.pointPoweredActive}}v2-tag-steel{{else}}v2-tag-bad{{/if}}" data-tooltip="{{localize 'GWORLD.Alternative.PoweredHint'}}">{{#if row.pointPoweredActive}}{{localize "GWORLD.Alternative.PoweredOn"}}{{else}}{{localize "GWORLD.Alternative.PoweredOff"}}{{/if}}</span>{{/if}}
                   </span>
                   <span class="v2-row-cp{{#if row.negative}} v2-bad{{/if}}">{{row.points}} CP</span>
                   {{!-- Roll a self-control number and delete without opening the panel. --}}
@@ -166,10 +168,54 @@
             </div>
           {{/if}}
 
+          {{#if row.alternative}}
+            <div class="v2-box">
+              <h4>{{localize "GWORLD.Alternative.Heading"}}</h4>
+              <div class="v2-box-line"><span>{{localize "GWORLD.Alternative.Set"}}</span><b>{{row.alternative.group}}</b></div>
+              <div class="v2-box-line"><span>{{localize "GWORLD.Alternative.Slots"}}</span><b>{{row.alternative.slots}}</b></div>
+              <div class="v2-box-line"><span>{{localize "GWORLD.Alternative.Billed"}}</span><b>{{localize "GWORLD.SheetV2.CostCp" cost=row.alternative.billed}}</b></div>
+              {{#if row.alternative.disabled}}<p class="v2-note v2-bad">{{localize "GWORLD.Alternative.DisabledNote"}}</p>{{/if}}
+              {{#if @root.editable}}
+                <label class="v2-box-line"><span>{{localize "GWORLD.Alternative.DisabledLabel"}}</span>
+                  <input type="checkbox" data-item-flag="system.alternativeDisabled" {{checked row.item.system.alternativeDisabled}}></label>
+                <label class="v2-box-line"><span>{{localize "GWORLD.Alternative.FrozenLabel"}}</span>
+                  <input type="checkbox" data-item-flag="system.alternativeFrozen" {{checked row.item.system.alternativeFrozen}}></label>
+              {{/if}}
+              <p class="v2-note">{{localize "GWORLD.Alternative.SwapNote"}}</p>
+            </div>
+          {{/if}}
+
           <div class="v2-detail-actions">
             {{#if row.selfControl}}
               <button type="button" class="v2-button v2-button-steel rollable" data-action="selfControlRoll"
                       data-tooltip="{{localize 'GWORLD.Trait.SelfControlRollHint'}}">{{> "gworld.die"}} CR {{row.selfControl}}</button>
+            {{/if}}
+            {{#if (and @root.editable row.alternative (not row.alternative.on) (not row.alternative.disabled))}}
+              <button type="button" class="v2-button v2-button-steel" data-action="v2ReadyAlternative"
+                      data-tooltip="{{localize 'GWORLD.Alternative.ReadyHint'}}">{{localize "GWORLD.Alternative.Ready"}}</button>
+            {{/if}}
+            {{#if (and @root.editable row.assistanceRank)}}
+              <button type="button" class="v2-button v2-button-steel rollable" data-action="v2AssistanceRoll"
+                      data-tooltip="{{localize 'GWORLD.PullingRank.RollHint'}}">{{> "gworld.die"}} {{localize "GWORLD.PullingRank.Roll"}}</button>
+              <button type="button" class="v2-button" data-action="v2AssistanceReset"
+                      data-tooltip="{{localize 'GWORLD.PullingRank.ResetHint'}}">{{localize "GWORLD.PullingRank.Reset"}}</button>
+            {{/if}}
+            {{#if (and @root.editable row.hamClause)}}
+              <button type="button" class="v2-button" data-action="v2HamClause"
+                      data-tooltip="{{localize 'GWORLD.Tasks.HamHint'}}">{{localize "GWORLD.Tasks.Ham"}}</button>
+            {{/if}}
+            {{#if (and @root.editable row.hamClauseActive)}}
+              <button type="button" class="v2-button v2-button-steel" data-action="v2HamClauseEnd"
+                      data-tooltip="{{localize 'GWORLD.Tasks.HamEndHint'}}">{{localize "GWORLD.Tasks.HamEnd"}}</button>
+            {{/if}}
+            {{#if (and @root.editable row.pointPowered)}}
+              {{#if row.pointPoweredActive}}
+                <button type="button" class="v2-button" data-action="v2EndPointPowered"
+                        data-tooltip="{{localize 'GWORLD.Alternative.EndHint'}}">{{localize "GWORLD.Alternative.End"}}</button>
+              {{else}}
+                <button type="button" class="v2-button v2-button-steel" data-action="v2UsePointPowered"
+                        data-tooltip="{{localize 'GWORLD.Alternative.UseHint'}}">{{localize "GWORLD.Alternative.Use"}}</button>
+              {{/if}}
             {{/if}}
             {{#if row.weakness}}
               <button type="button" class="v2-button v2-button-steel rollable" data-action="weaknessExposure"

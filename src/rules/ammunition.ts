@@ -392,8 +392,9 @@ export interface AmmunitionEffect {
  * TL7+; double cost; LC2. APDS: "works like APHC, but also adds 50% to
  * range and +1 damage per die"; TL9 for small arms; five times cost; LC1.
  * Bodkin points on arrows and bolts, TL3+: impaling becomes piercing at a
- * (2) divisor, no change in cost. Silver: bullets are solid and cost 50
- * times list, arrowheads 20 times (p. 275).
+ * (2) divisor, no change in cost. Silver: bullets are solid and add 49 times
+ * the good-quality price (+49 CF), arrowheads 19 times (Revised pp. 275, 342):
+ * 50 and 20 times the round's price.
  */
 export function ammunitionEffect(
   kind: AmmunitionType,

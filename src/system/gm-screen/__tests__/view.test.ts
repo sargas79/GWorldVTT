@@ -95,6 +95,9 @@ describe("the window's buttons", () => {
       "attributeSkillLevels",
       "thrownDamage",
       "throwingDistance",
+      "peopleSucceed",
+      "collectiveSkill",
+      "abstractDifficulty",
       "coverDr",
     ]);
   });

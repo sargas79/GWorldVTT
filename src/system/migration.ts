@@ -342,7 +342,6 @@ export const DEPRECATED_DATA: readonly DeprecatedData[] = [
   { id: "holy-items", label: "holy items", install: INSTALL_RULE_SET, field: { documentName: "Item", types: ["equipment"], path: "holy" } },
   { id: "gear-options", label: "gear improvements", install: INSTALL_RULE_SET, field: { documentName: "Item", types: ["equipment", "armor"], path: "improvements" } },
   { id: "gear-options", label: "Holdout bonuses on gear", install: INSTALL_RULE_SET, field: { documentName: "Item", types: ["equipment", "armor"], path: "holdout" } },
-  { id: "gear-options", label: "gear marked as Signature Gear", install: INSTALL_RULE_SET, field: { documentName: "Item", types: ["equipment", "armor"], path: "signature" } },
   { id: "gear-options", label: "weapon improvements", install: INSTALL_RULE_SET, field: { documentName: "Item", types: ["equipment"], path: "weaponImprovements" } },
   { id: "gear-options", label: "improvised weapon penalties", install: INSTALL_RULE_SET, field: { documentName: "Item", types: ["equipment"], path: "improvisedPenalty" } },
   ...["talentsSkipWildcards", "holyAttacks", "ritualPathMagic", "monsterHuntersGear", "bonusPointSpending"].map((rule) => ({

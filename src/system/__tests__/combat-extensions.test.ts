@@ -183,7 +183,7 @@ describe("hit locations", () => {
     expect(api.readLocationValue("addon:test-addon.artery")).toEqual({ hitLocation: "arm", addonLocation: "test-addon.artery" });
     expect(api.readLocationValue("skull")).toEqual({ hitLocation: "skull", addonLocation: null });
     expect(api.readLocationValue("addon:gone.x")).toBeNull();
-    expect(api.locationOverrides("test-addon.artery", "cut", 12)).toEqual({ woundingModifier: 2, cripplingThreshold: null, extraDr: 1, knockdown: -1, shockKnockdown: false, majorWoundKnockdown: null });
+    expect(api.locationOverrides("test-addon.artery", "cut", 12)).toEqual({ woundingModifier: 2, cripplingThreshold: null, extraDr: 1, knockdown: -1, shockKnockdown: false, majorWoundKnockdown: null, majorWound: null });
     expect(api.locationOverrides("test-addon.artery", "imp", 12)?.woundingModifier).toBeNull();
   });
 
@@ -205,6 +205,22 @@ describe("hit locations", () => {
     expect(api.registeredLocationAllowsArc("test-addon.joint", "front")).toBe(true);
     expect(api.locationOverrides("test-addon.spine", "cr", 12)).toMatchObject({ knockdown: -1, shockKnockdown: true, majorWoundKnockdown: null });
     expect(api.locationOverrides("test-addon.ear", "cut", 12)).toMatchObject({ knockdown: 0, majorWoundKnockdown: 0 });
+  });
+
+  it("lets a location's divisor, major-wound penalty and major wound depend on the wound (since 1.176.0)", async () => {
+    const api = await load();
+    api.registerHitLocation({
+      module: "test-addon", key: "lobe", label: "Lobe", parent: "face", penalty: -7,
+      cripplingDivisor: (type) => (type === "cut" ? 4 : null),
+      majorWoundKnockdown: (type) => (type === "cut" ? 0 : null),
+      majorWound: ({ type, uncappedInjury, maxHp }) => (type === "cut" ? uncappedInjury >= maxHp / 2 : null),
+    });
+    expect(api.locationOverrides("test-addon.lobe", "cut", 12)).toMatchObject({ cripplingThreshold: 3, majorWoundKnockdown: 0 });
+    expect(api.locationOverrides("test-addon.lobe", "cr", 12)).toMatchObject({ cripplingThreshold: null, majorWoundKnockdown: null });
+    const cut = api.locationOverrides("test-addon.lobe", "cut", 12)!;
+    expect(cut.majorWound!({ injury: 4, uncappedInjury: 5 })).toBe(false);
+    expect(cut.majorWound!({ injury: 4, uncappedInjury: 6 })).toBe(true);
+    expect(api.locationOverrides("test-addon.lobe", "cr", 12)!.majorWound!({ injury: 4, uncappedInjury: 6 })).toBeNull();
   });
 
   it("gives a random-location listener the damage type, the arc and a die (since 1.22.0)", async () => {

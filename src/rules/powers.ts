@@ -15,8 +15,10 @@
  * the two ways of finding its abilities meet under one heading.
  */
 
+import { powerModifierOrigin } from "./addendum-modifiers.js";
 import {
   PSI_POWERS,
+  powerOfAbility,
   TALENT_LEVEL_CAP,
   psionicsOf,
   talentCost,
@@ -106,8 +108,22 @@ export function powersOf(traits: readonly PowerTrait[]): PowerHeld[] {
     }
   }
 
+  // A trait that names no power but carries one of the Revised edition's power
+  // modifiers (Basic Set Revised pp. 331-332) is an ability of that origin --
+  // Biological, Chi, Divine, Magical and the rest -- unless it is already one
+  // of the six psi powers by its own modifier.
+  const unstated = traits.filter((trait) => !trait.power?.trim());
+  const byOrigin = new Set<PowerTrait>();
+  for (const trait of unstated) {
+    if (powerOfAbility(trait) !== null) continue;
+    const origin = powerModifierOrigin(trait.modifiers ?? []);
+    if (!origin) continue;
+    byOrigin.add(trait);
+    held(origin.origin.toLowerCase(), null, origin.origin).abilities.push(trait.name);
+  }
+
   // Everything that names no power is read the Basic Set's way.
-  for (const psi of psionicsOf(traits.filter((trait) => !trait.power?.trim()))) {
+  for (const psi of psionicsOf(unstated.filter((trait) => !byOrigin.has(trait)))) {
     const power = held(psi.power, psi.power, found.get(psi.power)?.name ?? "");
     power.abilities.push(...psi.abilities);
     power.talent = Math.max(power.talent, psi.talent);

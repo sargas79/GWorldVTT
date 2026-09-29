@@ -72,6 +72,7 @@
                     {{row.name}}
                     {{#if row.talentMark}}{{> "gworld.v2.talentMark" mark=row.talentMark}}{{/if}}
                     {{#if row.techLevel}}<span class="v2-tag">TL{{row.techLevel}}</span>{{/if}}
+                    {{#if row.earlyWarning}}<span class="v2-tag v2-tag-warn" data-tooltip="{{row.earlyWarning}}" aria-label="{{row.earlyWarning}}">&#9888;</span>{{/if}}
                     {{#unless row.trained}}<span class="v2-tag" data-tooltip="{{localize 'GWORLD.Section.RolledAtDefault'}}">{{localize "GWORLD.Skill.Untrained"}}</span>{{/unless}}
                   </span>
                   <span class="v2-row-type">
@@ -177,6 +178,10 @@
             {{#if (and @root.editable @root.rules.complementarySkills row.rollable (eq row.kind "skill"))}}
               <button type="button" class="v2-button" data-action="v2Complementary"
                       data-tooltip="{{localize 'GWORLD.Complementary.Hint'}}">{{localize "GWORLD.Complementary.Action"}}</button>
+            {{/if}}
+            {{#if (and @root.editable @root.rules.wildcardBonus row.wildcardLevel)}}
+              <button type="button" class="v2-button" data-action="v2WildcardBonus"
+                      data-tooltip="{{localize 'GWORLD.Wildcard.Hint' level=row.wildcardLevel}}">{{localize "GWORLD.Wildcard.Action"}}</button>
             {{/if}}
             {{#if (and @root.editable (eq row.kind "skill"))}}
               <button type="button" class="v2-button" data-action="v2PinSkill">{{#if row.pinned}}{{localize "GWORLD.SheetV2.Unpin"}}{{else}}{{localize "GWORLD.SheetV2.Pin"}}{{/if}}</button>

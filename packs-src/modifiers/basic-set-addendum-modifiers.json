@@ -1,0 +1,771 @@
+[
+  {
+    "_id": "88f43f0928ea768f",
+    "name": "Slow Recharge (1 ER/hour)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Energy Reserve",
+      "description": "",
+      "reference": "Basic Set: Characters p. 326"
+    }
+  },
+  {
+    "_id": "d383e8a76343a78a",
+    "name": "Slow Recharge (1 ER/day)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -60,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Energy Reserve",
+      "description": "",
+      "reference": "Basic Set: Characters p. 326"
+    }
+  },
+  {
+    "_id": "bd3c7a5ed789b45b",
+    "name": "Special Recharge (energy theft only)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -70,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Energy Reserve",
+      "description": "",
+      "reference": "Basic Set: Characters p. 326"
+    }
+  },
+  {
+    "_id": "d36436a47f5a5fe6",
+    "name": "Special Recharge (accessibility, half value)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Energy Reserve",
+      "description": "",
+      "reference": "Basic Set: Characters p. 326"
+    }
+  },
+  {
+    "_id": "3b9e34216db23036",
+    "name": "Affects Others",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 50,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 330"
+    }
+  },
+  {
+    "_id": "c5401e8542236fec",
+    "name": "Affects Others (Force Field with Area Effect, flat)",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 50,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 330"
+    }
+  },
+  {
+    "_id": "41c11670507d76a0",
+    "name": "Costs Hit Points",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 330"
+    }
+  },
+  {
+    "_id": "2ea98f23480f5faa",
+    "name": "Costs Hit Points (per second)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 330"
+    }
+  },
+  {
+    "_id": "583d4d523e6432bb",
+    "name": "Costs Hit Points (FP cost converted)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 330"
+    }
+  },
+  {
+    "_id": "20540f13f834ff0f",
+    "name": "Costs Hit Points (FP cost per second converted)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 330"
+    }
+  },
+  {
+    "_id": "7f95eb690f5d1837",
+    "name": "Fixed Duration",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 330"
+    }
+  },
+  {
+    "_id": "158c94029fa23ba0",
+    "name": "Game Time",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 331"
+    }
+  },
+  {
+    "_id": "9e9f02b6134f8d62",
+    "name": "Hard to Use",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [
+        "-3",
+        "-6",
+        "-9",
+        "-12"
+      ],
+      "maxLevels": 4,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 331"
+    }
+  },
+  {
+    "_id": "72e0acc0e50d5598",
+    "name": "Reliable",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 5,
+      "costTable": [],
+      "levelNames": [
+        "+1",
+        "+2",
+        "+3",
+        "+4",
+        "+5",
+        "+6",
+        "+7",
+        "+8",
+        "+9",
+        "+10"
+      ],
+      "maxLevels": 10,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "4a0648f42de6de97",
+    "name": "Maximum Duration",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": 0,
+      "costTable": [
+        -75,
+        -65,
+        -50,
+        -25,
+        -10,
+        -5,
+        0
+      ],
+      "levelNames": [
+        "Less than 30 seconds",
+        "Up to 1 minute",
+        "Up to 10 minutes",
+        "Up to 30 minutes",
+        "Up to 1 hour",
+        "Up to 12 hours",
+        "More than 12 hours"
+      ],
+      "maxLevels": 7,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 331"
+    }
+  },
+  {
+    "_id": "5ac3b1db18e75403",
+    "name": "Minimum Duration",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [
+        0,
+        -5,
+        -10,
+        -15,
+        -20,
+        -25,
+        -30
+      ],
+      "levelNames": [
+        "Less than 1 hour",
+        "Up to 8 hours",
+        "Up to 12 hours",
+        "Up to 24 hours",
+        "Up to 1 week",
+        "Up to 1 month",
+        "More than 1 month"
+      ],
+      "maxLevels": 7,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 331"
+    }
+  },
+  {
+    "_id": "2c51aa05517b3ed5",
+    "name": "Reduced Duration",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": 0,
+      "costTable": [
+        -5,
+        -10,
+        -15,
+        -20,
+        -25,
+        -30,
+        -35
+      ],
+      "levelNames": [
+        "1/2 duration",
+        "1/3 duration",
+        "1/6 duration",
+        "1/10 duration",
+        "1/20 duration",
+        "1/30 duration",
+        "1/60 duration"
+      ],
+      "maxLevels": 7,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "98205033d8910411",
+    "name": "Requires DX Roll",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "9f945894c085cf04",
+    "name": "Requires DX Roll (Quick Contest)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "bc2236550cb2d337",
+    "name": "Requires IQ Roll",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "526d07683802004a",
+    "name": "Requires IQ Roll (Quick Contest)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "132880c05d0f314d",
+    "name": "Requires HT Roll",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "a46af72e01b16f2b",
+    "name": "Requires HT Roll (Quick Contest)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "f59574410a5523f5",
+    "name": "Requires Will Roll",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "09f2ab41104791f2",
+    "name": "Requires Will Roll (Quick Contest)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -15,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "b9687e0dcce331c6",
+    "name": "Requires Per Roll",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "8d6ad710f194d909",
+    "name": "Requires Per Roll (Quick Contest)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -15,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "72ad26f86dc2b696",
+    "name": "Requires Skill Roll (DX, IQ or HT skill)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "0ba55c2369aa0177",
+    "name": "Requires Skill Roll (Will or Per skill)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "e3f967c36b5509e2",
+    "name": "Requires Skill Roll (Easy DX, IQ or HT skill)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "0082d461199a8132",
+    "name": "Requires Skill Roll (Easy Will or Per skill)",
+    "type": "modifier",
+    "system": {
+      "kind": "special",
+      "value": 0,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "8a302d0ad5c2dcb2",
+    "name": "Requires Active Defense Roll",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -40,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "f71a9559c55a02cf",
+    "name": "Switchable",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "General",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "7bbda7003a51f5ab",
+    "name": "Biological",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Power Modifiers",
+      "description": "",
+      "reference": "Basic Set: Characters p. 331"
+    }
+  },
+  {
+    "_id": "657bfdf0ca03c202",
+    "name": "Chi",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Power Modifiers",
+      "description": "",
+      "reference": "Basic Set: Characters p. 331"
+    }
+  },
+  {
+    "_id": "79da4585ce3c6e91",
+    "name": "Cosmic",
+    "type": "modifier",
+    "system": {
+      "kind": "enhancement",
+      "value": 50,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Power Modifiers",
+      "description": "",
+      "reference": "Basic Set: Characters p. 331"
+    }
+  },
+  {
+    "_id": "cc5c4c2a8c60356f",
+    "name": "Divine",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Power Modifiers",
+      "description": "",
+      "reference": "Basic Set: Characters p. 331"
+    }
+  },
+  {
+    "_id": "7517a4b84fc0264c",
+    "name": "Magical",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Power Modifiers",
+      "description": "",
+      "reference": "Basic Set: Characters p. 331"
+    }
+  },
+  {
+    "_id": "6680e0bb0d539ac5",
+    "name": "Moral",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Power Modifiers",
+      "description": "",
+      "reference": "Basic Set: Characters p. 331"
+    }
+  },
+  {
+    "_id": "dc20b82729f356dd",
+    "name": "Nature",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Power Modifiers",
+      "description": "",
+      "reference": "Basic Set: Characters p. 331"
+    }
+  },
+  {
+    "_id": "b869572d10a937f9",
+    "name": "Nature (with a TL penalty)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Power Modifiers",
+      "description": "",
+      "reference": "Basic Set: Characters p. 331"
+    }
+  },
+  {
+    "_id": "cb9b1fb11d741a62",
+    "name": "Psionic",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Power Modifiers",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "03964f4899bc086f",
+    "name": "Spirit",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Power Modifiers",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "0e94c4711876d2da",
+    "name": "Spirit (fickle)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -25,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Power Modifiers",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "fef0b0c830c2e1ed",
+    "name": "Super",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Power Modifiers",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "5a6f2cb009f926e7",
+    "name": "Superscience",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -10,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Power Modifiers",
+      "description": "",
+      "reference": "Basic Set: Characters p. 332"
+    }
+  },
+  {
+    "_id": "c2e9a7d41b5f0836",
+    "name": "Capricious Assistance",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -50,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Rank",
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 338"
+    }
+  }
+]

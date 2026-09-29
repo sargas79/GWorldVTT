@@ -634,6 +634,11 @@ function temperatureTolerance(trait: HeldTrait): { coldF: number; heatF: number 
  */
 const INJURY_TOLERANCE = /^injury tolerance\b/;
 
+/** The bodies that lack the parts the finer hit locations aim at (Basic Set Revised p. 566). */
+const INVERTEBRATE = /^invertebrate\b/;
+const NO_LEGS = /^no legs\b/;
+const NO_MANIPULATORS = /^no manipulators\b/;
+
 /**
  * Foresight comes whole or limited to a kind -- "Foresight (Ambushes)" -- so
  * it is matched by prefix, and each level is a use a session (Basic Set
@@ -715,6 +720,11 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
 
   for (const trait of traits) {
     const key = matchName(trait.name);
+    // Bodies missing the parts the finer hit locations aim at (Basic Set
+    // Revised p. 566). Not a kind of Injury Tolerance, but kept with it.
+    if (INVERTEBRATE.test(key)) total.injuryTolerance = { ...total.injuryTolerance, invertebrate: true };
+    else if (NO_LEGS.test(key)) total.injuryTolerance = { ...total.injuryTolerance, noLegs: true };
+    else if (NO_MANIPULATORS.test(key)) total.injuryTolerance = { ...total.injuryTolerance, noManipulators: true };
     if (INJURY_TOLERANCE.test(key)) {
       total.injuryTolerance = injuryToleranceFrom(
         [trait.name, ...(trait.modifiers ?? [])],

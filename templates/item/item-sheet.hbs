@@ -391,6 +391,37 @@
       </div>
       <p class="ihint">{{localize "GWORLD.Trait.LearnableHint"}}</p>
 
+      {{!-- Rank as an effective Patron (Basic Set Revised p. 337). --}}
+      <div class="ifields">
+        <label>{{localize "GWORLD.PullingRank.PatronValue"}}
+          <input type="number" name="system.patronValue" value="{{system.patronValue}}" min="0" max="30" step="5"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.PullingRank.PatronValueHint"}}</p>
+
+      {{!-- Alternative abilities, character point-powered abilities and a
+           Talent's replaced reaction bonus (Basic Set Revised pp. 324-325). --}}
+      <div class="ifields">
+        <label class="wide">{{localize "GWORLD.Alternative.Set"}}
+          <input type="text" name="system.alternativeGroup" value="{{system.alternativeGroup}}"
+                 placeholder="{{localize 'GWORLD.Alternative.SetPlaceholder'}}" {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Alternative.Slots"}}
+          <input type="number" name="system.alternativeSlots" value="{{system.alternativeSlots}}" min="1" step="1"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Alternative.PointPowered"}}
+          <input type="checkbox" name="system.pointPowered" {{checked system.pointPowered}}
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Alternative.NoReactionBonus"}}
+          <input type="checkbox" name="system.noReactionBonus" {{checked system.noReactionBonus}}
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.Alternative.FieldHint"}}</p>
+
       {{!-- Enhancements and limitations, and the self-control number: what
            changes a trait's cost from the figure the book prints. --}}
       <div class="isub">
@@ -1058,6 +1089,33 @@
           <input type="text" name="system.levelNames" value="{{join system.levelNames "; "}}" placeholder="x3; x10; x30"
                  {{#unless editable}}disabled{{/unless}} /></label>
       </div>
+    {{/if}}
+
+    {{!-- Equipment modifiers, each a cost factor on the price (Revised p. 342). --}}
+    {{#if isPhysical}}
+      <div class="ifields">
+        {{#each costChecks as |check|}}
+          <label class="icheck" data-tooltip="{{localize check.hint}}">
+            <input type="checkbox" name="system.{{check.name}}" {{#if check.checked}}checked{{/if}}
+                   {{#unless @root.editable}}disabled{{/unless}} />
+            {{localize check.label}}
+          </label>
+        {{/each}}
+        <label data-tooltip="{{localize 'GWORLD.CostFactor.presentationHint'}}">{{localize "GWORLD.CostFactor.presentation"}}
+          <input type="number" name="system.presentation" value="{{system.presentation}}" step="1" min="0" max="3"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+      {{#if costFactors}}
+        <p class="ihint">
+          {{#each costFactors.lines as |line|}}{{localize line.label}} {{line.cf}} CF{{#unless @last}}, {{/unless}}{{/each}}
+          &rarr; {{localize "GWORLD.CostFactor.Total" total=costFactors.total multiplier=costFactors.multiplier}}
+          {{#if costFactors.reactions}} {{localize "GWORLD.CostFactor.Reactions" bonus=costFactors.reactions}}{{/if}}
+          {{#if costFactors.skill}} {{localize "GWORLD.CostFactor.Skill" bonus=costFactors.skill}}{{/if}}
+          {{#if costFactors.accuracy}} {{localize "GWORLD.CostFactor.Accuracy" bonus=costFactors.accuracy}}{{/if}}
+          {{#if costFactors.rugged}} {{localize "GWORLD.CostFactor.RuggedEffect" ht=costFactors.ht}}{{/if}}
+        </p>
+      {{/if}}
     {{/if}}
 
     {{#if isPhysical}}

@@ -16,6 +16,7 @@ import {
 import { beastAttacks, beastTraitsFrom, naturalAttacks, weaponUnarmedBonus } from "../../rules/natural-attacks.js";
 import { becomesUnreadyAfterAttack } from "../../rules/readiness.js";
 import { aimBonus } from "../../rules/aim.js";
+import { flaggedSignatureItems, flatSignatureBilling } from "../../rules/flat-signature-gear.js";
 import { regenerationRate } from "../../rules/recovery.js";
 import { catalogSkill, defaultLevelFrom } from "../skill-catalog.js";
 import { isUnarmedSkill } from "../../rules/criticals.js";
@@ -84,6 +85,7 @@ import {
   type WeaponCondition,
 } from "../../rules/breakage.js";
 import { usableInCloseCombat } from "../../rules/tactical.js";
+import { closeCombatDamageModifier, closeCombatPenalty } from "../../rules/addendum-techniques.js";
 import { isRuleOn } from "../optional-rules.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
 import { canPull, towedWeight, wheelchairMove, type Conveyance } from "../../rules/towing.js";
@@ -115,7 +117,13 @@ import { supportEffect, supportOf, type Support } from "../../rules/accessories.
 import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalties.js";
 import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { powersOf } from "../../rules/powers.js";
+import { abilityRollModifiers, costsHitPointsCost, requiredRolls } from "../../rules/addendum-modifiers.js";
+import { analyseAlternatives } from "../alternative-analysis.js";
 import { sessionPools } from "../../rules/bonus-points.js";
+import {
+  cuttingEdgeFor, dabblerBonusFor, dabblerGain, isBowSkill, perksOf, strongbowAllowance, strongbowMinSt,
+} from "../../rules/addendum-perks.js";
+import { energyReserves, reserveValue } from "../../rules/energy-reserve.js";
 import { suitedLevel,
   defaultCreditPoints,
   effectiveSkillLevel,
@@ -642,6 +650,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare studyHours: Record<"ST" | "DX" | "IQ" | "HT" | "hp" | "will" | "per" | "fp" | "basicSpeed" | "basicMove", number>;
   declare hp: { value: number; max: number };
   declare fp: { value: number; max: number };
+  declare stress: number;
+  declare derangement: number;
   declare mounted: boolean;
   declare racial: { ST: number; DX: number; IQ: number; HT: number };
   declare templates: Array<{
@@ -671,7 +681,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     label: string;
     source: string;
   };
-  declare session: { impulseSpent: number; foresightUsed: number };
+  declare session: { impulseSpent: number; foresightUsed: number; reserves: Record<string, { spent: number; carry: number }> };
   declare points: {
     starting: number;
     disadvantageLimit: number;
@@ -797,6 +807,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
       hp: poolField(),
       fp: poolField(),
+      /** Stress and Derangement (Basic Set Revised pp. 572-573), as counts: a Stress of 3 is the book's -3. */
+      stress: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+      derangement: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
 
       points: new fields.SchemaField({
         starting: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 150 }),
@@ -843,6 +856,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       session: new fields.SchemaField({
         impulseSpent: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
         foresightUsed: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+        /** What each Energy Reserve has spent, by origin, and the seconds counted toward its next point (p. 326). */
+        reserves: new fields.ObjectField({ required: true, nullable: false, initial: () => ({}) }),
       }),
 
       /**
@@ -1407,6 +1422,27 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     return 0;
   }
 
+  /** Levels bought in the techniques whose names start with a prefix (the most of any). */
+  private techniqueLevelsByPrefix(prefix: string): number {
+    let most = 0;
+    for (const item of this.itemsOfType("technique")) {
+      if (!String(item.name ?? "").toLowerCase().startsWith(prefix.toLowerCase())) continue;
+      most = Math.max(most, Number((item.system as { derived?: { levels?: number } })?.derived?.levels) || 0);
+    }
+    return most;
+  }
+
+  /** The level of the best technique whose name starts with a prefix, or null (Revised p. 334). */
+  private techniqueLevelByPrefix(prefix: string): number | null {
+    let best: number | null = null;
+    for (const item of this.itemsOfType("technique")) {
+      if (!String(item.name ?? "").toLowerCase().startsWith(prefix.toLowerCase())) continue;
+      const level = (item.system as { derived?: { level?: number | null } })?.derived?.level;
+      if (typeof level === "number" && (best === null || level > best)) best = level;
+    }
+    return best;
+  }
+
   /** The score of a skill by name, or null when the character lacks it. */
   private skillLevelByName(name: string): number | null {
     if (!name) return null;
@@ -1462,7 +1498,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // campaign's average rather than from this character's own wealth
     // (Characters pp. 26, 85).
     const traded = Math.max(0, Number(this.points?.tradedForMoney ?? 0) || 0);
-    const signaturePoints = signatureGearPoints(traits);
+    // Under the flat-cost variant Signature Gear is a perk, not a budget of goods (Revised p. 342).
+    const signaturePoints = isRuleOn("flatSignatureGear") ? 0 : signatureGearPoints(traits);
     return {
       tradedPoints: traded,
       tradedForMoney: pointsForMoney(traded, tl),
@@ -1720,7 +1757,26 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // read, and everything below reads it.
     // A module may say a trait isn't in play right now (since 1.61.0): it is
     // still the character's, and still paid for, but none of it counts.
-    const traitsInPlay = moduleTraitsInPlay(this.parent, this.itemsOfType("trait"));
+    const moduleInPlay = moduleTraitsInPlay(this.parent, this.itemsOfType("trait"));
+    // An ability of an alternative set that isn't in a slot, a disabled set, and
+    // a point-powered ability nobody has paid to use are the character's and
+    // paid for, but count for nothing (Basic Set Revised pp. 324-325).
+    const alternatives = analyseAlternatives(this.itemsOfType("trait"));
+    const traitsInPlay = alternatives.inert.size === 0
+      ? moduleInPlay
+      : {
+          ...moduleInPlay,
+          inPlay: moduleInPlay.inPlay.filter((item: any) => !alternatives.inert.has(String(item.id))),
+          outOfPlay: [
+            ...moduleInPlay.outOfPlay,
+            ...moduleInPlay.inPlay
+              .filter((item: any) => alternatives.inert.has(String(item.id)))
+              .map((item: any) => ({
+                name: String(item.name ?? ""),
+                reason: `GWORLD.Alternative.Inert.${alternatives.inert.get(String(item.id))}`,
+              })),
+          ],
+        };
     const heldTraits = traitsInPlay.inPlay.map((item: any) => ({
       name: String(item.name ?? ""),
       levels: Number(item.system?.levels ?? 0),
@@ -1733,6 +1789,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ),
       // A reaction modifier typed onto the trait by the GM.
       reactionModifier: Number(item.system?.reactionModifier ?? 0) || 0,
+      noReactionBonus: item.system?.noReactionBonus === true,
       // A Talent's own list of skills, which is all a Talent from another book has.
       talentSkills: ((item.system?.talentSkills ?? []) as unknown[]).map((s) => String(s)),
       // The weapons a Weapon Master's class takes in, where the trait lists them.
@@ -1747,11 +1804,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // disadvantage the character suffers again (since 1.63.0).
     for (const restored of traitsInPlay.restored) {
       heldTraits.push({
-        name: restored.name, levels: Number(restored.levels ?? 0) || 0, specialty: "", modifiers: [], reactionModifier: 0,
+        name: restored.name, levels: Number(restored.levels ?? 0) || 0, specialty: "", modifiers: [], reactionModifier: 0, noReactionBonus: false,
         talentSkills: [], masteredWeapons: [], power: "", powerTalent: false, maxLevels: 0,
       });
     }
     const traits = traitEffects(heldTraits);
+    // The Revised perks that name what they are for (Basic Set Revised pp. 328-329).
+    const perks = perksOf(heldTraits);
 
     // Worn gear grants what the armour table's notes describe in trait terms:
     // a vacc suit and its helmet seal the wearer, a gas mask filters what is
@@ -1956,7 +2015,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // (Characters p. 168).
       const technological = isTechnologicalSkill(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel);
       const skillTL = isRuleOn("techLevelModifiers") && technological
-        ? skillTechLevel(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel, Number(this.tl) || 0)
+        ? skillTechLevel(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel, Number(this.tl) || 0, cuttingEdgeFor(perks, String(item.name ?? "")))
         : null;
       // Each tool's grade read for this skill, so improvised gear is -5 for
       // a technological skill and -2 for another (since API 1.145.0).
@@ -2006,8 +2065,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const jackBonus = resolved?.fromDefault && attributeDefaults.length && !(Number(sys.points) > 0)
         ? traits.jackOfAllTrades
         : 0;
+      // Dabbler adds to the attribute default of the skills it names, never
+      // past what a point in the skill would buy (Revised p. 328).
+      const dabbled = resolved?.fromDefault && attributeDefaults.length && !(Number(sys.points) > 0)
+        ? dabblerGain({
+            bonus: dabblerBonusFor(perks, String(item.name ?? "")),
+            level: resolved.level + jackBonus,
+            onePointLevel: attributeScore(sys.attribute) + (relativeLevelForPoints(1, sys.difficulty) ?? 0),
+          })
+        : 0;
       sys.derived = {
-        level: resolved ? resolved.level + jackBonus : null,
+        level: resolved ? resolved.level + jackBonus + dabbled : null,
         fromDefault: resolved?.fromDefault ?? true,
         relativeLevel: relativeLevelForPoints(sys.points + credit, sys.difficulty),
         // What the best default is worth toward buying the skill up
@@ -2442,7 +2510,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const level = listed
         ? defaultLevelFrom(listed.defaults, attributeScore, (other) => this.skillLevelByName(other), traits.jackOfAllTrades)
         : null;
-      const best = improved === null ? level : Math.max(level ?? improved, improved);
+      const dabbled = level !== null && listed
+        ? dabblerGain({
+            bonus: dabblerBonusFor(perks, name),
+            level,
+            onePointLevel: attributeScore(listed.attribute) + (relativeLevelForPoints(1, (listed.difficulty ?? "A") as Difficulty) ?? 0),
+          })
+        : 0;
+      const raised = level === null ? null : level + dabbled;
+      const best = improved === null ? raised : Math.max(raised ?? improved, improved);
       return { level: best === null ? null : best + penalty, atDefault: best !== null };
     };
 
@@ -2540,6 +2616,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const perLevel = (mode: any, damage: string): string =>
         item.type === "trait" && mode.perLevel ? levelledDamage(damage, levels) : damage;
 
+      const armedGrappleHeld = (id: unknown) => (this.parent as any)?.getFlag?.(SYSTEM_ID, "armedGrapple") === id;
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
         // What this character rolls the mode with: the skill they chose for
         // it, else the one the weapon names (Characters p. 175). Everything
@@ -2547,7 +2624,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // unarmed bonus, a master's dice, which critical table a fumble is
         // read on -- reads the one actually rolled.
         const rolledSkill = rolledSkillOf(mode);
-        const found = short(enchantedSkill(weaponSkill(rolledSkill, true, mastered)), lacking(mode.minSt ?? null));
+        // A weapon without a "C" reach in close combat, where the GM allows it
+        // (Revised p. 334): skill down 4 a yard of reach, less what the
+        // Close Combat technique bought back; swing damage down a point a yard.
+        const closeNonC = isRuleOn("closeCombat") && isRuleOn("closeCombatAnyWeapon") &&
+          this.conditions.closeCombat && !usableInCloseCombat(String(mode.reach ?? "C"));
+        const closePenalty = closeNonC ? closeCombatPenalty(String(mode.reach ?? ""), this.techniqueLevelsByPrefix("Close Combat")) : 0;
+        const closeDamage = closeNonC ? closeCombatDamageModifier(String(mode.reach ?? ""), mode.damageBase === "sw") : 0;
+        const found = short(
+          short(enchantedSkill(weaponSkill(rolledSkill, true, mastered)), lacking(mode.minSt ?? null)),
+          closePenalty,
+        );
         const skillLevel = found.level;
         const atDefault = found.atDefault;
         // A fist load or a hilt punch hits as hard as the unarmed skill it is
@@ -2563,7 +2650,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         const meleeMasterPerDie = masterPerDie(mastered, rolledSkill);
         const masterDamage = weaponMasterDamage(meleeMasterPerDie, String(mode.damageBase ?? ""), strikingSt, mode.minSt ?? null);
         const meleeBasis = mode.damageSpecial ? SPECIAL : withPuissance(perLevel(mode, resolveDamage(
-          strikingSt, mode.damageBase, mode.damageModifier + unarmedBonus + masterDamage, mode.damageFormula, mode.minSt,
+          strikingSt, mode.damageBase, mode.damageModifier + unarmedBonus + masterDamage + closeDamage, mode.damageFormula, mode.minSt,
           Number(mode.damageExtraDice ?? 0) || 0,
         )));
         const meleeDamage = mode.damageSpecial ? SPECIAL : withQuality(meleeBasis, mode.damageType);
@@ -2606,7 +2693,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           // (Campaigns p. 402). Only the upper end moves.
           reach: reachForSize(String(mode.reach ?? "C"), this.sm),
           parry:
-            mode.canParry && skillLevel !== null
+            mode.canParry && skillLevel !== null && !armedGrappleHeld(item.id)
               ? baseParry(skillLevel) + (mode.parryModifier ?? 0) + traits.enhancedParry.all
               : null,
           parryModifier: Number(mode.parryModifier ?? 0) || 0,
@@ -2616,9 +2703,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           usable:
             (!isRuleOn("closeCombat") ||
               !this.conditions.closeCombat ||
+              closeNonC ||
               usableInCloseCombat(String(mode.reach ?? "C"))) &&
             !(traits.oneArm && Boolean(mode.twoHanded)) &&
-            !wrecked,
+            !wrecked &&
+            // An armed grapple's weapon can neither attack nor defend (Revised p. 334).
+            !armedGrappleHeld(item.id),
           unbalanced: Boolean(mode.unbalanced),
           isFencing: Boolean(mode.isFencing),
           pick: Boolean(mode.pick),
@@ -2737,7 +2827,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         const shotsCapacity = isRuleOn("reloading") && !shotsEntry.thrown ? fullLoad(shotsEntry) : 0;
         const shotsLoaded = shotsCapacity > 0 ? Math.min(shotsCapacity, Math.max(0, Number(mode.loaded ?? 0) || 0)) : 0;
         const offMount = mode.mount === "mounted" && Boolean(mode.offMount);
-        const rangedStPenalty = lacking(mode.minSt ?? null, supportOf(String(mode.mount ?? ""), offMount));
+        // Strongbow: Bow at DX+1 draws a bow of ST+1 unpenalised, DX+2 one of ST+2 (Revised p. 329).
+        const bowAllowance = perks.strongbow && isBowSkill(rolledSkill)
+          ? strongbowAllowance((art.level ?? Number.NEGATIVE_INFINITY) - attrs.DX)
+          : 0;
+        const rangedStPenalty = lacking(strongbowMinSt(mode.minSt ?? null, bowAllowance), supportOf(String(mode.mount ?? ""), offMount));
         const foundRanged = short(enchantedSkill(art), rangedStPenalty);
         const skillLevel = foundRanged.level;
         const atDefault = foundRanged.atDefault;
@@ -2928,6 +3022,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const unarmedInput = (st: number) => ({
       st,
       boots: inBoots,
+      // Head Butt and Stamp Kick as bought, and a rigid helm's +1 to the butt (Revised p. 334).
+      techniques: {
+        headButt: this.techniqueLevelByPrefix("Head Butt"),
+        stampKick: this.techniqueLevelByPrefix("Stamp Kick"),
+      },
+      rigidHelm: this.itemsOfType("armor").some((item: any) =>
+        item.system?.equipped === true && item.system?.flexible !== true &&
+        ((item.system?.drByLocation ?? []) as Array<{ locations?: string[] }>).some((e) => (e.locations ?? []).includes("skull"))),
       // A punch and a kick are DX-based like any weapon skill, so an extra
       // layer of armour costs them the same -1 (Characters p. 286).
       dx: attrs.DX + layering,
@@ -3289,16 +3391,30 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     }
 
     // ── points ledger ───────────────────────────────────────────────────
+    // Flat-cost Signature Gear (Revised p. 342): a point for each flagged item, billed on the trait.
+    const flatSignature = isRuleOn("flatSignatureGear")
+      ? flatSignatureBilling(
+        this.itemsOfType("trait").map((i) => ({ id: String(i.id), name: i.name })),
+        flaggedSignatureItems([...this.itemsOfType("equipment"), ...this.itemsOfType("armor")]).length,
+      )
+      : null;
+    // The trait's levels are the count of flagged items this turn, so its row and the audit agree.
+    if (flatSignature) {
+      for (const trait of this.itemsOfType("trait")) {
+        const points = flatSignature.byTrait.get(String(trait.id));
+        if (points !== undefined && trait.system) trait.system.levels = points;
+      }
+    }
     const sumTraits = (category: string) =>
       this.itemsOfType("trait")
         .filter((i) => i.system?.category === category)
-        .reduce((sum, i) => sum + (i.system?.totalPoints ?? i.system?.points ?? 0), 0);
+        .reduce((sum, i) => sum + (alternatives.billed.get(String(i.id)) ?? i.system?.totalPoints ?? i.system?.points ?? 0), 0);
 
     // Billed on what was bought as an attribute; a level of Extra ST is
     // billed by the trait that bought it.
     const attributePoints =
       (bought.ST - 10) * 10 + (bought.HT - 10) * 10 + (bought.DX - 10) * 20 + (bought.IQ - 10) * 20;
-    const advantages = sumTraits("advantage") + sumTraits("perk");
+    const advantages = sumTraits("advantage") + sumTraits("perk") + (flatSignature?.unbilled ?? 0);
     const disadvantages = sumTraits("disadvantage");
     const quirks = sumTraits("quirk");
     const skillPoints = this.itemsOfType("skill").reduce(
@@ -3414,6 +3530,23 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // Talent is worth to a roll using them (Characters pp. 254-255): the
       // Basic Set's six, and any a book's entries name.
       powers: powersOf(heldTraits),
+      // What Hard to Use, Reliable, the Requires rolls and Costs Hit Points ask
+      // of a roll to use each trait that carries them (Basic Set Revised
+      // pp. 330-332): the modifiers on the roll, the rolls it asks for with
+      // their targets, and the HP each use takes.
+      abilityRolls: traitsInPlay.inPlay.flatMap((item: any) => {
+        const modifiers = ((item.system?.modifiers ?? []) as Array<{ name?: string; value?: number }>)
+          .map((m) => ({ name: String(m?.name ?? ""), value: Number(m?.value) || 0 }));
+        const use = abilityRollModifiers(modifiers);
+        const needs = requiredRolls(
+          modifiers,
+          { dx: attrs.DX, iq: attrs.IQ, ht: attrs.HT, will: secondary.will, per: secondary.per },
+          { combatReflexes: traits.activeDefense > 0 },
+        );
+        const cost = costsHitPointsCost(modifiers);
+        if (use.bonus === 0 && use.penalty === 0 && needs.length === 0 && cost.hp === 0) return [];
+        return [{ id: String(item.id ?? ""), name: String(item.name ?? ""), ...use, needs, hpCost: cost.hp, hpCostPerSecond: cost.perSecond }];
+      }),
       // "In a few cases, skill 20+ gives an automatic +2 to reactions.
       // Diplomacy and Fast-Talk work this way if you are allowed to talk -- as
       // does Merchant skill, during commercial transactions" (p. 494). Offered
@@ -3452,6 +3585,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       radiationTolerance: Math.max(1, Number(traits.radiationTolerance) || 1),
       traitEffectSources,
       traitsOutOfPlay: traitsInPlay.outOfPlay,
+      // Alternative sets (Basic Set Revised p. 324): slots, what is on, what each ability is billed.
+      alternativeSets: alternatives.sets.map((set) => ({
+        key: set.key,
+        slots: set.slots,
+        disabled: set.disabled,
+        free: set.free,
+        active: set.active,
+        members: set.members.map((id) => ({ id, billed: alternatives.billed.get(id) ?? 0 })),
+      })),
       regeneration: regenerationRate(traits.regeneration),
       // The attributes as everything else reads them: bought plus what traits
       // add. The sheet's inputs edit the bought figure and show this one.
@@ -3536,6 +3678,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         ]),
       ),
 
+      // The Revised perks that name what they are for (Basic Set Revised pp. 328-329).
+      perks,
       // The two techniques that change a roll made from a dialog rather than
       // from their own line on the sheet (Campaigns p. 417).
       techniques: {
@@ -3560,6 +3704,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         foresightMax: traits.foresight,
         foresightUsed: this.session?.foresightUsed ?? 0,
       }),
+      // Energy Reserves (Basic Set Revised p. 326): one to an origin, with what each holds.
+      reserves: energyReserves(heldTraits).map((r) => ({
+        ...r,
+        value: reserveValue(r.max, Number((this.session?.reserves as any)?.[r.key]?.spent ?? 0) || 0),
+      })),
       // The suit worn that DX and DX-based rolls are held to (Characters p. 192).
       environmentSuit,
       magic: { ...magic, mana, items: magicItems },

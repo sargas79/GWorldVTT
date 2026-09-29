@@ -23,6 +23,7 @@
  */
 
 import type { HitLocation } from "./hit-locations.js";
+import { largeTargetWounding } from "./revised-ranged.js";
 import type { DamageType } from "./types.js";
 
 export interface InjuryTolerance {
@@ -35,10 +36,22 @@ export interface InjuryTolerance {
   noHead: boolean;
   noNeck: boolean;
   noVitals: boolean;
+  /** Invertebrate (Characters p. 66): no spine or pelvis to hit (Basic Set Revised p. 566). */
+  invertebrate: boolean;
+  /** No Legs: no joints or veins and arteries in the legs (p. 566). */
+  noLegs: boolean;
+  /** No Manipulators: none in any limb (p. 566). */
+  noManipulators: boolean;
   /** The divisor of Damage Reduction, or 0 for a body without it. */
   damageDivisor: number;
   /** Cosmic, Rounds down: the divided injury rounds down and may reach 0. */
   roundsDown: boolean;
+  /**
+   * The target's SM, set only while the large-target wounding table is in
+   * play (Basic Set Revised p. 577): Unliving and Homogenous bodies then take
+   * piercing and impaling by size, not by the fixed figures.
+   */
+  largeTargetSm?: number;
 }
 
 export function noInjuryTolerance(): InjuryTolerance {
@@ -52,13 +65,16 @@ export function noInjuryTolerance(): InjuryTolerance {
     noHead: false,
     noNeck: false,
     noVitals: false,
+    invertebrate: false,
+    noLegs: false,
+    noManipulators: false,
     damageDivisor: 0,
     roundsDown: false,
   };
 }
 
 /** The kinds, by the word the book and GCA use for each. */
-const KINDS: ReadonlyArray<[RegExp, Exclude<keyof InjuryTolerance, "damageDivisor" | "roundsDown">]> = [
+const KINDS: ReadonlyArray<[RegExp, Exclude<keyof InjuryTolerance, "damageDivisor" | "roundsDown" | "largeTargetSm">]> = [
   [/\bunliving\b/i, "unliving"],
   [/\bhomogen(?:e)?ous\b/i, "homogenous"],
   [/\bdiffuse\b/i, "diffuse"],
@@ -119,7 +135,7 @@ export function injuryToleranceFrom(
 
 /** Whether anything about this tolerance changes how a blow lands. */
 export function hasInjuryTolerance(tolerance: InjuryTolerance): boolean {
-  return Object.values(tolerance).some(Boolean);
+  return Object.entries(tolerance).some(([key, value]) => key !== "largeTargetSm" && Boolean(value));
 }
 
 /**
@@ -157,6 +173,9 @@ export function toleratedWoundingModifier(
   type: DamageType,
   tolerance: InjuryTolerance,
 ): number | null {
+  if (typeof tolerance.largeTargetSm === "number" && (tolerance.homogenous || tolerance.unliving)) {
+    return largeTargetWounding(type, tolerance.largeTargetSm, tolerance.homogenous);
+  }
   if (tolerance.homogenous) return HOMOGENOUS[type] ?? null;
   if (tolerance.unliving) return UNLIVING[type] ?? null;
   return null;
