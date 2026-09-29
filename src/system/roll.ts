@@ -8,6 +8,8 @@
  */
 
 import { fromBehindAdjustment } from "../rules/revised-hit-locations.js";
+import { stampKickTarget } from "../rules/addendum-techniques.js";
+import { rigidHelmWorn } from "../rules/natural-attacks.js";
 import { outcomeStep } from "../rules/bonus-points.js";
 import { skillEncumbrancePenalty } from "../rules/physical.js";
 import { isCombatRoll, spendingInPlay } from "./bonus-points.js";
@@ -2039,6 +2041,20 @@ async function rollAction(
     ui.notifications?.warn(game.i18n.localize("GWORLD.CalledShot.NotFromBehind"));
     return null;
   }
+  // A Stamp Kick goes only at a lying foe, or a standing foe's foot or leg
+  // (Basic Set Revised p. 334): with the one foe targeted, anything else is
+  // refused, and says how to aim it.
+  if (rollType === "attack" && target.dataset.naturalKey === "stampKick") {
+    const foes = targetedTokens();
+    if (foes.length === 1) {
+      const posture = String(foes[0]?.actor?.system?.posture ?? "standing");
+      // A joint or a vein in a leg is still the leg.
+      if (!stampKickTarget({ foePosture: posture, location: aimedShot?.hitLocation ?? "" })) {
+        ui.notifications?.warn(game.i18n.localize("GWORLD.StampKick.WrongTarget"));
+        return null;
+      }
+    }
+  }
   // From behind the skull is -5 rather than -7, and the face -7 rather than
   // -5 (Basic Set Revised p. 566).
   if (aimedShot && !aimedShot.addonLocation && isRuleOn("finerHitLocations")) {
@@ -2428,8 +2444,16 @@ async function rollAction(
     // The attribute a skill or attribute roll is based on, as a tag a condition's rolls can name (API 1.42.0),
     // and the sense a Perception roll is made by (API 1.63.0).
     // Since 1.65.0 an attack's roll also carries the tags a `gworld.attackModifiers` listener added.
-    ...(target.dataset.basedOn || target.dataset.sense || (hooked?.tags ?? []).length
-      ? { tags: [target.dataset.basedOn, target.dataset.sense, ...(hooked?.tags ?? [])].filter((t): t is string => typeof t === "string" && Boolean(t)) }
+    // A Head Butt says so, so a parry can turn it back on the butter's face (Revised p. 334).
+    ...(target.dataset.basedOn || target.dataset.sense || (hooked?.tags ?? []).length || (rollType === "attack" && target.dataset.naturalKey === "headButt")
+      ? {
+          tags: [
+            target.dataset.basedOn,
+            target.dataset.sense,
+            ...(hooked?.tags ?? []),
+            ...(rollType === "attack" && target.dataset.naturalKey === "headButt" ? ["headButt"] : []),
+          ].filter((t): t is string => typeof t === "string" && Boolean(t)),
+        }
       : {}),
     // Who is being looked for: the one token targeted, on a roll to detect (API 1.63.0).
     ...(rollType !== "attack" && targetedTokens().length === 1 && targetedTokens()[0]?.actor
@@ -4988,6 +5012,7 @@ export async function handleDamageAction(
         damageModifier: Number(target.dataset.damageModifier) || 0,
         minSt: target.dataset.minSt ? Number(target.dataset.minSt) || null : null,
         naturalKey: target.dataset.naturalKey ?? "",
+        rigidHelm: rigidHelmWorn([...(actor?.items ?? [])].filter((item: any) => item?.type === "armor")),
         unarmedBonusSkill: target.dataset.unarmedBonusSkill ?? "",
         weaponMasterPerDie: Number(target.dataset.weaponMasterPerDie) || 0,
         dx: Number(actor?.system?.derived?.attributes?.DX) || 10,

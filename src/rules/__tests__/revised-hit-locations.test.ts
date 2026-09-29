@@ -54,8 +54,9 @@ describe("the rows", () => {
   });
 
   it("cripples a joint over HP/3 for a limb and HP/4 for an extremity", () => {
-    expect(revisedLocation("jointLeg")!.cripplingDivisor).toBe(3);
-    expect(revisedLocation("jointFoot")!.cripplingDivisor).toBe(4);
+    const divisor = (key: string) => (revisedLocation(key)!.cripplingDivisor as (type: DamageType) => number)("cr");
+    expect(divisor("jointLeg")).toBe(3);
+    expect(divisor("jointFoot")).toBe(4);
   });
 
   it("adds 0.5 to the wounding at the veins, and lifts the limb limit", () => {

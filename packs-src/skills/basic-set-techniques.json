@@ -702,7 +702,43 @@
       "prerequisite": "",
       "defaultModifier": -4,
       "points": 0,
-      "maxRelativeToPrerequisite": 0,
+      "maxRelativeToPrerequisite": -2,
+      "description": "",
+      "reference": "Basic Set: Characters p. 334",
+      "skillFamilies": [
+        "melee",
+        "ranged"
+      ]
+    }
+  },
+  {
+    "_id": "6f0c1d7a2b9e4835",
+    "name": "Close Combat (Reach 2)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "",
+      "defaultModifier": -8,
+      "points": 0,
+      "maxRelativeToPrerequisite": -4,
+      "description": "",
+      "reference": "Basic Set: Characters p. 334",
+      "skillFamilies": [
+        "melee",
+        "ranged"
+      ]
+    }
+  },
+  {
+    "_id": "a41e8c53d7b20f96",
+    "name": "Close Combat (Reach 3)",
+    "type": "technique",
+    "system": {
+      "difficulty": "H",
+      "prerequisite": "",
+      "defaultModifier": -12,
+      "points": 0,
+      "maxRelativeToPrerequisite": -6,
       "description": "",
       "reference": "Basic Set: Characters p. 334",
       "skillFamilies": [

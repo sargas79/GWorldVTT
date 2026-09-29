@@ -117,7 +117,7 @@ import { simplifiedResourcesApi } from "./simplified-resources.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.183.0";
+export const API_VERSION = "1.187.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -963,12 +963,12 @@ const combat = Object.freeze({
  * Rolls a random hit location as the system does (since 1.43.0): 3d on the
  * table, then the modules' `gworld.randomHitLocation` listeners.
  */
-async function rollHitLocation(options: { actor?: any; damageType?: string | null; arc?: "front" | "side" | "back" | null } = {}): Promise<{ hitLocation: string; addonLocation: string | null; roll: number }> {
+async function rollHitLocation(options: { actor?: any; damageType?: string | null; arc?: "front" | "side" | "back" | null; tightBeam?: boolean } = {}): Promise<{ hitLocation: string; addonLocation: string | null; roll: number }> {
   const dice = new Roll("3d6");
   await dice.evaluate();
   const total = Number(dice.total) || 10;
   const base = rules.randomHitLocation(total).location;
-  const picked = randomLocationWithHooks(total, base, options.actor, { damageType: options.damageType ?? null, arc: options.arc ?? null });
+  const picked = randomLocationWithHooks(total, base, options.actor, { damageType: options.damageType ?? null, arc: options.arc ?? null, tightBeam: options.tightBeam === true });
   return { hitLocation: picked.hitLocation, addonLocation: picked.addonLocation, roll: total };
 }
 

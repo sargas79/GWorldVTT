@@ -87,7 +87,7 @@ export function shotOptions(type: DamageType, tightBeam = false, actor?: any): S
   }
 
   // Locations a module registered, where it offers them for this attack.
-  for (const added of hitLocationsFor({ actor, damageType: type })) {
+  for (const added of hitLocationsFor({ actor, damageType: type, tightBeam })) {
     options.push({
       value: `${ADDON_LOCATION_PREFIX}${added.key}`,
       label: game.i18n.localize(added.label),

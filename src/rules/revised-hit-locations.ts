@@ -14,7 +14,7 @@
  * rows and asks the questions (see `system/revised-hit-locations.ts`).
  */
 
-import { woundingModifierAt, type HitLocation } from "./hit-locations.js";
+import { woundingModifierAt, type HitLocation, type LimbCounts } from "./hit-locations.js";
 import type { InjuryTolerance } from "./injury-tolerance.js";
 import type { DamageType } from "./types.js";
 
@@ -65,7 +65,7 @@ export interface RevisedLocationRule {
   /** The wounding modifier, or null for the parent's. */
   wounding?: (type: DamageType) => number | null;
   /** Crippled above HP over this (excess lost); null for never; omitted for as the parent. */
-  cripplingDivisor?: number | null | ((type: DamageType) => number | null | undefined);
+  cripplingDivisor?: number | null | ((type: DamageType, limbs?: LimbCounts) => number | null | undefined);
   knockdownFor?: (type: DamageType) => number;
   /** Any shock calls for the knockdown roll. */
   shockKnockdown?: boolean;
@@ -99,6 +99,22 @@ export function removedByCut(uncappedInjury: number, maxHp: number): boolean {
   return uncappedInjury >= 2 * injuryToCripple(maxHp / 4);
 }
 
+/**
+ * A joint cripples over HP/(one more than the body part does): HP/3 (not HP/2)
+ * for a limb and HP/4 (not HP/3) for an extremity (p. 566). A body with more
+ * than two of the limb cripples it over HP/n, an extremity over HP/(1.5n)
+ * (Campaigns p. 421), so its joints take one more of the divisor again.
+ */
+export function jointDivisor(parent: HitLocation, extremity: boolean, limbs: LimbCounts = {}): number {
+  const count = parent === "arm" || parent === "hand" ? limbs.arms : limbs.legs;
+  const n = Math.max(2, Math.floor(Number(count) || 0));
+  return (extremity ? 1.5 * n : n) + 1;
+}
+
+/** Where a miss by 1 lands from the ear, nose and jaw ("the torso (chest)"), and from the pelvis ("the torso (abdomen)"): a key the registry reads as the parent when the split is off. */
+const CHEST_KEY = `${REVISED_MODULE}.chest`;
+const ABDOMEN_KEY = `${REVISED_MODULE}.abdomen`;
+
 const isCut = (type: DamageType) => type === "cut";
 const neverGone = () => false;
 
@@ -116,7 +132,7 @@ export const REVISED_LOCATIONS: readonly RevisedLocationRule[] = [
     cripplingDivisor: (type) => (isCut(type) ? 4 : null),
     majorWound: (info) => (isCut(info.type) ? removedByCut(info.uncappedInjury, info.maxHp) : null),
     majorWoundKnockdown: (type) => (isCut(type) ? 0 : null),
-    missFallback: "torso",
+    missFallback: CHEST_KEY,
     switch: "finerHitLocations",
     removedBy: (tolerance) => tolerance.noHead,
   },
@@ -131,7 +147,7 @@ export const REVISED_LOCATIONS: readonly RevisedLocationRule[] = [
     cripplingDivisor: (type) => (isCut(type) ? 4 : null),
     majorWound: (info) => (isCut(info.type) ? null : info.uncappedInjury > info.maxHp / 4 ? true : null),
     majorWoundKnockdown: (type) => (isCut(type) ? 0 : null),
-    missFallback: "torso",
+    missFallback: CHEST_KEY,
     switch: "finerHitLocations",
     removedBy: (tolerance) => tolerance.noHead,
   },
@@ -142,7 +158,7 @@ export const REVISED_LOCATIONS: readonly RevisedLocationRule[] = [
     damageTypes: [],
     arcs: ["front"],
     knockdownFor: (type) => (type === "cr" ? -1 : 0),
-    missFallback: "torso",
+    missFallback: CHEST_KEY,
     switch: "finerHitLocations",
     removedBy: (tolerance) => tolerance.noHead,
   },
@@ -196,7 +212,7 @@ export const REVISED_LOCATIONS: readonly RevisedLocationRule[] = [
     parent: "torso",
     penalty: -3,
     damageTypes: [],
-    missFallback: "torso",
+    missFallback: ABDOMEN_KEY,
     switch: "finerHitLocations",
     removedBy: (tolerance) => tolerance.diffuse || tolerance.homogenous || tolerance.invertebrate,
   },
@@ -210,7 +226,7 @@ export const REVISED_LOCATIONS: readonly RevisedLocationRule[] = [
       parent,
       penalty: extremity ? -7 : -5,
       damageTypes: JOINT_TYPES,
-      cripplingDivisor: extremity ? 4 : 3,
+      cripplingDivisor: (_type, limbs = {}) => jointDivisor(parent, extremity, limbs),
       missFallback: parent,
       switch: "finerHitLocations",
       removedBy: (tolerance) =>
@@ -295,6 +311,8 @@ export interface RefineInput {
   refine: boolean;
   /** Chest and abdomen are in play. */
   split: boolean;
+  /** The blow is a tight-beam burn; a burn not known to be one is left out of every list. */
+  tightBeam?: boolean;
 }
 
 /**
@@ -304,8 +322,9 @@ export interface RefineInput {
  * torso hit the vitals or spine, a limb hit the veins or joint, a hand or foot
  * hit the joint. Returns null where the roll stands.
  *
- * A blow's type is read as the book does, with tight-beam burning unknown at
- * this point, so "burn" is left out of every list.
+ * A blow's type is read as the book does: burning counts only where the caller
+ * says it is tight-beam (`tightBeam`), and is left out of every list where it
+ * does not know.
  */
 export function refineRandomHit(input: RefineInput): RefinedHit | null {
   const { roll, damageType: type, arc } = input;
@@ -322,7 +341,9 @@ export function refineRandomHit(input: RefineInput): RefinedHit | null {
   }
   if (!input.refine || !type) return key ? { location, key } : null;
 
-  const among = (types: readonly DamageType[]) => types.includes(type);
+  // Tight-beam burning stands with the piercing and impaling wherever the book lists it.
+  const tight = type === "burn" && input.tightBeam === true;
+  const among = (types: readonly DamageType[]) => types.includes(type) || tight;
   const back = arc === "back";
   const one = () => input.d6() === 1;
 
@@ -448,4 +469,55 @@ export function withChestCoverage<T extends { locations: readonly string[] }>(
       ? { ...piece, locations: [...piece.locations, "torso"] }
       : piece,
   );
+}
+
+/** A trait a lasting wound gives, by its record's name: at `level` when it has levels, or a loss of `appearance` levels. */
+export interface WoundTrait {
+  /** The trait's name in the compendia; empty for an Appearance change. */
+  name: string;
+  level?: number;
+  /** Levels of Appearance lost (an ear one, a nose two, p. 566). */
+  appearance?: number;
+}
+
+/**
+ * What a lasting wound writes to the character (p. 566), for the note that
+ * names it: the spine's Bad Back (Severe) and Lame (Paraplegic), a broken
+ * neck's Quadriplegic, the pelvis's Lame (Missing Legs) until healed, a broken
+ * nose's No Sense of Smell/Taste until it heals, and the Appearance an ear or
+ * a nose lost takes. Empty for a note that is only a reminder.
+ */
+export function woundTraits(noteKey: string): WoundTrait[] {
+  switch (noteKey) {
+    case "SpineCrippled":
+      return [{ name: "Bad Back", level: 2 }, { name: "Lame (Paraplegic)" }];
+    case "NeckBroken":
+      return [{ name: "Quadriplegic" }];
+    case "PelvisBroken":
+      return [{ name: "Lame (Missing Legs)" }];
+    case "NoseBroken":
+      return [{ name: "No Sense of Smell/Taste" }];
+    case "EarRemoved":
+      return [{ name: "", appearance: 1 }];
+    case "NoseRemoved":
+      return [{ name: "", appearance: 2 }];
+    default:
+      return [];
+  }
+}
+
+/**
+ * Where Appearance stands after losing levels: the advantage's levels count up
+ * from Average, the disadvantage's down (Characters p. 21), and it stops at the
+ * disadvantage's fifth level. `current` is the signed level now (Attractive +1,
+ * Ugly -2); the result says which trait holds it, and how many levels.
+ */
+export function appearanceAfter(
+  current: number,
+  lost: number,
+): { trait: "Appearance" | "Appearance (Disadvantage)" | null; levels: number; signed: number } {
+  const signed = Math.max(-5, Math.floor(current) - Math.max(0, Math.floor(lost)));
+  if (signed > 0) return { trait: "Appearance", levels: signed, signed };
+  if (signed < 0) return { trait: "Appearance (Disadvantage)", levels: -signed, signed };
+  return { trait: null, levels: 0, signed: 0 };
 }
