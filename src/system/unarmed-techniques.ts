@@ -10,6 +10,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { isRuleOn } from "./optional-rules.js";
 import { techniqueLevelByPrefix } from "./technique-lookup.js";
 import { rollQuickContest } from "./contest.js";
 import { resolveSuccess } from "../rules/success.js";
@@ -171,6 +172,9 @@ export async function useTechnique(options: {
           },
           grave: true,
         });
+        // With the finer hit locations, a neck snap that injures over HP
+        // breaks the neck outright (Basic Set Revised p. 566).
+        if ((options.location || "neck") === "neck" && isRuleOn("finerHitLocations")) notes.push({ key: "BrokenNeck", grave: true });
       }
     } else {
       notes.push({ key: "HoldFails" });

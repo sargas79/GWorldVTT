@@ -21,6 +21,7 @@ import { registerChatHooks } from "./system/chat.js";
 import { registerSuppressionFire } from "./system/suppression-fire.js";
 import { registerFacing } from "./system/facing.js";
 import { registerAimTracking } from "./system/aim.js";
+import { registerRevisedHitLocations } from "./system/revised-hit-locations.js";
 import { registerSupersededPackHiding } from "./system/compendium-sources.js";
 import { registerEvaluateTracking } from "./system/evaluate.js";
 import { registerConcentrateTracking } from "./system/zen.js";
@@ -136,6 +137,8 @@ Hooks.once("init", () => {
   // grows an apply control when it renders.
   registerChatHooks();
   registerSuppressionFire();
+  // The missing hit locations, offered while their switches are on (Basic Set Revised p. 566).
+  registerRevisedHitLocations();
   registerSupersededPackHiding();
   registerSheetExtensionHooks();
   // The GM's Demolition tool: a charge set off against a door or a wall (p. 415).

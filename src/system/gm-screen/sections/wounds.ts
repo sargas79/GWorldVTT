@@ -98,13 +98,12 @@ function locationNotes(location: HitLocation, t: BuildContext["t"]): string {
 function addonRow(added: AddonHitLocation, { t, moduleTitle }: BuildContext): GmRow {
   const parent = HIT_LOCATIONS[added.parent];
   const wounding = TYPES.map((type) => {
-    const own = added.wounding(type);
-    return times(own === null ? woundingModifierAt(type, added.parent) : own);
+    const fixed = added.wounding(type);
+    return times(fixed === null ? woundingModifierAt(type, added.parent) : fixed);
   });
-  const divisor =
-    added.cripplingDivisor === undefined
-      ? (CRIPPLING_DIVISOR[parent.cripplingKind] ?? null)
-      : added.cripplingDivisor;
+  // A divisor that depends on the damage type is shown for a cutting blow.
+  const own = typeof added.cripplingDivisor === "function" ? added.cripplingDivisor("cut") : added.cripplingDivisor;
+  const divisor = own === undefined ? (CRIPPLING_DIVISOR[parent.cripplingKind] ?? null) : own;
   const notes = [
     added.damageTypes.length
       ? t(`${K}.HitLocation.Types`, { types: added.damageTypes.join(", ") })

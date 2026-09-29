@@ -14,6 +14,7 @@
  * with the DR that stops a sword.
  */
 
+import { isMissingPart, withChestCoverage } from "../rules/revised-hit-locations.js";
 import { parseVulnerability, worstVulnerability, type Vulnerability } from "../rules/vulnerability.js";
 import { type ArmorPiece } from "../rules/armor.js";
 import { bluntTraumaInjury } from "../rules/layered-armor.js";
@@ -420,13 +421,17 @@ export function resolveDamageAgainst(actor: any, incoming: IncomingDamage): Appl
 
   const traits = traitsOf(actor);
   const placed = placedDamage(incoming);
-  const damage = placed.damage;
+  // A body without the part aimed at -- no spine, no legs to have joints in --
+  // takes the blow on the location it is part of (Basic Set Revised p. 566).
+  const damage = isMissingPart(placed.damage.addonLocation, traits.injuryTolerance)
+    ? { ...placed.damage, addonLocation: null }
+    : placed.damage;
   // "DR has no effect" on a blast inside its victim (Campaigns p. 415): not
   // worn armour, not the victim's own, not a field -- and so no Hardened to
   // step it down either.
   const internal = blastPlacementOf(damage.blastPlacement) === "internal";
 
-  const worn = wornArmor(actor);
+  const worn = withChestCoverage(wornArmor(actor), damage.addonLocation, isRuleOn("chestAbdomenSplit")) as ArmorPiece[];
   const arc = isRuleOn("frontArmor") ? (damage.arc ?? null) : null;
   const { naturalDr, lines, layers } = armourAt(actor, damage, damage.hitLocation, traits, worn, arc);
 
@@ -940,7 +945,11 @@ function resolvePlaced(actor: any, damage: IncomingDamage, context: {
   // A blow that crippled what it struck is a major wound whatever it cost
   // (Campaigns p. 420). Crippling is read from the wound before either cap,
   // so a listener's lower cap leaves the limb crippled and the wound major.
-  const crippled = blast || kinetic ? false : result.crippled;
+  // A location of a module's may say a wound is or is not a major one whatever
+  // the crippling says (since API 1.176.0): a nose broken short of being lopped
+  // off, an ear sliced but not severed.
+  const forcedMajor = blast || kinetic ? null : (overrides?.majorWound?.({ injury: beforeCap, uncappedInjury: beforeCap + result.excessLost }) ?? null);
+  const crippled = blast || kinetic ? false : result.crippled && forcedMajor !== false;
   const applied = applyInjury(injury, previous, max, { unkillable: traits.unkillable }, { crippled });
 
   // Two of the critical results change what follows from the injury rather than
@@ -952,7 +961,7 @@ function resolvePlaced(actor: any, damage: IncomingDamage, context: {
     // twice; a critical's doubling is applied to whatever that left.
     shock: criticalShock(shockAfterTraits(applied.shock, traits), critical),
     majorWound:
-      applied.majorWound || Boolean(critical?.majorWound && result.penetrating > 0),
+      applied.majorWound || forcedMajor === true || Boolean(critical?.majorWound && result.penetrating > 0),
   };
 
   // A module's location may call for the roll on any shock (API 1.22.0).
@@ -1172,7 +1181,8 @@ async function spendAblativeDr(actor: any, damage: IncomingDamage, resolved: App
     // An empty list is whole-body coverage, and a field covers everything.
     // The location is the one the blow was worked out at, which a large-area
     // blow or a blast inside the victim moved.
-    if (!field && covered.length > 0 && !covered.includes(resolved.hitLocation)) continue;
+    const coversChest = resolved.hitLocation === "torso" && withChestCoverage([{ locations: covered }], resolved.addonLocation, isRuleOn("chestAbdomenSplit"))[0]!.locations.includes("torso");
+    if (!field && covered.length > 0 && !covered.includes(resolved.hitLocation) && !coversChest) continue;
 
     const lost = ablativeLoss({
       ablative,
@@ -1325,9 +1335,11 @@ export async function takeInjury(actor: any, options: TakeInjuryOptions): Promis
   const overrides = place.registered && type ? locationOverrides(place.registered, type, maxHp) : null;
   const threshold = overrides
     ? overrides.cripplingThreshold
-    : added && added.cripplingDivisor !== undefined
-      ? (added.cripplingDivisor === null ? null : maxHp / added.cripplingDivisor)
-      : undefined;
+    : added && typeof added.cripplingDivisor === "number"
+      ? maxHp / added.cripplingDivisor
+      : added && added.cripplingDivisor === null
+        ? null
+        : undefined;
   const result = injuryAtLocation({
     amount,
     location: place.hitLocation,

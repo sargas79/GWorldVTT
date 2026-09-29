@@ -430,6 +430,8 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       ],
       hitLocations: [
         "torso", "skull", "eye", "face", "neck", "vitals", "groin", "arm", "leg", "hand", "foot",
+        // Armour over the chest and not the abdomen (Basic Set Revised p. 566).
+        "chest",
       ],
       // How a piece of armour is spent as it stops damage (Characters p. 47).
       ablative: ["none", "ablative", "semiAblative"],

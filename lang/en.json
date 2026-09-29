@@ -832,6 +832,14 @@
           "Name": "Tech-level modifiers",
           "Hint": "A technological skill used with gear of another tech level takes a penalty: -1 per TL of difference for a DX-based skill such as Guns; by the table for an IQ-based one, steep for gear ahead of the skill (impossible at four TLs) and gentler for older gear. Weapon attacks and the tools carried for a skill take it (Characters p. 168)."
         },
+        "finerHitLocations": {
+          "Name": "Finer hit locations",
+          "Hint": "Ear, nose, jaw, spine, pelvis, joints and veins/arteries to aim at, the skull and face aimed at from behind, crushing at the vitals, and a 1d on a random hit that may turn it into the vitals, the spine, a joint or the veins. Bodies without the part take the blow on the location it belongs to (Basic Set Revised p. 566)."
+        },
+        "chestAbdomenSplit": {
+          "Name": "Chest and abdomen",
+          "Hint": "The torso is split into chest (9-10 on the random table) and abdomen, which replaces the groin at 11. Armour listing the chest protects only there (Basic Set Revised p. 566)."
+        },
         "flatSignatureGear": {
           "Name": "Flat-cost Signature Gear",
           "Hint": "Signature Gear becomes a 1-point perk: plot protection against permanent loss for each item you flag as Signature Gear, of any value, however it was acquired. It no longer buys goods with starting wealth (Basic Set Revised p. 342)."
@@ -2124,7 +2132,38 @@
       "arm": "Arm",
       "leg": "Leg",
       "hand": "Hand",
-      "foot": "Foot"
+      "foot": "Foot",
+      "chest": "Chest"
+    },
+    "RevisedHitLocation": {
+      "ear": "Ear",
+      "nose": "Nose",
+      "jaw": "Jaw",
+      "chest": "Chest",
+      "abdomen": "Abdomen",
+      "spineTorso": "Spine",
+      "spineNeck": "Spine (neck)",
+      "pelvis": "Pelvis",
+      "jointArm": "Joint (arm)",
+      "jointLeg": "Joint (leg)",
+      "jointHand": "Joint (hand)",
+      "jointFoot": "Joint (foot)",
+      "veinsArm": "Veins/arteries (arm)",
+      "veinsLeg": "Veins/arteries (leg)",
+      "veinsNeck": "Veins/arteries (neck)"
+    },
+    "RevisedWound": {
+      "EarSliced": "Ear: {lost} injury lost, no special effect",
+      "EarRemoved": "The ear is cut off: a major wound, and Appearance drops a level (Basic Set Revised p. 566)",
+      "NoseBroken": "Broken nose: a major wound to the face, and No Sense of Smell/Taste until it heals",
+      "NoseLopped": "The nose is lopped off: a major wound, and injury beyond it is lost",
+      "NoseRemoved": "The nose is cut off: a major wound, and Appearance drops two levels for good",
+      "SpineCrippled": "The spine is crippled: knocked down and stunned, Bad Back (Severe) and Lame (Paraplegic); roll twice to recover, once to avoid each lasting",
+      "NeckBroken": "A broken neck: knocked down and stunned, and Quadriplegic; roll to recover from it lasting or permanent",
+      "PelvisBroken": "The pelvis gives out: the victim falls, cannot stand, and fights only sitting or lying, Lame (Missing Legs) until healed",
+      "JointCrippled": "The joint is crippled; recovery rolls are at -2",
+      "VeinsBleedOut": "GM's ruling: a failed HT roll to avoid death means bleeding to death, with no Mortal Wounds rolls",
+      "Decapitation": "GM's ruling: a failed HT roll to avoid death from a cut to the neck means decapitation"
     },
     "Maneuver": {
       "AddonOptions": "Options",
@@ -2200,6 +2239,7 @@
         "LockDamage": "Crushing damage equal to the margin, less DR {dr}: {damage}",
         "ShockOnly": "The arm is crippled: no more damage, but shock and stunning as if hurt",
         "WrenchDamage": "Swing crushing {damage}, x{wounding} wounding, through DR {dr}",
+        "BrokenNeck": "Finer hit locations: injury over HP breaks the neck outright, and the victim is Quadriplegic (Basic Set Revised p. 566)",
         "HoldFails": "The hold does nothing this turn",
         "LockHolds": "Keeping it is +{bonus} in the Contest; the victim defends at {penalty}",
         "FlexibleIgnored": "Flexible armour (DR {dr}) is no use against a hold",
@@ -2939,7 +2979,9 @@
       "ChinkTorso": "Chink in torso armour",
       "ChinkOther": "Chink elsewhere",
       "MissByOne": "missed by 1: hits the {location} instead",
-      "NotFromBehind": "The eye can only be aimed at from the front or sides"
+      "NotFromBehind": "The eye can only be aimed at from the front or sides",
+      "SkullFromBehind": "Skull from behind: -5, not -7 (Basic Set Revised p. 566)",
+      "FaceFromBehind": "Face from behind: -7, not -5 (Basic Set Revised p. 566)"
     },
     "Disarm": {
       "Action": "Disarm",

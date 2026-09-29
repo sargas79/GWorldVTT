@@ -4227,3 +4227,30 @@ runs again on the next load. Each helper returns
   `flatSignatureGearCost`, `flatSignatureBilling` and `SIGNATURE_PERK_POINTS` are the
   pure pieces. Not done: the plot protection is the GM's to honour; the system
   neither enforces nor rolls it.
+- **The missing hit locations** (since 1.176.0; Basic Set Revised p. 566). The rules
+  switches `finerHitLocations` and `chestAbdomenSplit` (combat group, off). The system
+  registers its own rows through `registerHitLocation` as `gworld.<key>`: `ear`,
+  `nose`, `jaw`, `chest`, `abdomen`, `spineTorso`, `spineNeck`, `pelvis`, `jointArm`,
+  `jointLeg`, `jointHand`, `jointFoot`, `veinsArm`, `veinsLeg` and `veinsNeck`, each
+  offered while its switch is on and each a part of the Basic Set location it names.
+  The registration takes three additions. `cripplingDivisor` and
+  `majorWoundKnockdown` may be functions of the damage type, and `majorWound({ type,
+  injury, uncappedInjury, maxHp })` returns true to make the wound a major one, false to
+  keep a crippling from counting as one, or null to leave it. Armour takes a new
+  coverage value `chest` (protects the chest only; it counts as the torso while the
+  split is off). Also under the switch: crushing may aim at the vitals, the skull is -5
+  and the face -7 aimed at from behind, the random hit rolls its 1d (face to nose or
+  skull, neck to veins or spine, torso to vitals or spine, limbs to veins or joints,
+  hands and feet to joints) and splits the torso, and a body without the part takes the
+  blow on the location it belongs to (`InjuryTolerance` gains `invertebrate`, `noLegs`
+  and `noManipulators`, read from those traits). The damage card names ear and nose
+  lost, a broken nose, a crippled spine or broken neck, a pelvis that gives out, a
+  crippled joint, and the GM's rulings on the veins and a cut neck; a neck snap says
+  the neck breaks over HP. `rules.REVISED_LOCATIONS`, `refineRandomHit`, `woundNotes`,
+  `isMissingPart`, `withChestCoverage`, `fromBehindAdjustment` and `neckSnapBreaksNeck`
+  are the pure pieces. Not done: a tight-beam burn is not told from other burning when
+  aiming or on a random hit, so `burn` counts as tight-beam for the rows that take it
+  and the random refinements leave it out; the outcomes are on the card and are not
+  written to the character as traits; extra limbs do not change a joint's threshold;
+  a miss by one at the ear, nose, jaw, spine or pelvis lands on the torso whether or not
+  the split is on.

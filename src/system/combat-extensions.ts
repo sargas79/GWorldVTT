@@ -1469,7 +1469,7 @@ export interface HitLocationRegistration {
    * Crippled above max HP divided by this (2 for a limb, 3 for an extremity).
    * Null: can't be crippled. Missing: as the parent.
    */
-  cripplingDivisor?: number | null;
+  cripplingDivisor?: number | null | ((type: DamageType) => number | null | undefined);
   /** DR the location adds, on top of the parent's. */
   extraDr?: number;
   /** Added to the knockdown roll's modifier. */
@@ -1489,7 +1489,13 @@ export interface HitLocationRegistration {
   /** Any shock calls for a knockdown roll, not only a major wound (since 1.22.0). */
   shockKnockdown?: boolean;
   /** A major wound's knockdown penalty in place of the parent's (since 1.22.0). */
-  majorWoundKnockdown?: number;
+  majorWoundKnockdown?: number | ((type: DamageType) => number | null);
+  /**
+   * Whether this wound is a major one (since 1.176.0): true makes it one, false
+   * keeps a crippling from counting as one, null leaves it as the rules read it.
+   * `uncappedInjury` is the injury before any crippling limit.
+   */
+  majorWound?: (wound: { type: DamageType; injury: number; uncappedInjury: number; maxHp: number }) => boolean | null;
 }
 
 export interface AddonHitLocation {
@@ -1500,7 +1506,7 @@ export interface AddonHitLocation {
   penalty: number;
   damageTypes: DamageType[];
   wounding: (type: DamageType) => number | null;
-  cripplingDivisor: number | null | undefined;
+  cripplingDivisor: number | null | undefined | ((type: DamageType) => number | null | undefined);
   extraDr: number;
   knockdown: number;
   available: (context: { actor?: any; damageType?: string }) => boolean;
@@ -1508,7 +1514,8 @@ export interface AddonHitLocation {
   arcs: Array<"front" | "side" | "back"> | null;
   knockdownFor: (type: DamageType) => number;
   shockKnockdown: boolean;
-  majorWoundKnockdown: number | null;
+  majorWoundKnockdown: number | null | ((type: DamageType) => number | null);
+  majorWound: ((wound: { type: DamageType; injury: number; uncappedInjury: number; maxHp: number }) => boolean | null) | null;
 }
 
 const hitLocations = new Map<string, AddonHitLocation>();
@@ -1524,7 +1531,7 @@ export function registerHitLocation(registration: HitLocationRegistration): stri
   if (bad) return refuse(what, bad);
   if (!HIT_LOCATIONS[r.parent]) return refuse(what, `parent must be one of the Basic Set's locations`);
   if (!Number.isFinite(r.penalty)) return refuse(what, "its penalty is not a number");
-  if (r.cripplingDivisor !== undefined && r.cripplingDivisor !== null && !(r.cripplingDivisor > 0)) {
+  if (typeof r.cripplingDivisor !== "function" && r.cripplingDivisor !== undefined && r.cripplingDivisor !== null && !(r.cripplingDivisor > 0)) {
     return refuse(what, "cripplingDivisor must be above 0, null or left out");
   }
   const key = `${r.module}.${r.key}`;
@@ -1545,7 +1552,10 @@ export function registerHitLocation(registration: HitLocationRegistration): stri
     arcs: Array.isArray(r.arcs) ? r.arcs.filter((arc) => arc === "front" || arc === "side" || arc === "back") : null,
     knockdownFor: typeof r.knockdownFor === "function" ? r.knockdownFor : () => 0,
     shockKnockdown: r.shockKnockdown === true,
-    majorWoundKnockdown: typeof r.majorWoundKnockdown === "number" && Number.isFinite(r.majorWoundKnockdown) ? r.majorWoundKnockdown : null,
+    majorWoundKnockdown: typeof r.majorWoundKnockdown === "function"
+      ? r.majorWoundKnockdown
+      : typeof r.majorWoundKnockdown === "number" && Number.isFinite(r.majorWoundKnockdown) ? r.majorWoundKnockdown : null,
+    majorWound: typeof r.majorWound === "function" ? r.majorWound : null,
   });
   return key;
 }
@@ -1615,6 +1625,7 @@ export function locationOverrides(addonLocation: string | null | undefined, type
   knockdown: number;
   shockKnockdown: boolean;
   majorWoundKnockdown: number | null;
+  majorWound: ((wound: { injury: number; uncappedInjury: number }) => boolean | null) | null;
 } | null {
   const added = addonLocation ? hitLocations.get(addonLocation) : undefined;
   if (!added) return null;
@@ -1627,7 +1638,10 @@ export function locationOverrides(addonLocation: string | null | undefined, type
   }
   return {
     woundingModifier: wounding,
-    cripplingThreshold: added.cripplingDivisor === undefined ? undefined : added.cripplingDivisor === null ? null : maxHp / added.cripplingDivisor,
+    cripplingThreshold: (() => {
+      const divisor = typeof added.cripplingDivisor === "function" ? added.cripplingDivisor(type) : added.cripplingDivisor;
+      return divisor === undefined ? undefined : divisor === null ? null : maxHp / divisor;
+    })(),
     extraDr: added.extraDr,
     knockdown: added.knockdown + (() => {
       try {
@@ -1638,7 +1652,18 @@ export function locationOverrides(addonLocation: string | null | undefined, type
       }
     })(),
     shockKnockdown: added.shockKnockdown,
-    majorWoundKnockdown: added.majorWoundKnockdown,
+    majorWoundKnockdown: typeof added.majorWoundKnockdown === "function" ? added.majorWoundKnockdown(type) : added.majorWoundKnockdown,
+    majorWound: added.majorWound
+      ? (wound) => {
+          try {
+            const forced = added.majorWound!({ type, injury: wound.injury, uncappedInjury: wound.uncappedInjury, maxHp });
+            return typeof forced === "boolean" ? forced : null;
+          } catch (error) {
+            console.warn(`gworld | hit location ${added.key} failed its major wound check`, error);
+            return null;
+          }
+        }
+      : null,
   };
 }
 

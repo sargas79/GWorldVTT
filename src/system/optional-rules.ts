@@ -83,6 +83,10 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "trampling", reference: "Campaigns p. 404", default: true },
     { key: "picks", reference: "Campaigns p. 405", default: true },
     { key: "swarms", reference: "Campaigns p. 461", default: true },
+    // "Combat-heavy campaigns benefit from more hit locations": the Revised
+    // edition's addendum, so off unless the table wants them.
+    { key: "finerHitLocations", reference: "Basic Set Revised p. 566", default: false },
+    { key: "chestAbdomenSplit", reference: "Basic Set Revised p. 566", default: false },
   ],
   injury: [
     { key: "hitLocations", reference: "Campaigns p. 398", default: true },

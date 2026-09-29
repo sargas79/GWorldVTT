@@ -7,6 +7,7 @@
  * those rules are defined.
  */
 
+import { fromBehindAdjustment } from "../rules/revised-hit-locations.js";
 import { outcomeStep } from "../rules/bonus-points.js";
 import { skillEncumbrancePenalty } from "../rules/physical.js";
 import { isCombatRoll, spendingInPlay } from "./bonus-points.js";
@@ -179,7 +180,7 @@ import {
 } from "../rules/guided.js";
 import { MOVE_AND_ATTACK_PENALTY, WILD_SWING_SKILL_CAP, allOutAttackBonus, stopThrustBonus, strongAttackDamageBonus, wildSwingPenalty, type AllOutAttackOption } from "../rules/maneuvers.js";
 import { flailKind, type FlailKind } from "../rules/defenses.js";
-import { canTargetFromArc, missByOneHitsTorso } from "../rules/hit-locations.js";
+import { canTargetFromArc, missByOneHitsTorso, type HitLocation } from "../rules/hit-locations.js";
 import { facingAgainstTarget } from "./attack-arc.js";
 import { POSTURE_EFFECTS } from "../rules/posture.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
@@ -2024,6 +2025,17 @@ async function rollAction(
   if (aimedShot && (!canTargetFromArc(aimedShot.hitLocation, aimedArc) || !registeredLocationAllowsArc(aimedShot.addonLocation, aimedArc))) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.CalledShot.NotFromBehind"));
     return null;
+  }
+  // From behind the skull is -5 rather than -7, and the face -7 rather than
+  // -5 (Basic Set Revised p. 566).
+  if (aimedShot && !aimedShot.addonLocation && isRuleOn("finerHitLocations")) {
+    const adjustment = fromBehindAdjustment(aimedShot.hitLocation as HitLocation, aimedArc);
+    if (adjustment !== 0) {
+      modifiers.push({
+        label: game.i18n.localize(adjustment > 0 ? "GWORLD.CalledShot.SkullFromBehind" : "GWORLD.CalledShot.FaceFromBehind"),
+        value: adjustment,
+      });
+    }
   }
 
   if (melee && melee.fatigue > 0) {

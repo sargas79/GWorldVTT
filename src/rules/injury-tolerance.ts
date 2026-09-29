@@ -35,6 +35,12 @@ export interface InjuryTolerance {
   noHead: boolean;
   noNeck: boolean;
   noVitals: boolean;
+  /** Invertebrate (Characters p. 66): no spine or pelvis to hit (Basic Set Revised p. 566). */
+  invertebrate: boolean;
+  /** No Legs: no joints or veins and arteries in the legs (p. 566). */
+  noLegs: boolean;
+  /** No Manipulators: none in any limb (p. 566). */
+  noManipulators: boolean;
   /** The divisor of Damage Reduction, or 0 for a body without it. */
   damageDivisor: number;
   /** Cosmic, Rounds down: the divided injury rounds down and may reach 0. */
@@ -52,6 +58,9 @@ export function noInjuryTolerance(): InjuryTolerance {
     noHead: false,
     noNeck: false,
     noVitals: false,
+    invertebrate: false,
+    noLegs: false,
+    noManipulators: false,
     damageDivisor: 0,
     roundsDown: false,
   };

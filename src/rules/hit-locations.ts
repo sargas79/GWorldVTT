@@ -78,6 +78,8 @@ export interface HitLocationInfo {
  */
 export interface AttackQualifiers {
   tightBeam?: boolean;
+  /** Crushing may aim at the vitals, at the usual -3 and a wounding modifier of x1 (Basic Set Revised p. 566). */
+  crushingVitals?: boolean;
 }
 
 /** Damage types that can target the eye and vitals, burning aside. */
@@ -163,6 +165,7 @@ export function canTarget(
 ): boolean {
   const info = HIT_LOCATIONS[location];
   if (info.targetableBy.length === 0) return true;
+  if (location === "vitals" && type === "cr" && qualifiers.crushingVitals === true) return true;
   // A torch cannot be aimed at an eye; a laser can.
   if (type === "burn") return qualifiers.tightBeam === true;
   return info.targetableBy.includes(type);

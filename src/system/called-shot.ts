@@ -22,6 +22,7 @@ import {
 } from "../rules/hit-locations.js";
 import { canTargetChinks, chinkPenalty } from "../rules/melee-situations.js";
 import type { DamageType } from "../rules/types.js";
+import { isRuleOn } from "./optional-rules.js";
 import { ADDON_LOCATION_PREFIX, hitLocationsFor, readLocationValue } from "./combat-extensions.js";
 
 /** Where a declared called shot waits for its damage roll. */
@@ -59,7 +60,7 @@ export function shotOptions(type: DamageType, tightBeam = false, actor?: any): S
 
   for (const location of HIT_LOCATION_ORDER) {
     // A tight-beam burn may be aimed at the eye and the vitals (Campaigns p. 399).
-    if (!canTarget(location, type, { tightBeam })) continue;
+    if (!canTarget(location, type, { tightBeam, crushingVitals: isRuleOn("finerHitLocations") })) continue;
 
     const info = HIT_LOCATIONS[location];
     options.push({

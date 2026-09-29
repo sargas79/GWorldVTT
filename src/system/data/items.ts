@@ -1629,7 +1629,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
           initial: "torso",
           choices: [
             "torso", "skull", "eye", "face", "neck",
-            "vitals", "groin", "arm", "leg", "hand", "foot",
+            "vitals", "groin", "arm", "leg", "hand", "foot", "chest",
           ],
         }),
         { required: true, initial: () => [] },
@@ -1700,7 +1700,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
               required: true, nullable: false, blank: false, initial: "torso",
               choices: [
                 "torso", "skull", "eye", "face", "neck",
-                "vitals", "groin", "arm", "leg", "hand", "foot",
+                "vitals", "groin", "arm", "leg", "hand", "foot", "chest",
               ],
             }),
             { required: true, initial: () => [] },
