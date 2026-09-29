@@ -336,3 +336,83 @@ export function isPrivilegeTrait(name: string): boolean {
   const lower = String(name ?? "").toLowerCase();
   return PRIVILEGE_TRAITS.some((t) => lower.startsWith(t.toLowerCase()));
 }
+
+// -- The two tables on the item sheet (pp. 337-338) ---------------------------------------------
+
+/** What the item sheet keeps of a Rank's Patron value and level cost. */
+export interface RankTableResult {
+  patronValue: number;
+  costPerLevel: number;
+  /** Which figure was moved, for the sheet to say so. */
+  changed: Array<"patronValue" | "costPerLevel">;
+  /** Whether the pair lies outside the tables, whatever was kept (the GM may go there). */
+  outside: boolean;
+}
+
+/**
+ * Holds a Patron value to one of the five the tables give and a level cost
+ * to the range the Patron-to-Rank Table allows for it. A value of 0 means no
+ * Assistance Rolls and leaves the cost alone. With `override`, the GM's
+ * exception, nothing is moved and the result only says the pair is outside.
+ */
+export function enforceRankTables(patronValue: number, costPerLevel: number, override = false): RankTableResult {
+  const rawValue = Math.max(0, Math.floor(Number(patronValue) || 0));
+  const cost = Number(costPerLevel) || 0;
+  if (rawValue === 0) return { patronValue: 0, costPerLevel: cost, changed: [], outside: false };
+  const snapped = ORGANIZATION_VALUES.reduce((best, v) => (Math.abs(v - rawValue) < Math.abs(best - rawValue) ? v : best), ORGANIZATION_VALUES[0] as number);
+  const value = override ? rawValue : snapped;
+  const range = costRangeForPatron(value);
+  const changed: RankTableResult["changed"] = [];
+  if (value !== rawValue) changed.push("patronValue");
+  let kept = cost;
+  if (range && !override && cost > 0 && (cost < range[0] || cost > range[1])) {
+    kept = Math.min(range[1], Math.max(range[0], cost));
+    changed.push("costPerLevel");
+  }
+  return { patronValue: value, costPerLevel: kept, changed, outside: !costWithinTables(value, kept) };
+}
+
+// -- Delivering the aid (pp. 339-341) -----------------------------------------------------------
+
+/** What an aid type puts in the petitioner's hands, beyond words on the card. */
+export type AidDelivery = "money" | "people" | "equipment" | "bonus" | "hours" | "none";
+
+/** Which of the deliveries an aid type makes. */
+export function aidDelivery(key: string): AidDelivery {
+  switch (key) {
+    case "cash": return "money";
+    case "muscle":
+    case "theCavalry": return "people";
+    case "facilities": return "equipment";
+    case "generalizedAssistance": return "bonus";
+    case "warrant": return "hours";
+    default: return "none";
+  }
+}
+
+/** The best Luck a character has: 1 Luck, 2 Extraordinary Luck, 3 Ridiculous Luck, 0 none. */
+export function luckLevel(traitNames: readonly string[]): number {
+  let best = 0;
+  for (const raw of traitNames) {
+    const name = String(raw ?? "").toLowerCase();
+    if (/^ridiculous luck/.test(name)) best = Math.max(best, 3);
+    else if (/^extraordinary luck/.test(name)) best = Math.max(best, 2);
+    else if (/^luck\b/.test(name)) best = Math.max(best, 1);
+  }
+  return best;
+}
+
+interface RollFigures {
+  success: boolean;
+  criticalSuccess: boolean;
+  criticalFailure: boolean;
+  margin: number;
+}
+
+/** Whether roll `b` is better for the roller than `a`: a better outcome step, then a better margin. */
+export function betterRoll(a: RollFigures, b: RollFigures): boolean {
+  const step = (r: RollFigures) => (r.criticalSuccess ? 3 : r.success ? 2 : r.criticalFailure ? 0 : 1);
+  if (step(b) !== step(a)) return step(b) > step(a);
+  const signedMargin = (r: RollFigures) => (r.success ? r.margin : -r.margin);
+  return signedMargin(b) > signedMargin(a);
+}

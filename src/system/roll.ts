@@ -224,7 +224,9 @@ export interface RollModifier {
    * ranged attack, and `zen`, a zen skill's line (with `zen`, the skill's id);
    * since 1.105.0 `afflictionDr`, the DR bonus to an affliction's resistance roll;
    * since 1.153.0 `dualWeapon` (with `hand`) and `strikeAtWeapon` (with `itemId`);
-   * since 1.163.0 `gunslinger` (with `gunslinger`).
+   * since 1.163.0 `gunslinger` (with `gunslinger`);
+   * since 1.188.0 `situational`, a modifier typed at the roll, which Basic
+   * Abstract Difficulty replaces.
    * Blank or absent on lines nobody has named.
    */
   key?: string;
@@ -793,7 +795,8 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   // A roll that can be bought up with points (Campaigns p. 347)
   // remembers what it was, and an attack that missed remembers the defense
   // card it would have posted on a hit.
-  const successRoll = spendingInPlay(actor) && actor?.uuid
+  // An Assistance Roll reads its own outcome, offering the purchase itself.
+  const successRoll = spendingInPlay(actor) && actor?.uuid && !tags.includes("assistance")
     ? {
         [SYSTEM_ID]: {
           successRoll: {
@@ -5317,7 +5320,7 @@ export async function maybePromptModifiers(
     : undefined, offered);
   if (asked === null) return null;
   const lines: RollModifier[] = [...asked.lines];
-  if (asked.value !== 0) lines.unshift({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: asked.value });
+  if (asked.value !== 0) lines.unshift({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: asked.value, key: "situational" });
   return lines;
 }
 
