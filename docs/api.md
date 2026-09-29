@@ -4280,3 +4280,26 @@ runs again on the next load. Each helper returns
   the GM turns the others off), the roll dialog does not show BAD apart from its line,
   the "critical for 8 or more" option of Expanded Influence is the GM's, and there is
   no button for the unstatted NPC's roll (the GM screen states its skill).
+- **Extra effort extras** (since 1.178.0; Basic Set Revised pp. 571-572). Switches (rolls
+  group, off): `powerExtraEffort`, `godlikeExtraEffort`, `fatigueForSkill`; and in the
+  activities group `realisticMarching`. With `powerExtraEffort` on, the sheet's "Power
+  extra effort" button asks the increase, the power's Talent (and, with Godlike on, the FP
+  to spend) and rolls Will at -1 per 5% (at most 100%, no cap under Godlike), +5 motivated,
+  plus Talent, with no penalty for missing FP; the FP (1 a roll, or the Godlike multiple) are
+  paid after the roll and a critical success is free. `effort.rollPower(options)` does the
+  same, `effort.powerFp(fp?)` gives the price for an attack or defense rolled instead of
+  Will. `fatigueForSkill` adds a "Trade FP for a bonus" button and `effort.tradeFatigue({
+  actor, fp, kind })` (`skill`, `attack` or `resistance`): 1 FP per +1 up to +4, held as a
+  pending bonus for the next matching roll. `party.combiningSt(actors)` gives the summed
+  Basic Lift and effective ST (the square root of 5 x total BL, rounded up), and
+  `party.postCombiningSt(actors)` says so in chat. `realisticMarching` makes a hike's miles 4 x
+  Move, or 6 x Move when the marcher has Hiking, Soldier, Survival or Professional Skill
+  (Trail Guide) (`effort.isSkilledMarcher(actors)`). `rules.COMBAT_EXTRAS`, `extrasOverCap`,
+  `giantStepAllowed`, `greatLungeAllowed`, `heroicChargeAllowed`, `rapidRecoveryAllowed`,
+  `powerEffortTarget`, `powerEffortCost`, `godlikeEffect`, `fatigueForSkillBonus`,
+  `combinedBasicLift`, `combinedStrength`, `marchingHours`, `marchingSpeed` and
+  `marchingMilesPerMove` are the pure pieces (`dailyMiles` takes `milesPerMove`). Not done: the
+  four combat options (Giant Step, Great Lunge, Heroic Charge, Rapid Recovery) and the cap of one
+  offensive and one defensive a turn are rules only, not yet in the maneuver flow (the add-on's
+  Martial Arts options still serve); the fatigue trades are a sheet button holding a bonus, not
+  spinners inside the roll and resistance dialogs; Combining ST has no button on the Party sheet.

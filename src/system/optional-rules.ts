@@ -121,6 +121,10 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "expandedInfluence", reference: "Basic Set Revised p. 571", default: false },
     // One penalty for the scene instead of detailed modifiers; 10 + |BAD| for NPCs without a sheet (Addendum 4).
     { key: "basicAbstractDifficulty", reference: "Basic Set Revised p. 578", default: false },
+    // Extra Effort Extras (Addendum 4): powers, Godlike, and FP traded for skill and resistance.
+    { key: "powerExtraEffort", reference: "Basic Set Revised pp. 571-572", default: false },
+    { key: "godlikeExtraEffort", reference: "Basic Set Revised p. 572", default: false },
+    { key: "fatigueForSkill", reference: "Basic Set Revised p. 572", default: false },
   ],
   activities: [
     { key: "physicalActivities", reference: "Campaigns pp. 349-355", default: true },
@@ -142,6 +146,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "socialBackground", reference: "Characters pp. 23-24", default: true },
     { key: "sleep", reference: "Campaigns pp. 426-427", default: true },
     { key: "hiking", reference: "Campaigns pp. 351, 426", default: true },
+    // 8 or 12 hours a day at half the Move an hour, in place of 10 x Move miles (Addendum 4).
+    { key: "realisticMarching", reference: "Basic Set Revised p. 572", default: false },
     { key: "collisions", reference: "Campaigns pp. 430-432", default: true },
     { key: "electricity", reference: "Campaigns pp. 432-433", default: true },
     { key: "fire", reference: "Campaigns pp. 433-434", default: true },

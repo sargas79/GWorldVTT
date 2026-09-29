@@ -145,3 +145,4 @@ export * from "./cost-factors.js";
 export * from "./flat-signature-gear.js";
 export * from "./revised-hit-locations.js";
 export * from "./tasks-and-feats.js";
+export * from "./extra-effort-extras.js";

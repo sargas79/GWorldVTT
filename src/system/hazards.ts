@@ -26,6 +26,8 @@ import {
 import {
   catchingFire, FIRE_DAMAGE, ignites, prolongedContactTarget, type FireExposure, type Flammability,
 } from "../rules/fire.js";
+import { isSkilledMarcher } from "./extra-effort-extras.js";
+import { marchingMilesPerMove } from "../rules/extra-effort-extras.js";
 import { dailyMiles, marchingFatiguePerHour, type Terrain, type TravelWeather } from "../rules/hiking.js";
 import { HOT_DAY_FATIGUE } from "../rules/fatigue.js";
 import { randomHitLocation, type HitLocation } from "../rules/hit-locations.js";
@@ -261,6 +263,8 @@ export async function hike(options: {
     weather: options.weather,
     enhancedMove: Number(derived.traitEffects?.enhancedMove) || 1,
     hikingSuccess: outcome.success,
+    // Humping, Tramping, and Yomping: 4 x Move a day, or 6 with a skilled guide (Revised p. 572).
+    ...(isRuleOn("realisticMarching") ? { milesPerMove: marchingMilesPerMove(isSkilledMarcher([actor])) } : {}),
   });
   const day = dayWeather(actor);
   const hot = options.hot ?? day.hot;

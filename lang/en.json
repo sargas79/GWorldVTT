@@ -648,6 +648,22 @@
           "Name": "Basic Abstract Difficulty",
           "Hint": "One penalty from 0 to -10, set in the system settings or per scene, on the rolls of tasks; an NPC without a sheet has skill 10 + BAD (Basic Set Revised p. 578)."
         },
+        "powerExtraEffort": {
+          "Name": "Extra effort with powers",
+          "Hint": "A Will roll at -1 per 5% (at most 100%) to push a power past its limit, plus the power’s Talent; a flat 1 FP a use or a minute (Basic Set Revised pp. 571-572)."
+        },
+        "godlikeExtraEffort": {
+          "Name": "Godlike Extra Effort",
+          "Hint": "Spend more than 1 FP on extra effort, multiplying the bonus effect by the FP spent and ignoring the maximum (Basic Set Revised p. 572)."
+        },
+        "fatigueForSkill": {
+          "Name": "Trading Fatigue for Skill and Resistance",
+          "Hint": "1 FP per +1, up to +4, on a success roll or a contested resistance, with no Will roll (Basic Set Revised p. 572)."
+        },
+        "realisticMarching": {
+          "Name": "Realistic marching",
+          "Hint": "A day’s march is 8 hours, or 12 with a skilled guide, at half the Move an hour: 4 or 6 x Move miles, in place of 10 x Move (Basic Set Revised p. 572)."
+        },
         "teamEfforts": {
           "Name": "Team efforts",
           "Hint": "The party rolls once in a skill, on the Party sheet: the best member’s level, plus one for each who knows it, less the size of the group."
@@ -2507,7 +2523,29 @@
       "Flurry": "Flurry of Blows",
       "MightyBlows": "Mighty Blows",
       "NoFatigue": "Not enough FP for {what} ({cost} FP).",
-      "NotStBased": "Mighty Blows adds nothing to damage that is not ST-based."
+      "NotStBased": "Mighty Blows adds nothing to damage that is not ST-based.",
+      "PowerAction": "Power extra effort",
+      "PowerHint": "Push a power past its limit: a Will roll, plus the power’s Talent (Basic Set Revised pp. 571-572)",
+      "PowerTitle": "Extra effort with a power",
+      "Talent": "Power’s Talent",
+      "GodlikeFp": "FP to spend (each multiplies the bonus)",
+      "PowerSuccess": "Gains +{percent}% effect.",
+      "PowerCriticalSuccess": "Gains +{percent}% effect, and it costs no FP.",
+      "PowerFailure": "The ability works as it would have without extra effort.",
+      "PowerCriticalFailure": "The task fails automatically. {natural}",
+      "PowerNaturalEighteen": "On an 18, it critically fails.",
+      "TradeAction": "Trade FP for a bonus",
+      "TradeHint": "1 FP per +1, up to +4, held for the next roll; no Will roll (Basic Set Revised p. 572)",
+      "TradeTitle": "Trading Fatigue",
+      "TradeFor": "Bonus for",
+      "TradeSkill": "the next skill roll",
+      "TradeAttack": "the next attack",
+      "TradeResistance": "the next resistance roll",
+      "TradeFp": "FP to trade (+1 each, at most +4)",
+      "TradeSkillLine": "Fatigue traded for skill",
+      "TradeResistanceLine": "Fatigue traded for resistance",
+      "TradeHeld": "+{bonus} held for the next roll.",
+      "CombiningSt": "{count} combined: Basic Lift {bl} lb., effective ST {st}."
     },
     "Feats": {
       "Hint": "Jumping, lifting, running, swimming and throwing, from ST, Basic Lift and Move.",

@@ -24,7 +24,7 @@ describe("the add-on API", () => {
 
   it("reaches the party: whose it is, its members and the campaign's terms (since 1.68.0), and awards its characters points (since 1.160.0)", () => {
     const api = createApi();
-    expect(Object.keys(api.party).sort()).toEqual(["addMembers", "awardPoints", "awardRecipients", "campaignTerms", "membersOf", "of", "removeMember"]);
+    expect(Object.keys(api.party).sort()).toEqual(["addMembers", "awardPoints", "awardRecipients", "campaignTerms", "combiningSt", "membersOf", "of", "postCombiningSt", "removeMember"]);
     // Nothing is in a party where there is no world.
     expect(api.party.of({ uuid: "Actor.nobody", type: "character" })).toBeNull();
     // Since 1.82.0 the terms are the world's: a character in no party still has them.

@@ -47,8 +47,10 @@ export function dailyMiles(options: {
   enhancedMove?: number;
   /** Whether the Hiking roll was made. */
   hikingSuccess?: boolean;
+  /** Miles per point of Move in ideal conditions, in place of 10: 4 or 6 with Humping, Tramping, and Yomping (Revised p. 572). */
+  milesPerMove?: number;
 }): number {
-  const base = MILES_PER_MOVE * Math.max(0, options.move) * Math.max(1, options.enhancedMove ?? 1);
+  const base = (options.milesPerMove ?? MILES_PER_MOVE) * Math.max(0, options.move) * Math.max(1, options.enhancedMove ?? 1);
   const ground = TERRAIN_MULTIPLIER[options.terrain ?? "average"];
   const sky = WEATHER_MULTIPLIER[options.weather ?? "fair"];
   const skill = options.hikingSuccess ? HIKING_ROLL_BONUS : 1;

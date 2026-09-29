@@ -29,6 +29,18 @@
         {{localize "GWORLD.ExtraEffort.Action"}}
       </button>
     {{/if}}
+    {{#if rules.powerExtraEffort}}
+      <button type="button" class="ibtn" data-action="powerExtraEffort"
+              data-tooltip="{{localize "GWORLD.ExtraEffort.PowerHint"}}">
+        {{localize "GWORLD.ExtraEffort.PowerAction"}}
+      </button>
+    {{/if}}
+    {{#if rules.fatigueForSkill}}
+      <button type="button" class="ibtn" data-action="tradeFatigue"
+              data-tooltip="{{localize "GWORLD.ExtraEffort.TradeHint"}}">
+        {{localize "GWORLD.ExtraEffort.TradeAction"}}
+      </button>
+    {{/if}}
     <button type="button" class="ibtn" data-action="attributePenalties"
             data-tooltip="{{localize "GWORLD.Penalties.Hint"}}">
       {{localize "GWORLD.Penalties.Action"}}{{#if penaltiesShowing}} &middot; {{penaltiesShowing}}{{/if}}

@@ -26,6 +26,7 @@
  *      and every part of the API may be used.
  */
 
+import { combiningSt, isSkilledMarcher, postCombiningSt, powerEffortFp, rollPowerExtraEffort, tradeFatigueForBonus } from "./extra-effort-extras.js";
 import { currentBad, endHamClause, hamClauseOf, invokeHamClause, setBad, unstattedNpcSkill } from "./task-rules.js";
 import { gmScreenApi } from "./gm-screen/api.js";
 import { containersApi } from "./container-moves.js";
@@ -113,7 +114,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.177.0";
+export const API_VERSION = "1.178.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -902,6 +903,8 @@ export interface GWorldApi {
   readonly world: typeof worldApi;
   /** Social rolls (since 1.103.0): the skills the Influence roll offers. */
   readonly social: typeof socialApi;
+  /** Extra effort with powers and FP traded for a bonus (since 1.178.0). */
+  readonly effort: typeof effortApi;
   /** The GM Screen (since 1.157.0): open it, roll on its tables, add a module's tables, lists and tabs. */
   readonly gmScreen: typeof gmScreenApi;
   /** Containers (since 1.159.0): which items are containers, what is in one, and putting gear in or taking it out. */
@@ -1043,7 +1046,17 @@ const magic = Object.freeze({ ...magicApi, postResistance, manaLevel });
 const partyApi = Object.freeze({
   of: partyOf, membersOf, campaignTerms: actorCampaignTerms, addMembers, removeMember,
   awardRecipients: awardRecipientsOf, awardPoints: awardPartyPoints,
+  // Combining ST (since 1.178.0; Basic Set Revised p. 572): a group's Basic Lift and effective ST.
+  combiningSt, postCombiningSt,
 });
+
+/**
+ * The extra-effort namespace (since 1.178.0; Basic Set Revised pp. 571-572):
+ * extra effort with powers, FP traded for a bonus, and the marching skill test.
+ * The pure rules are under `rules` (`powerEffortTarget`, `godlikeEffect`,
+ * `fatigueForSkillBonus`, `extrasOverCap`, `marchingHours`...).
+ */
+const effortApi = Object.freeze({ rollPower: rollPowerExtraEffort, powerFp: powerEffortFp, tradeFatigue: tradeFatigueForBonus, isSkilledMarcher });
 
 /**
  * The world namespace (since 1.77.0): the campaign's Control Rating (Campaigns
@@ -1095,6 +1108,7 @@ export function createApi(): GWorldApi {
     party: partyApi,
     world: worldApi,
     social: socialApi,
+    effort: effortApi,
     gmScreen: gmScreenApi,
     containers: containersApi,
     hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK, partyChanged: PARTY_CHANGED_HOOK, campaignChanged: CAMPAIGN_CHANGED_HOOK }),

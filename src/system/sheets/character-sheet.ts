@@ -40,6 +40,7 @@ import {
 import { chooseFeintSkill } from "../alternative-feints.js";
 import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
+import { rollPowerExtraEffort, tradeFatigueForBonus } from "../extra-effort-extras.js";
 import { rollFall } from "../falling.js";
 import { rollBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
@@ -469,6 +470,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       contest: GWorldCharacterSheet.#onContest,
       frightCheck: GWorldCharacterSheet.#onFrightCheck,
       extraEffort: GWorldCharacterSheet.#onExtraEffort,
+      powerExtraEffort: GWorldCharacterSheet.#onPowerExtraEffort,
+      tradeFatigue: GWorldCharacterSheet.#onTradeFatigue,
       climb: GWorldCharacterSheet.#onClimb,
       swim: GWorldCharacterSheet.#onSwim,
       throwObject: GWorldCharacterSheet.#onThrow,
@@ -2106,6 +2109,58 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       percentIncrease: asked.percentIncrease,
       motivated: asked.motivated,
     });
+  }
+
+  /** Extra effort with a power (Basic Set Revised pp. 571-572): a Will roll plus the power's Talent. */
+  static async #onPowerExtraEffort(this: GWorldCharacterSheet) {
+    if (!isRuleOn("powerExtraEffort")) return;
+    const asked = await promptForExtraEffort();
+    if (asked === null) return;
+    const talent = await promptForNumber({
+      title: game.i18n.localize("GWORLD.ExtraEffort.PowerTitle"),
+      label: game.i18n.localize("GWORLD.ExtraEffort.Talent"),
+      initial: 0,
+    });
+    if (talent === null) return;
+    let fpSpent = 1;
+    if (isRuleOn("godlikeExtraEffort")) {
+      const fp = await promptForNumber({
+        title: game.i18n.localize("GWORLD.ExtraEffort.PowerTitle"),
+        label: game.i18n.localize("GWORLD.ExtraEffort.GodlikeFp"),
+        initial: 1,
+      });
+      if (fp === null) return;
+      fpSpent = Math.max(1, fp);
+    }
+    await rollPowerExtraEffort({
+      actor: this.actor,
+      percentIncrease: asked.percentIncrease,
+      motivated: asked.motivated,
+      talent,
+      fpSpent,
+    });
+  }
+
+  /** Trading Fatigue for Skill or Resistance (Basic Set Revised p. 572): 1 FP per +1, up to +4, held for the next roll. */
+  static async #onTradeFatigue(this: GWorldCharacterSheet) {
+    if (!isRuleOn("fatigueForSkill")) return;
+    const kind = await promptForChoice({
+      title: game.i18n.localize("GWORLD.ExtraEffort.TradeTitle"),
+      label: game.i18n.localize("GWORLD.ExtraEffort.TradeFor"),
+      options: [
+        { value: "skill", label: game.i18n.localize("GWORLD.ExtraEffort.TradeSkill") },
+        { value: "attack", label: game.i18n.localize("GWORLD.ExtraEffort.TradeAttack") },
+        { value: "resistance", label: game.i18n.localize("GWORLD.ExtraEffort.TradeResistance") },
+      ],
+    });
+    if (kind !== "skill" && kind !== "attack" && kind !== "resistance") return;
+    const fp = await promptForNumber({
+      title: game.i18n.localize("GWORLD.ExtraEffort.TradeTitle"),
+      label: game.i18n.localize("GWORLD.ExtraEffort.TradeFp"),
+      initial: 1,
+    });
+    if (fp === null) return;
+    await tradeFatigueForBonus({ actor: this.actor, fp, kind });
   }
 
   /**
