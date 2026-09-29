@@ -23,6 +23,7 @@ import {
 import { resolveSuccess, type SuccessRollResult } from "../rules/success.js";
 import { afterSuccessRoll, firstAidRules, physicianRoundsRules, procedureRoll } from "./procedure-extensions.js";
 import { stopBleeding } from "./bleeding.js";
+import { rechargeForRest } from "./reserves.js";
 import { crippledPartName, crippledParts, treatCrippled } from "./crippling.js";
 import { attributeOf, healthRollScore } from "./attributes.js";
 import { hasCondition, setCondition, syncHealthConditions } from "./conditions.js";
@@ -225,9 +226,12 @@ export async function restForFatigue(options: {
 
   // A regenerator heals through the same minutes (Characters p. 80).
   const regen = await regenerateWhileResting(actor, minutes * 60);
+  // Energy Reserves recharge through the same minutes (Basic Set Revised p. 326).
+  const reserves = await rechargeForRest(actor, minutes * 60);
 
   await post(actor, {
     regen,
+    reserves,
     kind: game.i18n.localize("GWORLD.Recovery.Rest"),
     detail: meal
       ? game.i18n.format("GWORLD.Recovery.RestedFed", { minutes })
@@ -263,6 +267,8 @@ export async function restForADay(options: {
   // comes on top of it: the trait adds to natural recovery, it doesn't replace it.
   const regen = await regenerateWhileResting(actor, 24 * 3600);
   const regenerated = Number(regen?.gained ?? 0);
+  // A day's rest recharges Energy Reserves too (Basic Set Revised p. 326).
+  const reserves = await rechargeForRest(actor, 24 * 3600);
 
   const hp = actor.system?.hp ?? { value: 0, max: 0 };
   const current = Number(hp.value) || 0;
@@ -286,6 +292,7 @@ export async function restForADay(options: {
     kind: game.i18n.localize("GWORLD.Recovery.Daily"),
     detail: game.i18n.localize("GWORLD.Recovery.DailyDetail"),
     regen,
+    reserves,
     target: ht + modifier,
     dice: dieResults(roll),
     roll: roll.total,

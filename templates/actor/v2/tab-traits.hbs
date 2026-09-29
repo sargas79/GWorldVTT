@@ -217,6 +217,10 @@
                         data-tooltip="{{localize 'GWORLD.Alternative.UseHint'}}">{{localize "GWORLD.Alternative.Use"}}</button>
               {{/if}}
             {{/if}}
+            {{#if (and @root.editable row.abilityCost)}}
+              <button type="button" class="v2-button v2-button-steel" data-action="v2PayAbilityCost"
+                      data-tooltip="{{localize 'GWORLD.AbilityCost.PayHint'}}">{{localize "GWORLD.AbilityCost.Pay"}}</button>
+            {{/if}}
             {{#if row.weakness}}
               <button type="button" class="v2-button v2-button-steel rollable" data-action="weaknessExposure"
                       data-tooltip="{{localize 'GWORLD.Weakness.ExposedHint'}}">{{localize "GWORLD.Weakness.Exposed"}}</button>

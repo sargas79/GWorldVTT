@@ -12,6 +12,7 @@ import { SYSTEM_ID } from "./constants.js";
 import { shotsEntryFor } from "./shots-entry.js";
 import { COMBAT_HOOKS, callCombatHook } from "./combat-extensions.js";
 import { skillLevelOf } from "./skill-level.js";
+import { heroicPenalty, isHeroicBow, rollQuickReady } from "./heroic-archer.js";
 import { isRuleOn } from "./optional-rules.js";
 import { shotsAfterFiring } from "../rules/cinematic.js";
 import { spendsNoAmmunition } from "./simplified-resources.js";
@@ -434,9 +435,15 @@ export async function reloadWeapon(actor: any, item: any, modeIndex: number): Pr
     return;
   }
 
+  // A Heroic Archer may ready the bow in no time (Basic Set Revised p. 327;
+  // since 1.184.0): a Bow roll at -3, and on a success there is no Ready
+  // maneuver, no time, and no aids or Fast-Draw to ask about.
+  const quick = await rollQuickReady(actor, item, mode);
+  const instant = quick?.success === true;
+
   // What a module's Shots entry offers to help -- an assistant, a loading aid
   // (since 1.71.0) -- is asked first, since it changes what the skill saves.
-  const ticked = entry.aids.length > 0 ? await promptForAids(item, entry.aids) : [];
+  const ticked = !instant && entry.aids.length > 0 ? await promptForAids(item, entry.aids) : [];
   if (ticked === null) return;
   const aids = usableAids(ticked);
 
@@ -444,7 +451,7 @@ export async function reloadWeapon(actor: any, item: any, modeIndex: number): Pr
   // skill is offered: one failed that aborts spends the time and loads nothing.
   const required: string[] = [];
   let aborted = false;
-  for (const roll of entry.requiredRolls) {
+  for (const roll of instant ? [] : entry.requiredRolls) {
     const outcome = await rollForReload(actor, roll);
     const failed = outcome !== "success";
     const abort = failed && roll.onFail !== "continue";
@@ -456,10 +463,10 @@ export async function reloadWeapon(actor: any, item: any, modeIndex: number): Pr
   // on a success -- more where the entry says so; a failure drops a round, a
   // critical failure the lot (Characters pp. 194-195).
   const timing = { entry, seconds: plan.seconds, rounds: plan.loading, aids };
-  const fastDraw = !aborted && fastDrawHelps(timing)
-    ? await rollFastDrawAmmo(actor, item, reloadTimeWith({ ...timing, fastDraw: true }).saved, entry.fastDrawRoll)
+  const fastDraw = !aborted && !instant && fastDrawHelps(timing)
+    ? await rollFastDrawAmmo(actor, item, reloadTimeWith({ ...timing, fastDraw: true }).saved, entry.fastDrawRoll, mode)
     : null;
-  const { seconds, saved } = reloadTimeWith({ ...timing, fastDraw: fastDraw?.outcome === "success" });
+  const { seconds, saved } = instant ? { seconds: 0, saved: 0 } : reloadTimeWith({ ...timing, fastDraw: fastDraw?.outcome === "success" });
   let loading = aborted ? 0 : plan.loading;
   if (fastDraw?.outcome === "failure") loading = Math.max(0, loading - 1);
   if (fastDraw?.outcome === "criticalFailure") loading = 0;
@@ -470,7 +477,11 @@ export async function reloadWeapon(actor: any, item: any, modeIndex: number): Pr
 
   await setLoaded(item, modeIndex, loaded + loading, source ? {} : { loadedFrom: "" });
   // "Reloading requires a number of Ready maneuvers" (p. 373).
-  if (actor?.isOwner && actor.system?.maneuver !== undefined) await actor.update({ "system.maneuver": "ready" });
+  if (!instant && actor?.isOwner && actor.system?.maneuver !== undefined) await actor.update({ "system.maneuver": "ready" });
+  // A quick ready that failed leaves the usual Ready maneuver, said on the card.
+  const heroicNote = quick
+    ? game.i18n.format(`GWORLD.HeroicArcher.QuickReady${instant ? "Success" : "Failure"}`, { penalty: quick.penalty })
+    : "";
 
   const content = await foundry.applications.handlebars.renderTemplate(CARD_TEMPLATE, {
     name: String(item.name),
@@ -480,7 +491,7 @@ export async function reloadWeapon(actor: any, item: any, modeIndex: number): Pr
     perShot: plan.perShot,
     loading,
     fastDraw: fastDraw ? L(`FastDraw.${fastDraw.label ? "Other." : ""}${fastDraw.outcome}`, { seconds: saved, label: fastDraw.label }) : "",
-    required,
+    required: heroicNote ? [...required, heroicNote] : required,
     aids: aids.map((aid) => aid.label).join(", "),
     goatsFoot: plan.needsGoatsFoot,
     mustStand: plan.mustStand,
@@ -507,23 +518,50 @@ async function rollFastDrawAmmo(
   item: any,
   saves: number,
   instead: ReloadRoll | null = null,
+  mode: any = null,
 ): Promise<{ outcome: "success" | "failure" | "criticalFailure"; label?: string } | null> {
   if (!actor || saves <= 0) return null;
-  const skill = instead?.skill ?? FAST_DRAW_AMMO;
+  // A Heroic Archer's bow draws with Fast-Draw (Arrow) where they have it, and
+  // halves the penalty the GM sets for the awkward draw (Revised p. 327).
+  const heroic = instead === null && isHeroicBow(actor, mode);
+  const skill = instead?.skill ?? (heroic && skillLevelOf(actor, "Fast-Draw (Arrow)") !== null ? "Fast-Draw (Arrow)" : FAST_DRAW_AMMO);
   const level = instead?.level ?? skillLevelOf(actor, skill);
   if (level === null) return null;
   const label = instead ? instead.label ?? skill : undefined;
-  const wanted = await foundry.applications.api.DialogV2.confirm({
-    window: { title: L("Title") },
-    content: `<p>${label === undefined
-      ? L("FastDraw.Ask", { name: String(item?.name ?? ""), level, seconds: saves })
-      : L("FastDraw.Other.Ask", { name: String(item?.name ?? ""), level, seconds: saves, label: foundry.utils.escapeHTML(label) })}</p>`,
-    rejectClose: false,
-  });
-  if (!wanted) return null;
+  const ask = `<p>${label === undefined
+    ? L("FastDraw.Ask", { name: String(item?.name ?? ""), level, seconds: saves })
+    : L("FastDraw.Other.Ask", { name: String(item?.name ?? ""), level, seconds: saves, label: foundry.utils.escapeHTML(label) })}</p>`;
+  let drawPenalty = 0;
+  if (heroic) {
+    const answer = await foundry.applications.api.DialogV2.prompt({
+      window: { title: L("Title") },
+      content: `<div class="gworld">${ask}
+        <label style="display:flex;gap:8px;justify-content:space-between;align-items:center"><span>${foundry.utils.escapeHTML(game.i18n.localize("GWORLD.HeroicArcher.FastDrawPenalty"))}</span>
+        <input type="number" name="penalty" value="0" step="1" style="width:5em"></label></div>`,
+      ok: {
+        label: L("Action"),
+        callback: (_event: Event, button: HTMLElement) => Number(button.closest<HTMLElement>(".application")?.querySelector<HTMLInputElement>('input[name="penalty"]')?.value ?? 0) || 0,
+      },
+      rejectClose: false,
+    });
+    if (typeof answer !== "number") return null;
+    drawPenalty = heroicPenalty(actor, -Math.abs(answer), String(mode?.skill ?? "Bow"));
+  } else {
+    const wanted = await foundry.applications.api.DialogV2.confirm({
+      window: { title: L("Title") },
+      content: ask,
+      rejectClose: false,
+    });
+    if (!wanted) return null;
+  }
   // The roll module reaches this one, so it is loaded when the roll is made.
   const { rollSuccess } = await import("./roll.js");
-  const result = await rollSuccess({ actor, base: level, label: label ?? L("FastDraw.Label"), skill });
+  const result = await rollSuccess({
+    actor, base: level, label: label ?? L("FastDraw.Label"), skill,
+    ...(drawPenalty < 0
+      ? { modifiers: [{ label: game.i18n.localize("GWORLD.HeroicArcher.FastDrawLine"), value: drawPenalty, key: "heroicArcher", heroicArcher: "fastDraw" as const }] }
+      : {}),
+  });
   if (!result) return null;
   const outcome = result.criticalFailure ? "criticalFailure" : result.success ? "success" : "failure";
   return label === undefined ? { outcome } : { outcome, label };

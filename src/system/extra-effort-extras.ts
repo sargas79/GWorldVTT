@@ -52,6 +52,11 @@ export async function rollPowerExtraEffort(options: {
   talent?: number;
   /** Godlike Extra Effort: FP spent, each multiplying the bonus. Ignored where the switch is off. */
   fpSpent?: number;
+  /**
+   * The origin of the power ("magical", "psionic", "chi"): an Energy Reserve
+   * of that origin pays the FP first (Basic Set Revised p. 326; since 1.184.0).
+   */
+  origin?: string;
 }): Promise<PowerEffortResult | null> {
   const { actor } = options;
   if (!isRuleOn("powerExtraEffort") || !actor?.isOwner) return null;
@@ -75,7 +80,7 @@ export async function rollPowerExtraEffort(options: {
 
   const cost = powerEffortCost({ criticalSuccess: outcome.criticalSuccess, fpSpent });
   let paid = 0;
-  if (cost > 0) paid = (await spendFatigue(actor, cost, L("PowerTitle"))) ? cost : 0;
+  if (cost > 0) paid = (await spendFatigue(actor, cost, L("PowerTitle"), options.origin)) ? cost : 0;
 
   const detail = outcome.criticalFailure
     ? L("PowerCriticalFailure", { natural: roll.total === 18 ? L("PowerNaturalEighteen") : "" })

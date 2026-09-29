@@ -59,6 +59,8 @@ import { legalityClassOf, legalityNote } from "../legality.js";
 import { isRuleOn } from "../optional-rules.js";
 import { promptForComplementary, rollComplementary } from "../complementary.js";
 import { endPointPowered, promptPointPowered, readyAlternative } from "../alternative-abilities.js";
+import { abilityCostOf, payAbilityCost } from "../ability-cost.js";
+import { adjustReserve } from "../reserves.js";
 import { alternativeKey } from "../../rules/alternative-abilities.js";
 import { grantWildcardBonus } from "../wildcard-bonus.js";
 import { canInvokeHamClause, endHamClause, hamClauseOf, invokeHamClause } from "../task-rules.js";
@@ -136,6 +138,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2HamClauseEnd: GWorldCharacterSheetV2.#onHamClauseEnd,
       v2UsePointPowered: GWorldCharacterSheetV2.#onUsePointPowered,
       v2EndPointPowered: GWorldCharacterSheetV2.#onEndPointPowered,
+      v2PayAbilityCost: GWorldCharacterSheetV2.#onPayAbilityCost,
+      v2ReserveAdjust: GWorldCharacterSheetV2.#onReserveAdjust,
       v2EditPortrait: GWorldCharacterSheetV2.#onEditPortrait,
       v2RollPlain: GWorldCharacterSheetV2.#onRollPlain,
       v2Retreat: GWorldCharacterSheetV2.#onRetreat,
@@ -1165,6 +1169,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         pointPowered: system.pointPowered === true,
         pointPoweredActive: system.pointPoweredActive === true,
         weakness: weaknessOf({ name: String(item.name ?? "") }) !== null,
+        // What a use costs in FP or HP, where the trait has Costs Fatigue or Costs Hit Points.
+        abilityCost: abilityCostOf(actor, String(item.id)),
         applied: isReadTrait(String(item.name ?? ""), system.talentSkills ?? []),
         // What the trait is of, where the book makes the player say, shown
         // with the name as the book writes it.
@@ -1866,6 +1872,21 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     const item = id ? this.actor.items.get(id) : null;
     if (item) await promptPointPowered(this.actor, item);
+  }
+
+  /** Spends a point of an Energy Reserve, gives one back, or refills it (Basic Set Revised p. 326). */
+  static async #onReserveAdjust(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const key = target.dataset.reserve;
+    const change = target.dataset.change;
+    if (!key || !change) return;
+    await adjustReserve(this.actor, key, change === "full" ? "full" : Number(change) || 0);
+  }
+
+  /** Pays what a use of an ability costs: Costs Fatigue from an Energy Reserve of its origin first, then FP; Costs Hit Points in HP. */
+  static async #onPayAbilityCost(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    if (item) await payAbilityCost(this.actor, item);
   }
 
   /** Ends the use of a point-powered ability: it is inert again. */

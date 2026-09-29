@@ -56,6 +56,23 @@ export function costsHitPointsCost(modifiers: readonly ModifierRef[]): { hp: num
   return { hp, perSecond };
 }
 
+/**
+ * What one use of an ability with Costs Fatigue takes (Basic Set Revised
+ * p. 111, "-5% per FP per use"), read back from the percentage it was priced
+ * at, doubled to -10% per FP where the cost is per second. Zero for a trait
+ * without the limitation.
+ */
+export function costsFatigueCost(modifiers: readonly ModifierRef[]): { fp: number; perSecond: boolean } {
+  let fp = 0;
+  let perSecond = false;
+  for (const m of named(modifiers, /^costs fatigue\b/i)) {
+    const second = /per second/i.test(m.name);
+    fp += Math.round(Math.abs(Number(m.value) || 0) / (5 * (second ? 2 : 1)));
+    perSecond ||= second;
+  }
+  return { fp, perSecond };
+}
+
 // ---------------------------------------------------------------------------
 // Hard to Use and Reliable (pp. 331-332)
 // ---------------------------------------------------------------------------

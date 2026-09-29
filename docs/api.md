@@ -4063,9 +4063,9 @@ runs again on the next load. Each helper returns
   amount)`. The world clock recharges every reserve on `updateWorldTime`. The
   sheet shows each reserve beside FP. `rules.energyReserves`,
   `rules.payFromReserve`, `rules.rechargeReserve`, `rules.drainsReserve` and
-  `rules.originKey` are the pieces. Extra effort with an ability of an origin
-  and Costs Fatigue are for the module that owns the ability, which charges
-  through `spendFatigue` with `origin`.
+  `rules.originKey` are the pieces. Extra effort with a power and Costs
+  Fatigue draw from the reserve too since 1.184.0 (see the entry for that
+  version); a module's own abilities charge through `spendFatigue` with `origin`.
 
 - **The Revised perks** (since 1.168.0; Basic Set Revised pp. 328-329). Each
   perk that names what it is for is read from its specialty into
@@ -4412,3 +4412,24 @@ runs again on the next load. Each helper returns
   `ammoTracked` (the API and the flag only), nothing yet calls `daysOfPower` for gadgets, and
   explosive or fine ammunition in a weapon is not detected, so a weapon holding it should be set
   tracked by hand. The add-on's six battery items are for the add-on to drop.
+
+- **Heroic Archer and Energy Reserve finished** (since 1.184.0; Basic Set Revised pp. 326-327).
+  Heroic Archer (switch `heroicArcher`, off): the Reload button on a Heroic Archer's Bow offers the
+  quick ready -- a Bow roll at -3 (-1 with Weapon Master (Bow)); on a success the bow is ready at once,
+  with no Ready maneuver and no time, and the next ranged attack carries the same penalty as a
+  `heroicArcher: "quickReady"` line (spent by that attack). The Fast-Draw (Arrow) roll asks the
+  GM's penalty for the draw and rolls it halved (`heroicArcher: "fastDraw"`), and the ranged
+  attack dialog has a stunt-shot penalty field, also halved (`heroicArcher: "stunt"`); anyone else
+  has no such field. `rules.quickReadyPenalty` and `rules.heroicHalvedPenalty` are the arithmetic.
+  Energy Reserve: extra effort's `spendFatigue` takes the ability's origin, so extra effort with a
+  power (`effort.rollPower({ ..., origin })`, and the sheet's button, which asks) draws from the
+  matching reserve first and counts what the reserve holds toward what can be afforded. Costs
+  Fatigue is now paid: `derived.abilityRolls` also lists `fpCost`, `fpCostPerSecond` and `origin`
+  (the trait's power modifier), `rules.costsFatigueCost(modifiers)` reads the price back (-5% per
+  FP, -10% per second), the Traits tab has a Pay cost button on such a trait and
+  `actors.payAbilityCost(actor, item)` does the same from a module, resolving to
+  `{ fp, reserve, hp }`. Rest and a day's rest recharge each reserve through the same minutes, and
+  the rest card says so. The sheet's pool beside FP has spend, give back and Full buttons. Not
+  done: extra effort chosen in a melee or ranged attack's dialog has no ability origin to pass, so
+  it pays FP; recovery aids of an origin (Recover Energy, Absorption) are for the module that owns
+  them to apply through `reserves.restore`.

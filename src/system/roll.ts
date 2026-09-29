@@ -198,7 +198,8 @@ import { gunslingerAccuracy, gunslingerWeapon, type GunslingerWeapon } from "../
 import { noPerks, offHandWaived } from "../rules/addendum-perks.js";
 import { closeCombatBulk } from "../rules/addendum-techniques.js";
 import { techniqueLevelsBoughtByPrefix } from "./technique-lookup.js";
-import { heroicAimBonus, heroicArcherWeapon, type HeroicArcherWeapon } from "../rules/heroic-archer.js";
+import { heroicAimBonus, heroicArcherWeapon, heroicHalvedPenalty, type HeroicArcherWeapon } from "../rules/heroic-archer.js";
+import { consumeQuickReady, pendingQuickReady } from "./heroic-archer.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
 import { rollMalediction } from "./malediction.js";
 import { COMPLEMENTARY_SOURCE, pendingModifierLines, removePendingModifier, spendPendingModifiers } from "./pending-modifiers.js";
@@ -234,9 +235,12 @@ export interface RollModifier {
   /**
    * On a `heroicArcher` line (since 1.166.0), what Heroic Archer did:
    * `accuracy` (the bow's Acc without an Aim), `aim` (the extra second of
-   * aim) or `moveAndAttack` / `closeCombat` (Bulk ignored).
+   * aim) or `moveAndAttack` / `closeCombat` (Bulk ignored); since 1.184.0
+   * `quickReady` (the penalty of the quick-ready roll and the attack after
+   * it), `stunt` (the halved stunt-shot penalty) and `fastDraw` (the halved
+   * Fast-Draw (Arrow) penalty).
    */
-  heroicArcher?: "accuracy" | "aim" | "moveAndAttack" | "closeCombat";
+  heroicArcher?: "accuracy" | "aim" | "moveAndAttack" | "closeCombat" | "quickReady" | "stunt" | "fastDraw";
   /** On a `dualWeapon` line, the hand rolled: `primary` or `off` (since 1.153.0). */
   hand?: "primary" | "off";
   /** On a `strikeAtWeapon` line, the id of the foe's item struck at (since 1.153.0). */
@@ -1061,6 +1065,8 @@ export function weaponFromDataset(actor: any, dataset: Record<string, unknown>) 
           skill: String(dataset.rollSkill ?? ""),
         })
       : null,
+    // What a quick ready left on this turn's shot (since 1.184.0).
+    quickReady: isRuleOn("heroicArcher") ? pendingQuickReady(actor) : 0,
     closeCombatLevels: techniqueLevelsBoughtByPrefix(actor, "Close Combat"),
     damageType: String(dataset.damageType ?? "cr") as DamageType,
     accuracy: n("accuracy"),
@@ -2090,6 +2096,8 @@ async function rollAction(
   if (rollType === "attack") await recordAddonDamage(actor, addon?.damageModifiers ?? []);
   // And the options themselves, which the blow carries to where it lands (since API 1.108.0).
   if (rollType === "attack") await recordAttackOptions(actor, { ...(melee?.options ?? shot?.options ?? {}) });
+  // A bow readied in no time costs the one shot that follows it (Basic Set Revised p. 327).
+  if (rollType === "attack" && ranged && weapon.heroicArcher) await consumeQuickReady(actor);
 
   // A setting that spends more than one shot needs the shots to spend
   // (since 1.50.0). Refused rather than fired, because a weapon cannot use
@@ -3426,6 +3434,10 @@ export async function promptForRangedAttack(options: {
   weaponTargets?: WeaponTarget[];
   /** Set for a Gunslinger's gun (Characters p. 58; since 1.163.0). */
   gunslinger?: GunslingerWeapon | null;
+  /** Set for a Heroic Archer's bow (Basic Set Revised p. 327): the dialog asks for a stunt-shot penalty (since 1.184.0). */
+  heroicArcher?: HeroicArcherWeapon | null;
+  /** What a quick ready left on this shot (since 1.184.0). */
+  quickReady?: number;
 }): Promise<RangedShot | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   const addonContext = attackContextFor({
@@ -3539,6 +3551,7 @@ export async function promptForRangedAttack(options: {
         </select>
       </label>
       ${field("modifier", game.i18n.localize("GWORLD.Chat.Modifier"), "0")}
+      ${options.heroicArcher ? field("stunt", game.i18n.localize("GWORLD.HeroicArcher.StuntPenalty"), "0") : ""}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Situation")}</span>
         <select name="situation" style="width:150px">
@@ -3592,6 +3605,8 @@ export async function promptForRangedAttack(options: {
       speed: num("speed"),
       size: num("size"),
       modifier: num("modifier"),
+      // A stunt shot's penalty, entered as a penalty whichever sign it is typed with.
+      stunt: options.heroicArcher ? -Math.abs(num("stunt")) : 0,
       shots: options.fixedShots ? options.fixedShots : rateOfFire > 1 || mayRaise ? num("shots") : 1,
       situation: situation as RangedInput["situation"],
       sight,
@@ -3757,6 +3772,8 @@ interface RangedInput {
   lockedOn?: boolean;
   /** The Revised edition's optional ranged rules, from the dialog's extra fields (since 1.182.0). */
   revised?: RevisedRangedInput | null;
+  /** The GM's penalty for a stunt shot, negative, which a Heroic Archer halves (since 1.184.0). */
+  stunt?: number;
 }
 
 /** What firing from a vehicle adds to a shot. */
@@ -3875,6 +3892,8 @@ export function rangedModifiers(
     gunslinger?: GunslingerWeapon | null;
     /** A Heroic Archer's bow (Basic Set Revised p. 327; since 1.166.0). */
     heroicArcher?: HeroicArcherWeapon | null;
+    /** The penalty a Heroic Archer's quick ready leaves on this attack, negative, or 0 (since 1.184.0). */
+    quickReady?: number;
     /** Levels bought in Close Combat, which buy back Bulk in close combat (Revised p. 334; since 1.171.0). */
     closeCombatLevels?: number;
   },
@@ -4179,6 +4198,16 @@ export function rangedModifiers(
   // A Heroic Archer's bow gives its Acc without an Aim maneuver, and another
   // +1 or +2 for one or two seconds of it (Revised p. 327); a Move and Attack
   // or close combat ignores Bulk in its place.
+  if (heroic && !gunslinger) {
+    // The bow was readied in no time on this turn, at a price on the shot (p. 327).
+    if ((weapon.quickReady ?? 0) < 0) {
+      modifiers.push({ label: L("HeroicArcherQuickReady"), value: weapon.quickReady as number, key: "heroicArcher", heroicArcher: "quickReady" });
+    }
+    // A stunt shot's penalty, the GM's to set, is halved for a Heroic Archer.
+    if ((input.stunt ?? 0) < 0) {
+      modifiers.push({ label: L("HeroicArcherStunt"), value: heroicHalvedPenalty(input.stunt as number), key: "heroicArcher", heroicArcher: "stunt" });
+    }
+  }
   if (heroic && !gunslinger && !heroicWaived) {
     if (!accuracyClaimed && weapon.accuracy !== 0) {
       modifiers.push({ label: L("HeroicArcherAccuracy"), value: weapon.accuracy, key: "heroicArcher", heroicArcher: "accuracy" });
