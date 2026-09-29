@@ -141,3 +141,4 @@ export * from "./addendum-techniques.js";
 export * from "./alternative-abilities.js";
 export * from "./pulling-rank.js";
 export * from "./skill-availability.js";
+export * from "./cost-factors.js";

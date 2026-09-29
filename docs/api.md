@@ -4192,3 +4192,25 @@ runs again on the next load. Each helper returns
   Advice only, with no switch: the compendium picker greys a skill above the
   character's TL (the campaign's when no actor) with a tooltip, and the skills
   tab shows a warning tag on one already taken; nothing is refused.
+- **Cost factors for equipment modifiers** (since 1.174.0; Basic Set Revised pp. 342, 275).
+  Every priced field is a cost factor (CF): final cost is list x (1 + total CF), the
+  total never below -0.8; weight effects multiply, stat adjustments add.
+  `rules.pricingOf(fields)` returns `{ factors, total, costMultiplier, weightFactor,
+  effects }` for a `PricedFields` (kind `weapon`, `tool`, `armor` or `shield`, with
+  quality, material, composition, equipmentQuality and the modifier fields);
+  `rules.totalCostFactor`, `priceFromCostFactors`, `cfFromMultiple`,
+  `cfFromPercentOfList`, `cfFromPercentAdded`, `presentationCostFactor`,
+  `MODIFIER_CF`, `MODIFIER_WEIGHT` and `COST_FACTOR_FLOOR` are the pieces, and
+  `rules.qualityCostFactor` and `silverCostFactor` read the Basic Set's grade and
+  silver prices as CFs. Silver is a surcharge on the good-quality price (solid +19,
+  coated +2, bullets +49), and a silver weapon, coated or solid, is good or cheap
+  at best (`maxQualityFor`): fine, very fine and silver are mutually exclusive.
+  New calculated fields: equipment `balanced`, `cuttingEdge`, `disguised`,
+  `rugged` (Booleans) and `presentation` (0-3, +1/+4/+9 CF); armor `fine`,
+  `disguised`, `presentation`; shield `fine`, `balanced`, `disguised`,
+  `presentation`, and the composition `mirrored` (silver-coated, +6 CF). The item
+  sheet reprices cost and weight from `listCost` and `listWeight` when any of them
+  changes, adding the CFs instead of multiplying, and shows the sum and the stat
+  effects (reactions, +1 skill or Acc, +2 HT and DR x2 for rugged). The stat
+  effects are shown, not applied to rolls. Modules that price their own Balanced,
+  Cutting-Edge, Disguised or Rugged fields should read these and `pricingOf`.

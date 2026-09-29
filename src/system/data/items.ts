@@ -1295,6 +1295,21 @@ function rangedModeField() {
  * quarterstaff can swing or thrust, under either Staff or Two-Handed Sword.
  * Modes model that directly instead of forcing duplicate items.
  */
+/**
+ * The equipment modifiers of Basic Set Revised p. 342 that an item can carry
+ * as calculated fields. Each is a cost factor on the price, so they add rather
+ * than multiply; the item sheet reprices from the list price when one changes.
+ */
+function costModifierFields(names: ReadonlyArray<"fine" | "balanced" | "cuttingEdge" | "disguised" | "rugged" | "presentation">) {
+  const out: Record<string, any> = {};
+  for (const name of names) {
+    out[name] = name === "presentation"
+      ? new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0, max: 3 })
+      : new fields.BooleanField({ initial: false });
+  }
+  return out;
+}
+
 export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare container: boolean;
   declare capacity: number;
@@ -1328,6 +1343,11 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare weaponClass: WeaponClass;
   declare listCost: number;
   declare listWeight: number;
+  declare balanced: boolean;
+  declare cuttingEdge: boolean;
+  declare disguised: boolean;
+  declare presentation: number;
+  declare rugged: boolean;
   declare hpLost: number;
   declare missedMaintenance: number;
   declare complexity: number;
@@ -1461,6 +1481,8 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
       listCost: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       /** The table's weight, before what it is made of. */
       listWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+      // Balanced, Cutting-Edge, Disguised, Presentation and Rugged (Revised p. 342), each a cost factor.
+      ...costModifierFields(["balanced", "cuttingEdge", "disguised", "presentation", "rugged"]),
       /**
        * Damage the weapon has taken (Campaigns p. 483): struck at, or worn.
        * Against the HP its weight gives it, this says whether it still works.
@@ -1516,6 +1538,9 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   declare enchantments: Enchantment[];
   declare listCost: number;
   declare listWeight: number;
+  declare fine: boolean;
+  declare disguised: boolean;
+  declare presentation: number;
   declare dr: number;
   declare drSplit: number | null;
   declare drSplitAppliesTo: DamageType[];
@@ -1546,6 +1571,8 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       /** The table's price and weight, before what it is made of. */
       listCost: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       listWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+      // Fine armor (+9 CF, weight x3/4), Disguised and Presentation (Revised p. 342).
+      ...costModifierFields(["fine", "disguised", "presentation"]),
       dr: new fields.NumberField({
         required: true,
         nullable: false,
@@ -1714,6 +1741,10 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
   declare composition: ShieldComposition;
   declare listCost: number;
   declare listWeight: number;
+  declare fine: boolean;
+  declare balanced: boolean;
+  declare disguised: boolean;
+  declare presentation: number;
   declare skill: string;
   declare meleeModes: unknown[];
   declare quantity: number;
@@ -1764,6 +1795,8 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
       /** The table's price and weight, before what it is made of. */
       listCost: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       listWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
+      // Fine (+9 CF, weight x3/4), Balanced, Disguised and Presentation (Revised p. 342).
+      ...costModifierFields(["fine", "balanced", "disguised", "presentation"]),
       skill: new fields.StringField({ required: true, blank: true, initial: "Shield" }),
       /**
        * Bashing someone with the shield (GURPS Basic Set: Characters p. 273).

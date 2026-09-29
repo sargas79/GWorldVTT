@@ -1091,6 +1091,33 @@
       </div>
     {{/if}}
 
+    {{!-- Equipment modifiers, each a cost factor on the price (Revised p. 342). --}}
+    {{#if isPhysical}}
+      <div class="ifields">
+        {{#each costChecks as |check|}}
+          <label class="icheck" data-tooltip="{{localize check.hint}}">
+            <input type="checkbox" name="system.{{check.name}}" {{#if check.checked}}checked{{/if}}
+                   {{#unless @root.editable}}disabled{{/unless}} />
+            {{localize check.label}}
+          </label>
+        {{/each}}
+        <label data-tooltip="{{localize 'GWORLD.CostFactor.presentationHint'}}">{{localize "GWORLD.CostFactor.presentation"}}
+          <input type="number" name="system.presentation" value="{{system.presentation}}" step="1" min="0" max="3"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+      {{#if costFactors}}
+        <p class="ihint">
+          {{#each costFactors.lines as |line|}}{{localize line.label}} {{line.cf}} CF{{#unless @last}}, {{/unless}}{{/each}}
+          &rarr; {{localize "GWORLD.CostFactor.Total" total=costFactors.total multiplier=costFactors.multiplier}}
+          {{#if costFactors.reactions}} {{localize "GWORLD.CostFactor.Reactions" bonus=costFactors.reactions}}{{/if}}
+          {{#if costFactors.skill}} {{localize "GWORLD.CostFactor.Skill" bonus=costFactors.skill}}{{/if}}
+          {{#if costFactors.accuracy}} {{localize "GWORLD.CostFactor.Accuracy" bonus=costFactors.accuracy}}{{/if}}
+          {{#if costFactors.rugged}} {{localize "GWORLD.CostFactor.RuggedEffect" ht=costFactors.ht}}{{/if}}
+        </p>
+      {{/if}}
+    {{/if}}
+
     {{#if isPhysical}}
       {{!-- What is enchanted onto it (Campaigns pp. 480-482): each spell
            with its own Power. Six names are effects on the item itself;
