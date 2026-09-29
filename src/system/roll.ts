@@ -5424,6 +5424,7 @@ export async function maybePromptModifiers(
   if (asked === null) return null;
   const lines: RollModifier[] = [];
   if (asked.value !== 0) lines.push({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: asked.value, key: "situational" });
+  lines.push(...asked.lines);
   if (asked.tradeFp > 0) {
     // 1 FP per +1, paid before the roll; a roller who can't pay does not get it.
     const bonus = fatigueForSkillBonus(asked.tradeFp);

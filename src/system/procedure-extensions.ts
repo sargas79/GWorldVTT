@@ -23,7 +23,7 @@
 
 import { sceneAreaLines } from "./modifier-areas.js";
 import { badReplacesSituational, taskRuleLines } from "./task-rules.js";
-import { allOutConcentrateLines, fallRollLines, mentalDefenseLines, moreManeuverAttackEffect, moreManeuverDefenseLines } from "./more-maneuvers.js";
+import { allOutConcentrateLines, fallRollLines, mentalDefenseLines, moreManeuverAttackEffect } from "./more-maneuvers.js";
 import { SYSTEM_ID } from "./constants.js";
 import { endAttackedThisTurn } from "./feint.js";
 import { isFightingRoll, noteFought } from "./combat-participation.js";

@@ -423,7 +423,7 @@ describe("the roll dialog's spinner for trading FP (Basic Set Revised p. 572)", 
     expect(content()).toContain('name="tradeFp"');
     expect(content()).toContain('max="4"');
     expect(lines).toEqual([
-      { label: "GWORLD.Chat.Situational", value: 1 },
+      { label: "GWORLD.Chat.Situational", value: 1, key: "situational" },
       { label: "GWORLD.ExtraEffort.TradeSkillLine", value: 3 },
     ]);
     expect(spent).toEqual([[3, "GWORLD.ExtraEffort.TradeTitle"]]);
