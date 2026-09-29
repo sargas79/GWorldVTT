@@ -4214,3 +4214,16 @@ runs again on the next load. Each helper returns
   effects (reactions, +1 skill or Acc, +2 HT and DR x2 for rugged). The stat
   effects are shown, not applied to rolls. Modules that price their own Balanced,
   Cutting-Edge, Disguised or Rugged fields should read these and `pricingOf`.
+- **Flat-cost Signature Gear** (since 1.175.0; Basic Set Revised p. 342). The rules
+  switch `flatSignatureGear` (equipment group, off): Signature Gear becomes a 1-point
+  perk whose count is the number of gear items flagged. Equipment and armor items
+  take `system.signature` (Boolean, revived from the field earlier releases migrated
+  away; its deprecated-data entry is gone). With the switch on the trait's levels
+  are the count of flagged items and the point audit bills a point each (a flag with
+  no Signature Gear trait held is billed anyway, as an advantage), the money tab's
+  budget line is hidden (`derived.wealth.signatureGearPoints` is 0) and the item sheet
+  and gear row show the flag. Off, the levels buy goods worth 50% of starting wealth
+  per point as before. `rules.isSignatureGearName`, `flaggedSignatureItems`,
+  `flatSignatureGearCost`, `flatSignatureBilling` and `SIGNATURE_PERK_POINTS` are the
+  pure pieces. Not done: the plot protection is the GM's to honour; the system
+  neither enforces nor rolls it.

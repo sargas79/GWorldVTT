@@ -185,6 +185,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "familiarity", reference: "Characters p. 169", default: false },
     // Mending what is broken, and the sand that breaks it.
     { key: "repairs", reference: "Campaigns pp. 484-485", default: true },
+    // Signature Gear as a 1-point perk on one flagged item, not a budget of goods.
+    { key: "flatSignatureGear", reference: "Basic Set Revised p. 342", default: false },
   ],
   // "Shamelessly unrealistic and strictly optional, but can be fun in
   // larger-than-life games!" -- the book's own words, and the reason every one

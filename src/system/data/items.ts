@@ -1348,6 +1348,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare disguised: boolean;
   declare presentation: number;
   declare rugged: boolean;
+  declare signature: boolean;
   declare hpLost: number;
   declare missedMaintenance: number;
   declare complexity: number;
@@ -1439,6 +1440,12 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
        * is a quarter of their ST, rounded down, before encumbrance.
        */
       wheelchair: new fields.BooleanField({ initial: false }),
+      /**
+       * Marked as Signature Gear under the flat-cost variant (Basic Set
+       * Revised p. 342): a 1-point perk giving plot protection to this item,
+       * whatever it is worth. Read only with the `flatSignatureGear` switch on.
+       */
+      signature: new fields.BooleanField({ initial: false }),
       /**
        * The grade it was bought in (GURPS Basic Set: Characters p. 274). The
        * tables' prices buy good quality through TL6; a finer weapon cuts
@@ -1541,6 +1548,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   declare fine: boolean;
   declare disguised: boolean;
   declare presentation: number;
+  declare signature: boolean;
   declare dr: number;
   declare drSplit: number | null;
   declare drSplitAppliesTo: DamageType[];
@@ -1573,6 +1581,8 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       listWeight: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
       // Fine armor (+9 CF, weight x3/4), Disguised and Presentation (Revised p. 342).
       ...costModifierFields(["fine", "disguised", "presentation"]),
+      /** Marked as Signature Gear under the flat-cost variant (Basic Set Revised p. 342). */
+      signature: new fields.BooleanField({ initial: false }),
       dr: new fields.NumberField({
         required: true,
         nullable: false,

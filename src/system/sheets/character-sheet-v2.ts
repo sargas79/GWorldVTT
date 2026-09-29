@@ -431,6 +431,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         // The equipment's own figures: what the book prints and the player looks for.
         stats: gearStatistics({ type: item.type, system: item.system, objectStats: item.type === "shield" ? objectStats(item) : null }, attacks, localize),
         legality: legalityNote(legalityClassOf(item)),
+        signature: isRuleOn("flatSignatureGear") && item.system?.signature === true,
         vehicle: s.category === "vehicle" && isRuleOn("vehicles"),
         // Whether the character knows this make (Characters p. 169), for any
         // equipment, vehicles included, where the rule is on (since API 1.102.0).

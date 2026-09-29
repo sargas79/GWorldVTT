@@ -832,6 +832,10 @@
           "Name": "Tech-level modifiers",
           "Hint": "A technological skill used with gear of another tech level takes a penalty: -1 per TL of difference for a DX-based skill such as Guns; by the table for an IQ-based one, steep for gear ahead of the skill (impossible at four TLs) and gentler for older gear. Weapon attacks and the tools carried for a skill take it (Characters p. 168)."
         },
+        "flatSignatureGear": {
+          "Name": "Flat-cost Signature Gear",
+          "Hint": "Signature Gear becomes a 1-point perk: plot protection against permanent loss for each item you flag as Signature Gear, of any value, however it was acquired. It no longer buys goods with starting wealth (Basic Set Revised p. 342)."
+        },
         "familiarity": {
           "Name": "Familiarity",
           "Hint": "A technological skill takes -2 with an item its user is not familiar with; eight hours of practice make it familiar. A character's familiarities are marked from the attack preview on the Combat tab. Off by default, since until the list is kept every weapon counts as unfamiliar (Characters p. 169)."
@@ -4147,6 +4151,8 @@
       "balancedHint": "+1 to skill with a melee or thrown weapon or shield, or +1 Acc with a muscle-powered missile weapon: +4 CF (Revised p. 342).",
       "cuttingEdge": "Cutting-edge",
       "cuttingEdgeHint": "Made of the latest materials: weight x2/3 for +1 CF. Anything but armor or weapons (Revised p. 342).",
+      "signature": "Signature Gear",
+      "signatureHint": "One of your Signature Gear items: a 1-point perk that protects it from permanent loss by the plot, whatever it is worth (Basic Set Revised p. 342).",
       "disguised": "Disguised",
       "disguisedHint": "Resembles something else of similar shape; finding the hidden function takes a Search roll: +4 CF (Revised p. 342).",
       "rugged": "Rugged",

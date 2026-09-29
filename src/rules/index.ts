@@ -142,3 +142,4 @@ export * from "./alternative-abilities.js";
 export * from "./pulling-rank.js";
 export * from "./skill-availability.js";
 export * from "./cost-factors.js";
+export * from "./flat-signature-gear.js";

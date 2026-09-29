@@ -11,6 +11,7 @@
   <span class="v2-row-name">
     {{row.name}}
     {{#if row.equipped}}<span class="v2-tag v2-tag-steel">{{localize "GWORLD.Item.Equipped"}}</span>{{/if}}
+    {{#if row.signature}}<span class="v2-tag v2-tag-steel" data-tooltip="{{localize 'GWORLD.CostFactor.signatureHint'}}">{{localize "GWORLD.CostFactor.signature"}}</span>{{/if}}
     {{#if row.legality.label}}<span class="v2-tag{{#if row.legality.restricted}} v2-tag-red{{/if}}">{{row.legality.label}}</span>{{/if}}
     {{#if (and row.container (or row.capacity row.inside.count))}}
       {{!-- What is inside: how full against its capacity where it has one. --}}

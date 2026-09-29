@@ -248,6 +248,8 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
         : kind === "shield" ? ["fine", "balanced"]
         : kind === "weapon" ? ["balanced"]
         : ["cuttingEdge", "rugged"];
+      // Flat-cost Signature Gear (Revised p. 342): the flag lives on the gear.
+      if (item.type !== "shield" && isRuleOn("flatSignatureGear")) names.push("signature");
       context.costChecks = [...names, "disguised"].map((name) => ({
         name,
         label: `GWORLD.CostFactor.${name}`,

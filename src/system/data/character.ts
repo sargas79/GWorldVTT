@@ -16,6 +16,7 @@ import {
 import { beastAttacks, beastTraitsFrom, naturalAttacks, weaponUnarmedBonus } from "../../rules/natural-attacks.js";
 import { becomesUnreadyAfterAttack } from "../../rules/readiness.js";
 import { aimBonus } from "../../rules/aim.js";
+import { flaggedSignatureItems, flatSignatureBilling } from "../../rules/flat-signature-gear.js";
 import { regenerationRate } from "../../rules/recovery.js";
 import { catalogSkill, defaultLevelFrom } from "../skill-catalog.js";
 import { isUnarmedSkill } from "../../rules/criticals.js";
@@ -1492,7 +1493,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // campaign's average rather than from this character's own wealth
     // (Characters pp. 26, 85).
     const traded = Math.max(0, Number(this.points?.tradedForMoney ?? 0) || 0);
-    const signaturePoints = signatureGearPoints(traits);
+    // Under the flat-cost variant Signature Gear is a perk, not a budget of goods (Revised p. 342).
+    const signaturePoints = isRuleOn("flatSignatureGear") ? 0 : signatureGearPoints(traits);
     return {
       tradedPoints: traded,
       tradedForMoney: pointsForMoney(traded, tl),
@@ -3384,6 +3386,20 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     }
 
     // ── points ledger ───────────────────────────────────────────────────
+    // Flat-cost Signature Gear (Revised p. 342): a point for each flagged item, billed on the trait.
+    const flatSignature = isRuleOn("flatSignatureGear")
+      ? flatSignatureBilling(
+        this.itemsOfType("trait").map((i) => ({ id: String(i.id), name: i.name })),
+        flaggedSignatureItems([...this.itemsOfType("equipment"), ...this.itemsOfType("armor")]).length,
+      )
+      : null;
+    // The trait's levels are the count of flagged items this turn, so its row and the audit agree.
+    if (flatSignature) {
+      for (const trait of this.itemsOfType("trait")) {
+        const points = flatSignature.byTrait.get(String(trait.id));
+        if (points !== undefined && trait.system) trait.system.levels = points;
+      }
+    }
     const sumTraits = (category: string) =>
       this.itemsOfType("trait")
         .filter((i) => i.system?.category === category)
@@ -3393,7 +3409,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // billed by the trait that bought it.
     const attributePoints =
       (bought.ST - 10) * 10 + (bought.HT - 10) * 10 + (bought.DX - 10) * 20 + (bought.IQ - 10) * 20;
-    const advantages = sumTraits("advantage") + sumTraits("perk");
+    const advantages = sumTraits("advantage") + sumTraits("perk") + (flatSignature?.unbilled ?? 0);
     const disadvantages = sumTraits("disadvantage");
     const quirks = sumTraits("quirk");
     const skillPoints = this.itemsOfType("skill").reduce(
