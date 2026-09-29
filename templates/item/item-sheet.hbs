@@ -566,6 +566,11 @@
           <input type="number" name="system.drLost" value="{{system.drLost}}" step="1" min="0"
                  {{#unless editable}}disabled{{/unless}} />
         </label>
+        {{!-- Hitting 'Em Where It Hurts (Basic Set Revised p. 576): the n of "n in 6". --}}
+        <label data-tooltip="{{localize 'GWORLD.Armor.CoverageHint'}}">{{localize "GWORLD.Armor.Coverage"}}
+          <input type="number" name="system.coverage" value="{{system.coverage}}" step="1" min="1" max="6"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
       </div>
       <div class="irow iflags">
         <label class="icheck" data-tooltip="{{localize 'GWORLD.Armor.ForceFieldHint'}}">

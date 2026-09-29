@@ -45,6 +45,7 @@ import { objectStats } from "../object-stats.js";
 import { shotsEntryFor } from "../shots-entry.js";
 import { fullLoad } from "../../rules/ammunition.js";
 import { isAmmunition } from "../ammunition.js";
+import { ammoToggleFor, gadgetDays, toggleAmmoTracked } from "../simplified-resources.js";
 import { lacksSpecialty, traitDisplayName } from "../../rules/traits.js";
 import { successChance } from "../sheet-v2/success-chance.js";
 import { mechanicFallbackLabel, mechanicsOf } from "../sheet-v2/trait-mechanics.js";
@@ -117,6 +118,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2Location: GWorldCharacterSheetV2.#onLocation,
       v2ShowMessage: GWorldCharacterSheetV2.#onShowMessage,
       v2ToggleCarried: GWorldCharacterSheetV2.#onToggleCarried,
+      v2ToggleAmmoTracked: GWorldCharacterSheetV2.#onToggleAmmoTracked,
       v2GearSort: GWorldCharacterSheetV2.#onGearSort,
       v2Upgrade: GWorldCharacterSheetV2.#onUpgrade,
       v2ProgressionMode: GWorldCharacterSheetV2.#onProgressionMode,
@@ -445,6 +447,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         loadModeIndex: Math.max(0, loadModeIndex),
         // A box of rounds says how many it has left, and that count is edited here.
         isAmmunition: isAmmunition(item),
+        // Simplified Resources (Revised p. 578): whether this weapon's shots are counted.
+        ammoToggle: ammoToggleFor(item),
         // Gear made to hold gear is a container, as the item says; anything can be kept in one.
         container: isContainer(item)
           ? { capacity: Number(s.capacity ?? 0) || 0, inside: rowById.get(String(item.id))?.inside ?? null, load: rowById.get(String(item.id))?.capacity ?? null }
@@ -505,6 +509,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         dodge: derived.defenses?.dodge?.total ?? null,
         dodgePenalty: Number(derived.encumbrance?.dodgePenalty ?? 0) || 0,
         money: system.money,
+        // Simplified Resources: the days the gadgets run on the spares carried (Revised p. 578).
+        gadgetDays: gadgetDays(actor),
       },
       areas,
       shields: physical.filter((i: any) => i.type === "shield" && i.system?.equipped).map((i: any) => ({ id: i.id, name: i.name, db: i.system?.db })),
@@ -1570,6 +1576,13 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     card.scrollIntoView({ block: "center", behavior: "smooth" });
     card.classList.add("gworld-flash");
     setTimeout(() => card.classList.remove("gworld-flash"), 1600);
+  }
+
+  /** Counts a weapon's shots, or stops (Simplified Resources, Basic Set Revised p. 578). */
+  static async #onToggleAmmoTracked(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const item = this.itemFrom(target);
+    if (!item || !this.isEditable) return;
+    await toggleAmmoTracked(item);
   }
 
   /** Moves a piece of equipment into the pack or out of it. */

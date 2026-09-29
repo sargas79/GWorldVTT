@@ -244,7 +244,7 @@ export interface ManeuverOptionRegistration {
   maneuver: string;
   label: string;
   /** The control. Defaults to a checkbox. */
-  input?: OptionInput;
+  input?: OptionInput | ((actor: any) => OptionInput);
   /** Whether it is offered to this actor. Defaults to always. */
   available?: (actor: any) => boolean;
   /** Why it can't be chosen right now, or null. Shown on the disabled control. */
@@ -261,7 +261,7 @@ interface ManeuverOption {
   id: string;
   maneuver: string;
   label: string;
-  input: OptionInput;
+  input: OptionInput | ((actor: any) => OptionInput);
   available: (actor: any) => boolean;
   refuse: (context: ManeuverOptionContext) => string | null;
   attack: ManeuverOptionRegistration["attack"] | null;
@@ -330,7 +330,7 @@ export function maneuverOptionsFor(actor: any): Array<{ id: string; label: strin
     .map((o) => ({
       id: o.id,
       label: o.label,
-      input: o.input,
+      input: typeof o.input === "function" ? safely(`maneuver option ${o.id}`, () => (o.input as (actor: any) => OptionInput)(actor), { type: "checkbox" } as OptionInput) : o.input,
       value: chosen[o.id],
       refused: safely(`maneuver option ${o.id}`, () => o.refuse(context), null),
       response: o.response && isChosen(chosen[o.id]) ? o.response.label : null,

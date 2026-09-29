@@ -29,11 +29,14 @@ import {
   contactShot,
   readRevisedRanged,
   revisedRangedFields,
+  revisedRangedDefenseModifiers,
   revisedRangedLines,
+  rapidStrikeCheck,
   simplifiedRange,
   simplifiedRangeOn,
   type RevisedRangedInput,
 } from "./revised-ranged.js";
+import { illuminationFields, readVisionPrompt, trackingTerrainLines, visionPromptFields, wireIllumination } from "./vision-prompts.js";
 import { normalizeDamage, rolledDice } from "./modifying-dice.js";
 import { rollBreakdown, signed, type RollBreakdown } from "./roll-breakdown.js";
 import { damageDice, damageDiceRow } from "./damage-dice.js";
@@ -1688,6 +1691,20 @@ export async function promptForModifier(
   held: HeldLine[] = [],
   onDiscard?: (ids: string[]) => Promise<void>,
 ): Promise<number | null> {
+  const asked = await promptForModifierDetail(held, onDiscard, false);
+  return asked ? asked.value : null;
+}
+
+/**
+ * The modifier prompt, with the lines a Vision roll adds (since API 1.190.0):
+ * In Plain Sight and the level of light (Basic Set Revised p. 574), offered
+ * only where `vision` is set. Returns the situational figure and those lines.
+ */
+export async function promptForModifierDetail(
+  held: HeldLine[] = [],
+  onDiscard?: (ids: string[]) => Promise<void>,
+  vision = false,
+): Promise<{ value: number; extra: RollModifier[] } | null> {
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: game.i18n.localize("GWORLD.Chat.ModifierTitle") },
     content: `<div class="gworld">${heldModifiersNote(held, onDiscard !== undefined)}
@@ -1695,6 +1712,7 @@ export async function promptForModifier(
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
         <input type="number" name="modifier" value="0" step="1" autofocus style="width:80px">
       </label>
+      ${vision ? visionPromptFields() : ""}
     </div>`,
     ok: {
       label: game.i18n.localize("GWORLD.Chat.Roll"),
@@ -1707,13 +1725,15 @@ export async function promptForModifier(
           .map((box) => box.value)
           .filter(Boolean);
         if (discarded.length > 0 && onDiscard) await onDiscard(discarded);
-        return Number(input?.value ?? 0);
+        return { value: Number(input?.value ?? 0), extra: vision ? readVisionPrompt(form) : [] };
       },
     },
     rejectClose: false,
   });
 
-  return typeof result === "number" && Number.isFinite(result) ? result : null;
+  return result && typeof result === "object" && Number.isFinite((result as { value: number }).value)
+    ? (result as { value: number; extra: RollModifier[] })
+    : null;
 }
 
 /** A bonus held for a roll as its dialog lists it: with the id to discard it by, where the rule that holds it lets it be discarded. */
@@ -2013,8 +2033,10 @@ async function rollAction(
     ? shot.modifiers
     : melee
       ? melee.modifiers
-      : await maybePromptModifiers(event, heldForRoll(actor, rollType, target.dataset.rollSkill ?? (rollType === "skill" ? rollLabel : undefined), target.dataset), actor);
+      : await maybePromptModifiers(event, heldForRoll(actor, rollType, target.dataset.rollSkill ?? (rollType === "skill" ? rollLabel : undefined), target.dataset), actor, target.dataset.sense === "vision" && rollType !== "attack");
   if (modifiers === null) return null;
+  // Terrain Types Redux (Revised p. 573): the terrain's modifier to a Tracking roll.
+  if (rollType === "skill") modifiers.push(...trackingTerrainLines(String(target.dataset.rollSkill ?? rollLabel ?? "")));
 
   modifiers.push(...standingRollLines(actor, {
     rollType,
@@ -2210,7 +2232,7 @@ async function rollAction(
         ranged: Boolean(ranged),
         modifiers,
         defensePenalty: (melee?.defensePenalty ?? shot?.defensePenalty ?? 0) + feint,
-        defenseModifiers: [...(addon?.defenseModifiers ?? [])],
+        defenseModifiers: [...(addon?.defenseModifiers ?? []), ...(shot?.defenseModifiers ?? [])],
         dataset: { ...target.dataset },
         // Move and Attack and a Wild Swing both hold skill to 9.
         skillCap: movingMelee || melee?.wildSwing ? WILD_SWING_SKILL_CAP : (null as number | null),
@@ -3070,6 +3092,8 @@ interface RangedShot {
   cover?: CoverApproach | "none";
   /** +1 to the target's Dodge where they have seen a laser dot within its range. */
   dodgeBonus?: number;
+  /** Lines for the target's defenses: a Prediction Shot's penalty to Dodge only (Revised p. 577). */
+  defenseModifiers?: Array<{ label: string; value: number; defenses?: AddonDefenseKey[] }>;
   /** The laser sight as the dialog left it: on, and whether the target saw the dot (p. 411). */
   laser?: { on: boolean; targetSees: boolean } | null;
   /** What the modules' attack options chosen in the dialog add up to. */
@@ -3647,6 +3671,7 @@ export async function promptForRangedAttack(options: {
         const form = root.closest<HTMLElement>(".application") ?? root;
         showRangedBreakdown(root, readForm(form) as Parameters<typeof showRangedBreakdown>[1], options);
       };
+      wireIllumination(root);
       root.addEventListener("change", update);
       root.addEventListener("input", update);
       update();
@@ -3679,6 +3704,15 @@ export async function promptForRangedAttack(options: {
   }
   const shellsFired = burst;
 
+  // A Ranged Rapid Strike (Revised p. 577) needs RoF 2 or more, no Dual-Weapon
+  // Attack, and a split of the RoF that leaves the other target a shot.
+  const rapid = rapidStrikeCheck(input.revised, { rateOfFire: effectiveRateOfFire, shots: burst, dual: input.dual != null });
+  if (rapid && "refusal" in rapid) {
+    ui.notifications?.warn(rapid.refusal);
+    return null;
+  }
+  if (rapid) ui.notifications?.info(game.i18n.format("GWORLD.RevisedRanged.RapidOther", { other: rapid.other }));
+
   // Each shell may be several pellets, which count as shots of their own.
   const pellets = multipleProjectiles({
     shotsFired: shellsFired,
@@ -3710,6 +3744,7 @@ export async function promptForRangedAttack(options: {
     lockedOn: input.lockedOn === true,
     dualWeapon: input.dual ?? null,
     defensePenalty: extras.defensePenalty,
+    defenseModifiers: revisedRangedDefenseModifiers(input.revised),
     weaponStrike: extras.weaponStrike,
     laser: { on: input.laser?.on === true, targetSees: input.laser?.targetSees === true },
     // "But if the target can see it, he gets +1 to Dodge!"
@@ -3927,7 +3962,7 @@ export function rangedModifiers(
   // In close combat the speed/range penalty is dropped and Bulk stands in its
   // place: the target is right there, and the weapon is in the way.
   // Simplified Range (Revised p. 577) reads a band in place of the table's range.
-  const banded = simplifiedRangeOn() ? simplifiedRange(seenRange) : null;
+  const banded = simplifiedRangeOn() ? simplifiedRange(seenRange, input.revised?.bandShift ?? "none") : null;
   const rangeValue = banded ? banded.penalty : speedRange;
   if (banded && banded.penalty !== 0 && situation !== "closeCombat" && steering.range) {
     modifiers.push({
@@ -4323,7 +4358,8 @@ function sightField(): string {
   <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
     <span>${game.i18n.localize("GWORLD.Sight.Darkness")}</span>
     <input type="number" name="darkness" value="0" min="0" max="9" step="1" style="width:90px">
-  </label>`;
+  </label>
+  ${illuminationFields()}`;
 }
 
 /** What the chosen sight costs, as a modifier line. */
@@ -4786,6 +4822,7 @@ export async function promptForMeleeAttack(options: {
           { modifiers, automatic: false },
         ], { cap }));
       };
+      wireIllumination(root);
       root.addEventListener("change", update);
       root.addEventListener("input", update);
       update();
@@ -5181,18 +5218,20 @@ function rollKind(rollType: string | undefined): RollKind {
  * Shift-click asks for a situational modifier. Returns null when the prompt is
  * dismissed, meaning the caller should abandon the roll entirely.
  */
-export async function maybePromptModifiers(event: Event, held: HeldLine[] = [], actor: any = null): Promise<RollModifier[] | null> {
+export async function maybePromptModifiers(event: Event, held: HeldLine[] = [], actor: any = null, vision = false): Promise<RollModifier[] | null> {
   // A complementary skill's bonus is put to the roller before the roll, not
   // only on shift-click, so that it is seen and can be discarded.
   const discardable = held.some((m) => m.heldId !== undefined);
   if (!(event as MouseEvent).shiftKey && !discardable) return [];
 
-  const value = await promptForModifier(held, discardable && actor
+  // A Vision roll also offers In Plain Sight and the level of light (Revised p. 574).
+  const asked = await promptForModifierDetail(held, discardable && actor
     ? async (ids) => { for (const id of ids) await removePendingModifier(actor, id); }
-    : undefined);
-  if (value === null) return null;
-  if (value === 0) return [];
-  return [{ label: game.i18n.localize("GWORLD.Chat.Situational"), value }];
+    : undefined, vision);
+  if (asked === null) return null;
+  const lines: RollModifier[] = [...asked.extra];
+  if (asked.value !== 0) lines.unshift({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: asked.value });
+  return lines;
 }
 
 /** The individual d6 faces from an evaluated Roll. */

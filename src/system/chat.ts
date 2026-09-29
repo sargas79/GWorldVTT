@@ -13,6 +13,7 @@
 
 import { revisedLocation, woundNotes as revisedNotes } from "../rules/revised-hit-locations.js";
 import { SYSTEM_ID } from "./constants.js";
+import { combatVisionMemo, combatVisionNeed, settleCombatVision } from "./vision-corrections.js";
 import { applyDamageToActor, takeInjury, traitsOf, type AppliedDamage, type IncomingDamage } from "./damage.js";
 import { isUndoable, undoDamage, type DamageTransaction } from "./damage-undo.js";
 import { HURTING_YOURSELF_DR, hurtingYourself } from "../rules/hurting-yourself.js";
@@ -970,6 +971,32 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       continue;
     }
 
+    // Vision Rolls in Combat (Revised pp. 574-575): against an attacker of SM -10
+    // or less, or a shot from -10 of range or worse, the defender must see it
+    // coming. The roll is made when a defense is chosen, once per attack; one
+    // already failed leaves no defense.
+    const sightNeed = await combatVisionNeed({
+      attacker,
+      attackerToken: flag.attackerToken,
+      defenderToken: entry.tokenUuid,
+      delivery: flag.delivery,
+    });
+    let sawIt: boolean | null = sightNeed ? combatVisionMemo(defender, String(message.id ?? "")) : null;
+    if (sightNeed && sawIt === false) {
+      const note = document.createElement("span");
+      note.className = "gc-warn";
+      note.textContent = game.i18n.format("GWORLD.Vision.NoDefense", { name: String(defender.name ?? "") });
+      who.append(note);
+      root.append(row);
+      continue;
+    }
+    if (sightNeed && sawIt === null) {
+      const note = document.createElement("span");
+      note.className = "gc-mod";
+      note.textContent = game.i18n.format("GWORLD.Vision.NeedsSight", { name: String(defender.name ?? "") });
+      who.append(note);
+    }
+
     // In tactical combat the arc the attack came from decides what is even
     // possible: a blow from behind cannot be defended at all by most people,
     // and one from the side reaches only the hand on that side.
@@ -1241,7 +1268,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       return control.value ? [[option.key, control.value]] : [];
     }));
 
-    const defendWith = (choice: DefenseChoice, technique?: { name: string; delta: number }, parryOverride?: DefenseParryWeapon | null) => {
+    const performDefense = (choice: DefenseChoice, technique?: { name: string; delta: number }, parryOverride?: DefenseParryWeapon | null) => {
       const sight = sightSelect.value;
       const blind = sight === "sees"
         ? null
@@ -1285,6 +1312,27 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
         arc: arc?.arc ?? null,
         parryWeapon: choice.key === "parry" ? (parryOverride ?? parryWith) : null,
         calledShot: flag.calledShot ?? null,
+      });
+    };
+
+    // The Vision roll comes first where the attack calls for one, and a defender
+    // who fails it has no active defense: the buttons go dead.
+    const defendWith = (choice: DefenseChoice, technique?: { name: string; delta: number }, parryOverride?: DefenseParryWeapon | null) => {
+      if (!sightNeed || sawIt === true) {
+        performDefense(choice, technique, parryOverride);
+        return;
+      }
+      void settleCombatVision(defender, String(message.id ?? ""), sightNeed).then((sees) => {
+        sawIt = sees;
+        if (sees) {
+          performDefense(choice, technique, parryOverride);
+          return;
+        }
+        for (const button of row.querySelectorAll<HTMLButtonElement>("button")) button.disabled = true;
+        const note = document.createElement("span");
+        note.className = "gc-warn";
+        note.textContent = game.i18n.format("GWORLD.Vision.NoDefense", { name: String(defender.name ?? "") });
+        who.append(note);
       });
     };
 

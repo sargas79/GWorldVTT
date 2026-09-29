@@ -22,6 +22,7 @@ import {
 import { resolveSuccess } from "../rules/success.js";
 import { DAMAGE_TYPES, type DamageType } from "../rules/types.js";
 import { objectStats } from "./object-stats.js";
+import { withLargeObject } from "./revised-ranged.js";
 
 const CARD_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/item-damage.hbs`;
 
@@ -113,7 +114,9 @@ export async function applyItemDamage(options: {
     dr,
     type,
     armorDivisor,
-    tolerance: { ...noInjuryTolerance(), [kind]: true },
+    // Above SM +4 the piercing and impaling table of Revised p. 577 applies
+    // (the pointer at the foot of Damage to Shields, p. 484): a vehicle item has its own SM.
+    tolerance: withLargeObject({ ...noInjuryTolerance(), [kind]: true }, Number(item.system?.vehicle?.sm) || 0),
   });
 
   const from = Math.max(0, Number(item.system.hpLost) || 0);
