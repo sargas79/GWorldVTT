@@ -1501,6 +1501,17 @@
       "forgotten": "The spell fails entirely; the caster forgets it, with an IQ roll each week to remember.",
       "demon": "The spell fails entirely; a demon or other malign entity appears and attacks the caster."
     },
+    "Ability": {
+      "UseHint": "Roll to use: {rolls}",
+      "UseAria": "Roll to use {name}",
+      "Reliable": "Reliable",
+      "HardToUse": "Hard to Use",
+      "RollLabel": "{trait}: {roll}",
+      "ContestLabel": "{label} (Quick Contest)",
+      "ScorePrompt": "Skill level to roll against",
+      "Works": "{name} uses {trait}",
+      "Fails": "{name} fails to use {trait}"
+    },
     "Trait": {
       "GmOnly": "Only the GM can change a character's traits.",
       "Specialty": "Of what",

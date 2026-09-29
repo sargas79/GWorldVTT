@@ -53,6 +53,11 @@
                               data-tooltip="{{localize 'GWORLD.Trait.SelfControlRollHint'}}"
                               aria-label="{{localize 'GWORLD.Trait.SelfControlRollHint'}}">{{> "gworld.die"}}<span>{{row.selfControl}}</span></button>
                     {{/if}}
+                    {{#if row.useRolls}}
+                      <button type="button" class="v2-row-icon v2-row-cr rollable" data-action="useAbility"
+                              data-tooltip="{{localize 'GWORLD.Ability.UseHint' rolls=row.useRolls}}"
+                              aria-label="{{localize 'GWORLD.Ability.UseAria' name=row.name}}">{{> "gworld.die"}}</button>
+                    {{/if}}
                     {{#if @root.editable}}
                       <button type="button" class="v2-row-icon v2-row-delete" data-action="deleteItem"
                               data-tooltip="{{localize 'GWORLD.SheetV2.DeleteNamed' name=row.name}}"

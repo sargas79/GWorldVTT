@@ -117,7 +117,7 @@ import { supportEffect, supportOf, type Support } from "../../rules/accessories.
 import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalties.js";
 import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { powersOf } from "../../rules/powers.js";
-import { abilityRollModifiers, costsHitPointsCost, requiredRolls } from "../../rules/addendum-modifiers.js";
+import { abilityRollModifiers, abilityUseRolls, activationTarget, costsFatigueCost, costsHitPointsCost, requiredRolls } from "../../rules/addendum-modifiers.js";
 import { analyseAlternatives } from "../alternative-analysis.js";
 import { sessionPools } from "../../rules/bonus-points.js";
 import {
@@ -3544,8 +3544,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           { combatReflexes: traits.activeDefense > 0 },
         );
         const cost = costsHitPointsCost(modifiers);
-        if (use.bonus === 0 && use.penalty === 0 && needs.length === 0 && cost.hp === 0) return [];
-        return [{ id: String(item.id ?? ""), name: String(item.name ?? ""), ...use, needs, hpCost: cost.hp, hpCostPerSecond: cost.perSecond }];
+        const fpCost = costsFatigueCost(modifiers);
+        const activation = activationTarget(modifiers);
+        if (use.bonus === 0 && use.penalty === 0 && needs.length === 0 && cost.hp === 0 && fpCost === 0 && activation === null) return [];
+        const scores = { dx: attrs.DX, iq: attrs.IQ, ht: attrs.HT, will: secondary.will, per: secondary.per };
+        return [{
+          id: String(item.id ?? ""), name: String(item.name ?? ""), ...use, needs,
+          hpCost: cost.hp, hpCostPerSecond: cost.perSecond, fpCost, activation,
+          // The rolls one use takes, in order: what the roll-to-use button makes.
+          rolls: abilityUseRolls(needs, activation, scores),
+        }];
       }),
       // "In a few cases, skill 20+ gives an automatic +2 to reactions.
       // Diplomacy and Fast-Talk work this way if you are allowed to talk -- as

@@ -13,7 +13,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
-import { durationMargin, reducedDurationDivisor } from "../rules/addendum-modifiers.js";
+import { durationMargin, reducedDurationDivisor, scaledDuration } from "../rules/addendum-modifiers.js";
 import { conditionLabel, setCondition } from "./conditions.js";
 import { callCombatHook } from "./combat-extensions.js";
 import { PROCEDURE_HOOKS, applyCondition, type ConditionApplication } from "./procedure-extensions.js";
@@ -394,7 +394,11 @@ export async function applyAfflictionEffects(context: {
     addonLocation: context.addonLocation ?? null,
     effects: [] as ConditionApplication[],
   });
-  const effects = Array.isArray(fired.effects) ? fired.effects : [];
+  // A listener names its own duration; Reduced Duration cuts it to the
+  // fraction the modifier prices, never under a unit (p. 332).
+  const divisor = reducedDurationDivisor(modifiers);
+  const effects = (Array.isArray(fired.effects) ? fired.effects : []).map((effect: ConditionApplication) =>
+    divisor > 1 && effect.duration ? { ...effect, duration: scaledDuration(effect.duration, divisor) ?? effect.duration } : effect);
   const applied: string[] = [];
   for (const effect of effects) {
     const key = await applyCondition(context.actor, effect, {

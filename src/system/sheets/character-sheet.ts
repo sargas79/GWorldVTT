@@ -9,6 +9,7 @@
  */
 
 import { clearZenShot, rollZenSkill, zenSkillsOf } from "../zen.js";
+import { useAbility } from "../ability-use.js";
 import { chooseTechniqueSkill, isOpenTechniqueData } from "../open-techniques.js";
 import { customItemData, customKindKey } from "../picker-merge.js";
 import { rememberFocus, restoreFocus, type RememberedFocus } from "../focus-memory.js";
@@ -467,6 +468,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       affliction: GWorldCharacterSheet.#onAffliction,
       weaknessExposure: GWorldCharacterSheet.#onWeaknessExposure,
       selfControlRoll: GWorldCharacterSheet.#onSelfControlRoll,
+      useAbility: GWorldCharacterSheet.#onUseAbility,
       evade: GWorldCharacterSheet.#onEvade,
       feint: GWorldCharacterSheet.#onFeint,
       contest: GWorldCharacterSheet.#onContest,
@@ -3282,6 +3284,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     if (outcome) {
       ui.notifications?.info(game.i18n.format(outcome.success ? "GWORLD.Trait.Resisted" : "GWORLD.Trait.GaveIn", { name: String(this.actor.name ?? ""), trait: String(item.name ?? "") }));
     }
+  }
+
+  /** The roll-to-use button of a trait that asks for one (Basic Set Revised pp. 330-332). */
+  static async #onUseAbility(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    if (id) await useAbility(this.actor, id);
   }
 
   static async #onAffliction(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {

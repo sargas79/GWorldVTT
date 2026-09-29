@@ -4119,6 +4119,25 @@ runs again on the next load. Each helper returns
   for a module's journal; `eitherOrPercent` and `disadvantageLimitation` only
   work out their sums.
 
+- **Rolling to use an ability** (since 1.186.0; Basic Set Revised pp. 330-332,
+  Characters p. 116). A trait carrying Hard to Use, Reliable, a Requires
+  Roll, Unreliable/Activation, Costs Fatigue or Costs Hit Points has a
+  roll-to-use button on its row of the trait tab. `derived.abilityRolls`
+  entries now also carry `fpCost`, `activation` (the Unreliable/Activation
+  target: 14, 11, 8 or 5) and `rolls`, the rolls one use takes in order (each
+  Requires roll, then the activation roll). `actors.useAbility(actor, itemId)`
+  makes them (Reliable's bonus and Hard to Use's penalty are lines on each but
+  the active defense; a Requires Skill Roll asks for the skill's level), stops
+  at the first failure, and pays Costs Fatigue and Costs Hit Points for the
+  attempt; it resolves to `{ success, rolls, fpSpent, hpSpent }` or null.
+  `gworld.afflictionEffect` still gets `margin` and `durationDivisor`, and the
+  system now divides the duration (turns, rounds, seconds) of every condition
+  a listener returns by that divisor, never below one unit (`rules.scaledDuration`).
+  Cosmic no longer files a trait under a "Cosmic" power in `derived.powers`
+  (it names no source), and a Magical trait that carries another origin files
+  under that one (`rules.powerModifierSource`). Also `rules.activationTarget`,
+  `costsFatigueCost` and `abilityUseRolls`.
+
 - **Alternative Abilities, point-powered abilities and wildcard bonuses**
   (since 1.170.0; Basic Set Revised pp. 324-325, 333). A trait carries
   `alternativeGroup` (the set's name, blank for none), `alternativeSlots`,
