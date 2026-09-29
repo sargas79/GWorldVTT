@@ -25,6 +25,10 @@ import {
   opportunityFirePenalty,
 } from "../../rules/attack-options.js";
 import { slamOrShove } from "../slam.js";
+import { ARMED_GRAPPLE_FLAG } from "../grappling.js";
+import { armedGrapple, evadeBase, type StandFrom } from "../../rules/addendum-techniques.js";
+import { canAcrobaticStand, rollAcrobaticStand } from "../acrobatic-stand.js";
+import { techniqueLevelByPrefix } from "../technique-lookup.js";
 import {
   CLIMBS,
   climb,
@@ -1283,7 +1287,24 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const posture = this.element.querySelector<HTMLSelectElement>("select[data-posture-select]");
     posture?.addEventListener("change", () => {
       if (!POSTURES.includes(posture.value as Posture)) return;
-      void this.actor.update({ "system.posture": posture.value });
+      void (async () => {
+        const from = String(this.actor.system?.posture ?? "standing");
+        // Standing on a roll of Acrobatic Stand, where the character has it (Revised p. 333).
+        if (canAcrobaticStand(this.actor, from, posture.value)) {
+          const wanted = await foundry.applications.api.DialogV2.confirm({
+            window: { title: game.i18n.localize("GWORLD.AcrobaticStand.Label") },
+            content: `<p>${game.i18n.localize("GWORLD.AcrobaticStand.Ask")}</p>`,
+          });
+          if (wanted) {
+            const stood = await rollAcrobaticStand(this.actor, from as StandFrom);
+            if (stood) {
+              await this.actor.update({ "system.posture": stood.posture });
+              return;
+            }
+          }
+        }
+        await this.actor.update({ "system.posture": posture.value });
+      })();
     });
 
     // The same filter serves the Skills tab and the Magic tab: a hundred
@@ -1897,7 +1918,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       }),
       first: {
         actor: this.actor,
-        base: attributeOf(this.actor, "DX"),
+        // The Evade technique replaces DX (Basic Set Revised p. 334; since API 1.171.0).
+        base: evadeBase(attributeOf(this.actor, "DX"), techniqueLevelByPrefix(this.actor, "Evade")),
         modifiers: [{ label: game.i18n.localize("GWORLD.Evade.Action"), value: modifier }],
       },
       second: { actor: foe, base: attributeOf(foe, "DX") },
@@ -2304,11 +2326,26 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const victim = targets[0]?.actor;
     if (!victim) return;
 
-    const asked = await promptForGrapple();
+    // Armed Grapple (Revised p. 334): any melee weapon on the sheet may take hold.
+    const weapons = ((this.actor.system?.derived?.melee ?? []) as any[])
+      .filter((row) => row.itemId && row.usable !== false && row.skillLevel !== null)
+      .map((row) => ({ id: String(row.itemId), label: `${row.name}${row.mode ? ` (${row.mode})` : ""}`, skill: String(row.skillName ?? ""), row }));
+    const asked = await promptForGrapple(weapons);
     if (!asked) return;
 
-    const skill = grapplingSkill(this.actor);
-    const base = skill?.level ?? attributeOf(this.actor, "DX");
+    const held = weapons.find((w) => w.id === asked.armed) ?? null;
+    let skill = grapplingSkill(this.actor);
+    let base = skill?.level ?? attributeOf(this.actor, "DX");
+    if (held) {
+      // The technique where the character has it; otherwise the weapon's skill
+      // at -2, or unpenalized Cloak (Revised p. 334).
+      const cloak = /cloak/i.test(held.skill);
+      const armed = armedGrapple({ cloak, oneHanded: !held.row.twoHanded, bothHandsOnIt: held.row.twoHanded === true });
+      const learned = techniqueLevelByPrefix(this.actor, "Armed Grapple");
+      skill = { name: game.i18n.localize("GWORLD.Grapple.Armed"), level: learned ?? Number(held.row.skillLevel) + armed.penalty };
+      base = skill.level;
+      if (armed.needsReady) ui.notifications?.info(game.i18n.localize("GWORLD.Grapple.NeedsReady"));
+    }
 
     // "+1 to hit when you grapple per +1 SM advantage you have over your
     // target" (Campaigns p. 402) -- which the sheet knows without being asked.
@@ -2349,6 +2386,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       hands: asked.hands,
       hitLocation: asked.hitLocation,
     });
+    // "While using your weapon to grapple, you can neither attack nor defend
+    // with it": the weapon is out of play until the grapple ends.
+    if (held) {
+      await this.actor.setFlag(SYSTEM_ID, ARMED_GRAPPLE_FLAG, held.id);
+      ui.notifications?.info(game.i18n.format("GWORLD.Grapple.WeaponBusy", { weapon: held.label }));
+    }
   }
 
   /**

@@ -67,6 +67,9 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "rapidFire", reference: "Campaigns p. 373", default: true },
     { key: "opportunityFire", reference: "Campaigns p. 390", default: true },
     { key: "closeCombat", reference: "Campaigns p. 391", default: true },
+    // The GM may let a weapon without a "C" reach fight in close combat, at
+    // -4 a yard of reach (the Close Combat technique buys half of it back).
+    { key: "closeCombatAnyWeapon", reference: "Basic Set Revised p. 334", default: false },
     { key: "slams", reference: "Campaigns p. 371", default: true },
     { key: "grappling", reference: "Campaigns p. 370", default: true },
     { key: "evading", reference: "Campaigns p. 368", default: true },

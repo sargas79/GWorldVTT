@@ -84,6 +84,7 @@ import {
   type WeaponCondition,
 } from "../../rules/breakage.js";
 import { usableInCloseCombat } from "../../rules/tactical.js";
+import { closeCombatDamageModifier, closeCombatPenalty } from "../../rules/addendum-techniques.js";
 import { isRuleOn } from "../optional-rules.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
 import { canPull, towedWeight, wheelchairMove, type Conveyance } from "../../rules/towing.js";
@@ -1415,6 +1416,27 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     return 0;
   }
 
+  /** Levels bought in the techniques whose names start with a prefix (the most of any). */
+  private techniqueLevelsByPrefix(prefix: string): number {
+    let most = 0;
+    for (const item of this.itemsOfType("technique")) {
+      if (!String(item.name ?? "").toLowerCase().startsWith(prefix.toLowerCase())) continue;
+      most = Math.max(most, Number((item.system as { derived?: { levels?: number } })?.derived?.levels) || 0);
+    }
+    return most;
+  }
+
+  /** The level of the best technique whose name starts with a prefix, or null (Revised p. 334). */
+  private techniqueLevelByPrefix(prefix: string): number | null {
+    let best: number | null = null;
+    for (const item of this.itemsOfType("technique")) {
+      if (!String(item.name ?? "").toLowerCase().startsWith(prefix.toLowerCase())) continue;
+      const level = (item.system as { derived?: { level?: number | null } })?.derived?.level;
+      if (typeof level === "number" && (best === null || level > best)) best = level;
+    }
+    return best;
+  }
+
   /** The score of a skill by name, or null when the character lacks it. */
   private skillLevelByName(name: string): number | null {
     if (!name) return null;
@@ -2587,6 +2609,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const perLevel = (mode: any, damage: string): string =>
         item.type === "trait" && mode.perLevel ? levelledDamage(damage, levels) : damage;
 
+      const armedGrappleHeld = (id: unknown) => (this.parent as any)?.getFlag?.(SYSTEM_ID, "armedGrapple") === id;
       (sys.meleeModes ?? []).forEach((mode: any, index: number) => {
         // What this character rolls the mode with: the skill they chose for
         // it, else the one the weapon names (Characters p. 175). Everything
@@ -2594,7 +2617,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // unarmed bonus, a master's dice, which critical table a fumble is
         // read on -- reads the one actually rolled.
         const rolledSkill = rolledSkillOf(mode);
-        const found = short(enchantedSkill(weaponSkill(rolledSkill, true, mastered)), lacking(mode.minSt ?? null));
+        // A weapon without a "C" reach in close combat, where the GM allows it
+        // (Revised p. 334): skill down 4 a yard of reach, less what the
+        // Close Combat technique bought back; swing damage down a point a yard.
+        const closeNonC = isRuleOn("closeCombat") && isRuleOn("closeCombatAnyWeapon") &&
+          this.conditions.closeCombat && !usableInCloseCombat(String(mode.reach ?? "C"));
+        const closePenalty = closeNonC ? closeCombatPenalty(String(mode.reach ?? ""), this.techniqueLevelsByPrefix("Close Combat")) : 0;
+        const closeDamage = closeNonC ? closeCombatDamageModifier(String(mode.reach ?? ""), mode.damageBase === "sw") : 0;
+        const found = short(
+          short(enchantedSkill(weaponSkill(rolledSkill, true, mastered)), lacking(mode.minSt ?? null)),
+          closePenalty,
+        );
         const skillLevel = found.level;
         const atDefault = found.atDefault;
         // A fist load or a hilt punch hits as hard as the unarmed skill it is
@@ -2610,7 +2643,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         const meleeMasterPerDie = masterPerDie(mastered, rolledSkill);
         const masterDamage = weaponMasterDamage(meleeMasterPerDie, String(mode.damageBase ?? ""), strikingSt, mode.minSt ?? null);
         const meleeBasis = mode.damageSpecial ? SPECIAL : withPuissance(perLevel(mode, resolveDamage(
-          strikingSt, mode.damageBase, mode.damageModifier + unarmedBonus + masterDamage, mode.damageFormula, mode.minSt,
+          strikingSt, mode.damageBase, mode.damageModifier + unarmedBonus + masterDamage + closeDamage, mode.damageFormula, mode.minSt,
           Number(mode.damageExtraDice ?? 0) || 0,
         )));
         const meleeDamage = mode.damageSpecial ? SPECIAL : withQuality(meleeBasis, mode.damageType);
@@ -2653,7 +2686,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           // (Campaigns p. 402). Only the upper end moves.
           reach: reachForSize(String(mode.reach ?? "C"), this.sm),
           parry:
-            mode.canParry && skillLevel !== null
+            mode.canParry && skillLevel !== null && !armedGrappleHeld(item.id)
               ? baseParry(skillLevel) + (mode.parryModifier ?? 0) + traits.enhancedParry.all
               : null,
           parryModifier: Number(mode.parryModifier ?? 0) || 0,
@@ -2663,9 +2696,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           usable:
             (!isRuleOn("closeCombat") ||
               !this.conditions.closeCombat ||
+              closeNonC ||
               usableInCloseCombat(String(mode.reach ?? "C"))) &&
             !(traits.oneArm && Boolean(mode.twoHanded)) &&
-            !wrecked,
+            !wrecked &&
+            // An armed grapple's weapon can neither attack nor defend (Revised p. 334).
+            !armedGrappleHeld(item.id),
           unbalanced: Boolean(mode.unbalanced),
           isFencing: Boolean(mode.isFencing),
           pick: Boolean(mode.pick),
@@ -2979,6 +3015,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const unarmedInput = (st: number) => ({
       st,
       boots: inBoots,
+      // Head Butt and Stamp Kick as bought, and a rigid helm's +1 to the butt (Revised p. 334).
+      techniques: {
+        headButt: this.techniqueLevelByPrefix("Head Butt"),
+        stampKick: this.techniqueLevelByPrefix("Stamp Kick"),
+      },
+      rigidHelm: this.itemsOfType("armor").some((item: any) =>
+        item.system?.equipped === true && item.system?.flexible !== true &&
+        ((item.system?.drByLocation ?? []) as Array<{ locations?: string[] }>).some((e) => (e.locations ?? []).includes("skull"))),
       // A punch and a kick are DX-based like any weapon skill, so an extra
       // layer of armour costs them the same -1 (Characters p. 286).
       dx: attrs.DX + layering,

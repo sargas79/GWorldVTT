@@ -4142,3 +4142,24 @@ runs again on the next load. Each helper returns
   `wildcard`. Not done: a Link between alternatives is not refused, and the
   wildcard bonus is held for the GM's category rather than added by each roll's
   own dialog.
+
+- **New techniques** (since 1.171.0; Basic Set Revised pp. 333-334). Records for
+  Acrobatic Stand, Armed Grapple (Cloak, and any melee weapon), Close Combat,
+  Evade (Acrobatics, Judo), Head Butt, Stamp Kick (Brawling, Karate) and Wrench
+  Arm and Wrench Leg (ST-4). `rules.acrobaticStand`, `acrobaticStandModifier`,
+  `armedGrapple`, `closeCombatPenalty`, `closeCombatDamageModifier`,
+  `closeCombatBulk`, `evadeBase`, `headButtDamage`, `headButtSelfInjury`,
+  `stampKickDamage`, `stampKickTarget`, `stampKickMiss` and `wrenchLevel` are the
+  figures. Wired: a natural attack row for Head Butt (`naturalKey: "headButt"`,
+  striking the skull for Hurting Yourself) and Stamp Kick (`"stampKick"`, the
+  foot), each rolled at the better of the technique and its default; a missed
+  Stamp Kick rolls DX; the Evade technique replaces DX in the evade contest;
+  changing posture to standing offers an Acrobatic Stand roll; an armed grapple
+  takes the weapon out of play (flag `armedGrapple`, the item's id) until the
+  hold ends; Neck Snap, Wrench Arm and Wrench Leg roll at the better of ST-4 and
+  their technique; the combat switch `closeCombatAnyWeapon` (off) lets a weapon
+  without a C reach fight in close combat at -4 skill per yard of reach (the
+  technique buys half back), swing damage -1 per yard and Parry from the reduced
+  skill, and Close Combat levels buy off a ranged weapon's Bulk. Not done: a
+  parried Head Butt hurting the butter's face and a Stamp Kick's target
+  restriction are pure rules only, not enforced on the cards.

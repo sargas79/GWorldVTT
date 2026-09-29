@@ -20,7 +20,11 @@ export function strikingPart(naturalKey: string): HitLocation | null {
     case "claw":
       return "hand";
     case "kick":
+    case "stampKick":
       return "foot";
+    // A head butt that met DR 3+ hurts the skull (Revised p. 334).
+    case "headButt":
+      return "skull";
     case "bite":
       return "face";
     default:

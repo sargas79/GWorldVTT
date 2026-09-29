@@ -10,6 +10,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { techniqueLevelByPrefix } from "./technique-lookup.js";
 import { rollQuickContest } from "./contest.js";
 import { resolveSuccess } from "../rules/success.js";
 import { improvisedWaived, noPerks } from "../rules/addendum-perks.js";
@@ -126,7 +127,13 @@ export async function useTechnique(options: {
     const strength = Number(actor.system?.attributes?.ST ?? 10) || 10;
     const attack =
       technique === "neckSnap"
-        ? strength + NECK_SNAP_PENALTY
+        ? Math.max(
+            strength + NECK_SNAP_PENALTY,
+            techniqueLevelByPrefix(
+              actor,
+              options.location === "arm" ? "Wrench Arm" : options.location === "leg" ? "Wrench Leg" : "Neck Snap",
+            ) ?? -Infinity,
+          )
         : lockAttack({ judo: levelOf(actor, "Judo"), wrestling: levelOf(actor, "Wrestling"), strength });
 
     const result = await rollQuickContest({

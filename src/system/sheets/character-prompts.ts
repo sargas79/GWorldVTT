@@ -2577,10 +2577,12 @@ export async function promptForDisarm(actor: any, foe: any): Promise<{
  * Both change what follows -- two hands are a far better grip than one, and only
  * a hold on the neck can be turned into a choke.
  */
-export async function promptForGrapple(): Promise<{
+export async function promptForGrapple(weapons: Array<{ id: string; label: string; skill: string }> = []): Promise<{
   hands: number;
   hitLocation: string;
   modifier: number;
+  /** The weapon the grapple is made with (Revised p. 334), or "" for bare hands. */
+  armed: string;
 } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Grapple.${key}`);
 
@@ -2603,6 +2605,12 @@ export async function promptForGrapple(): Promise<{
         <select name="where" style="width:120px">${options}</select>
       </label>
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${L("ArmedWith")}</span>
+        <select name="armed" style="width:160px"><option value="">${L("BareHands")}</option>${weapons
+          .map((w) => `<option value="${foundry.utils.escapeHTML(w.id)}">${foundry.utils.escapeHTML(w.label)}</option>`)
+          .join("")}</select>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
         <input type="number" name="modifier" value="0" step="1" style="width:90px">
       </label>
@@ -2618,6 +2626,7 @@ export async function promptForGrapple(): Promise<{
           hitLocation:
             form?.querySelector<HTMLSelectElement>('select[name="where"]')?.value ?? "torso",
           modifier: num("modifier"),
+          armed: form?.querySelector<HTMLSelectElement>('select[name="armed"]')?.value ?? "",
         };
       },
     },

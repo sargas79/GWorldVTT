@@ -135,6 +135,9 @@ export interface Grapple {
   hitLocation: string;
 }
 
+/** The item an Armed Grapple holds with, which cannot attack or defend meanwhile (since API 1.171.0). */
+export const ARMED_GRAPPLE_FLAG = "armedGrapple";
+
 /** Where every grapple is recorded, on each side of them (since 1.45.0). */
 export const GRAPPLES_FLAG = "grapples";
 
@@ -182,6 +185,10 @@ async function writeGrapples(actor: any, list: Grapple[]): Promise<void> {
   if (list[0]) await actor.setFlag(SYSTEM_ID, GRAPPLE_FLAG, list[0]);
   else if (actor.getFlag?.(SYSTEM_ID, GRAPPLE_FLAG)) await actor.unsetFlag(SYSTEM_ID, GRAPPLE_FLAG);
 
+  // Letting go of the last hold frees the weapon an armed grapple used.
+  if (!list.some((grapple) => grapple.holding) && actor.getFlag?.(SYSTEM_ID, ARMED_GRAPPLE_FLAG)) {
+    await actor.unsetFlag(SYSTEM_ID, ARMED_GRAPPLE_FLAG);
+  }
   await setCondition(actor, "grappling", list.some((grapple) => grapple.holding));
   await setCondition(actor, "grappled", list.some((grapple) => !grapple.holding));
   await setCondition(actor, "pinned", list.some((grapple) => !grapple.holding && grapple.pinned));

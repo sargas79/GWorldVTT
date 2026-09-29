@@ -592,6 +592,10 @@
           "Name": "Close combat",
           "Hint": "Sharing a hex: only a weapon that reaches close is any use there."
         },
+        "closeCombatAnyWeapon": {
+          "Name": "Any weapon in close combat",
+          "Hint": "A weapon without a C reach may fight in close combat at -4 skill for each yard of reach, swing damage -1 a yard, and Parry from the reduced skill. Off unless the GM allows it."
+        },
         "slams": {
           "Name": "Slams",
           "Hint": "Run into someone. Damage comes off how fast you were going."
@@ -2637,6 +2641,11 @@
       "Where": "Take hold of",
       "Label": "{skill} to grapple {foe}",
       "OneTarget": "Target exactly one foe to grapple.",
+      "ArmedWith": "Armed with",
+      "BareHands": "Bare hands",
+      "Armed": "Armed Grapple",
+      "NeedsReady": "A one-handed weapon other than a cloak needs both hands on it first: a Ready maneuver.",
+      "WeaponBusy": "{weapon} holds the foe and can neither attack nor defend until you let go.",
       "NotGrappled": "Nobody is holding on to you.",
       "NotInOne": "Not in a grapple.",
       "MustBeHolding": "Only the one doing the holding can try that.",
@@ -3567,9 +3576,24 @@
       "vehicle": "Vehicle",
       "misc": "Miscellaneous"
     },
+    "StampKick": {
+      "Balance": "DX to stay on balance after a missed Stamp Kick",
+      "NoRetreat": "{name} is off balance and cannot retreat until their next turn."
+    },
+    "AcrobaticStand": {
+      "Label": "Acrobatic Stand",
+      "Ask": "Roll Acrobatic Stand to rise, rather than change posture without a roll?",
+      "standsAsStep": "On your feet as a step.",
+      "standsAsManeuver": "On your feet as one Change Posture maneuver.",
+      "sits": "You end up sitting.",
+      "staysDown": "You stay down, and the turn is wasted.",
+      "falls": "You fall down."
+    },
     "Natural": {
       "punch": "Punch",
       "kick": "Kick",
+      "headButt": "Head Butt",
+      "stampKick": "Stamp Kick",
       "bite": "Bite",
       "claw": "Claw",
       "striker": "Striker"

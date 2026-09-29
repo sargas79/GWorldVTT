@@ -185,6 +185,8 @@ import { POSTURE_EFFECTS } from "../rules/posture.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
 import { gunslingerAccuracy, gunslingerWeapon, type GunslingerWeapon } from "../rules/gunslinger.js";
 import { noPerks, offHandWaived } from "../rules/addendum-perks.js";
+import { closeCombatBulk } from "../rules/addendum-techniques.js";
+import { techniqueLevelsBoughtByPrefix } from "./technique-lookup.js";
 import { heroicAimBonus, heroicArcherWeapon, type HeroicArcherWeapon } from "../rules/heroic-archer.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
 import { rollMalediction } from "./malediction.js";
@@ -1045,6 +1047,7 @@ export function weaponFromDataset(actor: any, dataset: Record<string, unknown>) 
           skill: String(dataset.rollSkill ?? ""),
         })
       : null,
+    closeCombatLevels: techniqueLevelsBoughtByPrefix(actor, "Close Combat"),
     damageType: String(dataset.damageType ?? "cr") as DamageType,
     accuracy: n("accuracy"),
     // Telescopic Vision is a scope of its own, the better of the two counting (Characters p. 92).
@@ -2500,6 +2503,20 @@ async function rollAction(
     });
   }
 
+  // A stamp kick that misses stomps the ground: "make a DX roll to avoid ending
+  // up off balance and unable to retreat until your next turn" (Revised p. 334).
+  if (rollType === "attack" && target.dataset.naturalKey === "stampKick" && outcome && !outcome.success) {
+    const balance = await rollSuccess({
+      actor,
+      base: Number(actor?.system?.derived?.attributes?.DX) || 10,
+      label: game.i18n.localize("GWORLD.StampKick.Balance"),
+      kind: "skill",
+      skill: "DX",
+      tags: ["stampKick", "DX"],
+    });
+    if (balance && !balance.success) ui.notifications?.warn(game.i18n.format("GWORLD.StampKick.NoRetreat", { name: String(actor?.name ?? "") }));
+  }
+
   // A shot at a random location behind cover (p. 407): "For shots that hit a
   // location that is only half exposed, roll 1d: on a roll of 4-6, the shot
   // strikes cover, not the target." Whether the location it found is half
@@ -3829,6 +3846,8 @@ export function rangedModifiers(
     gunslinger?: GunslingerWeapon | null;
     /** A Heroic Archer's bow (Basic Set Revised p. 327; since 1.166.0). */
     heroicArcher?: HeroicArcherWeapon | null;
+    /** Levels bought in Close Combat, which buy back Bulk in close combat (Revised p. 334; since 1.171.0). */
+    closeCombatLevels?: number;
   },
 ): RollModifier[] {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
@@ -3938,7 +3957,13 @@ export function rangedModifiers(
         gunslinger: situation,
       });
     } else {
-      modifiers.push({ label: L("Bulk"), value: bulkPenalty(weapon.bulk, situation), key: "bulk", situation });
+      const bulk = bulkPenalty(weapon.bulk, situation);
+      modifiers.push({
+        label: L("Bulk"),
+        value: situation === "closeCombat" ? closeCombatBulk(bulk, weapon.closeCombatLevels ?? 0) : bulk,
+        key: "bulk",
+        situation,
+      });
     }
   }
 
