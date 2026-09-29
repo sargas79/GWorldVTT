@@ -63,7 +63,7 @@ describe("the rule catalogue", () => {
     // is a GM's option, not a book rule (Characters pp. 290, 292).
     // The wildcard bonus is headed "optionally" (Basic Set Revised p. 333).
     // Pulling Rank is a workaround the book offers for hierarchical organizations (p. 337).
-    expect(off.sort()).toEqual(["allOutConcentrate", "allOutSlams", "basicAbstractDifficulty", "bleeding", "chestAbdomenSplit", "closeCombatAnyWeapon", "committedAttack", "damageToShields", "defensiveAttack", "derangementRollPenalties", "expandedInfluence", "familiarity", "fatigueForSkill", "finerHitLocations", "flatSignatureGear", "frostbite", "godlikeExtraEffort", "mentalDefense", "modifyingDiceAdds", "powerExtraEffort", "pullingRank", "realisticMarching", "stressAndDerangement", "stressRollPenalties", "studyAttributes", "terrainTypes", "visionRollsInCombat", "wildcardBonus"]);
+    expect(off.sort()).toEqual(["allOutConcentrate", "allOutSlams", "basicAbstractDifficulty", "bleeding", "chestAbdomenSplit", "closeCombatAnyWeapon", "closeContactShots", "committedAttack", "damageToShields", "defensiveAttack", "derangementRollPenalties", "expandedInfluence", "familiarity", "fatigueForSkill", "finerHitLocations", "flatSignatureGear", "frostbite", "godlikeExtraEffort", "largeTargetDamage", "mentalDefense", "modifyingDiceAdds", "nonCombatBonuses", "partialCoverage", "powerExtraEffort", "pullingRank", "realisticMarching", "simplifiedRange", "stressAndDerangement", "stressRollPenalties", "studyAttributes", "terrainTypes", "trickyShooting", "visionRollsInCombat", "wildcardBonus"]);
   });
 
   /**

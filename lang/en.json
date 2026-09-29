@@ -688,6 +688,30 @@
           "Name": "Vision rolls in combat",
           "Hint": "A Vision roll decides whether a very small or distant attacker is seen coming; failure leaves no active defense (Basic Set Revised pp. 574-575)."
         },
+        "closeContactShots": {
+          "Name": "Close-Contact Shots",
+          "Hint": "A gun touching or pressed to the target: +4 with All-Out Attack (Determined), +4 pressed, no Acc or aim, the target may parry (Basic Set Revised p. 576)."
+        },
+        "partialCoverage": {
+          "Name": "Hitting ’Em Where It Hurts",
+          "Hint": "Armour covering n in 6 of a location protects on a 1d roll of n or less; attackers may strike around it at a penalty (Basic Set Revised p. 576)."
+        },
+        "nonCombatBonuses": {
+          "Name": "Non-Combat Bonuses",
+          "Hint": "Up to +10 to shoot in favourable, low-pressure conditions (Basic Set Revised p. 576)."
+        },
+        "trickyShooting": {
+          "Name": "Tricky Shooting",
+          "Hint": "Prediction Shot (Deceptive Attack) and Ranged Rapid Strike (-6, two targets, RoF 2+) with ranged weapons (Basic Set Revised p. 577)."
+        },
+        "simplifiedRange": {
+          "Name": "Simplified Range",
+          "Hint": "Five range bands, Close 0, Short -3, Medium -7, Long -11, Extreme -15, replace the Size and Speed/Range Table's range (Basic Set Revised p. 577)."
+        },
+        "largeTargetDamage": {
+          "Name": "Piercing and impaling vs. large targets",
+          "Hint": "Unliving and Homogenous targets take piercing and impaling by their size modifier (Basic Set Revised p. 577)."
+        },
         "teamEfforts": {
           "Name": "Team efforts",
           "Hint": "The party rolls once in a skill, on the Party sheet: the best member’s level, plus one for each who knows it, less the size of the group."
@@ -4898,6 +4922,43 @@
         "parry": "A Committed Attack: no parry with the attacking hand",
         "block": "A Committed Attack: no block with the attacking shield",
         "dodge": "A Committed Attack with a kick: no dodge"
+    },
+    "RevisedRanged": {
+      "CloseContact": "Close-Contact Shot",
+      "Contact": "Gun",
+      "ContactNone": "Not in contact",
+      "ContactTouching": "Touching",
+      "ContactPressed": "Pressed against target",
+      "AllOutDetermined": "All-Out Attack (Determined)",
+      "ContactBraced": "Held against the target a turn (bracing)",
+      "Unresisting": "Target cannot resist (no Bulk)",
+      "NonCombat": "Non-combat bonuses",
+      "NoRiskSelf": "No risk to self",
+      "NoRiskOthers": "No risk to others",
+      "NoStake": "No political or military stake",
+      "RangeSpeedKnown": "Range and speed known",
+      "TargetIsPerson": "Target is a person (no pressure bonuses)",
+      "Environment": "Environment (0 to 4)",
+      "StrikeAround": "Strike around partial armour",
+      "StrikeNone": "No",
+      "Prediction": "Prediction Shot levels (Dodge only)",
+      "RangedRapidStrike": "Ranged Rapid Strike (two targets)",
+      "LineContact": "Close-contact shot: no Acc or aim",
+      "LineAllOut": "Close contact: All-Out Attack (Determined) +4, not +1",
+      "LinePressed": "Gun pressed against the target",
+      "LineBraced": "Bracing",
+      "LineTargetDefends": "Target defends at +{bonus}, and the runaround -2 is cancelled",
+      "LineNonCombat": "Non-combat bonuses",
+      "LineStrikeAround": "Striking around {n}/6 armour",
+      "LinePrediction": "Prediction Shot (target's Dodge -{levels})",
+      "LineRapid": "Ranged Rapid Strike",
+      "Band": "Range band: {band}",
+      "Bands": {
+        "close": "Close",
+        "short": "Short",
+        "medium": "Medium",
+        "long": "Long",
+        "extreme": "Extreme"
       }
     },
     "Stress": {

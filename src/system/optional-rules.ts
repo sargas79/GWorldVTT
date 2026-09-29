@@ -95,6 +95,13 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "mentalDefense", reference: "Basic Set Revised p. 575", default: false },
     { key: "committedAttack", reference: "Basic Set Revised pp. 575-576", default: false },
     { key: "defensiveAttack", reference: "Basic Set Revised p. 576", default: false },
+    // Optional rules for ranged combat (Addendum 4), all off.
+    { key: "closeContactShots", reference: "Basic Set Revised p. 576", default: false },
+    { key: "partialCoverage", reference: "Basic Set Revised p. 576", default: false },
+    { key: "nonCombatBonuses", reference: "Basic Set Revised p. 576", default: false },
+    { key: "trickyShooting", reference: "Basic Set Revised p. 577", default: false },
+    { key: "simplifiedRange", reference: "Basic Set Revised p. 577", default: false },
+    { key: "largeTargetDamage", reference: "Basic Set Revised p. 577", default: false },
   ],
   injury: [
     { key: "hitLocations", reference: "Campaigns p. 398", default: true },

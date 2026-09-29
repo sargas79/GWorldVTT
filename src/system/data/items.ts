@@ -1565,6 +1565,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   declare ablative: "none" | "ablative" | "semiAblative";
   declare drLost: number;
   declare forceField: boolean;
+  declare coverage: number;
   declare quantity: number;
   declare weight: number;
   declare cost: number;
@@ -1736,6 +1737,14 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
        * everything, the eyes included.
        */
       forceField: new fields.BooleanField({ initial: false }),
+      /**
+       * Partial coverage (Basic Set Revised p. 576): the n of "n in 6" chance the
+       * armour protects a hit on the locations it covers. 6 is full coverage.
+       * Read only while the `partialCoverage` switch is on.
+       */
+      coverage: new fields.NumberField({
+        required: true, nullable: false, integer: true, initial: 6, min: 1, max: 6,
+      }),
     };
   }
 }
