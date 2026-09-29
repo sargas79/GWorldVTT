@@ -15,7 +15,7 @@
  * the two ways of finding its abilities meet under one heading.
  */
 
-import { powerModifierOrigin } from "./addendum-modifiers.js";
+import { powerModifierSource } from "./addendum-modifiers.js";
 import {
   PSI_POWERS,
   powerOfAbility,
@@ -116,7 +116,7 @@ export function powersOf(traits: readonly PowerTrait[]): PowerHeld[] {
   const byOrigin = new Set<PowerTrait>();
   for (const trait of unstated) {
     if (powerOfAbility(trait) !== null) continue;
-    const origin = powerModifierOrigin(trait.modifiers ?? []);
+    const origin = powerModifierSource(trait.modifiers ?? []);
     if (!origin) continue;
     byOrigin.add(trait);
     held(origin.origin.toLowerCase(), null, origin.origin).abilities.push(trait.name);

@@ -117,7 +117,7 @@ import { supportEffect, supportOf, type Support } from "../../rules/accessories.
 import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalties.js";
 import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { powersOf } from "../../rules/powers.js";
-import { abilityRollModifiers, costsFatigueCost, costsHitPointsCost, powerModifierOrigin, requiredRolls } from "../../rules/addendum-modifiers.js";
+import { abilityRollModifiers, abilityUseRolls, activationTarget, costsFatigueCost, costsHitPointsCost, powerModifierOrigin, requiredRolls } from "../../rules/addendum-modifiers.js";
 import { analyseAlternatives } from "../alternative-analysis.js";
 import { talentGivesReaction } from "../../rules/alternative-abilities.js";
 import { sessionPools } from "../../rules/bonus-points.js";
@@ -3547,12 +3547,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         );
         const cost = costsHitPointsCost(modifiers);
         const fatigue = costsFatigueCost(modifiers);
-        if (use.bonus === 0 && use.penalty === 0 && needs.length === 0 && cost.hp === 0 && fatigue.fp === 0) return [];
+        const activation = activationTarget(modifiers);
+        if (use.bonus === 0 && use.penalty === 0 && needs.length === 0 && cost.hp === 0 && fatigue.fp === 0 && activation === null) return [];
+        const scores = { dx: attrs.DX, iq: attrs.IQ, ht: attrs.HT, will: secondary.will, per: secondary.per };
         return [{
           id: String(item.id ?? ""), name: String(item.name ?? ""), ...use, needs,
           hpCost: cost.hp, hpCostPerSecond: cost.perSecond,
-          fpCost: fatigue.fp, fpCostPerSecond: fatigue.perSecond,
+          fpCost: fatigue.fp, fpCostPerSecond: fatigue.perSecond, activation,
           origin: powerModifierOrigin(modifiers.map((m) => m.name))?.origin ?? "",
+          // The rolls one use takes, in order: what the roll-to-use button makes.
+          rolls: abilityUseRolls(needs, activation, scores),
         }];
       }),
       // "In a few cases, skill 20+ gives an automatic +2 to reactions.

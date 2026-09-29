@@ -59,7 +59,8 @@ import type { ControlRating, LegalityClass } from "../rules/legality.js";
 import { currentControlRating, legalityClassOf } from "./legality.js";
 import { surprise, undoKnockdown } from "./knockdown.js";
 import { rollFall } from "./falling.js";
-import { restoreFatigue, spendFatigueFor, spendHitPointsFor } from "./fatigue.js";
+import { useAbility } from "./ability-use.js";
+import { restoreFatigue,spendFatigueFor, spendHitPointsFor } from "./fatigue.js";
 import { chargeReserve, drainReserve, reservesOf, restoreReserve } from "./reserves.js";
 import { payAbilityCost } from "./ability-cost.js";
 import { changeTrait, type TraitChanged } from "./trait-change.js";
@@ -118,7 +119,7 @@ import { simplifiedResourcesApi } from "./simplified-resources.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.185.0";
+export const API_VERSION = "1.186.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -280,6 +281,17 @@ const actors = {
    */
   payAbilityCost(actor: any, item: any) {
     return payAbilityCost(actor, item);
+  },
+
+  /**
+   * Rolls to use a trait that asks for it (Basic Set Revised pp. 330-332;
+   * since 1.186.0): each Requires roll, then the Unreliable/Activation roll,
+   * with Reliable and Hard to Use on them, then the Costs Fatigue and Costs
+   * Hit Points of the attempt. Resolves to `{ success, rolls, fpSpent,
+   * hpSpent }`, or null.
+   */
+  useAbility(actor: any, itemId: string) {
+    return useAbility(actor, itemId);
   },
 
   /**

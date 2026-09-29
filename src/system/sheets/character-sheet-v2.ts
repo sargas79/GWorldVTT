@@ -1169,6 +1169,16 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         modifiers: system.modifiers ?? [],
         reactionModifier: Number(system.reactionModifier ?? 0) || 0,
         selfControl: system.selfControl ?? null,
+        // The rolls a use of the trait takes, for its roll-to-use button.
+        useRolls: (() => {
+          const entry = (context.derived?.abilityRolls ?? []).find((a: any) => String(a.id) === String(item.id));
+          const rolls = ((entry?.rolls ?? []) as Array<{ label: string }>).map((r) => r.label);
+          const costs = [
+            Number(entry?.fpCost ?? 0) > 0 ? `${entry.fpCost} FP` : "",
+            Number(entry?.hpCost ?? 0) > 0 ? `${entry.hpCost} HP` : "",
+          ].filter(Boolean);
+          return [...rolls, ...costs].join(", ");
+        })(),
         alternative: alternativeViewOf(item, context.derived?.alternativeSets ?? [], context.derived?.alternativeLinkConflicts ?? []),
         assistanceRank: isRuleOn("pullingRank") && isAssistanceRank(item),
         // A disadvantage the player may play up for the scene (Revised p. 570), and the one invoked.
