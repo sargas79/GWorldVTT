@@ -235,6 +235,10 @@
               <button type="button" class="v2-button v2-button-steel" data-action="v2PayAbilityCost"
                       data-tooltip="{{localize 'GWORLD.AbilityCost.PayHint'}}">{{localize "GWORLD.AbilityCost.Pay"}}</button>
             {{/if}}
+            {{#if (and @root.editable row.reserveRecovery)}}
+              <button type="button" class="v2-button v2-button-steel" data-action="v2RecoverReserve"
+                      data-tooltip="{{localize 'GWORLD.EnergyReserve.RecoverHint' origin=row.reserveRecovery.origin}}">{{localize "GWORLD.EnergyReserve.Recover"}}</button>
+            {{/if}}
             {{#if row.weakness}}
               <button type="button" class="v2-button v2-button-steel rollable" data-action="weaknessExposure"
                       data-tooltip="{{localize 'GWORLD.Weakness.ExposedHint'}}">{{localize "GWORLD.Weakness.Exposed"}}</button>

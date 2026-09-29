@@ -108,6 +108,49 @@ export function drainsReserve(reserveOrigin: string, powerOrigin: string | undef
   return power !== "" && power === originKey(reserveOrigin);
 }
 
+/** A trait that gives points back to a reserve: what kind it is and which reserve it feeds. */
+export interface ReserveRecoveryAid {
+  id: string;
+  name: string;
+  /** Recover Energy speeds recovery; Absorption turns damage taken into points. */
+  kind: "recoverEnergy" | "absorption";
+  /** The key of the reserve it feeds. */
+  key: string;
+  origin: string;
+}
+
+/** Which recovery aid a modifier name is, or null (p. 326: "Recover Energy ... Absorption"). */
+export function recoveryKind(modifierNames: readonly string[]): "recoverEnergy" | "absorption" | null {
+  for (const raw of modifierNames) {
+    const name = String(raw ?? "").trim().toLowerCase().replace(/^power modifier:\s*/, "");
+    if (/^recover energy\b/.test(name)) return "recoverEnergy";
+    if (/^absorption\b/.test(name)) return "absorption";
+  }
+  return null;
+}
+
+/**
+ * The traits that can refill a character's reserves: those with a Recover
+ * Energy or Absorption modifier whose origin (its power modifier) is the origin
+ * of a reserve the character holds. "Special skills or abilities of the ER's
+ * origin affect it exactly as they do FP recovery" (p. 326).
+ */
+export function reserveRecoveryAids(
+  traits: readonly { id: string; name: string; modifiers: readonly string[]; origin: string }[],
+  reserves: readonly { key: string; origin: string }[],
+): ReserveRecoveryAid[] {
+  const out: ReserveRecoveryAid[] = [];
+  for (const t of traits) {
+    const kind = recoveryKind(t.modifiers);
+    if (!kind) continue;
+    const key = originKey(t.origin);
+    const held = reserves.find((r) => r.key === key);
+    if (!held) continue;
+    out.push({ id: t.id, name: t.name, kind, key, origin: held.origin });
+  }
+  return out;
+}
+
 /**
  * Time passing recharges a reserve: a point for each whole interval, from the
  * seconds carried over as well. A reserve without an interval does not.

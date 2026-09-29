@@ -15,6 +15,7 @@ import { skillEncumbrancePenalty } from "../rules/physical.js";
 import { isCombatRoll, spendingInPlay } from "./bonus-points.js";
 import { SYSTEM_ID } from "./constants.js";
 import { consumeMightyBlows, recordMightyBlows, spendFatigue } from "./extra-effort.js";
+import { readReserveOrigin, reserveOriginField } from "./reserves.js";
 import { extrasCapRefusal, extrasOfOptions, recordExtras } from "./combat-extras.js";
 import type { CombatExtra } from "../rules/extra-effort-extras.js";
 import { consumeFeint } from "./feint.js";
@@ -2207,8 +2208,10 @@ async function rollAction(
     }
   }
 
+  // The Energy Reserve the dialog chose to pay extra effort from, if any (Basic Set Revised p. 326).
+  const chosenReserve = (melee?.reserveOrigin ?? shot?.reserveOrigin ?? "") || undefined;
   if (melee && melee.fatigue > 0) {
-    const paid = await spendFatigue(actor, melee.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title"));
+    const paid = await spendFatigue(actor, melee.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title"), chosenReserve);
     if (!paid) return null;
     if (melee.mightyBlows) await recordMightyBlows(actor);
   }
@@ -2216,7 +2219,7 @@ async function rollAction(
   if (boughtExtras.length > 0) await recordExtras(actor, boughtExtras);
   // A module's option chosen for a shot costs its FP the same way.
   if (shot?.addon && shot.addon.fatigue > 0) {
-    const paid = await spendFatigue(actor, shot.addon.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title"));
+    const paid = await spendFatigue(actor, shot.addon.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title"), chosenReserve);
     if (!paid) return null;
   }
   // What the modules' options chosen in the dialog did beyond the roll itself:
@@ -2231,7 +2234,7 @@ async function rollAction(
       }))
     : null;
   if (stance && stance.fatigue > 0) {
-    const paid = await spendFatigue(actor, stance.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title"));
+    const paid = await spendFatigue(actor, stance.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title"), chosenReserve);
     if (!paid) return null;
   }
   if (stance) modifiers.push(...stance.modifiers);
@@ -3227,6 +3230,8 @@ interface RangedShot {
   modifiers: RollModifier[];
   /** The attack options chosen, by id. */
   options?: Record<string, unknown>;
+  /** The Energy Reserve chosen to pay the FP of extra effort in this shot, or "" (since 1.191.0). */
+  reserveOrigin?: string;
   /** Shots for the rapid-fire arithmetic: shells times pellets. */
   shotsFired: number;
   /** Shells actually fired, which is what comes off the weapon's count. */
@@ -3745,6 +3750,7 @@ export async function promptForRangedAttack(options: {
       ${vehicleFields}
       ${mountFields}
       ${revisedRangedFields(rateOfFire)}
+      ${reserveOriginField(options.actor)}
       ${attackOptionFields(addonContext)}
       <div data-roll-breakdown></div>
     </div>`;
@@ -3785,6 +3791,7 @@ export async function promptForRangedAttack(options: {
       aimed,
       revised: readRevisedRanged(form),
       dual: readDualWeapon(form),
+      reserveOrigin: readReserveOrigin(form),
       weaponStrike: form?.querySelector<HTMLSelectElement>('select[name="weaponStrike"]')?.value ?? "",
       lockedOn: form?.querySelector<HTMLInputElement>('input[name="lockedOn"]')?.checked ?? false,
       concealed: readConcealed(form),
@@ -3893,6 +3900,7 @@ export async function promptForRangedAttack(options: {
   return {
     addon,
     options: input.addonValues ?? {},
+    reserveOrigin: input.reserveOrigin ?? "",
     modifiers,
     shotsFired: pellets.effectiveShots,
     shellsFired,
@@ -3956,6 +3964,8 @@ interface RangedInput {
   revised?: RevisedRangedInput | null;
   /** The GM's penalty for a stunt shot, negative, which a Heroic Archer halves (since 1.184.0). */
   stunt?: number;
+  /** The Energy Reserve chosen to pay the FP of extra effort in this shot, or "" for FP (since 1.192.0). */
+  reserveOrigin?: string;
   /** The shooter says the shot is from concealment (since 1.191.0). */
   concealed?: boolean;
 }
@@ -4830,6 +4840,8 @@ export async function promptForMeleeAttack(options: {
   defensePenalty: number;
   /** FP the chosen options cost, to be paid before the roll. */
   fatigue: number;
+  /** The Energy Reserve chosen to pay that FP first, or "" for FP alone (since 1.191.0). */
+  reserveOrigin: string;
   /** The combat options of extra effort bought for this attack, for the cap of one a turn (Revised p. 571). */
   extras: CombatExtra[];
   /** True when Mighty Blows was bought, for the damage roll to collect. */
@@ -4968,6 +4980,7 @@ export async function promptForMeleeAttack(options: {
           <option value="5">${game.i18n.localize("GWORLD.Ground.Higher5")}</option>
         </select>
       </label>
+      ${reserveOriginField(options.actor)}
       ${attackOptionFields(addonContext)}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
@@ -5044,14 +5057,16 @@ export async function promptForMeleeAttack(options: {
       jousting: ticked("jousting"),
       wildSwing: ticked("wildSwing"),
       stopThrustYards: num("stopThrustYards"),
+      reserveOrigin: readReserveOrigin(form),
     };
   }
 
   if (!result || typeof result !== "object") return null;
   const {
     deceptive, modifier, rapid, flurry, mighty, sight, darkness, calledShot, turned, ground, dual,
-    charging, pullSt, lanceSt, lanceYards, jousting, addonValues, wildSwing, stopThrustYards,
+    charging, pullSt, lanceSt, lanceYards, jousting, addonValues, wildSwing, stopThrustYards, reserveOrigin,
   } = result as {
+    reserveOrigin: string;
     wildSwing: boolean;
     stopThrustYards: number;
     addonValues: Record<string, unknown>;
@@ -5108,6 +5123,7 @@ export async function promptForMeleeAttack(options: {
     // Both cost a flat point each, and both are paid before the roll -- as is
     // whatever the modules' options cost.
     fatigue: (flurried ? EXTRA_EFFORT_FP : 0) + (mightyBlows ? EXTRA_EFFORT_FP : 0) + addon.fatigue,
+    reserveOrigin: reserveOrigin ?? "",
     mightyBlows,
     flurryOfBlows: flurried,
     calledShot: aimed.shot,

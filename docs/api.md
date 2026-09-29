@@ -4548,10 +4548,26 @@ runs again on the next load. Each helper returns
   FP, -10% per second), the Traits tab has a Pay cost button on such a trait and
   `actors.payAbilityCost(actor, item)` does the same from a module, resolving to
   `{ fp, reserve, hp }`. Rest and a day's rest recharge each reserve through the same minutes, and
-  the rest card says so. The sheet's pool beside FP has spend, give back and Full buttons. Not
-  done: extra effort chosen in a melee or ranged attack's dialog has no ability origin to pass, so
-  it pays FP; recovery aids of an origin (Recover Energy, Absorption) are for the module that owns
-  them to apply through `reserves.restore`.
+  the rest card says so. The sheet's pool beside FP has spend, give back and Full buttons. The
+  three gaps this left are closed in 1.192.0 (see **Energy Reserve finished**, below).
+
+- **Energy Reserve finished** (since 1.192.0; Basic Set Revised p. 326). What #908 still lacked.
+  The melee and ranged attack dialogs have a "Paid from" select (shown only to a character with a
+  reserve) naming the Energy Reserve that pays the FP of extra effort chosen there -- Flurry of
+  Blows, Mighty Blows, a module's attack option or maneuver option -- the same choice the sheet's
+  power extra-effort button asks; the answer is `reserveOrigin` on the melee and shot results and
+  goes to `spendFatigue`'s `origin`. Costs Fatigue (and Costs Hit Points) priced per second is now
+  charged per second: `derived.abilityRolls` already had `fpCostPerSecond` and `hpCostPerSecond`;
+  `actors.payAbilityCost(actor, item, seconds = 1)` charges each per-second cost for `seconds`
+  (a cost per use ignores it), from the origin's reserve first, and the sheet's Pay cost button
+  asks for the seconds where the cost is per second. Recovery: `derived.reserveRecoveries` lists
+  `{ id, name, kind, key, origin }` for each trait with a Recover Energy or Absorption modifier
+  whose origin (its power modifier) is one the character holds a reserve of; the Traits tab gives
+  such a trait a Recover ER button, and `reserves.recover(actor, itemId, amount)` does the same
+  from a module: it gives back `amount` points to that reserve, no more than it has spent, posts
+  a line to the log and resolves to the points given (0 for a trait that is no recovery aid).
+  `rules.recoveryKind` and `rules.reserveRecoveryAids` are the arithmetic. How much an ability
+  recovers stays with the table or the module; `reserves.restore` remains for anything else.
 
 - **The finished addenda** (since 1.187.0; Basic Set Revised pp. 333-334, 566). What #912 and
   #917 left undone. Techniques: a parried Head Butt (its attack roll carries the tag

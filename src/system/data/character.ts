@@ -127,7 +127,7 @@ import { sessionPools } from "../../rules/bonus-points.js";
 import {
   cuttingEdgeFor, dabblerBonusFor, dabblerGain, isBowSkill, perksOf, strongbowAllowance, strongbowMinSt,
 } from "../../rules/addendum-perks.js";
-import { energyReserves, reserveValue } from "../../rules/energy-reserve.js";
+import { energyReserves, reserveRecoveryAids, reserveValue } from "../../rules/energy-reserve.js";
 import { suitedLevel,
   defaultCreditPoints,
   effectiveSkillLevel,
@@ -3755,6 +3755,19 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         ...r,
         value: reserveValue(r.max, Number((this.session?.reserves as any)?.[r.key]?.spent ?? 0) || 0),
       })),
+      // Traits with Recover Energy or Absorption that refill a reserve of their origin (p. 326).
+      reserveRecoveries: reserveRecoveryAids(
+        traitsInPlay.inPlay.map((item: any) => {
+          const names = ((item.system?.modifiers ?? []) as Array<{ name?: string }>).map((m) => String(m?.name ?? ""));
+          return {
+            id: String(item.id ?? ""),
+            name: String(item.name ?? ""),
+            modifiers: names,
+            origin: powerModifierOrigin(names)?.origin ?? "",
+          };
+        }),
+        energyReserves(heldTraits),
+      ),
       // The suit worn that DX and DX-based rolls are held to (Characters p. 192).
       environmentSuit,
       magic: { ...magic, mana, items: magicItems },

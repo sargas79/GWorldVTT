@@ -18,6 +18,10 @@ export interface AbilityCost {
   fp: number;
   hp: number;
   origin: string;
+  /** True where either cost is per second of use (-10% per FP, doubled), so it is paid by the second. */
+  perSecond: boolean;
+  fpPerSecond: boolean;
+  hpPerSecond: boolean;
 }
 
 /** The cost of a trait's use, or null where it has none. */
@@ -27,7 +31,11 @@ export function abilityCostOf(actor: any, itemId: string): AbilityCost | null {
   if (!found) return null;
   const fp = Math.max(0, Math.floor(Number(found.fpCost) || 0));
   const hp = Math.max(0, Math.floor(Number(found.hpCost) || 0));
-  return fp > 0 || hp > 0 ? { fp, hp, origin: String(found.origin ?? "") } : null;
+  const fpPerSecond = fp > 0 && found.fpCostPerSecond === true;
+  const hpPerSecond = hp > 0 && found.hpCostPerSecond === true;
+  return fp > 0 || hp > 0
+    ? { fp, hp, origin: String(found.origin ?? ""), perSecond: fpPerSecond || hpPerSecond, fpPerSecond, hpPerSecond }
+    : null;
 }
 
 /** What paying a use came to. */
@@ -42,14 +50,21 @@ export interface AbilityPaid {
  * of the ability's origin first, and the HP of Costs Hit Points. Says so in
  * the log. Null where the ability costs nothing or this user may not change
  * the actor.
+ *
+ * A cost "per second" (Costs Fatigue or Costs Hit Points at the doubled price)
+ * is charged for each of `seconds` of use, from the origin's reserve first
+ * (since API 1.192.0); a cost per use ignores `seconds`.
  */
-export async function payAbilityCost(actor: any, item: any): Promise<AbilityPaid | null> {
+export async function payAbilityCost(actor: any, item: any, seconds = 1): Promise<AbilityPaid | null> {
   if (!actor?.isOwner || !item) return null;
   const cost = abilityCostOf(actor, String(item.id));
   if (!cost) return null;
+  const time = Math.max(1, Math.floor(Number(seconds)) || 1);
+  const fpDue = cost.fp * (cost.fpPerSecond ? time : 1);
+  const hpDue = cost.hp * (cost.hpPerSecond ? time : 1);
   const paid: AbilityPaid = { fp: 0, reserve: 0, hp: 0 };
-  if (cost.fp > 0) {
-    const applied = await spendFatigueFor(actor, cost.fp, {
+  if (fpDue > 0) {
+    const applied = await spendFatigueFor(actor, fpDue, {
       reason: "abilityCost",
       exertion: false,
       details: { ability: String(item.name ?? "") },
@@ -60,8 +75,8 @@ export async function payAbilityCost(actor: any, item: any): Promise<AbilityPaid
       paid.reserve = applied.reserveLost;
     }
   }
-  if (cost.hp > 0) {
-    const lost = await spendHitPointsFor(actor, cost.hp, { reason: "abilityCost" });
+  if (hpDue > 0) {
+    const lost = await spendHitPointsFor(actor, hpDue, { reason: "abilityCost" });
     if (lost) paid.hp = lost.hpLost;
   }
   const parts = [
@@ -72,7 +87,11 @@ export async function payAbilityCost(actor: any, item: any): Promise<AbilityPaid
   await ChatMessage.implementation.create({
     speaker: ChatMessage.implementation.getSpeaker({ actor }),
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
-    content: `<p>${foundry.utils.escapeHTML(L("Used", { ability: String(item.name ?? ""), paid: parts.join(", ") || "0" }))}</p>`,
+    content: `<p>${foundry.utils.escapeHTML(
+      cost.perSecond
+        ? L("UsedSeconds", { ability: String(item.name ?? ""), seconds: time, paid: parts.join(", ") || "0" })
+        : L("Used", { ability: String(item.name ?? ""), paid: parts.join(", ") || "0" }),
+    )}</p>`,
   });
   return paid;
 }
