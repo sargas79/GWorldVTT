@@ -4441,9 +4441,17 @@ runs again on the next load. Each helper returns
   running tally per location in the actor's `frostbite` flag and cripples (`crippling.cripple`,
   undecided duration, labelled Frostbite) a hand, foot, arm or leg once the tally passes its
   crippling threshold (Campaigns p. 421); the tally starts over at full HP. The Horizon Table
-  is a GM Screen section (`horizonTable`, Ranged tab). Not done: a shot from concealment (no
-  defense on the first attack, a Vision roll without the +10 after) is the GM's call and has no
-  control on the card, and the add-on's `frostbite` is not retired here.
+  is a GM Screen section (`horizonTable`, Ranged tab). The add-on's `frostbite` is not retired here.
+  Finished in 1.191.0: with `visionRollsInCombat` on, the ranged attack dialog gains a "Shot from
+  concealment" box. A shot so flagged carries `concealed: { first }` on its defense card (the
+  message flag `gworld.defense.concealed`). The shooter's `concealment` flag remembers whether
+  an earlier such shot revealed them: the first grants no active defense; every later one asks
+  each defender for a Vision roll without the +10 (rolled whatever the SM and range, never at a
+  bonus), and a defender who fails it may only dodge, at -4. `vision.noteConcealedShot(actor)`
+  (returns `{ first }` and marks the shooter revealed), `vision.hideAttacker(actor)` (hidden
+  again: their next such shot is a surprise), and `vision.combatVisionNeed({ ..., concealed })`;
+  pure pieces `rules.concealedVision` and `rules.concealedShotDefense`. `rollCombatVision`'s
+  `fromConcealment` now rolls at SM plus range plus `other` with no +10, whatever they are.
 - **More maneuvers** (since 1.181.0; Basic Set Revised pp. 575-576). Five combat-group switches,
   each off: `allOutSlams`, `allOutConcentrate`, `mentalDefense`, `committedAttack`,
   `defensiveAttack`. `system.maneuver` may now be `committedAttack`, `defensiveAttack` or

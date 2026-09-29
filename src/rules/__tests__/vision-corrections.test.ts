@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  AQUATIC_FORAGING, arcticTravelFor, combatVision, concealedAttackDefense, exposedLocations, foragingModifier,
+  AQUATIC_FORAGING, arcticTravelFor, combatVision, concealedAttackDefense, concealedShotDefense, concealedVision, exposedLocations, foragingModifier,
   frostbiteDamage, horizonMiles, horizonMilesForHeight, illuminationPenalty, modifierRange, plainSightBonus,
   pointSourcePenalty, signalRange, signalVisionBonus, trackingModifier, travelMultiplier,
 } from "../vision-corrections.js";
@@ -138,5 +138,20 @@ describe("the horizon (p. 575)", () => {
     expect(signalVisionBonus({ deliberate: true })).toBe(10);
     // A light at night: the darkness penalty of -6 reverses to +6.
     expect(signalVisionBonus({ deliberate: true, light: true, darknessPenalty: -6 })).toBe(16);
+  });
+});
+
+describe("a shot from concealment (p. 575)", () => {
+  it("rolls Vision without the +10, and only at no bonus", () => {
+    expect(concealedVision({ attackerSm: -2, rangePenalty: -5 })).toEqual({ needsRoll: true, modifier: -7 });
+    expect(concealedVision({ attackerSm: 0 })).toEqual({ needsRoll: true, modifier: 0 });
+    expect(concealedVision({ attackerSm: 1 })).toEqual({ needsRoll: false, modifier: 1 });
+  });
+
+  it("grants no defense to the first, then a Vision roll: normal defenses or a dodge at -4", () => {
+    expect(concealedShotDefense({ first: true, seen: null })).toBe("none");
+    expect(concealedShotDefense({ first: false, seen: null })).toBe("roll");
+    expect(concealedShotDefense({ first: false, seen: true })).toBe("normal");
+    expect(concealedShotDefense({ first: false, seen: false })).toBe("dodgeMinus4");
   });
 });

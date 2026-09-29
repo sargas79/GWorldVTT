@@ -17,14 +17,14 @@ import { HIT_LOCATIONS, HIT_LOCATION_ORDER, cripplingThreshold, type HitLocation
 import { resolveSuccess } from "../rules/success.js";
 import { rangedToHitModifier } from "../rules/ranged.js";
 import {
-  AQUATIC_FORAGING, combatVision, exposedLocations, foragingModifier, frostbiteCripples, frostbiteDamage, plainSightBonus,
+  AQUATIC_FORAGING, combatVision, concealedVision, exposedLocations, foragingModifier, frostbiteCripples, frostbiteDamage, plainSightBonus,
   signalRange, signalVisionBonus, TERRAIN_TYPES, type AquaticTerrain, type CombatVision, type TerrainType,
 } from "../rules/vision-corrections.js";
 import { SYSTEM_ID } from "./constants.js";
 import { cripple } from "./crippling.js";
 import { skillLevelOf } from "./skill-level.js";
 import { rollSuccess, yardsBetween } from "./roll.js";
-import { currentTerrain } from "./vision-prompts.js";
+import { currentTerrain, hideAttacker, noteConcealedShot } from "./vision-prompts.js";
 
 const L = (key: string, data?: Record<string, unknown>) =>
   data ? game.i18n.format(`GWORLD.Vision.${key}`, data) : game.i18n.localize(`GWORLD.Vision.${key}`);
@@ -106,9 +106,11 @@ export async function rollCombatVision(options: {
   /** Unseen ranged attacks from concealment: the roll has no +10 (a second attack on). */
   fromConcealment?: boolean;
 }): Promise<{ sees: boolean; rolled: boolean; check: CombatVision }> {
-  const check = combatVision({ attackerSm: options.attackerSm, rangePenalty: options.rangePenalty, other: options.other });
+  const check = options.fromConcealment
+    ? concealedVision({ attackerSm: options.attackerSm, rangePenalty: options.rangePenalty, other: options.other })
+    : combatVision({ attackerSm: options.attackerSm, rangePenalty: options.rangePenalty, other: options.other });
   if (!isRuleOn("visionRollsInCombat") || !check.needsRoll) return { sees: true, rolled: false, check };
-  const modifier = check.modifier - (options.fromConcealment ? 10 : 0);
+  const modifier = check.modifier;
   const target = (Number(options.actor?.system?.derived?.per) || attributeOf(options.actor, "IQ")) + modifier;
   const roll = new Roll("3d6");
   await roll.evaluate();
@@ -206,6 +208,8 @@ export interface CombatVisionNeed {
   check: CombatVision;
   attackerSm: number;
   rangePenalty: number;
+  /** Set for a shot from concealment after the first: the roll has no +10. */
+  concealed?: boolean;
 }
 
 const VISION_MEMO_FLAG = "combatVision";
@@ -222,6 +226,8 @@ export async function combatVisionNeed(options: {
   attackerToken?: string | undefined;
   defenderToken?: string | undefined;
   delivery?: string | undefined;
+  /** A shot from concealment after the first: the roll has no +10 and is always called for (pp. 574-575). */
+  concealed?: boolean | undefined;
 }): Promise<CombatVisionNeed | null> {
   if (!isRuleOn("visionRollsInCombat")) return null;
   const attackerSm = Number(options.attacker?.system?.sm) || 0;
@@ -232,8 +238,8 @@ export async function combatVisionNeed(options: {
     const yards = yardsBetween(from?.object ?? null, to?.object ?? null);
     if (yards !== null) rangePenalty = rangedToHitModifier({ rangeYards: yards, targetSpeedYardsPerSecond: 0, targetSizeModifier: 0 }).speedRange;
   }
-  const check = combatVision({ attackerSm, rangePenalty });
-  return check.needsRoll ? { check, attackerSm, rangePenalty } : null;
+  const check = options.concealed ? concealedVision({ attackerSm, rangePenalty }) : combatVision({ attackerSm, rangePenalty });
+  return check.needsRoll ? { check, attackerSm, rangePenalty, ...(options.concealed ? { concealed: true } : {}) } : null;
 }
 
 /** What the defender already found out about the attack on this card: true (saw), false (did not), null (not yet rolled). */
@@ -251,7 +257,7 @@ export function combatVisionMemo(defender: any, messageId: string): boolean | nu
 export async function settleCombatVision(defender: any, messageId: string, need: CombatVisionNeed): Promise<boolean> {
   const known = combatVisionMemo(defender, messageId);
   if (known !== null) return known;
-  const { sees } = await rollCombatVision({ actor: defender, attackerSm: need.attackerSm, rangePenalty: need.rangePenalty });
+  const { sees } = await rollCombatVision({ actor: defender, attackerSm: need.attackerSm, rangePenalty: need.rangePenalty, fromConcealment: need.concealed === true });
   if (defender?.isOwner && typeof defender.setFlag === "function") {
     const memo = { ...((defender.getFlag?.(SYSTEM_ID, VISION_MEMO_FLAG) as Record<string, boolean> | undefined) ?? {}), [messageId]: sees };
     const keys = Object.keys(memo);
@@ -271,6 +277,8 @@ export const visionApi = Object.freeze({
   forageSkill,
   combatVisionNeed,
   settleCombatVision,
+  noteConcealedShot,
+  hideAttacker,
   signalRange,
   signalVisionBonus,
   plainSightBonus,
