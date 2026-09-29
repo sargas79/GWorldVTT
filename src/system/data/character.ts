@@ -97,6 +97,7 @@ import { evaluateBonus, takesEvaluateBonus } from "../../rules/maneuvers.js";
 import {
   COMBAT_HOOKS, MODULE_KEY, adjustWeaponAttacks, maneuverAllowancesFor, maneuverInfo, maneuverKeys, parryWeaponRows, type WeaponRowEntry,
 } from "../combat-extensions.js";
+import { moreManeuverDefenseLines, stepsFor } from "../more-maneuvers.js";
 import { shotsEntryFor } from "../shots-entry.js";
 import { malfunctionOf } from "../malfunctions.js";
 import { stuckWeaponOf } from "../picks.js";
@@ -3372,6 +3373,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       defenses: { dodge: defenses.dodge?.total ?? null, parry: defenses.parry?.total ?? null, block: defenses.block?.total ?? null },
       lines: [] as Array<BonusLine & { defense: string }>,
     }).lines as Array<BonusLine & { defense: string }>;
+    // Committed Attack's -2 and Defensive Attack's +1 (Revised pp. 575-576) are in the figure the button shows.
+    for (const defense of ["dodge", "parry", "block"] as const) {
+      for (const line of moreManeuverDefenseLines(this.parent, defense)) {
+        defenseBonuses.push({ label: line.label, value: line.value, source: "system", defense });
+      }
+    }
     const bareHandedParry: DefenseView | null = bareParryResult && bestBareParry
       ? {
           total: bareParryResult.total,
@@ -3483,6 +3490,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         defenseAvailable,
         parryAvailable,
         movement: allowances.movement,
+        // How many steps a "step" is: Committed Attack's second, a Giant Step's extra (Revised pp. 571, 576).
+        steps: stepsFor(this.parent, allowances.movement),
         option: this.maneuverOption,
       },
       evaluateBonus: this.maneuver === "evaluate" || takesEvaluateBonus(this.maneuver, maneuverInfo(this.maneuver).attacks)

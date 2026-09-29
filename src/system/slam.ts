@@ -19,6 +19,7 @@ import { isRuleOn } from "./optional-rules.js";
 import { damageDistance, rollDamage, rollSuccess } from "./roll.js";
 import { callCombatHook, COMBAT_HOOKS } from "./combat-extensions.js";
 import { targetedTokens, withTargets } from "./targets.js";
+import { noteSlam, slamRefusal } from "./more-maneuvers.js";
 import { attributeOf } from "./attributes.js";
 import { shoveDamage, slamDamage, slamOutcome, slamSkillBonus, slamSkills, slamToHit, type SlamKind } from "../rules/attack-options.js";
 import { knockback, strongAttackDamageBonus } from "../rules/maneuvers.js";
@@ -162,6 +163,12 @@ async function ask(actor: any, kind: "slam" | "shove"): Promise<{ choice: string
 /** The Slam and Shove buttons: asks, rolls to hit against each foe, and works out what the hits do. */
 export async function slamOrShove(actor: any, kind: "slam" | "shove"): Promise<void> {
   if (!isRuleOn("slams")) return;
+  // A Double slams once, and its other attack comes before it (Revised p. 575).
+  const refused = kind === "slam" ? slamRefusal(actor) : null;
+  if (refused) {
+    ui.notifications?.warn(refused);
+    return;
+  }
   const asked = await ask(actor, kind);
   if (!asked) return;
   const variant = variants.find((v) => v.id === asked.choice) ?? null;
@@ -204,6 +211,9 @@ export async function slamOrShove(actor: any, kind: "slam" | "shove"): Promise<v
     }));
     if (outcome?.success && !outcome.criticalFailure) hits.push(foe);
   }
+
+  // The slam is one of a Double's two attacks, hit or miss (Revised p. 575).
+  if (kind === "slam") await noteSlam(actor);
 
   // A flying tackle ends lying down, hit or miss; a pounce rolls to stay up (p. 372).
   if (ownKind === "flyingTackle" && actor?.isOwner) await actor.update({ "system.posture": "lying" });

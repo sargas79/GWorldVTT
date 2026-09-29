@@ -22,7 +22,7 @@ import { registerSuppressionFire } from "./system/suppression-fire.js";
 import { registerFacing } from "./system/facing.js";
 import { registerAimTracking } from "./system/aim.js";
 import { registerRevisedHitLocations } from "./system/revised-hit-locations.js";
-import { registerMoreManeuvers } from "./system/more-maneuvers.js";
+import { registerConcentrationRun, registerMoreManeuvers } from "./system/more-maneuvers.js";
 import { registerSupersededPackHiding } from "./system/compendium-sources.js";
 import { registerEvaluateTracking } from "./system/evaluate.js";
 import { registerConcentrateTracking } from "./system/zen.js";
@@ -64,6 +64,8 @@ import { READY_HOOK, createApi, warnIncompatibleModules } from "./system/api.js"
 import { registerCombatStateHooks } from "./system/combat-extensions.js";
 import { registerProcedureHooks } from "./system/procedure-extensions.js";
 import { registerReserveHooks } from "./system/reserves.js";
+import { registerStressHooks } from "./system/stress.js";
+import { registerCombatExtras } from "./system/combat-extras.js";
 import { configureDeprecatedData, migrateContainers, migrateLearnableTraits, migrateRenamedTraits, registerMigrationSettings, warnUncoveredData } from "./system/migration.js";
 import { closeRuleRegistration, openRuleRegistration, registerRule, registerRuleGroup } from "./system/rule-registry.js";
 import { registerSettings } from "./system/settings.js";
@@ -158,6 +160,7 @@ Hooks.once("init", () => {
   registerAimTracking();
   registerEvaluateTracking();
   registerConcentrateTracking();
+  registerConcentrationRun();
   registerBattleFatigue();
   registerTaskRules();
   // What a module keeps per combatant runs out at the turn, round or combat
@@ -165,6 +168,7 @@ Hooks.once("init", () => {
   registerCombatStateHooks();
   registerProcedureHooks(setCondition);
   registerReserveHooks();
+  registerStressHooks();
   registerConsciousnessTurns();
   // A disarm changes the foe's weapon, which a player rarely owns, so the
   // GM's client makes the change when asked.
@@ -245,6 +249,8 @@ Hooks.once("ready", () => {
   console.log(`${SYSTEM_ID} | Ready`);
   // The choices the addendum's maneuvers ask for, on the combat tab (Basic Set Revised pp. 575-576).
   registerMoreManeuvers();
+  // Giant Step, Great Lunge and Heroic Charge, beside Flurry and Mighty Blows (Basic Set Revised p. 571).
+  registerCombatExtras();
   // What the compendia know about skills nobody on the sheet has learned,
   // so a weapon whose skill is missing is rolled at the book's default.
   void loadSkillCatalog();

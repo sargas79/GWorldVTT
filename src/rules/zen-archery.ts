@@ -75,6 +75,7 @@ export function zenSkillCovers(covers: readonly string[], skill: string): boolea
  * the roll asks for is unbroken.
  */
 export function concentrateTurnsAfterTurn(turns: number, maneuver: string): number {
-  if (maneuver !== "concentrate") return 0;
+  // A task may alternate between Concentrate and All-Out Concentrate (Revised p. 575).
+  if (maneuver !== "concentrate" && maneuver !== "allOutConcentrate") return 0;
   return Math.max(0, Math.floor(Number(turns) || 0)) + 1;
 }

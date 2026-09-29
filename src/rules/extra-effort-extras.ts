@@ -64,6 +64,61 @@ export function rapidRecoveryAllowed(options: { unbalanced: boolean; maneuver: s
   return options.maneuver === "moveAndAttack" || (options.unbalanced && options.maneuver === "attack");
 }
 
+/** Great Lunge adds this much to the attack's reach, in yards (p. 571). */
+export const GREAT_LUNGE_REACH = 1;
+
+/** Giant Step buys this many extra steps (p. 571). */
+export const GIANT_STEP_STEPS = 1;
+
+/** Heroic Charge takes back the Move and Attack skill penalty (p. 571). */
+export const HEROIC_CHARGE_TO_HIT = 4;
+
+/**
+ * Where a Giant Step's critical failure lands: "1 HP of injury to the leg,
+ * not the arm" (p. 571).
+ */
+export const GIANT_STEP_CRITICAL_LIMB = "leg";
+
+/** A Heroic Charge's defensive drawbacks still apply: -2 to rolls to avoid falling or tripping (p. 571). */
+export const HEROIC_CHARGE_FALL_PENALTY = -2;
+
+/**
+ * The extras used so far in a round, kept as the round they were used in and
+ * their keys. A record from another round is over and counts for nothing.
+ */
+export interface ExtrasRecord {
+  round: string;
+  extras: CombatExtra[];
+}
+
+/** The extras a record still holds in this round. */
+export function extrasHeld(record: ExtrasRecord | null | undefined, round: string | null): CombatExtra[] {
+  if (!record || round === null || record.round !== round || !Array.isArray(record.extras)) return [];
+  return record.extras.filter((extra) => extra in COMBAT_EXTRAS);
+}
+
+/** The record once these extras are added to what the round already held. */
+export function extrasAdded(record: ExtrasRecord | null | undefined, round: string, added: readonly CombatExtra[]): ExtrasRecord {
+  const held = extrasHeld(record, round);
+  return { round, extras: [...held, ...added.filter((extra) => !held.includes(extra))] };
+}
+
+/**
+ * The options wanted that the cap of one offensive and one defensive a turn
+ * would refuse, given what the round already holds (p. 571). Choosing again
+ * an option already used this round is no second use of the cap.
+ */
+export function extrasRefused(held: readonly CombatExtra[], wanted: readonly CombatExtra[]): CombatExtra[] {
+  const fresh = wanted.filter((extra) => !held.includes(extra));
+  return extrasOverCap([...held, ...fresh]).filter((extra) => fresh.includes(extra));
+}
+
+/** The combat option an attack option's key stands for, or null: `gworld.giantStep` and the like. */
+export function combatExtraOfKey(key: string): CombatExtra | null {
+  const short = key.startsWith("gworld.") ? key.slice("gworld.".length) : key;
+  return short in COMBAT_EXTRAS ? (short as CombatExtra) : null;
+}
+
 /** The most a powers' extra effort may add, as a percentage (p. 571). */
 export const POWER_EFFORT_MAX_PERCENT = 100;
 

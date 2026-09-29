@@ -4298,11 +4298,9 @@ runs again on the next load. Each helper returns
   `giantStepAllowed`, `greatLungeAllowed`, `heroicChargeAllowed`, `rapidRecoveryAllowed`,
   `powerEffortTarget`, `powerEffortCost`, `godlikeEffect`, `fatigueForSkillBonus`,
   `combinedBasicLift`, `combinedStrength`, `marchingHours`, `marchingSpeed` and
-  `marchingMilesPerMove` are the pure pieces (`dailyMiles` takes `milesPerMove`). Not done: the
-  four combat options (Giant Step, Great Lunge, Heroic Charge, Rapid Recovery) and the cap of one
-  offensive and one defensive a turn are rules only, not yet in the maneuver flow (the add-on's
-  Martial Arts options still serve); the fatigue trades are a sheet button holding a bonus, not
-  spinners inside the roll and resistance dialogs; Combining ST has no button on the Party sheet.
+  `marchingMilesPerMove` are the pure pieces (`dailyMiles` takes `milesPerMove`). The combat
+  options, the cap, the spinners and the Party button were finished in 1.189.0 (see "Extra effort
+  and the maneuvers, finished" below).
 - **Stress and Derangement** (since 1.179.0; Basic Set Revised pp. 572-573). Switch
   `stressAndDerangement` (rolls group, off) with sub-options `stressRollPenalties` and
   `derangementRollPenalties` (off). A character gains `system.stress` and
@@ -4322,11 +4320,9 @@ runs again on the next load. Each helper returns
   indulgence })`, `dayEnd({ actor, clinicianSkill })`, `buyOff(actor, { points, target })` and
   `clinicianSkill(actor)`; `rules.addHardship`, `frightHardship`, `stressFrightPenalty`,
   `stressRecovered`, `stressRollPenalty`, `derangementRollPenalty`, `derangementRecoveryTarget` and
-  `cureByPoints` are the pure pieces. `roll.frightCheck` still rolls an ordinary check. Not done:
-  no rest hook for time passing outside the Rest button (the world clock does not bleed Stress off),
-  the day's-end roll is the GM's call (no check that the day was free of new hardship), the
-  rolls for supernatural powers and the Physician (Psychiatric) hint on the injuries chapter are
-  not wired, and the permanent-disadvantage overflow is reported, not added as a trait.
+  `cureByPoints` are the pure pieces. `roll.frightCheck` still rolls an ordinary check. The world
+  clock, the permanent overflow, the powers' penalties and the injuries chapter's pointer were
+  finished in 1.189.0 (see "Extra effort and the maneuvers, finished" below).
 - **Terrain, illumination, vision, frostbite and the horizon** (since 1.180.0; Basic Set
   Revised pp. 573-575). Switches: `terrainTypes` (activities), `frostbite` (injury) and
   `visionRollsInCombat` (combat), all off. With `terrainTypes` on, the sheet's hike prompt
@@ -4368,12 +4364,9 @@ runs again on the next load. Each helper returns
   and a grab or grapple (an attack that does no damage) gives the target +1 on its defenses.
   All-Out Concentrate is +1 to skill and spell rolls, which makes the distraction roll Will-2;
   Mental Defense is +2 on resistance rolls while All-Out Defense is the maneuver.
-  `registerManeuverOption` and `registerManeuver` stay for other books. Not done: the +1 of
-  All-Out Concentrate is on every skill and spell roll (the GM removes it from others) and does
-  not check that the maneuver was held for the whole task; the second step's count and the
-  Defensive kick's +2 on falling rolls are not enforced; the defense buttons' figures do not show
-  the -2 or +1 (the roll's lines do); Double's extra melee attack before a slam is the ordinary
-  second All-Out Attack.
+  `registerManeuverOption` and `registerManeuver` stay for other books. The whole-task check, the
+  step count, the kick's +2, the figures on the defense buttons and Double's attack before a slam
+  were finished in 1.189.0 (see "Extra effort and the maneuvers, finished" below).
 - **Optional ranged rules** (since 1.182.0; Basic Set Revised pp. 576-577). Switches, all off, in
   the combat group: `closeContactShots`, `partialCoverage`, `nonCombatBonuses`, `trickyShooting`,
   `simplifiedRange`, `largeTargetDamage`. Each adds fields to the ranged attack dialog or changes a
@@ -4412,3 +4405,66 @@ runs again on the next load. Each helper returns
   `ammoTracked` (the API and the flag only), nothing yet calls `daysOfPower` for gadgets, and
   explosive or fine ammunition in a weapon is not detected, so a weapon holding it should be set
   tracked by hand. The add-on's six battery items are for the add-on to drop.
+
+- **Extra effort and the maneuvers, finished** (since 1.189.0; Basic Set Revised pp. 571-576).
+  Adds no switch except `mentalOnTheClock` (rolls group, off, under `stressAndDerangement`); the
+  rest ride on the switches of 1.178.0 to 1.181.0.
+  *Combat options (`extraEffort`).* Giant Step (an Attack or Defensive Attack), Great Lunge (melee
+  Attack, Committed Attack or Move and Attack, +1 yard of reach) and Heroic Charge (Move and
+  Attack: takes back the -4 in melee and lifts the cap of 9 through `gworld.attackModifiers`,
+  `skillCap`) are attack options `gworld.giantStep`, `gworld.greatLunge` and `gworld.heroicCharge`
+  in the attack dialog, 1 FP each. Rapid Recovery is a button on the Combat tab (`data-action`
+  `rapidRecovery`, `effort.declareRapidRecovery(actor)`): 1 FP, and until the round ends an
+  unbalanced weapon that attacked may parry (`gworld.parryWeapons` sees it as not excluded).
+  Flurry of Blows, Mighty Blows, Giant Step, Great Lunge and Heroic Charge are the offensive
+  options and Feverish Defense and Rapid Recovery the defensive ones; a second of a kind in one
+  round is refused in the dialog or on the defense card. `effort.usedThisRound(actor)` lists what
+  the actor has used this round and `effort.capRefusal(actor, extras)` the reason the cap refuses
+  some, or null. Nothing is tracked outside a battle. A Giant Step adds a step to the sheet's step
+  count, and a Heroic Charge puts -2 on a roll to avoid falling (below). The module id `gworld` on
+  these options is the system's own; an add-on with its own copies keeps working, and retires
+  them when it likes. `rules.extrasHeld`, `extrasAdded`, `extrasRefused`, `combatExtraOfKey`,
+  `GREAT_LUNGE_REACH`, `GIANT_STEP_STEPS` and `HEROIC_CHARGE_TO_HIT` are the pure pieces.
+  *FP for skill and resistance (`fatigueForSkill`).* The shift-click roll dialog for a skill or an
+  attribute roll has a spinner, "Trade FP for skill (+1 each, 0-4)", limited to the FP the
+  character has; the FP is paid with the roll and the bonus is a line on it. The attack dialog has
+  the attack option `gworld.fatigueTrade`, a number 0-4. The subject of a Resisted spell is asked
+  for up to 4 FP for +1 each on its resistance roll, on the resistance card. The sheet button that
+  holds a bonus for the next roll stays. `roll.promptForRoll` is the dialog with the spinner and
+  the fall checkbox (`promptForModifier` keeps its shape).
+  *Combining ST.* The Party sheet's header has a "Combining ST" button that posts the members'
+  summed Basic Lift and effective ST to chat (`party.postCombiningSt`).
+  *Stress and Derangement.* Derangement past Will becomes a disadvantage on the character, "Mental
+  disadvantages from Derangement", worth -1 point for each point of overflow and flagged
+  `derangementOverflow`; further overflow adds to it (`mental.permanentDisadvantage(actor,
+  points)`). With `mentalOnTheClock` on, the world clock (`updateWorldTime`) sheds 1 Stress per 10
+  minutes from each character outside a started combat, carrying the seconds that were not yet a
+  whole 10 minutes, and each midnight after a day with no new Stress or Derangement rolls the
+  day's-end Will roll for a character with Derangement (`mental.timePasses(actor, { from, to })`,
+  the GM's client). The Derangement penalty also applies to a success roll tagged `power` or
+  `supernatural`, and to one tagged `evil`, where it is a penalty to a roll tagged `resist` and a
+  bonus of the same size to use the power (`mental.powerLines({ actor, tags })`, under
+  `derangementRollPenalties`). The day's-end card and the Derangement tooltip carry the injuries
+  chapter's pointer (p. 418): Physician (Psychiatric) or Psychology for treatment.
+  `rules.stressShedByClock`, `daysEnded`, `dayWasQuiet` and `derangementPowerModifier` are the
+  pure pieces.
+  *All-Out Concentrate.* The +1 is only on a skill or spell roll made after every turn of the
+  task so far was All-Out Concentrate: a plain Concentrate in the run takes it off (the run is
+  kept on the actor when each turn ends), except on the distraction roll, tagged `distraction`,
+  which is Will-2 on the maneuver alone. `zen` counts a turn of All-Out Concentrate as
+  concentrating.
+  *Steps.* `derived.maneuver.steps` is the number of steps a "step" maneuver allows: 1, Committed
+  Attack's second step when chosen, and a Giant Step used this round; the Combat tab shows it.
+  *Defense figures.* Committed Attack's -2 and Defensive Attack's +1 are in the figure of the
+  defense buttons (`derived.defenses`, `extensionBonuses.defenses`) and no longer a separate line
+  on the roll.
+  *Kick and falling.* Defensive Attack has a fourth benefit, a kick, +2 on a DX roll to avoid
+  falling; the roll dialog for a DX roll has an "avoiding a fall" checkbox that adds it (and a
+  Heroic Charge's -2), and a module's roll tagged `fall` gets the same lines.
+  *Double.* An All-Out Attack (Double) that slams counts the slam as one of its two attacks, may
+  slam once, and makes no attack after the slam (`gworld.slam` chosen, allOutSlams on).
+  Still not done: a Giant Step's extra step is counted, not moved (the system has no step
+  tracking on the map); the +1 of All-Out Concentrate is still the GM's to withhold from a roll
+  that is not the concentrated task; Heroic Charge's ranged penalty is a note, since the ranged
+  Move and Attack penalty is the weapon's Bulk; the add-on's retirement of its options is for the
+  add-on.

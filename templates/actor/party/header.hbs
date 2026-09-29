@@ -26,6 +26,9 @@
       <button type="button" class="v2-button v2-build-button" data-action="awardPoints"
               data-tooltip="{{localize "GWORLD.Party.AwardPointsHint"}}">{{> "gworld.plus"}} {{localize "GWORLD.Party.AwardPoints"}}</button>
     {{/if}}
+    {{!-- The members' Basic Lifts added up, and the ST of the group (Basic Set Revised p. 572). --}}
+    <button type="button" class="v2-button v2-build-button" data-action="combiningSt"
+            data-tooltip="{{localize "GWORLD.Party.CombiningStHint"}}">{{localize "GWORLD.Party.CombiningSt"}}</button>
     {{#if editable}}
       <button type="button" class="v2-button v2-build-button" data-action="addMembers"
               data-tooltip="{{localize "GWORLD.Party.AddMembersHint"}}">{{> "gworld.plus"}} {{localize "GWORLD.Party.AddMembers"}}</button>

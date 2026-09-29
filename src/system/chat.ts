@@ -39,6 +39,7 @@ import { setCondition, syncHealthConditions } from "./conditions.js";
 import { catchFire, fragileCatchesFire, irradiate, rollBrittleLimb } from "./hazards.js";
 import { fragileIgnition } from "../rules/fragile.js";
 import { EXTRA_EFFORT_FP, FEVERISH_DEFENSE_BONUS } from "../rules/extra-effort.js";
+import { extrasCapRefusal, recordExtras } from "./combat-extras.js";
 import { spendFatigue } from "./extra-effort.js";
 import { isRuleOn } from "./optional-rules.js";
 import { combatStyle } from "./settings.js";
@@ -1161,6 +1162,12 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     const feverishBox = isRuleOn("extraEffort") && refused.feverish === null ? document.createElement("input") : null;
     if (feverishBox) {
       feverishBox.type = "checkbox";
+      // One defensive option a turn (Basic Set Revised p. 571).
+      const capped = extrasCapRefusal(defender, ["feverishDefense"]);
+      if (capped) {
+        feverishBox.disabled = true;
+        feverishBox.title = capped;
+      }
       const feverish = document.createElement("label");
       feverish.className = "gc-retreat";
       feverish.append(feverishBox, document.createTextNode(
@@ -1748,6 +1755,7 @@ async function rollDefense(options: {
       game.i18n.localize("GWORLD.ExtraEffort.Feverish"),
     );
     if (!paid) return;
+    await recordExtras(defender, ["feverishDefense"]);
   }
   // And what the modules' options cost.
   if (addon.fatigue > 0) {

@@ -39,6 +39,7 @@ import {
   type PartySkillRow,
 } from "../party/roster.js";
 import { promptForTeamEffort, rollTeamEffort, teamEffortMembers } from "../team-effort.js";
+import { postCombiningSt } from "../extra-effort-extras.js";
 import { reportRefusedDrop } from "./drop-errors.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
@@ -170,6 +171,7 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       awardPoints: GWorldPartySheet.#onAwardPoints,
       roll: GWorldPartySheet.#onRoll,
       teamEffort: GWorldPartySheet.#onTeamEffort,
+      combiningSt: GWorldPartySheet.#onCombiningSt,
       changeMana: GWorldPartySheet.#onChangeMana,
       openRules: GWorldPartySheet.#onOpenRules,
       openSources: GWorldPartySheet.#onOpenSources,
@@ -611,6 +613,17 @@ export class GWorldPartySheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     const asked = await promptForTeamEffort(skill, teamEffortMembers(this.actor, skill));
     if (!asked) return;
     await rollTeamEffort({ members: asked.members, skill, modifier: asked.modifier });
+  }
+
+  /**
+   * The group's strength for a job of physical labor (Basic Set Revised p.
+   * 572): the members' Basic Lifts added, and the square root of five times
+   * that, rounded up, for an effective ST. Posted to chat for everyone.
+   */
+  static async #onCombiningSt(this: GWorldPartySheet) {
+    const actors = this.#members().map((m) => m.actor).filter((actor): actor is any => actor !== null);
+    if (actors.length === 0) return;
+    await postCombiningSt(actors);
   }
 
   /* ── the world ───────────────────────────────────────────────────────── */
