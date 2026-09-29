@@ -674,7 +674,11 @@
         },
         "derangementRollPenalties": {
           "Name": "Derangement penalties to rolls",
-          "Hint": "Derangement/2 to Influence rolls and rolls to show sanity (Basic Set Revised p. 573)."
+          "Hint": "Derangement/2 to Influence rolls, rolls to show sanity and rolls for supernatural powers that need a focused mind, a bonus of that size to use an evil one (Basic Set Revised p. 573)."
+        },
+        "mentalOnTheClock": {
+          "Name": "Stress and Derangement follow the clock",
+          "Hint": "As the world clock advances, characters out of combat shed 1 Stress per 10 minutes, and each midnight after a day with no new Stress or Derangement is the day’s end for the Will roll (Basic Set Revised p. 573)."
         },
         "realisticMarching": {
           "Name": "Realistic marching",
@@ -2665,6 +2669,29 @@
       "TradeSkillLine": "Fatigue traded for skill",
       "TradeResistanceLine": "Fatigue traded for resistance",
       "TradeHeld": "+{bonus} held for the next roll.",
+      "TradeSpinner": "Trade FP for skill (+1 each, 0-{max})",
+      "TradeAttackSpinner": "Trade FP for the attack (+1 each, 0-{max})",
+      "ResistSpinner": "Trade FP to resist (+1 each, 0-{max})",
+      "ResistTitle": "Trading Fatigue for Resistance",
+      "ResistLine": "Fatigue traded for resistance",
+      "Extra": {
+        "flurry": "Flurry of Blows",
+        "mightyBlows": "Mighty Blows",
+        "giantStep": "Giant Step",
+        "greatLunge": "Great Lunge",
+        "heroicCharge": "Heroic Charge",
+        "feverishDefense": "Feverish Defense",
+        "rapidRecovery": "Rapid Recovery"
+      },
+      "OverCap": "Extra effort allows one offensive and one defensive option a turn: {extra} is over it.",
+      "GiantStepNote": "Giant Step: {steps} extra step, before or after the attack; a critical failure injures the {limb}, not the arm.",
+      "GreatLungeNote": "Great Lunge: +{reach} yard of reach.",
+      "HeroicChargeNote": "Heroic Charge: no Move and Attack penalty or skill cap; the defensive drawbacks still apply.",
+      "HeroicChargeFall": "Heroic Charge (avoiding a fall)",
+      "RapidRecoveryHint": "1 FP, before the first parry: the weapon that attacked may parry, at the usual penalties (Basic Set Revised p. 571)",
+      "RapidRecoveryNotNow": "Rapid Recovery is for an unbalanced weapon that attacked on an Attack, or any weapon after a Move and Attack.",
+      "RapidRecoveryDeclared": "Rapid Recovery declared: the weapon that attacked may parry this turn.",
+      "FallCheck": "Rolling to avoid falling or tripping",
       "CombiningSt": "{count} combined: Basic Lift {bl} lb., effective ST {st}."
     },
     "Feats": {
@@ -5015,8 +5042,13 @@
       "Benefit": {
         "parry": "+1 to Parry (one weapon)",
         "block": "+1 to Block (balanced weapon)",
-        "sameWeapon": "Parry with the unbalanced weapon that attacked"
+        "sameWeapon": "Parry with the unbalanced weapon that attacked",
+        "kick": "A kick: no defense bonus, +2 DX to avoid falling"
       },
+      "KickBalanceLine": "Defensive Attack (kick)",
+      "SlamTwice": "An All-Out Attack (Double) cannot slam twice",
+      "AttackAfterSlam": "An All-Out Attack (Double) makes its other attack before the slam",
+      "StepsLabel": "Steps: {count}",
       "Refuses": {
         "parry": "A Committed Attack: no parry with the attacking hand",
         "block": "A Committed Attack: no block with the attacking shield",
@@ -5065,7 +5097,7 @@
       "Stress": "Stress",
       "Derangement": "Derangement",
       "Hint": "Temporary jitters, held up to -Will ({limit}); beyond it becomes Derangement. Bleeds off 1 per 10 minutes of rest (Basic Set Revised p. 573).",
-      "DerangementHint": "Lasting mental harm, held up to -Will ({limit}); beyond it becomes points of permanent mental disadvantages (Basic Set Revised p. 573).",
+      "DerangementHint": "Lasting mental harm, held up to -Will ({limit}); beyond it becomes points of permanent mental disadvantages (Basic Set Revised p. 573). Treat it as the injuries chapter (p. 418) suggests, with Physician (Psychiatric) or Psychology.",
       "Kind": "Kind of Fright Check",
       "KindOrdinary": "Ordinary (Stress; the Unfazeable are immune)",
       "KindSanity": "Sanity-blasting (Derangement; Unfazeable +8)",
@@ -5087,7 +5119,11 @@
       "BuyOffPoints": "Points of new mental disadvantages",
       "Cured": "{name} is eased: Stress {stress}, Derangement {derangement}.",
       "Line": "Stress",
-      "DerangementLine": "Derangement"
+      "DerangementLine": "Derangement",
+      "DerangementPowerLine": "Derangement (power)",
+      "PermanentName": "Mental disadvantages from Derangement",
+      "PermanentDescription": "Derangement beyond the limit became permanent mental disadvantages. Rename, split or replace this with the specific disadvantages the GM and player choose.",
+      "TreatmentPointer": "Treatment: as the injuries chapter (p. 418) suggests, the GM may adapt the rules for treating physical troubles to Stress (like fatigue), Derangement (like injury) and mental disadvantages (like crippling), rolling Physician (Psychiatric) or Psychology."
     },
     "Tasks": {
       "Ham": "Ham Clause",
@@ -5360,7 +5396,9 @@
       "RuleOff": "rule off",
       "Notes": "Notes",
       "AwardPoints": "Award points",
-      "AwardPointsHint": "Give every character in the party the same character points at once, each added to that character's log. NPCs get none.",
+      "CombiningSt": "Combining ST",
+      "CombiningStHint": "Add the members' Basic Lifts for a job of physical labor and give the group's effective ST, the square root of 5 x total BL rounded up (Basic Set Revised p. 572).",
+      "AwardPointsHint":"Give every character in the party the same character points at once, each added to that character's log. NPCs get none.",
       "AwardTitle": "Award character points to the party",
       "AwardEachGets": "Each ticked character gets the whole award; untick anyone who missed the session:",
       "AwardSkipped": "Not awarded (NPCs): {names}",

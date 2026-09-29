@@ -44,6 +44,7 @@ import { rollExtraEffort } from "../extra-effort.js";
 import { buyOffHardship, clinicianSkillOf, rollDerangementDayEnd, stressOn } from "../stress.js";
 import { rollPowerExtraEffort, tradeFatigueForBonus } from "../extra-effort-extras.js";
 import { reservesOf } from "../reserves.js";
+import { declareRapidRecovery } from "../combat-extras.js";
 import { rollFall } from "../falling.js";
 import { rollBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
@@ -479,6 +480,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       derangementDayEnd: GWorldCharacterSheet.#onDerangementDayEnd,
       buyOffHardship: GWorldCharacterSheet.#onBuyOffHardship,
       tradeFatigue: GWorldCharacterSheet.#onTradeFatigue,
+      rapidRecovery: GWorldCharacterSheet.#onRapidRecovery,
       climb: GWorldCharacterSheet.#onClimb,
       swim: GWorldCharacterSheet.#onSwim,
       throwObject: GWorldCharacterSheet.#onThrow,
@@ -2214,6 +2216,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (points === null) return;
     await buyOffHardship(this.actor, { points, target });
+  }
+
+  /** Rapid Recovery (Basic Set Revised p. 571): 1 FP, declared before the first parry, so the weapon that attacked may parry. */
+  static async #onRapidRecovery(this: GWorldCharacterSheet) {
+    if (await declareRapidRecovery(this.actor)) ui.notifications?.info(game.i18n.localize("GWORLD.ExtraEffort.RapidRecoveryDeclared"));
   }
 
   /** Trading Fatigue for Skill or Resistance (Basic Set Revised p. 572): 1 FP per +1, up to +4, held for the next roll. */

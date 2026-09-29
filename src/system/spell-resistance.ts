@@ -17,6 +17,8 @@
 import { SYSTEM_ID } from "./constants.js";
 import { isRuleOn } from "./optional-rules.js";
 import { promptForNumber } from "./roll.js";
+import { spendFatigue } from "./extra-effort.js";
+import { FATIGUE_TRADE_MAX, fatigueForSkillBonus } from "../rules/extra-effort-extras.js";
 import { quickContest, resolveSuccess } from "../rules/success.js";
 import {
   resistanceAttribute,
@@ -219,9 +221,26 @@ async function rollResistance(subject: any, flag: ResistFlag): Promise<void> {
     if (score === null) return;
   }
 
+  // Trading Fatigue for Resistance (Basic Set Revised p. 572): the subject may
+  // spend up to 4 FP for +1 each, now that the caster's roll has worked.
+  let traded = 0;
+  if (isRuleOn("fatigueForSkill") && subject?.isOwner) {
+    const most = Math.min(FATIGUE_TRADE_MAX, Math.max(0, Math.floor(Number(subject.system?.fp?.value) || 0)));
+    if (most > 0) {
+      const fp = await promptForNumber({
+        title: game.i18n.localize("GWORLD.ExtraEffort.ResistTitle"),
+        label: game.i18n.format("GWORLD.ExtraEffort.ResistSpinner", { max: most }),
+        initial: 0,
+      });
+      if (fp === null) return;
+      const wanted = Math.min(most, fatigueForSkillBonus(fp));
+      if (wanted > 0 && (await spendFatigue(subject, wanted, game.i18n.localize("GWORLD.ExtraEffort.ResistTitle")))) traded = wanted;
+    }
+  }
+
   const magicResistance = flag.magical === false ? 0 : Number(subject.system?.derived?.magic?.magicResistance ?? 0) || 0;
-  const bonus = (flag.area ? 2 : 1) * magicResistance;
-  const target = resistanceScore({ score, magicResistance, area: flag.area });
+  const bonus = (flag.area ? 2 : 1) * magicResistance + traded;
+  const target = resistanceScore({ score, magicResistance, area: flag.area }) + traded;
 
   // The Rule of 16 (Campaigns p. 349), for a living or sapient subject; "There
   // is no such limit if the subject is a spell" (p. 241).
@@ -239,7 +258,10 @@ async function rollResistance(subject: any, flag: ResistFlag): Promise<void> {
   const affected = spellAffects({ caster, subject: resisted });
   const contest = quickContest(caster, resisted);
 
-  const modifiers = bonus ? [{ label: game.i18n.localize("GWORLD.Spell.MagicResistance"), value: bonus }] : [];
+  const modifiers = [
+    ...(bonus - traded ? [{ label: game.i18n.localize("GWORLD.Spell.MagicResistance"), value: bonus - traded }] : []),
+    ...(traded ? [{ label: game.i18n.localize("GWORLD.ExtraEffort.ResistLine"), value: traded }] : []),
+  ];
   const content = await foundry.applications.handlebars.renderTemplate(ROLL_TEMPLATE, {
     label: game.i18n.format("GWORLD.Resist.Label", { name: String(subject.name), spell: flag.spell, with: flag.resistedBy }),
     kind: "skill",

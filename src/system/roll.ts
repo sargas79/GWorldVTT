@@ -15,6 +15,8 @@ import { skillEncumbrancePenalty } from "../rules/physical.js";
 import { isCombatRoll, spendingInPlay } from "./bonus-points.js";
 import { SYSTEM_ID } from "./constants.js";
 import { consumeMightyBlows, recordMightyBlows, spendFatigue } from "./extra-effort.js";
+import { extrasCapRefusal, extrasOfOptions, recordExtras } from "./combat-extras.js";
+import type { CombatExtra } from "../rules/extra-effort-extras.js";
 import { consumeFeint } from "./feint.js";
 import {
   UNAIMED,
@@ -189,7 +191,8 @@ import {
   steeringDuty,
   type Guidance,
 } from "../rules/guided.js";
-import { committedRefusal, moreManeuverDamageLines } from "./more-maneuvers.js";
+import { attackAfterSlamRefusal, committedRefusal, fallRollLines, moreManeuverDamageLines } from "./more-maneuvers.js";
+import { FATIGUE_TRADE_MAX, fatigueForSkillBonus } from "../rules/extra-effort-extras.js";
 import { MOVE_AND_ATTACK_PENALTY, WILD_SWING_SKILL_CAP, allOutAttackBonus, stopThrustBonus, strongAttackDamageBonus, wildSwingPenalty, type AllOutAttackOption } from "../rules/maneuvers.js";
 import { flailKind, type FlailKind } from "../rules/defenses.js";
 import { canTargetFromArc, missByOneHitsTorso, type HitLocation } from "../rules/hit-locations.js";
@@ -1710,17 +1713,42 @@ export interface DialogOffers {
   context: BonusRollContext;
 }
 
+/** What the roll dialog's extra controls offer: FP for a bonus (p. 572) and a roll to avoid a fall. */
+export interface RollDialogExtras {
+  /** Trading Fatigue for Skill, or for Resistance: the most FP that can be traded, or 0 for none offered. */
+  tradeMax?: number;
+  /** Whether the roll may be to avoid falling or tripping, which a kick or a Heroic Charge changes (pp. 571, 576). */
+  fall?: boolean;
+  /** Whether the roll is a resistance roll, for the label. */
+  resistance?: boolean;
+}
+
 /**
  * The modifier dialog, with what a roll offers besides the situational
  * modifier: the wildcard, Talent and equipment bonuses the player may tick.
- * Returns the typed modifier and the offered lines chosen, or null when the
- * dialog is dismissed.
+ * It also asks for the FP to trade for a bonus, as a spinner (Basic Set
+ * Revised p. 572), and whether the roll is to avoid a fall. Returns the typed
+ * modifier, the offered lines chosen and those, or null when the dialog is
+ * dismissed.
  */
 export async function askForModifier(
   held: HeldLine[] = [],
   onDiscard?: (ids: string[]) => Promise<void>,
   offered?: DialogOffers,
-): Promise<{ value: number; lines: RollModifier[] } | null> {
+  extras: RollDialogExtras = {},
+): Promise<{ value: number; lines: RollModifier[]; tradeFp: number; fall: boolean } | null> {
+  const tradeMax = Math.max(0, Math.floor(extras.tradeMax ?? 0));
+  const trade = tradeMax > 0
+    ? `<label style="display:flex;align-items:center;gap:8px">
+        <span>${game.i18n.format(extras.resistance ? "GWORLD.ExtraEffort.ResistSpinner" : "GWORLD.ExtraEffort.TradeSpinner", { max: tradeMax })}</span>
+        <input type="number" name="tradeFp" value="0" min="0" max="${tradeMax}" step="1" style="width:80px">
+      </label>`
+    : "";
+  const fall = extras.fall
+    ? `<label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="fall"><span>${game.i18n.localize("GWORLD.ExtraEffort.FallCheck")}</span>
+      </label>`
+    : "";
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: game.i18n.localize("GWORLD.Chat.ModifierTitle") },
     content: `<div class="gworld">${heldModifiersNote(held, onDiscard !== undefined)}
@@ -1729,6 +1757,7 @@ export async function askForModifier(
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
         <input type="number" name="modifier" value="0" step="1" autofocus style="width:80px">
       </label>
+      ${trade}${fall}
     </div>`,
     ok: {
       label: game.i18n.localize("GWORLD.Chat.Roll"),
@@ -1742,19 +1771,22 @@ export async function askForModifier(
           .filter(Boolean);
         if (discarded.length > 0 && onDiscard) await onDiscard(discarded);
         const value = Number(input?.value ?? 0);
-        // Number is what the dialog has always answered with; the offered lines ride beside it.
-        if (!offered) return value;
-        return { value, lines: readOffers(form, offered.offers, offered.context) };
+        const spun = Number(form?.querySelector<HTMLInputElement>('input[name="tradeFp"]')?.value ?? 0) || 0;
+        return {
+          value,
+          lines: offered ? readOffers(form, offered.offers, offered.context) : [],
+          tradeFp: tradeMax > 0 ? Math.max(0, Math.min(tradeMax, Math.floor(spun))) : 0,
+          fall: form?.querySelector<HTMLInputElement>('input[name="fall"]')?.checked === true,
+        };
       },
     },
     rejectClose: false,
   });
 
-  if (typeof result === "number" && Number.isFinite(result)) return { value: result, lines: [] };
-  if (result && typeof result === "object" && Number.isFinite((result as { value: number }).value)) {
-    return { value: (result as { value: number }).value, lines: (result as { lines: RollModifier[] }).lines ?? [] };
-  }
-  return null;
+  if (!result || typeof result !== "object") return null;
+  const asked = result as { value: number; lines?: RollModifier[]; tradeFp?: number; fall?: boolean };
+  if (!Number.isFinite(asked.value)) return null;
+  return { value: asked.value, lines: asked.lines ?? [], tradeFp: asked.tradeFp ?? 0, fall: asked.fall === true };
 }
 
 /** Asks only for the bonuses a roll offers, where its own dialog has none. Null when dismissed. */
@@ -1813,6 +1845,13 @@ export async function handleRollAction(
   target: HTMLElement,
 ): Promise<SuccessRollResult | null> {
   if (target.dataset.rollType !== "attack" || Number(target.dataset.malediction) > 0) return rollAction(actor, event, target, null);
+
+  // A Double slams last: no other attack follows the slam (Basic Set Revised p. 575).
+  const afterSlam = attackAfterSlamRefusal(actor);
+  if (afterSlam) {
+    ui.notifications?.warn(afterSlam);
+    return null;
+  }
 
   // A maneuver's attacks this turn, as the modules may have changed them: an
   // attack that picks its own target asks for it, and each one made is counted.
@@ -2072,6 +2111,8 @@ async function rollAction(
         // A self-control roll is not one a bonus is offered for.
         kind: rollKind(rollType) === "selfControl" ? "attribute" : rollKind(rollType) as BonusRollKind,
         skill: target.dataset.rollSkill ?? (rollType === "skill" ? rollLabel : undefined),
+        rollType,
+        basedOn: target.dataset.basedOn,
       });
   if (modifiers === null) return null;
 
@@ -2141,6 +2182,8 @@ async function rollAction(
     if (!paid) return null;
     if (melee.mightyBlows) await recordMightyBlows(actor);
   }
+  const boughtExtras = melee ? (melee.extras ?? []) : extrasOfOptions(shot?.options);
+  if (boughtExtras.length > 0) await recordExtras(actor, boughtExtras);
   // A module's option chosen for a shot costs its FP the same way.
   if (shot?.addon && shot.addon.fatigue > 0) {
     const paid = await spendFatigue(actor, shot.addon.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title"));
@@ -4732,6 +4775,8 @@ export async function promptForMeleeAttack(options: {
   defensePenalty: number;
   /** FP the chosen options cost, to be paid before the roll. */
   fatigue: number;
+  /** The combat options of extra effort bought for this attack, for the cap of one a turn (Revised p. 571). */
+  extras: CombatExtra[];
   /** True when Mighty Blows was bought, for the damage roll to collect. */
   mightyBlows: boolean;
   /** Whether Flurry of Blows was bought for a Rapid Strike (since 1.27.0). */
@@ -4894,7 +4939,9 @@ export async function promptForMeleeAttack(options: {
         // Move and Attack and a Wild Swing both hold skill to 9 (pp. 365, 388),
         // so the ceiling is shown rather than sprung at roll time. The same
         // pair the roll itself caps on.
-        const cap = options.actor?.system?.maneuver === "moveAndAttack" || answers.wildSwing
+        // A Heroic Charge ignores it (Revised p. 571).
+        const cap = (options.actor?.system?.maneuver === "moveAndAttack" || answers.wildSwing)
+          && !answers.addonValues?.["gworld.heroicCharge"]
           ? WILD_SWING_SKILL_CAP
           : null;
         drawBreakdown(root, rollBreakdown(Number(options.effectiveSkill) || 0, [
@@ -4981,7 +5028,19 @@ export async function promptForMeleeAttack(options: {
   const { modifiers, deception, flurried, aimed, addon, groundPenalty, dualDefense } = assembled;
 
   const mightyBlows = mighty && effortAllowed;
+  // No more than one offensive option a turn, counting this round's so far (Revised p. 571).
+  const extras: CombatExtra[] = [
+    ...(flurried ? (["flurry"] as const) : []),
+    ...(mightyBlows ? (["mightyBlows"] as const) : []),
+    ...extrasOfOptions(addonValues),
+  ];
+  const overCap = extrasCapRefusal(options.actor, extras);
+  if (overCap) {
+    ui.notifications?.warn(overCap);
+    return null;
+  }
   return {
+    extras,
     wildSwing: wildSwing === true,
     stopThrustBonus: options.stopThrust ? stopThrustBonus(stopThrustYards) : 0,
     addon,
@@ -5303,9 +5362,14 @@ export async function maybePromptModifiers(
   event: Event,
   held: HeldLine[] = [],
   actor: any = null,
-  /** What the roll is, so its dialog can offer the wildcard, Talent and equipment bonuses that go with it. */
-  rolling: BonusRollContext | null = null,
+  /**
+   * What the roll is: its `kind` (with `skill`) lets the dialog offer the wildcard, Talent and
+   * equipment bonuses that go with it, and its `rollType` and `basedOn` the Fatigue-for-Skill
+   * spinner and the fall check.
+   */
+  context: Partial<BonusRollContext> & { rollType?: string | undefined; basedOn?: string | undefined } = {},
 ): Promise<RollModifier[] | null> {
+  const rolling: BonusRollContext | null = context.kind ? { kind: context.kind, ...(context.skill !== undefined ? { skill: context.skill } : {}) } as BonusRollContext : null;
   // A complementary skill's bonus is put to the roller before the roll, not
   // only on shift-click, so that it is seen and can be discarded.
   const discardable = held.some((m) => m.heldId !== undefined);
@@ -5315,12 +5379,32 @@ export async function maybePromptModifiers(
   const offered = offers && rolling && anyOffered(offers) ? { offers, context: rolling } : undefined;
   if (!(event as MouseEvent).shiftKey && !discardable && !offered) return [];
 
-  const asked = await askForModifier(held, discardable && actor
-    ? async (ids) => { for (const id of ids) await removePendingModifier(actor, id); }
-    : undefined, offered);
+  // Trading Fatigue for Skill or Resistance is a spinner in the dialog (Basic
+  // Set Revised p. 572), where the switch is on, on a skill or attribute roll.
+  const tradeable = isRuleOn("fatigueForSkill") && actor?.isOwner && (context.rollType === "skill" || context.rollType === "attribute");
+  const tradeMax = tradeable ? Math.min(FATIGUE_TRADE_MAX, Math.max(0, Math.floor(Number(actor?.system?.fp?.value) || 0))) : 0;
+  const asked = await askForModifier(
+    held,
+    discardable && actor
+      ? async (ids) => { for (const id of ids) await removePendingModifier(actor, id); }
+      : undefined,
+    offered,
+    {
+      tradeMax,
+      fall: context.rollType === "attribute" && context.basedOn === "DX",
+      resistance: context.rollType === "attribute",
+    },
+  );
   if (asked === null) return null;
-  const lines: RollModifier[] = [...asked.lines];
-  if (asked.value !== 0) lines.unshift({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: asked.value, key: "situational" });
+  const lines: RollModifier[] = [];
+  if (asked.value !== 0) lines.push({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: asked.value, key: "situational" });
+  if (asked.tradeFp > 0) {
+    // 1 FP per +1, paid before the roll; a roller who can't pay does not get it.
+    const bonus = fatigueForSkillBonus(asked.tradeFp);
+    if (!(await spendFatigue(actor, bonus, game.i18n.localize("GWORLD.ExtraEffort.TradeTitle")))) return null;
+    lines.push({ label: game.i18n.localize(context.rollType === "attribute" ? "GWORLD.ExtraEffort.TradeResistanceLine" : "GWORLD.ExtraEffort.TradeSkillLine"), value: bonus });
+  }
+  if (asked.fall) lines.push(...fallRollLines(actor, ["fall"]));
   return lines;
 }
 

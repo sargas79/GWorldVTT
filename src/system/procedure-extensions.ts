@@ -23,7 +23,7 @@
 
 import { sceneAreaLines } from "./modifier-areas.js";
 import { badReplacesSituational, taskRuleLines } from "./task-rules.js";
-import { allOutConcentrateLines, mentalDefenseLines, moreManeuverAttackEffect, moreManeuverDefenseLines } from "./more-maneuvers.js";
+import { allOutConcentrateLines, fallRollLines, mentalDefenseLines, moreManeuverAttackEffect, moreManeuverDefenseLines } from "./more-maneuvers.js";
 import { SYSTEM_ID } from "./constants.js";
 import { endAttackedThisTurn } from "./feint.js";
 import { isFightingRoll, noteFought } from "./combat-participation.js";
@@ -649,12 +649,12 @@ function hookedSuccessRoll(context: SuccessRollContext, refusable: boolean): { m
     for (const defense of ["dodge", "parry", "block"]) {
       if (ctx.tags.includes(defense)) {
         ctx.modifiers.push(...maneuverOptionDefenseLines(ctx.actor, defense));
-        ctx.modifiers.push(...moreManeuverDefenseLines(ctx.actor, defense));
+        // Committed Attack's -2 and Defensive Attack's +1 are in the defense's figure on the sheet.
       }
     }
   }
   // All-Out Concentrate's +1 (which makes a distraction Will-2), and Mental Defense's +2 (Revised p. 575).
-  ctx.modifiers.push(...allOutConcentrateLines(ctx.actor, ctx.kind), ...mentalDefenseLines(ctx.actor, ctx.tags));
+  ctx.modifiers.push(...allOutConcentrateLines(ctx.actor, ctx.kind, ctx.tags), ...mentalDefenseLines(ctx.actor, ctx.tags), ...fallRollLines(ctx.actor, ctx.tags));
   callCombatHook(PROCEDURE_HOOKS.successRollModifiers, ctx);
   // Text, not merely something truthy: the card and the warning show it.
   const refusal = refusable && typeof ctx.refusal === "string" && ctx.refusal.trim() ? ctx.refusal.trim() : null;

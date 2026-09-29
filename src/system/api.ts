@@ -27,7 +27,8 @@
  */
 
 import { visionApi } from "./vision-corrections.js";
-import { applyHardship, buyOffHardship, clinicianSkillOf, mentalOf, recoverStress, rollDerangementDayEnd } from "./stress.js";
+import { addPermanentDisadvantage, applyHardship, buyOffHardship, clinicianSkillOf, derangementPowerLines, mentalOf, mentalTimePasses, recoverStress, rollDerangementDayEnd } from "./stress.js";
+import { declareRapidRecovery, extrasCapRefusal, extrasThisRound } from "./combat-extras.js";
 import { combiningSt, isSkilledMarcher, postCombiningSt, powerEffortFp, rollPowerExtraEffort, tradeFatigueForBonus } from "./extra-effort-extras.js";
 import { currentBad, endHamClause, hamClauseOf, invokeHamClause, setBad, unstattedNpcSkill } from "./task-rules.js";
 import { gmScreenApi } from "./gm-screen/api.js";
@@ -119,7 +120,7 @@ import { simplifiedResourcesApi } from "./simplified-resources.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.188.0";
+export const API_VERSION = "1.189.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -1097,9 +1098,15 @@ const partyApi = Object.freeze({
  */
 const mentalApi = Object.freeze({
   of: mentalOf, add: applyHardship, recover: recoverStress, dayEnd: rollDerangementDayEnd, buyOff: buyOffHardship, clinicianSkill: clinicianSkillOf,
+  // Since 1.189.0: permanent disadvantages from overflow, the world clock, and the powers line.
+  permanentDisadvantage: addPermanentDisadvantage, timePasses: mentalTimePasses, powerLines: derangementPowerLines,
 });
 
-const effortApi = Object.freeze({ rollPower: rollPowerExtraEffort, powerFp: powerEffortFp, tradeFatigue: tradeFatigueForBonus, isSkilledMarcher });
+const effortApi = Object.freeze({
+  rollPower: rollPowerExtraEffort, powerFp: powerEffortFp, tradeFatigue: tradeFatigueForBonus, isSkilledMarcher,
+  // Since 1.189.0: the combat options of extra effort (Basic Set Revised p. 571) and their cap of one a turn.
+  usedThisRound: extrasThisRound, capRefusal: extrasCapRefusal, declareRapidRecovery,
+});
 
 /**
  * The world namespace (since 1.77.0): the campaign's Control Rating (Campaigns
