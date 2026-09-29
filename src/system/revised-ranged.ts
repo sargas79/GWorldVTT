@@ -6,18 +6,28 @@
  */
 
 import { isRuleOn } from "./optional-rules.js";
+import { chosenManeuverOptions, registerManeuverOption } from "./procedure-extensions.js";
 import {
+  EVASIVE_MANEUVERS,
   RANGED_RAPID_STRIKE_PENALTY,
   bandForYards,
   bandPenalty,
   closeContactShot,
   combinedCoverage,
   coverageProtects,
+  evasiveBonuses,
+  firearmAttack,
+  mayDodgeFirearm,
   nonCombatBonus,
+  rangedRapidStrikeAllowed,
+  rapidStrikeShare,
+  shiftBand,
   strikeAroundPenalty,
   type ContactKind,
+  type EvasiveDeclaration,
   type RangeBand,
 } from "../rules/revised-ranged.js";
+import { rangedToHitModifier } from "../rules/ranged.js";
 import type { InjuryTolerance } from "../rules/injury-tolerance.js";
 
 const L = (key: string, data?: Record<string, unknown>) =>
@@ -35,6 +45,8 @@ export interface RevisedRangedInput {
   /** Levels of Deceptive Attack on a ranged attack (Prediction Shot). */
   prediction: number;
   rapidStrike: boolean;
+  /** Simplified Range: a band the shooter moved to since the range was measured, or none. */
+  bandShift: "none" | "closer" | "farther";
 }
 
 /** One line the dialog adds, before it is labelled. */
@@ -49,9 +61,11 @@ export function simplifiedRangeOn(): boolean {
 }
 
 /** The band a range falls in, and its penalty, while Simplified Range is on. */
-export function simplifiedRange(yards: number): { band: RangeBand; penalty: number } {
-  const band = bandForYards(yards);
-  return { band, penalty: bandPenalty(band) };
+export function simplifiedRange(yards: number, shift: "none" | "closer" | "farther" = "none"): { band: RangeBand; penalty: number; shifted: boolean } {
+  const measured = bandForYards(yards);
+  // A Move or Move and Attack at Close or Short crosses into the next band (p. 577).
+  const band = shift === "none" ? measured : shiftBand(measured, shift);
+  return { band, penalty: bandPenalty(band), shifted: band !== measured };
 }
 
 const checkbox = (name: string, label: string) =>
@@ -99,6 +113,16 @@ export function revisedRangedFields(rateOfFire: number): string {
       </select>
     </label>`);
   }
+  if (isRuleOn("simplifiedRange")) {
+    parts.push(`<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <span>${L("BandShift")}</span>
+      <select name="rrBandShift" style="width:150px">
+        <option value="none">${L("BandStay")}</option>
+        <option value="closer">${L("BandCloser")}</option>
+        <option value="farther">${L("BandFarther")}</option>
+      </select>
+    </label>`);
+  }
   if (isRuleOn("trickyShooting")) {
     parts.push(`<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
       <span>${L("Prediction")}</span>
@@ -113,7 +137,7 @@ export function revisedRangedFields(rateOfFire: number): string {
 export function readRevisedRanged(form: HTMLElement | null): RevisedRangedInput | null {
   if (!form) return null;
   const has = (name: string) => form.querySelector(`[name="${name}"]`) !== null;
-  if (!["rrContact", "rrNoRiskSelf", "rrStrikeAround", "rrPrediction"].some(has)) return null;
+  if (!["rrContact", "rrNoRiskSelf", "rrStrikeAround", "rrPrediction", "rrBandShift"].some(has)) return null;
   const checked = (name: string) => form.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.checked ?? false;
   const num = (name: string) => Number(form.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value ?? 0) || 0;
   const contact = (form.querySelector<HTMLSelectElement>('select[name="rrContact"]')?.value ?? "none") as ContactKind;
@@ -135,6 +159,7 @@ export function readRevisedRanged(form: HTMLElement | null): RevisedRangedInput 
       : null,
     prediction: Math.max(0, Math.trunc(num("rrPrediction"))),
     rapidStrike: checked("rrRapid"),
+    bandShift: ((v) => (v === "closer" || v === "farther" ? v : "none"))(form.querySelector<HTMLSelectElement>('select[name="rrBandShift"]')?.value),
   };
 }
 
@@ -184,6 +209,133 @@ export function revisedRangedLines(input: RevisedRangedInput | null | undefined)
 }
 
 /**
+ * What a Prediction Shot does to the target: the defense penalty of its
+ * Deceptive Attack "reduces Dodge only" (p. 577), so it is a line for the
+ * defender's dodge and for no other defense.
+ */
+export function revisedRangedDefenseModifiers(input: RevisedRangedInput | null | undefined): Array<{ label: string; value: number; defenses: Array<"dodge"> }> {
+  if (!input || input.prediction <= 0) return [];
+  return [{ label: L("LinePredictionDodge", { levels: input.prediction }), value: -input.prediction, defenses: ["dodge"] }];
+}
+
+/**
+ * Whether a Ranged Rapid Strike may be made as the dialog was filled in
+ * (p. 577): a weapon of RoF 2 or more, no Dual-Weapon Attack, and a share of
+ * the shots for this target that leaves at least one for the other. Returns
+ * the refusal to show, or the shots the other target is left with; null where
+ * no Rapid Strike was asked for.
+ */
+export function rapidStrikeCheck(
+  input: RevisedRangedInput | null | undefined,
+  options: { rateOfFire: number; shots: number; dual: boolean },
+): { refusal: string } | { other: number } | null {
+  if (!input?.rapidStrike) return null;
+  if (!rangedRapidStrikeAllowed(options.rateOfFire, options.dual)) return { refusal: L(options.dual ? "RapidNoDual" : "RapidNeedsRof") };
+  const share = rapidStrikeShare(options.rateOfFire, options.shots);
+  if (!share) return { refusal: L("RapidShare", { rof: options.rateOfFire }) };
+  return { other: share.other };
+}
+
+/**
+ * The lines a ranged Feint takes: "All modifiers that apply to ranged attacks
+ * also apply to ranged feints" (p. 577), here the range and the target's size,
+ * from the measured shot to the one target.
+ */
+export function rangedFeintLines(shot: { rangeYards: number; targetSizeModifier: number } | null): Array<{ label: string; value: number }> {
+  if (!shot) return [];
+  const { speedRange, size } = rangedToHitModifier({ rangeYards: shot.rangeYards, targetSpeedYardsPerSecond: 0, targetSizeModifier: shot.targetSizeModifier });
+  const lines: Array<{ label: string; value: number }> = [];
+  const banded = simplifiedRangeOn() ? simplifiedRange(shot.rangeYards) : null;
+  const range = banded ? banded.penalty : speedRange;
+  if (range !== 0) {
+    lines.push({ label: banded ? L("Band", { band: game.i18n.localize(`GWORLD.RevisedRanged.Bands.${banded.band}`) }) : L("FeintRange"), value: range });
+  }
+  if (size !== 0) lines.push({ label: L("FeintSize"), value: size });
+  return lines;
+}
+
+// ---------------------------------------------------------------- Restricted Dodge Against Firearms
+
+const MODULE = "gworld";
+const cap = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+/** The maneuver-option keys of a maneuver's evasive declaration. */
+const evasiveKeys = (maneuver: string) => ({
+  shooter: `evasive${cap(maneuver)}`,
+  acrobatic: `evasiveAcrobatic${cap(maneuver)}`,
+  drop: `evasiveDrop${cap(maneuver)}`,
+});
+
+/** The other fighters a declaration may name: the combatants, or else the tokens on the scene. */
+function potentialShooters(actor: any): Array<{ value: string; label: string }> {
+  const seen = new Map<string, string>();
+  const add = (other: any) => {
+    const uuid = String(other?.uuid ?? "");
+    if (uuid && other !== actor && uuid !== String(actor?.uuid ?? "")) seen.set(uuid, String(other?.name ?? uuid));
+  };
+  const combatants: any[] = [...((globalThis as any).game?.combat?.combatants ?? [])];
+  for (const combatant of combatants) add(combatant?.actor);
+  if (seen.size === 0) {
+    for (const token of (globalThis as any).canvas?.tokens?.placeables ?? []) add(token?.actor);
+  }
+  return [...seen].map(([value, label]) => ({ value, label }));
+}
+
+/** Registers the evasive-movement declaration on each maneuver that allows it (Revised p. 577). */
+export function registerRestrictedDodge(): void {
+  for (const maneuver of EVASIVE_MANEUVERS) {
+    const keys = evasiveKeys(maneuver);
+    registerManeuverOption({
+      module: MODULE, key: keys.shooter, maneuver, label: L("EvasiveShooter"),
+      input: (actor) => ({ type: "select", choices: potentialShooters(actor) }),
+      available: () => isRuleOn("restrictedDodge"),
+    });
+    registerManeuverOption({
+      module: MODULE, key: keys.acrobatic, maneuver, label: L("EvasiveAcrobatic"),
+      available: () => isRuleOn("restrictedDodge"),
+    });
+    registerManeuverOption({
+      module: MODULE, key: keys.drop, maneuver, label: L("EvasiveDrop"),
+      available: () => isRuleOn("restrictedDodge"),
+    });
+  }
+}
+
+const isTicked = (value: unknown) => value === true || value === "true" || value === 1 || value === "1";
+
+/** What the defender declared on the maneuver they hold: the one shooter, and the two turn-bound extras. */
+export function evasiveDeclaration(actor: any): EvasiveDeclaration | null {
+  const maneuver = String(actor?.system?.maneuver ?? "");
+  if (!EVASIVE_MANEUVERS.includes(maneuver)) return null;
+  const chosen = chosenManeuverOptions(actor);
+  const keys = evasiveKeys(maneuver);
+  const shooter = String(chosen[`${MODULE}.${keys.shooter}`] ?? "");
+  return {
+    shooter: shooter || null,
+    maneuver,
+    acrobaticRolledOnTurn: isTicked(chosen[`${MODULE}.${keys.acrobatic}`]),
+    droppedProneAtEnd: isTicked(chosen[`${MODULE}.${keys.drop}`]),
+  };
+}
+
+/**
+ * What the restricted-dodge rule refuses a defender against a firearm attack
+ * (p. 577): the dodge itself unless this shooter was declared on the defender's
+ * maneuver, and the Acrobatic Dodge unless it was rolled on their turn. Null
+ * where the rule is off, or the attack is not a firearm's.
+ */
+export function restrictedDodgeRefusals(
+  defender: any,
+  attacker: any,
+  attack: { skill?: string | undefined; delivery?: string | undefined },
+): { dodge: string | null; acrobatic: string | null } | null {
+  if (!isRuleOn("restrictedDodge") || attack.delivery === "melee" || !firearmAttack(attack.skill)) return null;
+  const declared = evasiveDeclaration(defender);
+  const shooter = String(attacker?.uuid ?? "");
+  if (!shooter || !mayDodgeFirearm(declared, shooter)) return { dodge: L("RestrictedNoDodge"), acrobatic: L("RestrictedNoDodge") };
+  return { dodge: null, acrobatic: evasiveBonuses(declared).acrobatic ? null : L("RestrictedNoAcrobatic") };
+}
+
+/**
  * Hitting 'Em Where It Hurts: one 1d roll per hit for the partly armoured
  * location, its pieces' coverage added. Pieces that fail to protect are
  * dropped; the rest keep their DR. Returns the pieces that count.
@@ -207,6 +359,25 @@ export function rollPartialCoverage<T extends { coverage?: number | null; locati
     coverage,
     roll: rolled,
   };
+}
+
+/** Says in chat what the coverage roll of a hit came to. */
+export async function announceCoverage(actor: any, coverage: { coverage: number; roll: number; protected: boolean }): Promise<void> {
+  const chat = (globalThis as { ChatMessage?: any }).ChatMessage;
+  if (!chat?.implementation?.create) return;
+  const result = L(coverage.protected ? "CoverageProtected" : "CoverageMissed");
+  await chat.implementation.create({
+    speaker: chat.implementation.getSpeaker({ actor }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content: `<div class="gworld gworld-chat"><p>${L("CoverageRolled", { roll: coverage.roll, coverage: coverage.coverage, result })}</p></div>`,
+  });
+}
+
+/** The tolerance with a target's size modifier added while large-target wounding is on, for a thing that has no actor (a vehicle item, a large object). */
+export function withLargeObject(tolerance: InjuryTolerance, sm: number): InjuryTolerance {
+  if (!isRuleOn("largeTargetDamage")) return tolerance;
+  if (!tolerance.unliving && !tolerance.homogenous) return tolerance;
+  return { ...tolerance, largeTargetSm: Number(sm) || 0 };
 }
 
 /** The tolerance with the target's SM added while large-target wounding is on. */

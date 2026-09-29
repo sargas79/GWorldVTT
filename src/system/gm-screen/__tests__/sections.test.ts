@@ -241,6 +241,14 @@ describe("what a player sees", () => {
     ).toBe(false);
   });
 
+  it("lists the Horizon Table of the visual signals (Basic Set Revised p. 575)", () => {
+    const horizon = table("horizonTable");
+    expect(horizon.rows).toHaveLength(21);
+    expect(row(horizon, "2 yd")).toEqual(["2 yd", "0", "3 mi"]);
+    expect(row(horizon, "1.5\"")).toEqual(["1.5\"", "-10", "0.4 mi"]);
+    expect(row(horizon, "100 yd")).toEqual(["100 yd", "+10", "21 mi"]);
+  });
+
   it("gives every section words to be found by", () => {
     const tabs = assembleScreen(englishContext(), { isGM: true });
     const stunned = tabs.flatMap((tab) => tab.sections).filter((s) => s.search.includes("stun"));

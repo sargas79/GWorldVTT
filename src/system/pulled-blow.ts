@@ -55,13 +55,15 @@ export function pulledFormula(options: {
   unarmedBonusSkill?: string;
   /** Weapon Master's bonus per die on the blow, or 0 (Characters p. 99). */
   weaponMasterPerDie?: number;
+  /** A rigid helm is worn, which adds to a head butt (Revised p. 334). */
+  rigidHelm?: boolean;
 }): string | null {
   if (!canPullPunches(options.stBased ? "muscle" : "mechanical")) return null;
   // Never harder than full strength, never below 1.
   const st = pulledStrength(options.strength, options.chosen);
 
-  if (options.naturalKey === "punch" || options.naturalKey === "kick") {
-    const blow = naturalAttacks({ st, dx: options.dx, skills: options.skills })
+  if (["punch", "kick", "headButt", "stampKick"].includes(options.naturalKey)) {
+    const blow = naturalAttacks({ st, dx: options.dx, skills: options.skills, rigidHelm: options.rigidHelm === true })
       .find((attack) => attack.key === options.naturalKey);
     return blow ? formatDiceAdds(blow.damage) : null;
   }

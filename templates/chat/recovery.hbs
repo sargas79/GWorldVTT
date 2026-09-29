@@ -25,6 +25,14 @@
     </div>
   {{/if}}
 
+  {{#each reserves as |reserve|}}
+    {{!-- Energy Reserves recharge through the rest (Basic Set Revised p. 326). --}}
+    <div class="gc-result success">
+      {{localize "GWORLD.EnergyReserve.Name" origin=reserve.origin}} &mdash; <strong>{{signed reserve.gained}}</strong> ER
+      <span class="gc-mod">{{reserve.value}} / {{reserve.max}}</span>
+    </div>
+  {{/each}}
+
   {{#if lines}}
     {{!-- A doctor's roll says several things rather than moving one number:
          what the tools were worth, what the operation did, what still has to

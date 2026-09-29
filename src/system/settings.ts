@@ -16,6 +16,7 @@ import { MANA_LEVEL_KEY } from "./casting.js";
 import { CONTROL_RATING_KEY } from "./legality.js";
 import { registerCampaignSettings } from "./campaign.js";
 import { registerTemperatureSetting } from "./weather.js";
+import { registerTerrainSettings } from "./vision-prompts.js";
 import { registerTaskSettings } from "./task-rules.js";
 import { MANA_LEVELS } from "../rules/casting.js";
 import { CONTROL_RATINGS } from "../rules/legality.js";
@@ -95,6 +96,7 @@ export function registerSettings(): void {
   // The day's temperature (Campaigns pp. 426, 434): what makes a hot day, for
   // the fatigue a march or a battle costs. Blank where the GM hasn't said.
   registerTemperatureSetting();
+  registerTerrainSettings();
   // Basic Abstract Difficulty (Basic Set Revised p. 578).
   registerTaskSettings();
 

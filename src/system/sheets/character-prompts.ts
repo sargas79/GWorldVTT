@@ -7,7 +7,7 @@
 
 import { tacticalOnScene } from "../settings.js";
 import { isRuleOn } from "../optional-rules.js";
-import { TERRAIN_ORDER, type TerrainType } from "../../rules/vision-corrections.js";
+import { AQUATIC_FORAGING, TERRAIN_ORDER, type AquaticTerrain, type TerrainType } from "../../rules/vision-corrections.js";
 import { attackArc } from "../../rules/tactical.js";
 import { type Entanglement } from "../entangling.js";
 import { type Victim } from "../unarmed-techniques.js";
@@ -1769,6 +1769,28 @@ export async function promptForHike(
       modifier: num(form, "modifier"),
       biome: (str(form, "biome") || "") as TerrainType | "",
     }),
+  );
+}
+
+/** A foraging roll (pp. 427, 573): the terrain, and how its modifier is found. */
+export async function promptForForage(defaultTerrain: string): Promise<{
+  terrain: TerrainType | AquaticTerrain; average: boolean; exceptional: "rich" | "desolate" | undefined;
+} | null> {
+  const V = (key: string) => game.i18n.localize(`GWORLD.Vision.${key}`);
+  const keys = [...TERRAIN_ORDER, ...(Object.keys(AQUATIC_FORAGING) as AquaticTerrain[])];
+  const terrains: Array<[string, string]> = keys.map((k): [string, string] => [k, V(`Terrain_${k}`)]);
+  const modes: Array<[string, string]> = [["roll", V("ForageRolled")], ["average", V("ForageAverage")], ["rich", V("ForageRich")], ["desolate", V("ForageDesolate")]];
+  return hazardPrompt(
+    V("ForageTitle"),
+    hazardSelect("terrain", V("ForageTerrain"), terrains) + hazardSelect("mode", V("ForageMode"), modes),
+    (form) => {
+      const mode = str(form, "mode");
+      return {
+        terrain: (str(form, "terrain") || defaultTerrain || "plains") as TerrainType | AquaticTerrain,
+        average: mode === "average",
+        exceptional: mode === "rich" || mode === "desolate" ? mode : undefined,
+      };
+    },
   );
 }
 

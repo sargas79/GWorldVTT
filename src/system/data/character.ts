@@ -13,7 +13,7 @@ import {
   secondaryCharacteristics,
   secondaryPointCost,
 } from "../../rules/attributes.js";
-import { beastAttacks, beastTraitsFrom, naturalAttacks, weaponUnarmedBonus } from "../../rules/natural-attacks.js";
+import { beastAttacks, beastTraitsFrom, naturalAttacks, rigidHelmWorn, weaponUnarmedBonus } from "../../rules/natural-attacks.js";
 import { becomesUnreadyAfterAttack } from "../../rules/readiness.js";
 import { aimBonus } from "../../rules/aim.js";
 import { flaggedSignatureItems, flatSignatureBilling } from "../../rules/flat-signature-gear.js";
@@ -39,6 +39,7 @@ import { crippledPartName, crippledParts } from "../crippling.js";
 import { attackAttribute, levelledDamage } from "../../rules/trait-attacks.js";
 import { talentBonusFor, talentBonuses, talentsRaising, traitSkillBonuses, traitSkillBonusesFor } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
+import { balancedBonus, presentationReactions } from "../../rules/cost-factors.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
 import { senseScores } from "../../rules/senses.js";
 import {
@@ -85,7 +86,8 @@ import {
   type WeaponCondition,
 } from "../../rules/breakage.js";
 import { usableInCloseCombat } from "../../rules/tactical.js";
-import { closeCombatDamageModifier, closeCombatPenalty } from "../../rules/addendum-techniques.js";
+import { closeCombatDamageModifier, closeCombatPenalty, longestReach } from "../../rules/addendum-techniques.js";
+import { withChestCoverage } from "../../rules/revised-hit-locations.js";
 import { isRuleOn } from "../optional-rules.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
 import { canPull, towedWeight, wheelchairMove, type Conveyance } from "../../rules/towing.js";
@@ -97,6 +99,7 @@ import { evaluateBonus, takesEvaluateBonus } from "../../rules/maneuvers.js";
 import {
   COMBAT_HOOKS, MODULE_KEY, adjustWeaponAttacks, maneuverAllowancesFor, maneuverInfo, maneuverKeys, parryWeaponRows, type WeaponRowEntry,
 } from "../combat-extensions.js";
+import { moreManeuverDefenseLines, stepsFor } from "../more-maneuvers.js";
 import { shotsEntryFor } from "../shots-entry.js";
 import { malfunctionOf } from "../malfunctions.js";
 import { stuckWeaponOf } from "../picks.js";
@@ -117,8 +120,9 @@ import { supportEffect, supportOf, type Support } from "../../rules/accessories.
 import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalties.js";
 import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { powersOf } from "../../rules/powers.js";
-import { abilityRollModifiers, costsHitPointsCost, requiredRolls } from "../../rules/addendum-modifiers.js";
+import { abilityRollModifiers, abilityUseRolls, activationTarget, costsFatigueCost, costsHitPointsCost, powerModifierOrigin, requiredRolls } from "../../rules/addendum-modifiers.js";
 import { analyseAlternatives } from "../alternative-analysis.js";
+import { talentGivesReaction } from "../../rules/alternative-abilities.js";
 import { sessionPools } from "../../rules/bonus-points.js";
 import {
   cuttingEdgeFor, dabblerBonusFor, dabblerGain, isBowSkill, perksOf, strongbowAllowance, strongbowMinSt,
@@ -1422,14 +1426,26 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     return 0;
   }
 
-  /** Levels bought in the techniques whose names start with a prefix (the most of any). */
-  private techniqueLevelsByPrefix(prefix: string): number {
-    let most = 0;
+  /**
+   * The Close Combat levels bought for a weapon's longest reach (Revised p. 334):
+   * the record named for that reach, else the plain "Close Combat" one, which
+   * is the reach 1 record and serves any reach as far as half its penalty goes.
+   */
+  private closeCombatLevels(reach: string): number {
+    const yards = Math.min(3, longestReach(reach));
+    const named = yards >= 2 ? this.techniqueLevelsExactly(`Close Combat (Reach ${yards})`) : null;
+    return named ?? this.techniqueLevelsExactly("Close Combat") ?? 0;
+  }
+
+  /** The levels bought in the technique of exactly this name, or null where the character has none. */
+  private techniqueLevelsExactly(name: string): number | null {
+    let found: number | null = null;
     for (const item of this.itemsOfType("technique")) {
-      if (!String(item.name ?? "").toLowerCase().startsWith(prefix.toLowerCase())) continue;
-      most = Math.max(most, Number((item.system as { derived?: { levels?: number } })?.derived?.levels) || 0);
+      if (String(item.name ?? "").trim().toLowerCase() !== name.toLowerCase()) continue;
+      const levels = Number((item.system as { derived?: { levels?: number } })?.derived?.levels) || 0;
+      found = Math.max(found ?? 0, levels);
     }
-    return most;
+    return found;
   }
 
   /** The level of the best technique whose name starts with a prefix, or null (Revised p. 334). */
@@ -1789,7 +1805,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ),
       // A reaction modifier typed onto the trait by the GM.
       reactionModifier: Number(item.system?.reactionModifier ?? 0) || 0,
-      noReactionBonus: item.system?.noReactionBonus === true,
+      // A Talent whose reaction bonus was replaced by another benefit, or by none (Revised pp. 324-325).
+      noReactionBonus: !talentGivesReaction({ noReactionBonus: item.system?.noReactionBonus === true, benefit: item.system?.talentBenefit }),
       // A Talent's own list of skills, which is all a Talent from another book has.
       talentSkills: ((item.system?.talentSkills ?? []) as unknown[]).map((s) => String(s)),
       // The weapons a Weapon Master's class takes in, where the trait lists them.
@@ -2332,7 +2349,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // divides, is then shown as the pipeline will subtract it. There is no
     // blow to read an arc from, so front-only armour counts.
     const profiles = Object.fromEntries(
-      HIT_LOCATION_ORDER.map((loc) => [loc, previewBands(previewDrAt(this.parent, loc, traits, worn, DAMAGE_TYPES))]),
+      // Armour that covers the chest alone is what a blow at the torso meets
+      // (Basic Set Revised p. 566), so the torso row shows it.
+      HIT_LOCATION_ORDER.map((loc) => [loc, previewBands(previewDrAt(this.parent, loc, traits, loc === "torso" ? withChestCoverage(worn, "chest", true) as ArmorPiece[] : worn, DAMAGE_TYPES))]),
     ) as Record<HitLocation, ReturnType<typeof previewBands>>;
     for (const loc of HIT_LOCATION_ORDER) drByLocation[loc] = profiles[loc].bands[0]?.dr ?? 0;
 
@@ -2532,7 +2551,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // its basic damage (Campaigns pp. 480-481).
       const magic = magicOf(item);
       const enchantedSkill = (found: { level: number | null; atDefault: boolean }) =>
-        found.level === null ? found : { ...found, level: found.level + magic.accuracy };
+        found.level === null ? found : { ...found, level: found.level + magic.accuracy + balance.skill };
 
       // The grade it was bought in and what it is made of (Characters
       // pp. 274-275): a fine blade cuts a point deeper, a fine rifle is a
@@ -2557,6 +2576,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           isFencing: (sys.meleeModes ?? []).some((m: any) => m.isFencing),
         })) as WeaponClass;
       const firearm = weaponClass === "firearm";
+      // Balanced: +1 to skill, or +1 Acc with a bow (Basic Set Revised p. 342).
+      const balance = item.type === "trait" ? { skill: 0, accuracy: 0 } : balancedBonus(weaponClass, (sys as any).balanced === true);
       const weight = effectiveWeight(item);
       const objectHp = item.type === "trait"
         ? 0
@@ -2629,7 +2650,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // Close Combat technique bought back; swing damage down a point a yard.
         const closeNonC = isRuleOn("closeCombat") && isRuleOn("closeCombatAnyWeapon") &&
           this.conditions.closeCombat && !usableInCloseCombat(String(mode.reach ?? "C"));
-        const closePenalty = closeNonC ? closeCombatPenalty(String(mode.reach ?? ""), this.techniqueLevelsByPrefix("Close Combat")) : 0;
+        const closePenalty = closeNonC ? closeCombatPenalty(String(mode.reach ?? ""), this.closeCombatLevels(String(mode.reach ?? ""))) : 0;
         const closeDamage = closeNonC ? closeCombatDamageModifier(String(mode.reach ?? ""), mode.damageBase === "sw") : 0;
         const found = short(
           short(enchantedSkill(weaponSkill(rolledSkill, true, mastered)), lacking(mode.minSt ?? null)),
@@ -2717,7 +2738,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           unarmed: isUnarmedSkill(rolledSkill),
           stBased: mode.damageBase === "thr" || mode.damageBase === "sw",
           damageBase: String(mode.damageBase ?? ""),
-          damageModifier: Number(mode.damageModifier ?? 0) || 0,
+          // With the close-combat swing penalty in it, so a pulled blow rereads it (Revised p. 334).
+          damageModifier: (Number(mode.damageModifier ?? 0) || 0) + closeDamage,
           // The skill the bonus is read for, so a pulled blow can work it out
           // again at the lower ST it is struck with.
           unarmedBonusSkill: mode.unarmedBonus ? rolledSkill : "",
@@ -2901,7 +2923,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           twoHanded: Boolean(mode.twoHanded),
           swung: mode.damageBase === "sw",
           // "+1 to Acc" for a fine firearm, "-1 Acc" for a cheap thrown weapon.
-          accuracy: (mode.accuracy ?? 0) + qualityAccuracyBonus(weaponClass, quality, Boolean(mode.thrown)),
+          accuracy: (mode.accuracy ?? 0) + qualityAccuracyBonus(weaponClass, quality, Boolean(mode.thrown)) + balance.accuracy,
           scopeBonus: mode.scopeBonus ?? 0,
           scopeFixed: mode.scopeFixed === true,
           range: range.halfDamage ? `${range.halfDamage} / ${range.max}` : String(range.max),
@@ -3027,9 +3049,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         headButt: this.techniqueLevelByPrefix("Head Butt"),
         stampKick: this.techniqueLevelByPrefix("Stamp Kick"),
       },
-      rigidHelm: this.itemsOfType("armor").some((item: any) =>
-        item.system?.equipped === true && item.system?.flexible !== true &&
-        ((item.system?.drByLocation ?? []) as Array<{ locations?: string[] }>).some((e) => (e.locations ?? []).includes("skull"))),
+      rigidHelm: rigidHelmWorn(this.itemsOfType("armor")),
       // A punch and a kick are DX-based like any weapon skill, so an extra
       // layer of armour costs them the same -1 (Characters p. 286).
       dx: attrs.DX + layering,
@@ -3372,6 +3392,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       defenses: { dodge: defenses.dodge?.total ?? null, parry: defenses.parry?.total ?? null, block: defenses.block?.total ?? null },
       lines: [] as Array<BonusLine & { defense: string }>,
     }).lines as Array<BonusLine & { defense: string }>;
+    // Committed Attack's -2 and Defensive Attack's +1 (Revised pp. 575-576) are in the figure the button shows.
+    for (const defense of ["dodge", "parry", "block"] as const) {
+      for (const line of moreManeuverDefenseLines(this.parent, defense)) {
+        defenseBonuses.push({ label: line.label, value: line.value, source: "system", defense });
+      }
+    }
     const bareHandedParry: DefenseView | null = bareParryResult && bestBareParry
       ? {
           total: bareParryResult.total,
@@ -3483,6 +3509,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         defenseAvailable,
         parryAvailable,
         movement: allowances.movement,
+        // How many steps a "step" is: Committed Attack's second, a Giant Step's extra (Revised pp. 571, 576).
+        steps: stepsFor(this.parent, allowances.movement),
         option: this.maneuverOption,
       },
       evaluateBonus: this.maneuver === "evaluate" || takesEvaluateBonus(this.maneuver, maneuverInfo(this.maneuver).attacks)
@@ -3544,8 +3572,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           { combatReflexes: traits.activeDefense > 0 },
         );
         const cost = costsHitPointsCost(modifiers);
-        if (use.bonus === 0 && use.penalty === 0 && needs.length === 0 && cost.hp === 0) return [];
-        return [{ id: String(item.id ?? ""), name: String(item.name ?? ""), ...use, needs, hpCost: cost.hp, hpCostPerSecond: cost.perSecond }];
+        const fatigue = costsFatigueCost(modifiers);
+        const activation = activationTarget(modifiers);
+        if (use.bonus === 0 && use.penalty === 0 && needs.length === 0 && cost.hp === 0 && fatigue.fp === 0 && activation === null) return [];
+        const scores = { dx: attrs.DX, iq: attrs.IQ, ht: attrs.HT, will: secondary.will, per: secondary.per };
+        return [{
+          id: String(item.id ?? ""), name: String(item.name ?? ""), ...use, needs,
+          hpCost: cost.hp, hpCostPerSecond: cost.perSecond,
+          fpCost: fatigue.fp, fpCostPerSecond: fatigue.perSecond, activation,
+          origin: powerModifierOrigin(modifiers.map((m) => m.name))?.origin ?? "",
+          // The rolls one use takes, in order: what the roll-to-use button makes.
+          rolls: abilityUseRolls(needs, activation, scores),
+        }];
       }),
       // "In a few cases, skill 20+ gives an automatic +2 to reactions.
       // Diplomacy and Fast-Talk work this way if you are allowed to talk -- as
@@ -3553,6 +3591,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // as conditional sources, since only the table knows who is talking.
       reactions: [
         ...reactionSources(heldTraits),
+        // Presentation gear worn or carried: +1 to +3 to reactions (Basic Set Revised p. 342).
+        ...presentationReactions(
+          this.items
+            .filter((i: any) => ["equipment", "armor", "shield"].includes(i.type) && i.system?.equipped === true)
+            .map((i: any) => ({ name: String(i.name ?? ""), presentation: Number(i.system?.presentation) || 0 })),
+        ),
         ...(["Diplomacy", "Fast-Talk"] as const)
           .filter((skill) => automaticSkillBonus(this.skillLevelByName(skill) ?? 0))
           .map((skill) => ({ label: skill, value: 2, condition: "talking" as const })),
@@ -3594,6 +3638,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         active: set.active,
         members: set.members.map((id) => ({ id, billed: alternatives.billed.get(id) ?? 0 })),
       })),
+      // Abilities of a set carrying a Link, which p. 324 says can't be.
+      alternativeLinkConflicts: alternatives.linkConflicts,
       regeneration: regenerationRate(traits.regeneration),
       // The attributes as everything else reads them: bought plus what traits
       // add. The sheet's inputs edit the bought figure and show this one.

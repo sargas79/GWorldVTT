@@ -15,7 +15,7 @@
  * one of its own.
  */
 
-import { bondBonus, cuttingEdgeFor, noPerks } from "../rules/addendum-perks.js";
+import { bondFor, cuttingEdgeFor, noPerks } from "../rules/addendum-perks.js";
 import { normalizeSkillName } from "../rules/skills.js";
 import {
   familiarityKey,
@@ -123,7 +123,8 @@ export function familiarityApplies(actor: any, item: any, skillName: string): bo
 export function equipmentUseLines(actor: any, item: any, skillName: string | undefined): EquipmentUse {
   const use = techLevelUseLines(actor, item, skillName);
   // Weapon Bond and Equipment Bond: +1 with the one item the perk names (Revised pp. 328-329).
-  const bond = item ? bondBonus(actor?.system?.derived?.perks ?? noPerks(), String(item.name ?? "")) : 0;
+  // The item is the one flagged as bonded, or the one a bond perk names.
+  const bond = bondFor(actor?.system?.derived?.perks ?? noPerks(), item ? { name: String(item.name ?? ""), bonded: item.system?.bonded === true } : null);
   if (bond === 0) return use;
   const label = format("GWORLD.Perks.BondLine", { item: String(item.name ?? "") }, `Bond: ${String(item.name ?? "")}`);
   const lines: EquipmentUseLine[] = [...use.lines, { key: "bond", label, value: bond }];

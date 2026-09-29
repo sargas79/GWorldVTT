@@ -14,13 +14,27 @@ import {
   CLINICIAN_SKILL,
   addHardship,
   cureByPoints,
+  dayWasQuiet,
+  daysEnded,
+  derangementPowerModifier,
   derangementRecoveryTarget,
   derangementRollPenalty,
   stressRecovered,
   stressRollPenalty,
+  stressShedByClock,
   type FrightKind,
 } from "../rules/stress.js";
 import { resolveSuccess } from "../rules/success.js";
+import { SYSTEM_ID } from "./constants.js";
+import { everyActor } from "./every-actor.js";
+
+/** Flags on a character: when the last hardship was inflicted, and the seconds of rest not yet a whole 10 minutes. */
+const LAST_HARDSHIP_FLAG = "mentalLastHardship";
+const CLOCK_CARRY_FLAG = "mentalClockCarry";
+/** Marks the item that holds the points Derangement's overflow turned permanent. */
+const PERMANENT_FLAG = "derangementOverflow";
+
+const worldTime = (): number => Number((globalThis as { game?: { time?: { worldTime?: number } } }).game?.time?.worldTime) || 0;
 
 const L = (key: string, data?: Record<string, unknown>) =>
   data ? game.i18n.format(`GWORLD.Stress.${key}`, data) : game.i18n.localize(`GWORLD.Stress.${key}`);
@@ -76,6 +90,10 @@ export async function applyHardship(actor: any, options: { kind: FrightKind; amo
   const now = mentalOf(actor);
   const result = addHardship({ stress: now.stress, derangement: now.derangement, will: now.limit, kind: options.kind, amount: options.amount });
   await actor.update({ "system.stress": result.stress, "system.derangement": result.derangement });
+  // A day that inflicts new hardship is no day's end for the Derangement roll.
+  await actor.setFlag?.(SYSTEM_ID, LAST_HARDSHIP_FLAG, worldTime());
+  // What the limit could not hold is now points of permanent mental disadvantages (p. 573).
+  if (result.permanentPoints > 0) await addPermanentDisadvantage(actor, result.permanentPoints);
   await post(
     actor,
     L("Gained", {
@@ -134,7 +152,7 @@ export async function rollDerangementDayEnd(options: { actor: any; clinicianSkil
   await ChatMessage.implementation.create({
     speaker: ChatMessage.implementation.getSpeaker({ actor }),
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
-    content: `<div class="gworld gworld-chat"><p>${L("DayEndCard", { name: String(actor.name ?? ""), target, roll: own.total, shed, derangement: derangement - shed })}${therapy}</p></div>`,
+    content: `<div class="gworld gworld-chat"><p>${L("DayEndCard", { name: String(actor.name ?? ""), target, roll: own.total, shed, derangement: derangement - shed })}${therapy}</p>${derangement - shed > 0 ? `<p><small>${L("TreatmentPointer")}</small></p>` : ""}</div>`,
     rolls,
   });
   return { shed };
@@ -185,5 +203,102 @@ export function stressRollLines(context: { actor: any; kind: string; skill?: str
     const value = derangementRollPenalty(derangement);
     if (value !== 0) lines.push({ label: L("DerangementLine"), value });
   }
+  lines.push(...derangementPowerLines(context));
   return lines;
+}
+
+/**
+ * Turns points of Derangement beyond the limit into permanent mental
+ * disadvantages (p. 573): one disadvantage on the character that holds them,
+ * named for what it is, which the player renames and splits as they choose.
+ * Points already turned permanent are added to. Returns the points it now
+ * holds, or null where nothing could be added.
+ */
+export async function addPermanentDisadvantage(actor: any, points: number): Promise<number | null> {
+  if (!actor?.isOwner || !(points > 0)) return null;
+  const held = [...(actor.items ?? [])].find((item: any) => item?.type === "trait" && item.getFlag?.(SYSTEM_ID, PERMANENT_FLAG) === true);
+  if (held) {
+    const total = Math.abs(Number(held.system?.points) || 0) + points;
+    await held.update({ "system.points": -total });
+    return total;
+  }
+  await actor.createEmbeddedDocuments("Item", [{
+    name: L("PermanentName"),
+    type: "trait",
+    system: { category: "disadvantage", points: -points, description: `<p>${L("PermanentDescription")}</p>` },
+    flags: { [SYSTEM_ID]: { [PERMANENT_FLAG]: true } },
+  }]);
+  return points;
+}
+
+/** Whether an actor is in a battle that has begun, where time passes by rounds and not by rest. */
+function inBattle(actor: any): boolean {
+  for (const combat of (globalThis as { game?: { combats?: Iterable<any> } }).game?.combats ?? []) {
+    if (!combat?.started) continue;
+    for (const combatant of combat.combatants ?? []) if (combatant?.actor === actor) return true;
+  }
+  return false;
+}
+
+/**
+ * Lets the world clock's advance work on an actor's hardship (p. 573): Stress
+ * bleeds off 1 per 10 minutes, and each midnight that closes a day without
+ * new Stress or Derangement is the day's end, for the Derangement roll. A
+ * character in a battle is not at rest. Without the switch nothing happens.
+ */
+export async function mentalTimePasses(actor: any, options: { from: number; to: number }): Promise<{ shed: number; days: number }> {
+  const none = { shed: 0, days: 0 };
+  if (!stressOn() || !isRuleOn("mentalOnTheClock") || !actor?.isOwner || inBattle(actor)) return none;
+  const { stress, derangement } = mentalOf(actor);
+  const elapsed = options.to - options.from;
+  if (!(elapsed > 0)) return none;
+  let shed = 0;
+  const carried = Number(actor.getFlag?.(SYSTEM_ID, CLOCK_CARRY_FLAG)) || 0;
+  if (stress > 0) {
+    const clock = stressShedByClock(carried, elapsed);
+    if (clock.carry !== carried) await actor.setFlag?.(SYSTEM_ID, CLOCK_CARRY_FLAG, clock.carry);
+    if (clock.shed > 0) shed = await recoverStress(actor, { minutes: clock.shed * 10 });
+  } else if (carried !== 0) {
+    await actor.unsetFlag?.(SYSTEM_ID, CLOCK_CARRY_FLAG);
+  }
+  let days = 0;
+  if (derangement > 0) {
+    const last = actor.getFlag?.(SYSTEM_ID, LAST_HARDSHIP_FLAG);
+    const lastHardship = typeof last === "number" ? last : null;
+    for (const dayStart of daysEnded(options.from, options.to)) {
+      if (!dayWasQuiet(dayStart, lastHardship)) continue;
+      if (mentalOf(actor).derangement <= 0) break;
+      await rollDerangementDayEnd({ actor });
+      days++;
+    }
+  }
+  return { shed, days };
+}
+
+/** Registers the world-time hook that lets the clock rest an actor's Stress and close a day for Derangement. */
+export function registerStressHooks(): void {
+  Hooks.on("updateWorldTime", (time: number, delta: number) => {
+    if (!game.user?.isGM || !stressOn() || !isRuleOn("mentalOnTheClock")) return;
+    const elapsed = Number(delta) || 0;
+    if (elapsed <= 0) return;
+    for (const actor of everyActor()) void mentalTimePasses(actor, { from: Number(time) - elapsed, to: Number(time) });
+  });
+}
+
+/**
+ * The line Derangement puts on a roll for a supernatural power (p. 573):
+ * Derangement/2 against the powers that need a focused mind or chi, and
+ * against resisting an evil one that causes more Derangement, and a bonus of
+ * that size to use such an evil one. The roll says which it is by its tags:
+ * `power` or `supernatural` for a power's roll, `evil` for one that
+ * causes Derangement, `resist` for resisting one.
+ */
+export function derangementPowerLines(context: { tags: readonly string[]; actor: any }): Array<{ label: string; value: number }> {
+  if (!stressOn() || !isRuleOn("derangementRollPenalties")) return [];
+  const evil = context.tags.includes("evil");
+  const power = context.tags.includes("power") || context.tags.includes("supernatural") || evil;
+  if (!power) return [];
+  const { derangement } = mentalOf(context.actor);
+  const value = derangementPowerModifier(derangement, { evil, resisting: context.tags.includes("resist") });
+  return value === 0 ? [] : [{ label: L("DerangementPowerLine"), value }];
 }

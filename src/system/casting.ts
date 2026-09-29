@@ -943,5 +943,7 @@ export async function rollKeepConcentration(actor: any): Promise<void> {
     label: L("KeepConcentration"),
     kind: "skill",
     modifiers: [{ label: L("Distracted"), value: DISTRACTION_PENALTY }],
+    // All-Out Concentrate makes it Will-2 on the maneuver alone (Revised p. 575).
+    tags: ["distraction"],
   });
 }

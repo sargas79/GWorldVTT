@@ -17,7 +17,7 @@
 import { isMissingPart, withChestCoverage } from "../rules/revised-hit-locations.js";
 import { parseVulnerability, worstVulnerability, type Vulnerability } from "../rules/vulnerability.js";
 import { type ArmorPiece } from "../rules/armor.js";
-import { rollPartialCoverage, withLargeTarget } from "./revised-ranged.js";
+import { announceCoverage, rollPartialCoverage, withLargeTarget } from "./revised-ranged.js";
 import { bluntTraumaInjury } from "../rules/layered-armor.js";
 import { ablativeLoss, drAgainst, drFromBelow, hardenedAgainst, remainingDr, drLostAfterWear } from "../rules/armor.js";
 import { criticalDr } from "../rules/criticals.js";
@@ -85,6 +85,13 @@ export interface IncomingDamage {
    * substitute maximum damage for what was rolled.
    */
   maxDamage?: number;
+  /**
+   * The 1d roll (1-6) for partly armoured locations (Hitting 'Em Where It
+   * Hurts, Revised p. 576), made once per hit. Set, it is used as it is, so
+   * working the same blow out again gives the same answer; unset, the roll is
+   * made when the blow is worked out.
+   */
+  coverageRoll?: number;
   /** A critical hit, whose table entry may multiply damage or halve DR. */
   critical?: CriticalHit;
   /**
@@ -219,6 +226,8 @@ export interface IncomingDamage {
 
 /** What applying a blow did. */
 export interface AppliedDamage {
+  /** The partial-coverage roll the hit made, or null where no partly armoured piece covered the location (since API 1.190.0). */
+  coverage?: { coverage: number; roll: number; protected: boolean } | null;
   actorName: string;
   hitLocation: HitLocation;
   /** A module's location struck, as `<module>.<key>`, or null. */
@@ -435,7 +444,9 @@ export function resolveDamageAgainst(actor: any, incoming: IncomingDamage): Appl
 
   const chested = withChestCoverage(wornArmor(actor), damage.addonLocation, isRuleOn("chestAbdomenSplit")) as ArmorPiece[];
   // Hitting 'Em Where It Hurts (Revised p. 576): one 1d roll for the partly armoured location.
-  const worn = rollPartialCoverage(chested, damage.hitLocation).worn;
+  const covered = rollPartialCoverage(chested, damage.hitLocation, damage.coverageRoll);
+  const worn = covered.worn;
+  const coverage = covered.roll === null ? null : { coverage: covered.coverage, roll: covered.roll, protected: covered.protectedByRoll === true };
   const arc = isRuleOn("frontArmor") ? (damage.arc ?? null) : null;
   const { naturalDr, lines, layers } = armourAt(actor, damage, damage.hitLocation, traits, worn, arc);
 
@@ -455,7 +466,8 @@ export function resolveDamageAgainst(actor: any, incoming: IncomingDamage): Appl
     });
   }
 
-  return resolvePlaced(actor, damage, { hp, fp, traits, internal, naturalDr, lines, layers, largeArea });
+  const resolved = resolvePlaced(actor, damage, { hp, fp, traits, internal, naturalDr, lines, layers, largeArea });
+  return coverage ? { ...resolved, coverage } : resolved;
 }
 
 /**
@@ -857,7 +869,7 @@ function resolvePlaced(actor: any, damage: IncomingDamage, context: {
   // A location a module registered changes what it says it changes -- the
   // wounding modifier, the crippling threshold, DR of its own, the knockdown
   // roll -- and takes everything else from the Basic Set location it is part of.
-  const overrides = locationOverrides(damage.addonLocation, damage.type, Number(hp.max) || 0);
+  const overrides = locationOverrides(damage.addonLocation, damage.type, Number(hp.max) || 0, { arms: 2 + traits.extraArms, legs: 2 + traits.extraLegs });
 
   // A body with a Vulnerability is hurt worse by the thing it fears, and so
   // is one wearing something that makes it vulnerable (since API 1.106.0):
@@ -1106,6 +1118,8 @@ export async function applyDamageToActor(
   const incoming = callCombatHook(COMBAT_HOOKS.injury, { actor, item, mode, damage: { ...damage } }).damage;
 
   const resolved = resolveDamageAgainst(actor, incoming);
+  // The 1d roll for partly armoured locations is said in chat, once per hit.
+  if (resolved.coverage) await announceCoverage(actor, resolved.coverage);
 
   // Ablative DR is spent whether or not the blow got through: it "stops damage
   // once", and semi-ablative loses its point "regardless of whether the attack
@@ -1336,7 +1350,7 @@ export async function takeInjury(actor: any, options: TakeInjuryOptions): Promis
   // A registered location changes the wounding modifier and the threshold
   // where it says so, and takes the rest from its parent.
   const added = place.registered ? registeredHitLocation(place.registered) : undefined;
-  const overrides = place.registered && type ? locationOverrides(place.registered, type, maxHp) : null;
+  const overrides = place.registered && type ? locationOverrides(place.registered, type, maxHp, { arms: 2 + traits.extraArms, legs: 2 + traits.extraLegs }) : null;
   const threshold = overrides
     ? overrides.cripplingThreshold
     : added && typeof added.cripplingDivisor === "number"

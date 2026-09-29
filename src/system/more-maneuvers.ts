@@ -8,15 +8,25 @@
  */
 
 import { isRuleOn } from "./optional-rules.js";
-import { registerManeuverOption, chosenManeuverOptions } from "./procedure-extensions.js";
-import type { AttackEffect } from "./combat-extensions.js";
+import { rapidRecoveryDeclared } from "./combat-extras.js";
+import { PROCEDURE_HOOKS, registerManeuverOption, chosenManeuverOptions, recordAttackMade } from "./procedure-extensions.js";
+import { getCombatState, setCombatState, type AttackEffect } from "./combat-extensions.js";
+import { SYSTEM_ID } from "./constants.js";
+import { HEROIC_CHARGE_FALL_PENALTY } from "../rules/extra-effort-extras.js";
+import type { MovementAllowance } from "../rules/maneuvers.js";
+import { extrasThisRound } from "./combat-extras.js";
 import {
   ADDENDUM_MANEUVERS,
   ADDENDUM_MANEUVER_ORDER,
   ALL_OUT_CONCENTRATE_BONUS,
   COMMITTED_DEFENSE_PENALTY,
   DEFENSIVE_GRAPPLE_BONUS,
+  DEFENSIVE_KICK_BALANCE,
   MENTAL_DEFENSE_BONUS,
+  allOutConcentrateApplies,
+  concentrationRunAfterTurn,
+  maneuverSteps,
+  slamAllowsAttackBefore,
   allOutMaySlam,
   allOutSlamMovement,
   committedDamageBonus,
@@ -88,7 +98,7 @@ export function registerMoreManeuvers(): void {
   });
   registerManeuverOption({
     module: MODULE, key: "defensiveBenefit", maneuver: "defensiveAttack", label: L("DefensiveBenefit"),
-    input: select(["parry", "block", "sameWeapon"], "Benefit"), available: () => isRuleOn("defensiveAttack"),
+    input: select(["parry", "block", "sameWeapon", "kick"], "Benefit"), available: () => isRuleOn("defensiveAttack"),
   });
   registerManeuverOption({
     module: MODULE, key: "mentalDefense", maneuver: "allOutDefense", label: L("MentalDefense"),
@@ -151,13 +161,98 @@ export function committedRefusal(actor: any, defense: "dodge" | "parry" | "block
 
 /** Whether the actor may parry again with an unbalanced weapon it attacked with (Defensive Attack). */
 export function allowsSameWeaponParry(actor: any): boolean {
+  // Rapid Recovery, declared before the first parry, does as much (Revised p. 571).
+  if (rapidRecoveryDeclared(actor)) return true;
   return defensive(actor) && defensiveAllowsSameWeaponParry(String(chosen(actor, "defensiveBenefit") ?? ""));
 }
 
-/** The line All-Out Concentrate adds to a skill or spell roll (the concentrated task; the GM says which). */
-export function allOutConcentrateLines(actor: any, kind: string): Line[] {
+/** Where an actor's run of concentrating turns is kept: true while every one was All-Out Concentrate. */
+const CONCENTRATION_FLAG = "allOutConcentrationRun";
+
+/**
+ * The line All-Out Concentrate adds to a skill or spell roll (the concentrated
+ * task; the GM says which), only while the task has been All-Out Concentrate
+ * the entire time (p. 575). A roll to keep concentrating through a distraction
+ * is tagged `distraction` and takes it on the maneuver alone.
+ */
+export function allOutConcentrateLines(actor: any, kind: string, tags: readonly string[] = []): Line[] {
   if (maneuverOf(actor) !== "allOutConcentrate" || !isRuleOn("allOutConcentrate") || kind !== "skill") return [];
-  return [{ label: game.i18n.localize("GWORLD.Maneuver.allOutConcentrate"), value: ALL_OUT_CONCENTRATE_BONUS }];
+  const run = actor?.getFlag?.(SYSTEM_ID, CONCENTRATION_FLAG);
+  const applies = allOutConcentrateApplies({
+    maneuver: maneuverOf(actor),
+    allOutSoFar: typeof run === "boolean" ? run : null,
+    distraction: tags.includes("distraction"),
+  });
+  return applies ? [{ label: game.i18n.localize("GWORLD.Maneuver.allOutConcentrate"), value: ALL_OUT_CONCENTRATE_BONUS }] : [];
+}
+
+/** Keeps the run of concentrating turns as each combatant's turn ends. The GM's client writes it. */
+export function registerConcentrationRun(): void {
+  Hooks.on(PROCEDURE_HOOKS.turnEnd, (_combat: unknown, combatant: any) => {
+    if (!game.user?.isGM) return;
+    const actor = combatant?.actor;
+    if (!actor?.isOwner || typeof actor.getFlag !== "function") return;
+    const before = actor.getFlag(SYSTEM_ID, CONCENTRATION_FLAG);
+    const after = concentrationRunAfterTurn(typeof before === "boolean" ? before : null, maneuverOf(actor));
+    if (after === null) {
+      if (before !== undefined) void actor.unsetFlag(SYSTEM_ID, CONCENTRATION_FLAG);
+    } else if (after !== before) {
+      void actor.setFlag(SYSTEM_ID, CONCENTRATION_FLAG, after);
+    }
+  });
+}
+
+/**
+ * The steps the actor's maneuver allows: one, Committed Attack's second when
+ * it takes it, and a Giant Step declared this round (Revised pp. 571, 576).
+ */
+export function stepsFor(actor: any, movement: MovementAllowance): number {
+  return maneuverSteps({
+    movement,
+    secondStep: committed(actor) && isChecked(chosen(actor, "committedStep")),
+    giantStep: extrasThisRound(actor).includes("giantStep"),
+  });
+}
+
+/** Whether the actor is on an All-Out Attack (Double) that slams (p. 575). */
+function doubleSlam(actor: any): boolean {
+  return maneuverOf(actor) === "allOutAttack" && isRuleOn("allOutSlams") && isChecked(chosen(actor, "slam"))
+    && slamAllowsAttackBefore(String(actor?.system?.allOutAttackOption ?? "determined"));
+}
+
+/** Why a slam is refused: a Double slams once, not twice (p. 575). */
+export function slamRefusal(actor: any): string | null {
+  return doubleSlam(actor) && getCombatState(actor, SYSTEM_ID, "slamMade") === true ? L("SlamTwice") : null;
+}
+
+/** Why an attack is refused: after the slam of a Double there is no other attack to make before it (p. 575). */
+export function attackAfterSlamRefusal(actor: any): string | null {
+  return doubleSlam(actor) && getCombatState(actor, SYSTEM_ID, "slamMade") === true ? L("AttackAfterSlam") : null;
+}
+
+/** A slam is one of a Double's two attacks: counted, and remembered so no attack follows it. */
+export async function noteSlam(actor: any): Promise<void> {
+  if (!doubleSlam(actor) || !(game as { combat?: { started?: boolean } }).combat?.started) return;
+  await setCombatState(actor, SYSTEM_ID, "slamMade", true, "turn");
+  await recordAttackMade(actor);
+}
+
+/**
+ * The lines on a roll to avoid falling or tripping, tagged `fall` (a DX roll
+ * from the roll dialog, or a module's): +2 for a kick under Defensive Attack
+ * (p. 576), and -2 after a Heroic Charge, whose defensive drawbacks still apply
+ * (p. 571).
+ */
+export function fallRollLines(actor: any, tags: readonly string[]): Line[] {
+  if (!tags.includes("fall")) return [];
+  const lines: Line[] = [];
+  if (defensive(actor) && String(chosen(actor, "defensiveBenefit") ?? "") === "kick") {
+    lines.push({ label: L("KickBalanceLine"), value: DEFENSIVE_KICK_BALANCE });
+  }
+  if (isRuleOn("extraEffort") && extrasThisRound(actor).includes("heroicCharge")) {
+    lines.push({ label: game.i18n.localize("GWORLD.ExtraEffort.HeroicChargeFall"), value: HEROIC_CHARGE_FALL_PENALTY });
+  }
+  return lines;
 }
 
 /** The line Mental Defense adds to a roll to resist a supernatural attack. */

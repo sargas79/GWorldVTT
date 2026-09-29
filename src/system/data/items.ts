@@ -60,6 +60,12 @@ function physicalFields() {
     carried: new fields.BooleanField({ initial: true }),
     equipped: new fields.BooleanField({ initial: false }),
     /**
+     * The one weapon or piece of equipment a Weapon Bond or Equipment Bond
+     * makes +1 (Basic Set Revised pp. 328-329): the owner's, "uniquely suited
+     * to you". Read where the character holds a bond perk to cover it.
+     */
+    bonded: new fields.BooleanField({ initial: false }),
+    /**
      * The id of the container, on the same actor, this is kept in: blank for
      * loose. A container that is gone reads as loose (see containers.ts).
      */
@@ -263,6 +269,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
   declare maxLevels: number;
   declare reactionModifier: number;
   declare noReactionBonus: boolean;
+  declare talentBenefit: string;
   declare patronValue: number;
   declare alternativeGroup: string;
   declare alternativeSlots: number;
@@ -392,6 +399,14 @@ export class TraitData extends foundry.abstract.TypeDataModel {
        * with none (Basic Set Revised pp. 324-325): it gives no reaction bonus.
        */
       noReactionBonus: new fields.BooleanField({ required: true, initial: false }),
+      /**
+       * What a Talent gives in place of its reaction bonus (Basic Set Revised
+       * pp. 324-325): blank keeps the reaction bonus; "none" is no extra
+       * benefit; any other names one of the book's alternatives, and the roll
+       * dialog offers the Talent's levels as that bonus. See
+       * `TALENT_BENEFITS` in rules/alternative-abilities.
+       */
+      talentBenefit: new fields.StringField({ required: true, blank: true, initial: "" }),
       /**
        * The Patron value of the organization behind a Rank trait, 10 to 30, or 0 for none
        * (Basic Set Revised p. 337). Never paid: it sets how much Rank an Assistance Roll needs.
@@ -1336,6 +1351,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare carried: boolean;
   declare containerId: string;
   declare equipped: boolean;
+  declare bonded: boolean;
   declare category: EquipmentCategory;
   declare unready: boolean;
   declare quality: WeaponQuality;
@@ -1353,6 +1369,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare missedMaintenance: number;
   declare complexity: number;
   declare equipmentQuality: EquipmentQuality;
+  declare qualityAddsTools: boolean;
   declare ammunition: { kind: AmmunitionType; fits: string };
   declare equipmentModifier: number | null;
   declare forSkills: string[];
@@ -1420,6 +1437,8 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
         initial: "basic",
         choices: [...EQUIPMENT_QUALITIES],
       }),
+      /** A kit whose good or fine grade adds tools weighs x5 or x20 (Basic Set Revised p. 342). */
+      qualityAddsTools: new fields.BooleanField({ initial: false }),
       /**
        * A stated modifier to the skills in `forSkills`, for a tool no grade
        * describes (a kit that gives -2). When set it replaces the grade's
@@ -1572,6 +1591,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
   declare carried: boolean;
   declare containerId: string;
   declare equipped: boolean;
+  declare bonded: boolean;
 
   static override defineSchema() {
     return {
@@ -1772,6 +1792,7 @@ export class ShieldData extends foundry.abstract.TypeDataModel {
   declare carried: boolean;
   declare containerId: string;
   declare equipped: boolean;
+  declare bonded: boolean;
 
   static override defineSchema() {
     return {

@@ -63,6 +63,48 @@ export function distractionPenalty(allOutConcentrate: boolean, usual = -3): numb
   return allOutConcentrate ? usual + ALL_OUT_CONCENTRATE_BONUS : usual;
 }
 
+/**
+ * Whether every turn of a run of concentration so far was All-Out Concentrate,
+ * after a turn ends on this maneuver: null once anything else is done (the
+ * run is over), false once a plain Concentrate is in it, true otherwise
+ * (p. 575: "you get the +1 only if you take All-Out Concentrate the entire
+ * time").
+ */
+export function concentrationRunAfterTurn(allOutSoFar: boolean | null, maneuver: string): boolean | null {
+  if (maneuver === "allOutConcentrate") return allOutSoFar === false ? false : true;
+  if (maneuver === "concentrate") return false;
+  return null;
+}
+
+/**
+ * Whether All-Out Concentrate's +1 applies to a roll: the actor is on the
+ * maneuver, and it has been All-Out Concentrate the whole time. A distraction
+ * roll takes the +1 on the maneuver alone ("Will-2 ... at +1 for this
+ * maneuver").
+ */
+export function allOutConcentrateApplies(options: { maneuver: string; allOutSoFar: boolean | null; distraction?: boolean }): boolean {
+  if (options.maneuver !== "allOutConcentrate") return false;
+  return options.distraction === true || options.allOutSoFar !== false;
+}
+
+/**
+ * The steps a maneuver allows (pp. 575-576): a step is one, Committed Attack
+ * may take a second, and a Giant Step (p. 571) adds another. A maneuver that
+ * allows no step, or moves further than one, counts none.
+ */
+export function maneuverSteps(options: { movement: MovementAllowance; secondStep?: boolean; giantStep?: boolean }): number {
+  if (options.movement !== "step") return 0;
+  return 1 + (options.secondStep ? 1 : 0) + (options.giantStep ? 1 : 0);
+}
+
+/** The +2 a Defensive Attack with a kick gives DX rolls to avoid falling (p. 576). */
+export const DEFENSIVE_KICK_BALANCE = 2;
+
+/** What an attack made before an All-Out Attack (Double)'s slam may be: another melee attack, at half Move (p. 575). */
+export function slamAllowsAttackBefore(option: string): boolean {
+  return allOutSlamMovement(option).extraAttack;
+}
+
 /** +2 to resist supernatural attacks until the next turn (p. 575). */
 export const MENTAL_DEFENSE_BONUS = 2;
 

@@ -278,6 +278,11 @@ export const TABLES_SECTIONS: readonly GmSectionDef[] = [
     id: "abstractDifficulty",
     tab: "tables",
     cite: "pp. B570, B578",
+    actions: [
+      { id: "set", label: partKey("abstractDifficulty", "ActionSet"), hint: partKey("abstractDifficulty", "ActionSetHint") },
+      { id: "rollNpc", label: partKey("abstractDifficulty", "ActionRoll"), hint: partKey("abstractDifficulty", "ActionRollHint") },
+      { id: "endScene", label: partKey("abstractDifficulty", "ActionEnd"), hint: partKey("abstractDifficulty", "ActionEndHint") },
+    ],
     build: ({ t }) => {
       const bad = currentBad();
       return {

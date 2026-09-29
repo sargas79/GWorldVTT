@@ -108,6 +108,11 @@ export interface GmSectionDef {
   summary?: string;
   build?: (context: BuildContext) => GmSectionContent;
   roll?: GmRollSpec;
+  /**
+   * Buttons on the card's header that do something rather than roll: `label`
+   * is a localization key, and `id` names the handler in `gm-screen/actions.ts`.
+   */
+  actions?: Array<{ id: string; label: string; hint?: string }>;
   /** The module that added it, or null for the system's own. */
   module?: string | null;
   /** Shown to the GM only. */

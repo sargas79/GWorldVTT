@@ -22,8 +22,8 @@
  */
 
 import { sceneAreaLines } from "./modifier-areas.js";
-import { taskRuleLines } from "./task-rules.js";
-import { allOutConcentrateLines, mentalDefenseLines, moreManeuverAttackEffect, moreManeuverDefenseLines } from "./more-maneuvers.js";
+import { badReplacesSituational, taskRuleLines } from "./task-rules.js";
+import { allOutConcentrateLines, fallRollLines, mentalDefenseLines, moreManeuverAttackEffect } from "./more-maneuvers.js";
 import { SYSTEM_ID } from "./constants.js";
 import { endAttackedThisTurn } from "./feint.js";
 import { isFightingRoll, noteFought } from "./combat-participation.js";
@@ -244,7 +244,7 @@ export interface ManeuverOptionRegistration {
   maneuver: string;
   label: string;
   /** The control. Defaults to a checkbox. */
-  input?: OptionInput;
+  input?: OptionInput | ((actor: any) => OptionInput);
   /** Whether it is offered to this actor. Defaults to always. */
   available?: (actor: any) => boolean;
   /** Why it can't be chosen right now, or null. Shown on the disabled control. */
@@ -261,7 +261,7 @@ interface ManeuverOption {
   id: string;
   maneuver: string;
   label: string;
-  input: OptionInput;
+  input: OptionInput | ((actor: any) => OptionInput);
   available: (actor: any) => boolean;
   refuse: (context: ManeuverOptionContext) => string | null;
   attack: ManeuverOptionRegistration["attack"] | null;
@@ -330,7 +330,7 @@ export function maneuverOptionsFor(actor: any): Array<{ id: string; label: strin
     .map((o) => ({
       id: o.id,
       label: o.label,
-      input: o.input,
+      input: typeof o.input === "function" ? safely(`maneuver option ${o.id}`, () => (o.input as (actor: any) => OptionInput)(actor), { type: "checkbox" } as OptionInput) : o.input,
       value: chosen[o.id],
       refused: safely(`maneuver option ${o.id}`, () => o.refuse(context), null),
       response: o.response && isChosen(chosen[o.id]) ? o.response.label : null,
@@ -630,9 +630,14 @@ function hookedSuccessRoll(context: SuccessRollContext, refusable: boolean): { m
     ...(refusable ? { refusal: null } : {}),
   };
   ctx.modifiers.push(...conditionModifiers(ctx.actor, ctx.kind, ctx.tags));
-  if (ctx.tags.includes("detection")) ctx.modifiers.push(...detectionModifiers(ctx));
+  // Basic Abstract Difficulty "replaces all situational modifiers" (Revised
+  // p. 578): the ones typed at the roll, and the scene's own (detection,
+  // smoke and the like). The character's own modifiers stay.
+  const abstractTask = badReplacesSituational(ctx);
+  if (abstractTask) ctx.modifiers = ctx.modifiers.filter((line) => (line as ModifierLine).key !== "situational");
+  if (ctx.tags.includes("detection") && !abstractTask) ctx.modifiers.push(...detectionModifiers(ctx));
   // Smoke, fog and the like on the scene (since 1.63.0).
-  ctx.modifiers.push(...sceneAreaLines(ctx));
+  if (!abstractTask) ctx.modifiers.push(...sceneAreaLines(ctx));
   // A disadvantage played up, and the scene's Basic Abstract Difficulty (Revised pp. 570, 578).
   ctx.modifiers.push(...taskRuleLines(ctx));
   // A DX roll while suited up is held to the Environment Suit skill (Characters p. 192).
@@ -644,12 +649,12 @@ function hookedSuccessRoll(context: SuccessRollContext, refusable: boolean): { m
     for (const defense of ["dodge", "parry", "block"]) {
       if (ctx.tags.includes(defense)) {
         ctx.modifiers.push(...maneuverOptionDefenseLines(ctx.actor, defense));
-        ctx.modifiers.push(...moreManeuverDefenseLines(ctx.actor, defense));
+        // Committed Attack's -2 and Defensive Attack's +1 are in the defense's figure on the sheet.
       }
     }
   }
   // All-Out Concentrate's +1 (which makes a distraction Will-2), and Mental Defense's +2 (Revised p. 575).
-  ctx.modifiers.push(...allOutConcentrateLines(ctx.actor, ctx.kind), ...mentalDefenseLines(ctx.actor, ctx.tags));
+  ctx.modifiers.push(...allOutConcentrateLines(ctx.actor, ctx.kind, ctx.tags), ...mentalDefenseLines(ctx.actor, ctx.tags), ...fallRollLines(ctx.actor, ctx.tags));
   callCombatHook(PROCEDURE_HOOKS.successRollModifiers, ctx);
   // Text, not merely something truthy: the card and the warning show it.
   const refusal = refusable && typeof ctx.refusal === "string" && ctx.refusal.trim() ? ctx.refusal.trim() : null;

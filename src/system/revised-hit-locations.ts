@@ -63,6 +63,7 @@ export function registerRevisedHitLocations(): void {
       addonLocation: string | null;
       damageType: string | null;
       arc: "front" | "side" | "back" | null;
+      tightBeam?: boolean;
       d6: () => number;
     }) => {
       // Another listener has already decided where it landed.
@@ -76,6 +77,7 @@ export function registerRevisedHitLocations(): void {
         damageType: (context.damageType as DamageType | null) ?? null,
         arc: context.arc ?? null,
         d6: context.d6,
+        tightBeam: context.tightBeam === true,
         refine,
         split,
       });

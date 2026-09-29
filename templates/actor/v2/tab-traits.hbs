@@ -43,6 +43,7 @@
                     {{row.displayName}}{{#if row.lacksSpecialty}} <span class="v2-tag v2-tag-bad" data-tooltip="{{localize 'GWORLD.Trait.SpecialtyHint'}}">{{localize "GWORLD.Trait.Unspecified"}}</span>{{/if}}{{#if row.levelled}} <span class="v2-levels">{{row.levels}}{{#if row.levelName}} &middot; {{row.levelName}}{{/if}}</span>{{/if}}
                     {{#if row.applied}}<span class="v2-tag v2-tag-steel" data-tooltip="{{localize 'GWORLD.Trait.AppliedHint'}}">{{localize "GWORLD.Trait.Applied"}}</span>{{/if}}
                     {{#if row.alternative}}<span class="v2-tag {{#if row.alternative.on}}v2-tag-steel{{else}}v2-tag-bad{{/if}}" data-tooltip="{{localize 'GWORLD.Alternative.RowHint' group=row.alternative.group}}">{{#if row.alternative.disabled}}{{localize "GWORLD.Alternative.TagDisabled"}}{{else if row.alternative.on}}{{localize "GWORLD.Alternative.TagOn"}}{{else}}{{localize "GWORLD.Alternative.TagOff"}}{{/if}}</span>{{/if}}
+                    {{#if row.alternative.linkConflict}}<span class="v2-tag v2-tag-bad" data-tooltip="{{localize 'GWORLD.Alternative.LinkConflictHint'}}">{{localize "GWORLD.Alternative.LinkConflict"}}</span>{{/if}}
                     {{#if row.pointPowered}}<span class="v2-tag {{#if row.pointPoweredActive}}v2-tag-steel{{else}}v2-tag-bad{{/if}}" data-tooltip="{{localize 'GWORLD.Alternative.PoweredHint'}}">{{#if row.pointPoweredActive}}{{localize "GWORLD.Alternative.PoweredOn"}}{{else}}{{localize "GWORLD.Alternative.PoweredOff"}}{{/if}}</span>{{/if}}
                   </span>
                   <span class="v2-row-cp{{#if row.negative}} v2-bad{{/if}}">{{row.points}} CP</span>
@@ -52,6 +53,11 @@
                       <button type="button" class="v2-row-icon v2-row-cr rollable" data-action="selfControlRoll"
                               data-tooltip="{{localize 'GWORLD.Trait.SelfControlRollHint'}}"
                               aria-label="{{localize 'GWORLD.Trait.SelfControlRollHint'}}">{{> "gworld.die"}}<span>{{row.selfControl}}</span></button>
+                    {{/if}}
+                    {{#if row.useRolls}}
+                      <button type="button" class="v2-row-icon v2-row-cr rollable" data-action="useAbility"
+                              data-tooltip="{{localize 'GWORLD.Ability.UseHint' rolls=row.useRolls}}"
+                              aria-label="{{localize 'GWORLD.Ability.UseAria' name=row.name}}">{{> "gworld.die"}}</button>
                     {{/if}}
                     {{#if @root.editable}}
                       <button type="button" class="v2-row-icon v2-row-delete" data-action="deleteItem"
@@ -175,6 +181,7 @@
               <div class="v2-box-line"><span>{{localize "GWORLD.Alternative.Slots"}}</span><b>{{row.alternative.slots}}</b></div>
               <div class="v2-box-line"><span>{{localize "GWORLD.Alternative.Billed"}}</span><b>{{localize "GWORLD.SheetV2.CostCp" cost=row.alternative.billed}}</b></div>
               {{#if row.alternative.disabled}}<p class="v2-note v2-bad">{{localize "GWORLD.Alternative.DisabledNote"}}</p>{{/if}}
+              {{#if row.alternative.linkConflict}}<p class="v2-note v2-bad">{{localize "GWORLD.Alternative.LinkConflictNote"}}</p>{{/if}}
               {{#if @root.editable}}
                 <label class="v2-box-line"><span>{{localize "GWORLD.Alternative.DisabledLabel"}}</span>
                   <input type="checkbox" data-item-flag="system.alternativeDisabled" {{checked row.item.system.alternativeDisabled}}></label>
@@ -208,6 +215,13 @@
               <button type="button" class="v2-button v2-button-steel" data-action="v2HamClauseEnd"
                       data-tooltip="{{localize 'GWORLD.Tasks.HamEndHint'}}">{{localize "GWORLD.Tasks.HamEnd"}}</button>
             {{/if}}
+            {{#if (and @root.editable row.controllable)}}
+              <button type="button" class="v2-button v2-button-steel rollable" data-action="v2InflictControllable"
+                      data-tooltip="{{localize 'GWORLD.Perks.InflictHint'}}">{{> "gworld.die"}} {{localize "GWORLD.Perks.Inflict"}}</button>
+            {{/if}}
+            {{#if row.specialExercises}}
+              <span class="v2-tag v2-tag-steel" data-tooltip="{{localize 'GWORLD.Perks.SpecialExercisesHint'}}">{{localize "GWORLD.Perks.SpecialExercisesTag" levels=row.specialExercises}}</span>
+            {{/if}}
             {{#if (and @root.editable row.pointPowered)}}
               {{#if row.pointPoweredActive}}
                 <button type="button" class="v2-button" data-action="v2EndPointPowered"
@@ -216,6 +230,10 @@
                 <button type="button" class="v2-button v2-button-steel" data-action="v2UsePointPowered"
                         data-tooltip="{{localize 'GWORLD.Alternative.UseHint'}}">{{localize "GWORLD.Alternative.Use"}}</button>
               {{/if}}
+            {{/if}}
+            {{#if (and @root.editable row.abilityCost)}}
+              <button type="button" class="v2-button v2-button-steel" data-action="v2PayAbilityCost"
+                      data-tooltip="{{localize 'GWORLD.AbilityCost.PayHint'}}">{{localize "GWORLD.AbilityCost.Pay"}}</button>
             {{/if}}
             {{#if row.weakness}}
               <button type="button" class="v2-button v2-button-steel rollable" data-action="weaknessExposure"

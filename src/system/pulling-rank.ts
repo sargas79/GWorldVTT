@@ -14,11 +14,20 @@
 import { SYSTEM_ID } from "./constants.js";
 import { isRuleOn } from "./optional-rules.js";
 import { currentControlRating } from "./legality.js";
-import { pendingModifiers, skillName, COMPLEMENTARY_SOURCE } from "./pending-modifiers.js";
+import { addPendingModifier, pendingModifiers, skillName, COMPLEMENTARY_SOURCE } from "./pending-modifiers.js";
 import { rollSuccess } from "./roll.js";
+import { buyOutcomeBeforeReading } from "./bonus-points.js";
+import { adjustCash } from "./life.js";
+import { outcomeStep } from "../rules/bonus-points.js";
 import { averageStartingWealth } from "../rules/wealth.js";
 import {
   ASSISTANCE_TYPES,
+  aidDelivery,
+  betterRoll,
+  generalizedAssistanceBonus,
+  luckLevel,
+  muscleSkill,
+  warrantHours,
   assistanceLines,
   assistanceOutcome,
   assistanceTarget,
@@ -112,6 +121,97 @@ function aidFigures(type: AssistanceType, ctx: { value: number; rank: number; tl
     default:
       return [];
   }
+}
+
+/** The names of the traits an actor has. */
+function traitNames(actor: any): string[] {
+  const names: string[] = [];
+  for (const item of actor?.items ?? []) if (item.type === "trait") names.push(String(item.name ?? ""));
+  return names;
+}
+
+/** Asks whether to spend Luck on a roll that was not a critical success. */
+async function askLuck(level: number): Promise<boolean> {
+  const answer = await foundry.applications.api.DialogV2.confirm({
+    window: { title: L("LuckTitle") },
+    content: `<p>${foundry.utils.escapeHTML(L(`LuckAsk.${level}`))}</p>`,
+    rejectClose: false,
+  });
+  return answer === true;
+}
+
+/** What delivering an aid needs to know. */
+interface DeliveryContext {
+  value: number;
+  rank: number;
+  tl: number;
+  returned: boolean;
+  night: boolean;
+  startingMoney: number;
+  organization: string;
+  /** The aid asked for arrived. */
+  aid: boolean;
+  roll: { success: boolean; criticalSuccess: boolean; criticalFailure: boolean };
+}
+
+/** Rolls a die and returns what it shows. */
+async function rollDie(): Promise<number> {
+  const roll = new Roll("1d6");
+  await roll.evaluate();
+  return Number(roll.total) || 1;
+}
+
+/**
+ * Puts the aid in the petitioner's hands: Cash into the sheet's money, the
+ * people of Muscle or The Cavalry as an NPC in the world, the equipment
+ * bonus of Facilities and the bonus of Generalized Assistance held for the
+ * next skill roll, and the hours a Warrant takes. Resolves to the lines for
+ * the card saying what was done.
+ */
+async function deliverAid(actor: any, type: AssistanceType, ctx: DeliveryContext): Promise<string[]> {
+  const lines: string[] = [];
+  const kind = aidDelivery(type.key);
+  const bonus = kind === "bonus" ? generalizedAssistanceBonus(ctx.value, ctx.roll) : 0;
+  if (kind === "bonus" && bonus !== 0) {
+    const id = await addPendingModifier(actor, { label: L("Line.generalized"), value: bonus, tags: ["skill"], source: "assistance" });
+    if (id) lines.push(L("Delivered.bonus", { bonus: signed(bonus) }));
+    return lines;
+  }
+  if (!ctx.aid) return lines;
+  if (kind === "money") {
+    const amount = cashAmount(ctx.startingMoney, ctx.rank, ctx.returned);
+    if (amount > 0) {
+      await adjustCash({ actor, amount, note: L("Delivered.cashNote", { name: ctx.organization }), chat: false });
+      lines.push(L(ctx.returned ? "Delivered.cashReturned" : "Delivered.cash", { amount }));
+    }
+  } else if (kind === "equipment") {
+    const bonusValue = facilitiesBonus(ctx.value, ctx.tl);
+    if (bonusValue > 0) {
+      const id = await addPendingModifier(actor, { label: L("Line.facilities"), value: bonusValue, tags: ["skill"], source: "assistance" });
+      if (id) lines.push(L("Delivered.facilities", { bonus: signed(bonusValue) }));
+    }
+  } else if (kind === "people") {
+    const count = responderCount(ctx.value);
+    const skill = type.key === "muscle" ? muscleSkill(await rollDie()) : null;
+    const made = await createResponders(actor, type, ctx.organization, count, skill);
+    lines.push(L(made ? "Delivered.people" : "Delivered.peopleGm", { count, skill: skill ?? "" }));
+  } else if (kind === "hours") {
+    lines.push(L("Delivered.warrant", { hours: warrantHours(await rollDie(), ctx.night) }));
+  }
+  return lines;
+}
+
+/** Creates the NPC that stands for the people an aid brings, where the user may. Whether it did. */
+async function createResponders(actor: any, type: AssistanceType, organization: string, count: number, skill: number | null): Promise<boolean> {
+  if (!(game as any).user?.can?.("ACTOR_CREATE")) return false;
+  const name = L("Responders", { aid: L(`Type.${type.key}`), organization });
+  const description = skill === null ? L("RespondersDescription", { owner: String(actor.name ?? "") }) : L("RespondersSkilled", { owner: String(actor.name ?? ""), skill });
+  const created = await (Actor as any).implementation.create({
+    name,
+    type: "npc",
+    system: { groupSize: Math.max(1, count), tactics: description },
+  });
+  return Boolean(created);
 }
 
 /** Asks for the roll's particulars. Resolves to null when cancelled. */
@@ -222,38 +322,62 @@ export async function rollAssistance(actor: any, item: any): Promise<string | nu
     return null;
   }
 
-  const rolled = await rollSuccess({
-    actor,
-    base,
-    label,
-    kind: "skill",
-    skill: ASSISTANCE_MASTER,
-    modifiers,
-    tags: ["assistance"],
-  });
+  const held = heldComplementary(actor);
+  const rollOptions = { actor, base, label, kind: "skill" as const, skill: ASSISTANCE_MASTER, tags: ["assistance"] };
+  let rolled = await rollSuccess({ ...rollOptions, modifiers });
   if (!rolled) return null;
   // Counts as a request only once it was rolled.
   if (!type.unmodified) await actor.setFlag?.(SYSTEM_ID, ASSISTANCE_COUNT_FLAG, answer.previous + 1);
 
+  // Luck: roll again and keep the better (Basic Set Revised p. 339 lets Luck apply).
+  const luck = luckLevel(traitNames(actor));
+  if (luck > 0 && !rolled.criticalSuccess && (await askLuck(luck))) {
+    const again = await rollSuccess({
+      ...rollOptions,
+      label: L("LuckLabel", { label }),
+      // The bonus held for the first roll went with it; the second keeps it.
+      modifiers: held ? [...modifiers, { label: L("Line.complementary"), value: held }] : modifiers,
+    });
+    if (again && betterRoll(rolled, again)) rolled = again;
+  }
+
+  // Buying Success: points spent before the outcome is read.
+  const bought = await buyOutcomeBeforeReading(actor, { skill: ASSISTANCE_MASTER, step: outcomeStep(rolled) });
+  const result = bought
+    ? {
+        success: bought === "success" || bought === "criticalSuccess",
+        criticalSuccess: bought === "criticalSuccess",
+        criticalFailure: bought === "criticalFailure",
+        margin: rolled.success ? rolled.margin : 0,
+      }
+    : rolled;
+
   const capricious = isCapricious(item);
   const outcome = assistanceOutcome({
-    success: rolled.success,
-    criticalSuccess: rolled.criticalSuccess,
-    criticalFailure: rolled.criticalFailure,
-    margin: rolled.margin,
+    success: result.success,
+    criticalSuccess: result.criticalSuccess,
+    criticalFailure: result.criticalFailure,
+    margin: result.margin,
     inWorldPenalty: mods.inWorld < 0,
     capricious,
   });
-  const figures = outcome === "aid" || outcome === "aidComplicated"
-    ? aidFigures(type, {
-        value,
-        rank: answer.rank,
-        tl: answer.tl,
-        returned: answer.returned,
-        night: answer.night,
-        startingMoney: averageStartingWealth(Number(actor.system?.tl) || answer.tl),
-      })
-    : [];
+  const context = {
+    value,
+    rank: answer.rank,
+    tl: answer.tl,
+    returned: answer.returned,
+    night: answer.night,
+    startingMoney: averageStartingWealth(Number(actor.system?.tl) || answer.tl),
+  };
+  const brings = outcome === "aid" || outcome === "aidComplicated";
+  const figures = brings ? aidFigures(type, context) : [];
+  const delivered = await deliverAid(actor, type, {
+    ...context,
+    organization: String(item.name ?? ""),
+    aid: brings,
+    roll: result,
+  });
+  figures.push(...delivered);
   const esc = foundry.utils.escapeHTML;
   await ChatMessage.implementation.create({
     speaker: ChatMessage.implementation.getSpeaker({ actor }),

@@ -56,6 +56,23 @@ export function costsHitPointsCost(modifiers: readonly ModifierRef[]): { hp: num
   return { hp, perSecond };
 }
 
+/**
+ * What one use of an ability with Costs Fatigue takes (Basic Set Revised
+ * p. 111, "-5% per FP per use"), read back from the percentage it was priced
+ * at, doubled to -10% per FP where the cost is per second. Zero for a trait
+ * without the limitation.
+ */
+export function costsFatigueCost(modifiers: readonly ModifierRef[]): { fp: number; perSecond: boolean } {
+  let fp = 0;
+  let perSecond = false;
+  for (const m of named(modifiers, /^costs fatigue\b/i)) {
+    const second = /per second/i.test(m.name);
+    fp += Math.round(Math.abs(Number(m.value) || 0) / (5 * (second ? 2 : 1)));
+    perSecond ||= second;
+  }
+  return { fp, perSecond };
+}
+
 // ---------------------------------------------------------------------------
 // Hard to Use and Reliable (pp. 331-332)
 // ---------------------------------------------------------------------------
@@ -430,6 +447,87 @@ export function powerModifierOrigin(modifierNames: readonly string[]): PowerModi
     if (found) return found;
   }
   return null;
+}
+
+/**
+ * The origin a trait's power modifiers file it under on the Powers list, or
+ * null. Cosmic is a power modifier but names no source of power -- it lifts the
+ * limits of whatever source the ability has -- so a Cosmic trait is never an
+ * ability of a "Cosmic" power. Magical is the one origin common enough to sit
+ * beside another (a Divine spell-like ability), so a more specific origin on
+ * the same trait wins over it.
+ */
+export function powerModifierSource(modifierNames: readonly string[]): PowerModifierOrigin | null {
+  const found = modifierNames
+    .map((name) => powerModifierOrigin([name]))
+    .filter((origin): origin is PowerModifierOrigin => origin !== null && origin.origin !== "Cosmic");
+  return found.find((origin) => origin.origin !== "Magical") ?? found[0] ?? null;
+}
+
+/**
+ * A duration a condition carries after Reduced Duration: turns, rounds and
+ * seconds all divided by the divisor, never under one of the unit it is in
+ * (p. 332: "you cannot take an ability's minimum duration below one second").
+ */
+export function scaledDuration(
+  duration: { turns?: number; rounds?: number; seconds?: number } | undefined,
+  divisor: number,
+): { turns?: number; rounds?: number; seconds?: number } | undefined {
+  if (!duration || divisor <= 1) return duration;
+  const cut = (n: number | undefined) => (typeof n === "number" ? Math.max(1, Math.floor(n / divisor)) : undefined);
+  const scaled = { turns: cut(duration.turns), rounds: cut(duration.rounds), seconds: reducedSeconds(duration.seconds ?? 0, divisor) };
+  return {
+    ...(scaled.turns !== undefined ? { turns: scaled.turns } : {}),
+    ...(scaled.rounds !== undefined ? { rounds: scaled.rounds } : {}),
+    ...(duration.seconds !== undefined ? { seconds: scaled.seconds } : {}),
+  };
+}
+
+/**
+ * The target of an Unreliable/Activation roll, read from what the modifier
+ * was priced at: -10% is 14 or less, -20% 11, -40% 8, -80% 5 (Characters
+ * p. 116). Null where a trait has none. The worst of several holds.
+ */
+export function activationTarget(modifiers: readonly ModifierRef[]): number | null {
+  const table: Record<number, number> = { 10: 14, 20: 11, 40: 8, 80: 5 };
+  const targets = named(modifiers, /^unreliable\/activation\b/i)
+    .map((m) => table[Math.abs(Number(m.value) || 0)])
+    .filter((n): n is number => typeof n === "number");
+  return targets.length > 0 ? Math.min(...targets) : null;
+}
+
+/** One roll a use of an ability asks for, in the order it is made. */
+export interface AbilityUseRoll {
+  label: string;
+  /** The score to roll against; null where a skill's level is unknown to the sheet. */
+  base: number | null;
+  /** True where the roll is a Quick Contest rather than a plain success roll. */
+  contest: boolean;
+  /** Reliable and Hard to Use apply to it. */
+  modified: boolean;
+}
+
+/**
+ * The rolls one use of a trait takes, in order: each Requires roll, then the
+ * Activation roll. Hard to Use and Reliable apply to every one but the
+ * active-defense roll, which is a defense.
+ */
+export function abilityUseRolls(
+  needs: readonly AbilityRollNeed[],
+  activation: number | null,
+  scores: { dx: number; iq: number; ht: number; will: number; per: number },
+): AbilityUseRoll[] {
+  const rolls: AbilityUseRoll[] = needs.map((need) => {
+    const roll = need.roll;
+    if (roll.kind === "attribute") {
+      const key = roll.attribute.toLowerCase() as keyof typeof scores;
+      return { label: need.label, base: roll.quickContest ? scores[key] : need.target, contest: roll.quickContest, modified: true };
+    }
+    if (roll.kind === "activeDefense") return { label: need.label, base: need.target, contest: false, modified: false };
+    return { label: need.label, base: null, contest: false, modified: true };
+  });
+  if (activation !== null) rolls.push({ label: "Unreliable/Activation", base: activation, contest: false, modified: true });
+  return rolls;
 }
 
 /** Nature's penalty to use abilities by place (p. 331): wild -1, settlement -3, pollution -5, wasteland -10. */

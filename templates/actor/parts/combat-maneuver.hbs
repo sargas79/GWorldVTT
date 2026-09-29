@@ -182,6 +182,11 @@
         <span>{{localize "GWORLD.Wait.CoveringLine"}}</span>
       </label>
     {{/if}}
+    {{#if derived.maneuver.steps}}
+      <div class="fld">
+        <span class="fl">{{localize "GWORLD.MoreManeuvers.StepsLabel" count=derived.maneuver.steps}}</span>
+      </div>
+    {{/if}}
     <div class="fld">
       <span class="fl">{{localize "GWORLD.Field.Defenses"}}</span>
       <div class="fi">

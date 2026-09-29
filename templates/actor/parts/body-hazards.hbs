@@ -26,6 +26,12 @@
         {{localize "GWORLD.Hazard.Hike"}}
       </button>
     {{/if}}
+    {{#if rules.terrainTypes}}
+      {{!-- Terrain Types Redux (Basic Set Revised p. 573): the terrain's foraging modifier on a Survival roll. --}}
+      <button type="button" class="ibtn" data-action="forage" data-tooltip="{{localize "GWORLD.Vision.ForageHint"}}">
+        {{localize "GWORLD.Vision.ForageAction"}}
+      </button>
+    {{/if}}
     {{#if rules.collisions}}
       <button type="button" class="ibtn" data-action="struckBy" data-tooltip="{{localize "GWORLD.Hazard.CollisionHint"}}">
         {{localize "GWORLD.Hazard.Collision"}}

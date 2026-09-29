@@ -102,6 +102,7 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "trickyShooting", reference: "Basic Set Revised p. 577", default: false },
     { key: "simplifiedRange", reference: "Basic Set Revised p. 577", default: false },
     { key: "largeTargetDamage", reference: "Basic Set Revised p. 577", default: false },
+    { key: "restrictedDodge", reference: "Basic Set Revised p. 577", default: false },
   ],
   injury: [
     { key: "hitLocations", reference: "Campaigns p. 398", default: true },
@@ -136,6 +137,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "pullingRank", reference: "Basic Set Revised p. 337", default: false },
     // Influence rolls giving the whole Reaction Table by margin, not Good or Bad (Addendum 4).
     { key: "expandedInfluence", reference: "Basic Set Revised p. 571", default: false },
+    // The GM's option there: a critical stands for a margin of 8 or more.
+    { key: "expandedInfluenceCritical", reference: "Basic Set Revised p. 571", default: false },
     // One penalty for the scene instead of detailed modifiers; 10 + |BAD| for NPCs without a sheet (Addendum 4).
     { key: "basicAbstractDifficulty", reference: "Basic Set Revised p. 578", default: false },
     // Extra Effort Extras (Addendum 4): powers, Godlike, and FP traded for skill and resistance.
@@ -146,6 +149,7 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "stressAndDerangement", reference: "Basic Set Revised pp. 572-573", default: false },
     { key: "stressRollPenalties", reference: "Basic Set Revised p. 573", default: false },
     { key: "derangementRollPenalties", reference: "Basic Set Revised p. 573", default: false },
+    { key: "mentalOnTheClock", reference: "Basic Set Revised p. 573", default: false },
   ],
   activities: [
     { key: "physicalActivities", reference: "Campaigns pp. 349-355", default: true },

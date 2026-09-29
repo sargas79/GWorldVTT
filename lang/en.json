@@ -644,9 +644,13 @@
           "Name": "Expanded Influence Rolls",
           "Hint": "An Influence roll gives a reaction by the margin of the Quick Contest, from Disastrous to Excellent, instead of only Good or Bad (Basic Set Revised p. 571)."
         },
+        "expandedInfluenceCritical": {
+          "Name": "Expanded Influence: criticals",
+          "Hint": "With Expanded Influence Rolls: a critical success by the influencer that the subject does not match counts as a victory by 8 or more, and a critical failure the subject does not share as a loss by 8 or more (Basic Set Revised p. 571)."
+        },
         "basicAbstractDifficulty": {
           "Name": "Basic Abstract Difficulty",
-          "Hint": "One penalty from 0 to -10, set in the system settings or per scene, on the rolls of tasks; an NPC without a sheet has skill 10 + BAD (Basic Set Revised p. 578)."
+          "Hint": "One penalty from 0 to -10, set from the GM Screen (for the world or for the scene) on the rolls of tasks, replacing the situational modifiers typed at the roll and the scene’s own; an NPC without a sheet has skill 10 + BAD, rolled from the GM Screen (Basic Set Revised p. 578)."
         },
         "powerExtraEffort": {
           "Name": "Extra effort with powers",
@@ -670,7 +674,11 @@
         },
         "derangementRollPenalties": {
           "Name": "Derangement penalties to rolls",
-          "Hint": "Derangement/2 to Influence rolls and rolls to show sanity (Basic Set Revised p. 573)."
+          "Hint": "Derangement/2 to Influence rolls, rolls to show sanity and rolls for supernatural powers that need a focused mind, a bonus of that size to use an evil one (Basic Set Revised p. 573)."
+        },
+        "mentalOnTheClock": {
+          "Name": "Stress and Derangement follow the clock",
+          "Hint": "As the world clock advances, characters out of combat shed 1 Stress per 10 minutes, and each midnight after a day with no new Stress or Derangement is the day’s end for the Will roll (Basic Set Revised p. 573)."
         },
         "realisticMarching": {
           "Name": "Realistic marching",
@@ -711,6 +719,10 @@
         "largeTargetDamage": {
           "Name": "Piercing and impaling vs. large targets",
           "Hint": "Unliving and Homogenous targets take piercing and impaling by their size modifier (Basic Set Revised p. 577)."
+        },
+        "restrictedDodge": {
+          "Name": "Restricted Dodge Against Firearms",
+          "Hint": "To dodge a gun a fighter must have declared evasive movement against that shooter on their turn; Acrobatic Dodge is rolled on their turn too (Basic Set Revised p. 577)."
         },
         "teamEfforts": {
           "Name": "Team efforts",
@@ -1501,6 +1513,17 @@
       "forgotten": "The spell fails entirely; the caster forgets it, with an IQ roll each week to remember.",
       "demon": "The spell fails entirely; a demon or other malign entity appears and attacks the caster."
     },
+    "Ability": {
+      "UseHint": "Roll to use: {rolls}",
+      "UseAria": "Roll to use {name}",
+      "Reliable": "Reliable",
+      "HardToUse": "Hard to Use",
+      "RollLabel": "{trait}: {roll}",
+      "ContestLabel": "{label} (Quick Contest)",
+      "ScorePrompt": "Skill level to roll against",
+      "Works": "{name} uses {trait}",
+      "Fails": "{name} fails to use {trait}"
+    },
     "Trait": {
       "GmOnly": "Only the GM can change a character's traits.",
       "Specialty": "Of what",
@@ -1872,6 +1895,27 @@
       "TooLowToAttempt": "{label}: effective {effective} is below 3, so the roll cannot be attempted."
     },
     "Perks": {
+      "Bonded": "Bonded",
+      "BondedHint": "The one weapon or piece of equipment a Weapon Bond or Equipment Bond makes +1 (Basic Set Revised pp. 328-329). Needs a bond perk to cover it.",
+      "Permit": "Permit",
+      "PermitHint": "You hold a Permit for this gear, so carrying it below the Control Rating is legal for you (Revised p. 329).",
+      "Superseded": "Superseded",
+      "SupersededHint": "The {perk} perk replaces this technique (Revised p. 329).",
+      "SupersededNote": "The {perk} perk completely replaces this technique (Revised p. 329): 5 points for one skill is a bad deal beside it. Take the perk instead.",
+      "SupersededHeld": "You hold the {perk} perk, which completely replaces this technique (Revised p. 329).",
+      "Inflict": "Inflict on myself",
+      "InflictHint": "Roll HT (a physical trait) or Will (a mental one), at -1 for each further try in the hour (Revised p. 328).",
+      "InflictTitle": "Inflict {disadvantage}",
+      "InflictKindHint": "A physical disadvantage is rolled against HT and a mental one against Will. Mark the perk's specialty (P) or (M) to stop being asked.",
+      "InflictKind": "The disadvantage is",
+      "KindPhysical": "Physical (HT)",
+      "KindMental": "Mental (Will)",
+      "InflictNothing": "Name the disadvantage in the perk's specialty first.",
+      "InflictLabel": "Inflict {disadvantage} on self ({attribute})",
+      "InflictAttempt": "Try number {attempt} this hour",
+      "SpecialExercisesTag": "+{levels} to the maximum",
+      "SpecialExercisesHint": "Special Exercises lets this trait exceed its human maximum (Revised p. 329).",
+      "NuisanceWaived": "No Nuisance Rolls ({task}): the roll is waived.",
       "BondLine": "Bond: {item}",
       "FeintTitle": "Feint with",
       "FeintChoose": "Skill to Feint with",
@@ -1919,6 +1963,8 @@
       "HeroicArcherAim": "Heroic Archer (aimed)",
       "HeroicArcherMoveAndAttack": "Heroic Archer (no Bulk penalty)",
       "HeroicArcherCloseCombat": "Heroic Archer (no Bulk in close combat)",
+      "HeroicArcherQuickReady": "Heroic Archer (bow readied at once)",
+      "HeroicArcherStunt": "Heroic Archer (stunt shot, halved)",
       "VehicleDodged": "The vehicle dodged",
       "TargetingSystem": "Targeting system",
       "StabilityCap": "Aim capped at SR {sr}",
@@ -2259,7 +2305,12 @@
       "PelvisBroken": "The pelvis gives out: the victim falls, cannot stand, and fights only sitting or lying, Lame (Missing Legs) until healed",
       "JointCrippled": "The joint is crippled; recovery rolls are at -2",
       "VeinsBleedOut": "GM's ruling: a failed HT roll to avoid death means bleeding to death, with no Mortal Wounds rolls",
-      "Decapitation": "GM's ruling: a failed HT roll to avoid death from a cut to the neck means decapitation"
+      "Decapitation": "GM's ruling: a failed HT roll to avoid death from a cut to the neck means decapitation",
+      "Apply": "Write to sheet: {traits}",
+      "ApplyHint": "The GM adds these traits to the character (Basic Set Revised p. 566). Roll to recover first, where the wound allows it.",
+      "Applied": "{name}: {traits} written to the sheet.",
+      "NothingApplied": "{name} already has what this wound gives, or the compendia lack the trait.",
+      "AppearanceLoss": "Appearance -{levels}"
     },
     "Maneuver": {
       "AddonOptions": "Options",
@@ -2413,6 +2464,8 @@
       "AblativeHint": "Whether the DR is destroyed as it stops damage (p. 47). Ablative loses a point per point stopped; semi-ablative loses one per 10 points of basic damage rolled, penetrating or not. You cannot combine the two.",
       "DrLost": "DR lost",
       "DrLostHint": "Points of ablative DR destroyed so far. They \"heal\" at the rate lost HP do.",
+      "Coverage": "Coverage (n in 6)",
+      "CoverageHint": "Partial armour protects a hit on the locations it covers on a 1d roll of this number or less; 6 is full coverage. Read only with Hitting 'Em Where It Hurts on (Basic Set Revised p. 576).",
       "DrByLocationHint": "Places this piece armours differently from the rest of itself: a suit whose torso is better armoured than its limbs, a helmet whose skull is better armoured than its face. The figure here replaces the piece's own DR at those locations, its split included.",
       "AddDrByLocation": "Add a location with its own DR",
       "RemoveDrByLocation": "Remove this location",
@@ -2602,6 +2655,8 @@
       "PowerAction": "Power extra effort",
       "PowerHint": "Push a power past its limit: a Will roll, plus the power’s Talent (Basic Set Revised pp. 571-572)",
       "PowerTitle": "Extra effort with a power",
+      "PowerOrigin": "Paid from",
+      "PowerOriginNone": "FP (no Energy Reserve)",
       "Talent": "Power’s Talent",
       "GodlikeFp": "FP to spend (each multiplies the bonus)",
       "PowerSuccess": "Gains +{percent}% effect.",
@@ -2620,6 +2675,29 @@
       "TradeSkillLine": "Fatigue traded for skill",
       "TradeResistanceLine": "Fatigue traded for resistance",
       "TradeHeld": "+{bonus} held for the next roll.",
+      "TradeSpinner": "Trade FP for skill (+1 each, 0-{max})",
+      "TradeAttackSpinner": "Trade FP for the attack (+1 each, 0-{max})",
+      "ResistSpinner": "Trade FP to resist (+1 each, 0-{max})",
+      "ResistTitle": "Trading Fatigue for Resistance",
+      "ResistLine": "Fatigue traded for resistance",
+      "Extra": {
+        "flurry": "Flurry of Blows",
+        "mightyBlows": "Mighty Blows",
+        "giantStep": "Giant Step",
+        "greatLunge": "Great Lunge",
+        "heroicCharge": "Heroic Charge",
+        "feverishDefense": "Feverish Defense",
+        "rapidRecovery": "Rapid Recovery"
+      },
+      "OverCap": "Extra effort allows one offensive and one defensive option a turn: {extra} is over it.",
+      "GiantStepNote": "Giant Step: {steps} extra step, before or after the attack; a critical failure injures the {limb}, not the arm.",
+      "GreatLungeNote": "Great Lunge: +{reach} yard of reach.",
+      "HeroicChargeNote": "Heroic Charge: no Move and Attack penalty or skill cap; the defensive drawbacks still apply.",
+      "HeroicChargeFall": "Heroic Charge (avoiding a fall)",
+      "RapidRecoveryHint": "1 FP, before the first parry: the weapon that attacked may parry, at the usual penalties (Basic Set Revised p. 571)",
+      "RapidRecoveryNotNow": "Rapid Recovery is for an unbalanced weapon that attacked on an Attack, or any weapon after a Move and Attack.",
+      "RapidRecoveryDeclared": "Rapid Recovery declared: the weapon that attacked may parry this turn.",
+      "FallCheck": "Rolling to avoid falling or tripping",
       "CombiningSt": "{count} combined: Basic Lift {bl} lb., effective ST {st}."
     },
     "Feats": {
@@ -3750,7 +3828,13 @@
     },
     "StampKick": {
       "Balance": "DX to stay on balance after a missed Stamp Kick",
-      "NoRetreat": "{name} is off balance and cannot retreat until their next turn."
+      "NoRetreat": "{name} is off balance and cannot retreat until their next turn.",
+      "WrongTarget": "A Stamp Kick goes only at a lying foe, or a standing foe's foot or leg: aim it (shift-click the attack) at the foot or leg."
+    },
+    "HeadButt": {
+      "Parried": "Head Butt parried",
+      "Backlash": "{name} butts the parry: {damage} crushing to the face, less DR {dr}, is {injury} injury (Basic Set Revised p. 334).",
+      "Take": "Take {injury} injury to the face"
     },
     "AcrobaticStand": {
       "Label": "Acrobatic Stand",
@@ -3759,7 +3843,8 @@
       "standsAsManeuver": "On your feet as one Change Posture maneuver.",
       "sits": "You end up sitting.",
       "staysDown": "You stay down, and the turn is wasted.",
-      "falls": "You fall down."
+      "falls": "You fall down.",
+      "StepSpent": "Your step is already spent this turn: you stand as a Change Posture maneuver instead."
     },
     "Natural": {
       "punch": "Punch",
@@ -4228,6 +4313,15 @@
         "destroyed": "Destroyed"
       }
     },
+    "SimplifiedResources": {
+      "Counting": "Counting shots",
+      "NotCounting": "Not counting shots",
+      "ToggleHint": "Simplified Resources: this weapon's shots are not counted until you switch this on (Basic Set Revised p. 578).",
+      "ForcedHint": "Explosive, fine and magical ammunition is always counted (Basic Set Revised p. 578).",
+      "Gadgets": "Gadgets run",
+      "Days": "{days} days",
+      "GadgetHint": "A day for every gadget, one more for each $3 and 1 lb of spare batteries (TL6-8) or $10 and 0.5 lb of spare cells (TL9+), Basic Set Revised p. 578."
+    },
     "Ammunition": {
       "none": "Ordinary",
       "hp": "Hollow-point",
@@ -4314,6 +4408,8 @@
       "balancedHint": "+1 to skill with a melee or thrown weapon or shield, or +1 Acc with a muscle-powered missile weapon: +4 CF (Revised p. 342).",
       "cuttingEdge": "Cutting-edge",
       "cuttingEdgeHint": "Made of the latest materials: weight x2/3 for +1 CF. Anything but armor or weapons (Revised p. 342).",
+      "qualityAddsTools": "Grade adds tools",
+      "qualityAddsToolsHint": "The good or fine grade of this kit adds more tools, so its weight is x5 or x20 (Revised p. 342).",
       "signature": "Signature Gear",
       "signatureHint": "One of your Signature Gear items: a 1-point perk that protects it from permanent loss by the plot, whatever it is worth (Basic Set Revised p. 342).",
       "disguised": "Disguised",
@@ -4416,7 +4512,30 @@
     },
     "EnergyReserve": {
       "Name": "ER ({origin})",
-      "Hint": "Energy Reserve: pays the FP costs of {origin} abilities and nothing else. It recharges 1 every 10 minutes (slower with Slow Recharge, not at all by itself with Special Recharge), whatever the character does; low ER has none of the effects of low FP (Basic Set Revised p. 326)."
+      "Hint": "Energy Reserve: pays the FP costs of {origin} abilities and nothing else. It recharges 1 every 10 minutes (slower with Slow Recharge, not at all by itself with Special Recharge), whatever the character does; low ER has none of the effects of low FP (Basic Set Revised p. 326).",
+      "Spend": "Spend 1 ER",
+      "Restore": "Give back 1 ER",
+      "Refill": "Full",
+      "RefillHint": "Refill this reserve to its full size."
+    },
+    "AbilityCost": {
+      "Pay": "Pay cost",
+      "PayHint": "Pay what a use of this ability costs: Costs Fatigue from an Energy Reserve of its origin first, then FP, and Costs Hit Points in HP.",
+      "Used": "{ability}: paid {paid}.",
+      "Reserve": "{points} ER ({origin})",
+      "Fp": "{points} FP",
+      "Hp": "{points} HP"
+    },
+    "HeroicArcher": {
+      "QuickReadyAsk": "Ready {name} at once? Heroic Archer rolls Bow at {penalty} (skill {level}); on a success the bow is ready with no Ready maneuver, and the attack this turn is at {penalty} too.",
+      "QuickReadyTitle": "Heroic Archer",
+      "QuickReadyLabel": "Heroic Archer: ready the bow",
+      "QuickReadySuccess": "Heroic Archer readies the bow at once; the attack is at {penalty}.",
+      "QuickReadyFailure": "The quick ready failed; the bow takes its usual Ready maneuver.",
+      "QuickReadyLine": "Heroic Archer (quick ready)",
+      "FastDrawPenalty": "Fast-Draw (Arrow) penalty (a Heroic Archer's is halved)",
+      "StuntPenalty": "Stunt shot penalty (a Heroic Archer's is halved)",
+      "FastDrawLine": "Fast-Draw (Arrow) penalty (halved for a Heroic Archer)"
     },
     "BonusPoints": {
       "Title": "Points to spend",
@@ -4828,6 +4947,24 @@
       "TurnStart": "{name} is at 0 HP or less: roll HT to stay conscious, unless this turn is Do Nothing with no defense rolls."
     },
     "Alternative": {
+      "LinkConflict": "Link",
+      "LinkConflictHint": "A Link can't be had between alternative abilities (Revised p. 324).",
+      "LinkConflictNote": "This ability carries a Link, which alternative abilities can't have between them (Revised p. 324): only the abilities in slots work at a time. Remove the Link or take it out of the set.",
+      "TalentBenefit": "Talent benefit",
+      "TalentBenefitHint": "What this Talent gives in place of its reaction bonus, as the GM decides (Revised pp. 324-325). Roll dialogs offer the Talent's levels as that bonus.",
+      "Benefit": {
+        "reaction": "The reaction bonus",
+        "none": "No extra benefit",
+        "influence": "Influence rolls after a show of skill",
+        "followUp": "Follow-up rolls (extra effort, recall)",
+        "defaults": "Default rolls of related skills",
+        "noSkill": "Rolls on the theme with no skill",
+        "contests": "Contests against its skills",
+        "advantages": "Related advantages",
+        "selfless": "Bonus to another's roll",
+        "penalty": "Offsetting penalties",
+        "feat": "Access to a feat (attribute-4 + Talent)"
+      },
       "Heading": "Alternative abilities",
       "Set": "Alternative set",
       "SetPlaceholder": "Name of the set, blank for none",
@@ -4893,7 +5030,68 @@
       "Forage": "Foraging in {terrain}: modifier {modifier}.",
       "Saw": "{name} sees the attack coming (Vision {target}, rolled {roll}).",
       "Missed": "{name} does not see the attack coming (Vision {target}, rolled {roll}): no active defense.",
-      "Frostbitten": "{name} suffers frostbite: {hp} HP ({where})."
+      "Frostbitten": "{name} suffers frostbite: {hp} HP ({where}).",
+      "FrostbiteCrippled": "{name}'s {part} is crippled by frostbite.",
+      "FrostbiteLabel": "Frostbite",
+      "Setting": {
+        "Terrain": "Terrain the party is in",
+        "TerrainHint": "Terrain Types Redux (Basic Set Revised p. 573): its Tracking modifier goes on every Tracking roll. Leave blank for none.",
+        "Surface": "Ground for Tracking",
+        "SurfaceHint": "Loose snow or sand without wind or water (or lapping water) gives 0 to Tracking in Arctic, Desert and Island/Beach; with lots of wind or water it is -4."
+      },
+      "Surface_firm": "Firm ground",
+      "Surface_loose": "Loose snow or sand, no wind or water",
+      "Surface_looseWindy": "Loose snow or sand, lots of wind or water",
+      "TrackingTerrain": "Tracking in {terrain}",
+      "ForageAction": "Forage",
+      "ForageHint": "Roll Survival (or Fishing under water) with the terrain's foraging modifier (Basic Set Revised p. 573).",
+      "ForageTitle": "Foraging",
+      "ForageTerrain": "Terrain",
+      "ForageMode": "Modifier",
+      "ForageRolled": "Roll the dice (1d-7, 2d-7...)",
+      "ForageAverage": "Use the listed average",
+      "ForageRich": "Exceptionally rich (maximum)",
+      "ForageDesolate": "Exceptionally desolate (minimum)",
+      "ForageLine": "Foraging in {terrain}",
+      "ForageRoll": "Foraging ({skill})",
+      "Light": "Light",
+      "LevelNone": "Set by hand",
+      "Flicker": "Flicker or moving shadows (0 to 3)",
+      "Unadapted": "Eyes not yet adapted to a sudden shift (-2)",
+      "LightLine": "Light: {level}",
+      "PlainSight": "In plain sight",
+      "PlainSightNone": "No",
+      "PlainSightBonus": "Actively watching, unconcealed (+{bonus})",
+      "PlainSightDetail": "Details of a target already located (+{bonus})",
+      "PlainSightLine": "In plain sight",
+      "PlainSightDetailLine": "Details of a located target",
+      "PlainSightHint": "Never for attacks, a Quick Contest against a concealment skill, or when only noticing in passing (Basic Set Revised p. 574).",
+      "NeedsSight": "{name} must roll Vision to see the attack coming (Basic Set Revised pp. 574-575).",
+      "NoDefense": "{name} did not see the attack coming: no active defense.",
+      "SeenAttack": "{name} saw the attack coming.",
+      "Level_totalDarkness": "Total darkness",
+      "Level_overcastMoonless": "Overcast moonless night",
+      "Level_starlightThroughClouds": "Starlight through clouds",
+      "Level_starlight": "Starlight (moonless night)",
+      "Level_quarterMoon": "Quarter moon",
+      "Level_halfMoon": "Half moon",
+      "Level_indicatorLed": "Indicator LED",
+      "Level_fullMoon": "Full moon",
+      "Level_deepTwilight": "Deep twilight",
+      "Level_candlelight": "Candlelight",
+      "Level_nightlight": "Nightlight",
+      "Level_twilight": "Twilight",
+      "Level_streetLightSide": "Street lights (side road)",
+      "Level_gaslight": "Gaslight",
+      "Level_phoneScreen": "Cell-phone screen",
+      "Level_sunrise": "Sunrise or sunset",
+      "Level_streetLightMain": "Street lights (main road)",
+      "Level_torch": "Torch",
+      "Level_flashlight": "Standard flashlight",
+      "Level_daylight": "Daylight",
+      "Level_interior": "Ordinary interior light",
+      "Level_readingLight": "Reading light",
+      "Level_brightFlashlight": "High-quality flashlight"
     },
     "MoreManeuvers": {
       "Slam": "Slam: full Move, forward only",
@@ -4920,8 +5118,13 @@
       "Benefit": {
         "parry": "+1 to Parry (one weapon)",
         "block": "+1 to Block (balanced weapon)",
-        "sameWeapon": "Parry with the unbalanced weapon that attacked"
+        "sameWeapon": "Parry with the unbalanced weapon that attacked",
+        "kick": "A kick: no defense bonus, +2 DX to avoid falling"
       },
+      "KickBalanceLine": "Defensive Attack (kick)",
+      "SlamTwice": "An All-Out Attack (Double) cannot slam twice",
+      "AttackAfterSlam": "An All-Out Attack (Double) makes its other attack before the slam",
+      "StepsLabel": "Steps: {count}",
       "Refuses": {
         "parry": "A Committed Attack: no parry with the attacking hand",
         "block": "A Committed Attack: no block with the attacking shield",
@@ -4957,6 +5160,25 @@
       "LineStrikeAround": "Striking around {n}/6 armour",
       "LinePrediction": "Prediction Shot (target's Dodge -{levels})",
       "LineRapid": "Ranged Rapid Strike",
+      "LinePredictionDodge": "Prediction Shot: Dodge -{levels}",
+      "RapidNoDual": "A Ranged Rapid Strike cannot be combined with Dual-Weapon Attack (Basic Set Revised p. 577).",
+      "RapidNeedsRof": "A Ranged Rapid Strike needs a weapon with a Rate of Fire of 2 or more (Basic Set Revised p. 577).",
+      "RapidShare": "A Ranged Rapid Strike splits the Rate of Fire ({rof}) between two targets: give this one at least 1 shot and leave at least 1 for the other.",
+      "RapidOther": "Ranged Rapid Strike: {other} shot(s) are left for the second target.",
+      "BandShift": "Moved to another band",
+      "BandStay": "No",
+      "BandCloser": "Closer band (Move)",
+      "BandFarther": "Farther band (Move)",
+      "FeintRange": "Speed/Range",
+      "FeintSize": "Target size",
+      "EvasiveShooter": "Evasive movement against",
+      "EvasiveAcrobatic": "Acrobatics rolled this turn (Acrobatic Dodge)",
+      "EvasiveDrop": "Will dive prone at the end of the turn (Dodge and Drop)",
+      "RestrictedNoDodge": "No dodge: evasive movement was not declared against this shooter on the defender's turn (Basic Set Revised p. 577).",
+      "RestrictedNoAcrobatic": "No Acrobatic Dodge: the Acrobatics roll must be made on the defender's own turn (Basic Set Revised p. 577).",
+      "CoverageRolled": "Hitting 'Em Where It Hurts: 1d rolled {roll} against {coverage}/6 coverage; the armour {result}.",
+      "CoverageProtected": "protects",
+      "CoverageMissed": "misses the hit",
       "Band": "Range band: {band}",
       "Bands": {
         "close": "Close",
@@ -4970,7 +5192,7 @@
       "Stress": "Stress",
       "Derangement": "Derangement",
       "Hint": "Temporary jitters, held up to -Will ({limit}); beyond it becomes Derangement. Bleeds off 1 per 10 minutes of rest (Basic Set Revised p. 573).",
-      "DerangementHint": "Lasting mental harm, held up to -Will ({limit}); beyond it becomes points of permanent mental disadvantages (Basic Set Revised p. 573).",
+      "DerangementHint": "Lasting mental harm, held up to -Will ({limit}); beyond it becomes points of permanent mental disadvantages (Basic Set Revised p. 573). Treat it as the injuries chapter (p. 418) suggests, with Physician (Psychiatric) or Psychology.",
       "Kind": "Kind of Fright Check",
       "KindOrdinary": "Ordinary (Stress; the Unfazeable are immune)",
       "KindSanity": "Sanity-blasting (Derangement; Unfazeable +8)",
@@ -4992,13 +5214,34 @@
       "BuyOffPoints": "Points of new mental disadvantages",
       "Cured": "{name} is eased: Stress {stress}, Derangement {derangement}.",
       "Line": "Stress",
-      "DerangementLine": "Derangement"
+      "DerangementLine": "Derangement",
+      "DerangementPowerLine": "Derangement (power)",
+      "PermanentName": "Mental disadvantages from Derangement",
+      "PermanentDescription": "Derangement beyond the limit became permanent mental disadvantages. Rename, split or replace this with the specific disadvantages the GM and player choose.",
+      "TreatmentPointer": "Treatment: as the injuries chapter (p. 418) suggests, the GM may adapt the rules for treating physical troubles to Stress (like fatigue), Derangement (like injury) and mental disadvantages (like crippling), rolling Physician (Psychiatric) or Psychology."
     },
     "Tasks": {
       "Ham": "Ham Clause",
       "HamHint": "Play this disadvantage up for the scene: -1 to every success roll per -5 points of it (Basic Set Revised p. 570).",
       "HamEnd": "End Ham Clause",
-      "HamEndHint": "The scene is over; the penalty ends. It also ends with the battle.",
+      "HamEndHint": "The scene is over; the penalty ends. It also ends with the battle, and when another scene is made active.",
+      "SceneEnded": "Scene ended: {count} Ham Clause(s) ended.",
+      "BadDialogTitle": "Basic Abstract Difficulty",
+      "BadDialogHint": "Now {bad}. A known enemy group’s points as an Enemy, divided by 4, is a suggestion.",
+      "BadValue": "Penalty (0 to 10)",
+      "BadWhere": "For",
+      "BadScene": "This scene: {name}",
+      "BadWorld": "The world",
+      "BadClear": "Drop this scene’s own",
+      "BadSet": "Set",
+      "BadOff": "Switch the Basic Abstract Difficulty rule on first.",
+      "NpcRollTitle": "NPC without a sheet",
+      "NpcRollHint": "Effective skill {skill} (10 + the penalty of {bad}). Do not modify for skill, equipment, time or tactics.",
+      "NpcRollWho": "Who",
+      "NpcRollWhoPlaceholder": "the guard captain",
+      "NpcRollAnon": "An NPC",
+      "NpcRollCard": "{who}",
+      "NpcRollLine": "Rolled {total} against {skill} (10 + |{bad}|).",
       "HamInvoked": "{name} plays up {trait}: {penalty} to every success roll this scene.",
       "HamLine": "Ham Clause ({trait})",
       "BadLine": "Basic Abstract Difficulty",
@@ -5035,6 +5278,30 @@
         "complementary": "Complementary skill held: {value}"
       },
       "Label": "{name}: {aid}",
+      "LuckLabel": "{label} (Luck)",
+      "LuckTitle": "Luck",
+      "LuckAsk": {
+        "1": "Spend Luck: roll again and keep the better roll? (Luck can be used once an hour of play.)",
+        "2": "Spend Extraordinary Luck: roll again and keep the better roll? (Once every 30 minutes of play.)",
+        "3": "Spend Ridiculous Luck: roll again and keep the better roll? (Once every 10 minutes of play.)"
+      },
+      "Responders": "{aid} from {organization}",
+      "RespondersDescription": "Sent by the organization to help {owner}.",
+      "RespondersSkilled": "Sent by the organization to help {owner}. Skill {skill}.",
+      "Delivered": {
+        "cash": "${amount} added to the sheet’s money.",
+        "cashReturned": "${amount} added to the sheet’s money, to be returned.",
+        "cashNote": "Cash from {name}",
+        "facilities": "Equipment bonus {bonus} held for the next skill roll.",
+        "bonus": "Complementary bonus {bonus} held for the next skill roll.",
+        "people": "{count} people created as an NPC in the world.",
+        "peopleGm": "{count} people arrive; the GM makes them as an NPC.",
+        "warrant": "Ready in {hours} hours."
+      },
+      "TableClamp": "Patron value {value} takes a level cost of {min} to {max} (Patron-to-Rank Table); the cost was set to {cost}.",
+      "TableSnap": "Patron values are 10, 15, 20, 25 or 30 points; the value was set to {value}.",
+      "TableOutside": "Patron value {value} and {cost} points a level are outside the Patron-to-Rank and Rank-to-Patron Tables; allowed as the GM’s exception.",
+      "TableRange": "The tables allow {min} to {max} points a level at this value.",
       "Title": "Assistance roll",
       "TooLow": "Target {target}: under 3, no attempt is possible.",
       "Line": {
@@ -5045,7 +5312,9 @@
         "charisma": "Charisma",
         "smoothOperator": "Smooth Operator",
         "reputation": "Reputation",
-        "complementary": "Complementary skill"
+        "complementary": "Complementary skill",
+        "facilities": "Facilities",
+        "generalized": "Generalized Assistance"
       },
       "Outcome": {
         "aid": "The aid asked for arrives.",
@@ -5116,6 +5385,21 @@
         "healing": "HP healed",
         "others": "Another's roll"
       }
+    },
+    "RollBonus": {
+      "Title": "Bonuses to this roll",
+      "Wildcard": "Wildcard skill bonus",
+      "WildcardSkill": "Wildcard",
+      "WildcardOption": "{skill} (+{level} relative)",
+      "WildcardLine": "{skill} wildcard ({category}) {halved}",
+      "Halved": "halved",
+      "DefenseHalved": "An active defense takes half the bonus.",
+      "None": "None",
+      "Talent": "Talent benefits",
+      "TalentOption": "{talent}: {benefit} ({value})",
+      "TalentLine": "{talent} ({benefit})",
+      "Equipment": "Bonded or familiar gear",
+      "EquipmentUsing": "Using"
     },
     "Complementary": {
       "Action": "Complementary roll",
@@ -5207,7 +5491,9 @@
       "RuleOff": "rule off",
       "Notes": "Notes",
       "AwardPoints": "Award points",
-      "AwardPointsHint": "Give every character in the party the same character points at once, each added to that character's log. NPCs get none.",
+      "CombiningSt": "Combining ST",
+      "CombiningStHint": "Add the members' Basic Lifts for a job of physical labor and give the group's effective ST, the square root of 5 x total BL rounded up (Basic Set Revised p. 572).",
+      "AwardPointsHint":"Give every character in the party the same character points at once, each added to that character's log. NPCs get none.",
       "AwardTitle": "Award character points to the party",
       "AwardEachGets": "Each ticked character gets the whole award; untick anyone who missed the session:",
       "AwardSkipped": "Not awarded (NPCs): {names}",
@@ -5708,6 +5994,7 @@
       "Source": "From {module}",
       "GmOnly": "GM only",
       "GmDecides": "(GM decides)",
+      "Miles": "{miles} mi",
       "OrLess": "{value} or less",
       "UpTo": "Up to {value}",
       "Minutes": "{value} min",
@@ -5767,6 +6054,8 @@
         "checks": "Fright"
       },
       "Column": {
+        "Height": "Height",
+        "Horizon": "Horizon",
         "Who": "Who",
         "Fraction": "Fraction",
         "Roll": "Roll",
@@ -6055,7 +6344,13 @@
           "Title": "Basic Abstract Difficulty",
           "Summary": "One penalty for the scene, and the quick ways to modify a roll.",
           "Current": "This scene",
-          "CurrentOff": "Off, or 0. Switch it on in the rules to set a penalty from 0 to -10 in the system settings.",
+          "CurrentOff": "Off, or 0. Switch the rule on, then set a penalty from 0 to -10 with the button above.",
+          "ActionSet": "Set BAD",
+          "ActionSetHint": "Set the penalty for the world or for the scene being viewed, or drop the scene’s own.",
+          "ActionRoll": "Roll an NPC",
+          "ActionRollHint": "Roll 3d for an NPC without a sheet, at skill 10 + the penalty.",
+          "ActionEnd": "End scene",
+          "ActionEndHint": "Ends every Ham Clause and drops the viewed scene’s own penalty.",
           "CurrentText": "{bad} on tasks; an NPC without a sheet has effective skill {skill}.",
           "Suggest": "A suggestion",
           "SuggestText": "A known enemy group’s points as an Enemy, divided by 4, dropping fractions.",
@@ -6262,6 +6557,11 @@
           "CloseCombatText": "The weapon's Bulk in place of the speed/range penalty.",
           "Unfamiliar": "Unfamiliar weapon",
           "UnfamiliarText": "{value}."
+        },
+        "horizonTable": {
+          "Title": "Horizon Table",
+          "Summary": "How far a viewpoint of a given height sees to the horizon.",
+          "Note": "Line of sight for visual signals: an observer at a given height, their own included (the SM column), sees to the horizon shown. For two people add the two horizons; the same goes for a signal above the ground, like a flare or smoke. Each further x100 in height, or +12 SM, is another x10 in distance. A deliberate signal is spotted at +10 (in plain sight); at night a light reverses the darkness penalty into a bonus."
         },
         "sizeSpeedRange": {
           "Title": "Size and Speed/Range Table",

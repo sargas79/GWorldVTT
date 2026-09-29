@@ -9,6 +9,7 @@
  */
 
 import { clearZenShot, rollZenSkill, zenSkillsOf } from "../zen.js";
+import { useAbility } from "../ability-use.js";
 import { chooseTechniqueSkill, isOpenTechniqueData } from "../open-techniques.js";
 import { customItemData, customKindKey } from "../picker-merge.js";
 import { rememberFocus, restoreFocus, type RememberedFocus } from "../focus-memory.js";
@@ -42,6 +43,8 @@ import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
 import { buyOffHardship, clinicianSkillOf, rollDerangementDayEnd, stressOn } from "../stress.js";
 import { rollPowerExtraEffort, tradeFatigueForBonus } from "../extra-effort-extras.js";
+import { reservesOf } from "../reserves.js";
+import { declareRapidRecovery } from "../combat-extras.js";
 import { rollFall } from "../falling.js";
 import { rollBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
@@ -196,6 +199,9 @@ import {
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
 import { moreManeuverChoices } from "../more-maneuvers.js";
+import { rangedFeintLines } from "../revised-ranged.js";
+import { forage } from "../vision-corrections.js";
+import { currentTerrain } from "../vision-prompts.js";
 import { allOutAttackOptionsFor, feintModifiers, registeredManeuvers } from "../combat-extensions.js";
 import { evaluateBonusFor } from "../evaluate.js";
 import { setCondition } from "../conditions.js";
@@ -233,6 +239,7 @@ import {
   promptForNumber,
   beyondHalfDamage,
   yardsBetween,
+  measuredShot,
   rollSuccess,
   lineDropped,
   secondLineOf,
@@ -285,6 +292,7 @@ import {
   promptForMotionSickness,
   promptForStayingUp,
   promptForHike,
+  promptForForage,
   promptForCollision,
   promptForShock,
   promptForFire,
@@ -467,6 +475,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       affliction: GWorldCharacterSheet.#onAffliction,
       weaknessExposure: GWorldCharacterSheet.#onWeaknessExposure,
       selfControlRoll: GWorldCharacterSheet.#onSelfControlRoll,
+      useAbility: GWorldCharacterSheet.#onUseAbility,
       evade: GWorldCharacterSheet.#onEvade,
       feint: GWorldCharacterSheet.#onFeint,
       contest: GWorldCharacterSheet.#onContest,
@@ -476,6 +485,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       derangementDayEnd: GWorldCharacterSheet.#onDerangementDayEnd,
       buyOffHardship: GWorldCharacterSheet.#onBuyOffHardship,
       tradeFatigue: GWorldCharacterSheet.#onTradeFatigue,
+      rapidRecovery: GWorldCharacterSheet.#onRapidRecovery,
       climb: GWorldCharacterSheet.#onClimb,
       swim: GWorldCharacterSheet.#onSwim,
       throwObject: GWorldCharacterSheet.#onThrow,
@@ -553,6 +563,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       stayAwake: GWorldCharacterSheet.#onStayAwake,
       sleep: GWorldCharacterSheet.#onSleep,
       hike: GWorldCharacterSheet.#onHike,
+      forage: GWorldCharacterSheet.#onForage,
       struckBy: GWorldCharacterSheet.#onStruckBy,
       shock: GWorldCharacterSheet.#onShock,
       burn: GWorldCharacterSheet.#onBurn,
@@ -1988,6 +1999,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       return;
     }
     const evaluated = evaluateBonusFor(this.actor);
+    // A ranged Feint takes the ranged attack's modifiers: range and size (Revised p. 577).
+    const rangedLines = ranged && isRuleOn("trickyShooting") ? rangedFeintLines(measuredShot(this.actor)) : [];
 
     // Alternative Feints: a non-combat skill may stand in for the weapon's (Revised p. 328).
     const feintBasis = await chooseFeintSkill(this.actor, base, String(target.dataset.rollLabel ?? ""));
@@ -2000,7 +2013,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         foe: String(foe.name),
       }),
       // A Feint takes what Evaluate maneuvers before it earned (Campaigns p. 364).
-      feinter: { actor: this.actor, base: feintBasis.base, modifiers: [...(evaluated ? [{ label: game.i18n.localize("GWORLD.Maneuver.evaluate"), value: evaluated }] : []), ...added.modifiers] },
+      feinter: { actor: this.actor, base: feintBasis.base, modifiers: [...(evaluated ? [{ label: game.i18n.localize("GWORLD.Maneuver.evaluate"), value: evaluated }] : []), ...rangedLines, ...added.modifiers] },
       // Naming what they rolled against matters here: the rule lets them roll
       // their best of several things, and the card should say which it was.
       defender: { actor: foe, base: defense.score, note: defense.source },
@@ -2154,12 +2167,29 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       if (fp === null) return;
       fpSpent = Math.max(1, fp);
     }
+    // A power of an origin the character has an Energy Reserve for is paid
+    // from that reserve first (Basic Set Revised p. 326).
+    let origin = "";
+    const reserves = reservesOf(this.actor);
+    if (reserves.length > 0) {
+      const chosen = await promptForChoice({
+        title: game.i18n.localize("GWORLD.ExtraEffort.PowerTitle"),
+        label: game.i18n.localize("GWORLD.ExtraEffort.PowerOrigin"),
+        options: [
+          { value: "none", label: game.i18n.localize("GWORLD.ExtraEffort.PowerOriginNone") },
+          ...reserves.map((r) => ({ value: r.key, label: game.i18n.format("GWORLD.EnergyReserve.Name", { origin: r.origin }) })),
+        ],
+      });
+      if (chosen === null) return;
+      origin = chosen === "none" ? "" : chosen;
+    }
     await rollPowerExtraEffort({
       actor: this.actor,
       percentIncrease: asked.percentIncrease,
       motivated: asked.motivated,
       talent,
       fpSpent,
+      ...(origin ? { origin } : {}),
     });
   }
 
@@ -2194,6 +2224,11 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (points === null) return;
     await buyOffHardship(this.actor, { points, target });
+  }
+
+  /** Rapid Recovery (Basic Set Revised p. 571): 1 FP, declared before the first parry, so the weapon that attacked may parry. */
+  static async #onRapidRecovery(this: GWorldCharacterSheet) {
+    if (await declareRapidRecovery(this.actor)) ui.notifications?.info(game.i18n.localize("GWORLD.ExtraEffort.RapidRecoveryDeclared"));
   }
 
   /** Trading Fatigue for Skill or Resistance (Basic Set Revised p. 572): 1 FP per +1, up to +4, held for the next roll. */
@@ -3284,6 +3319,12 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     }
   }
 
+  /** The roll-to-use button of a trait that asks for one (Basic Set Revised pp. 330-332). */
+  static async #onUseAbility(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    if (id) await useAbility(this.actor, id);
+  }
+
   static async #onAffliction(this: GWorldCharacterSheet, _event: Event, target: HTMLElement) {
     await rollAffliction(this.actor, target);
   }
@@ -3743,6 +3784,19 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const asked = await promptForHike(dayWeather(this.actor).hot);
     if (!asked) return;
     await hike({ actor: this.actor, ...asked });
+  }
+
+  /** Foraging in a terrain (Campaigns p. 427; Basic Set Revised p. 573). */
+  static async #onForage(this: GWorldCharacterSheet) {
+    if (!isRuleOn("terrainTypes")) return;
+    const asked = await promptForForage(currentTerrain()?.terrain ?? "");
+    if (!asked) return;
+    await forage({
+      actor: this.actor,
+      terrain: asked.terrain,
+      average: asked.average,
+      ...(asked.exceptional ? { exceptional: asked.exceptional } : {}),
+    });
   }
 
   /** Struck by something moving (Campaigns pp. 430-432). */

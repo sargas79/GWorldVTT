@@ -29,6 +29,7 @@ import {
   wakingFrom,
 } from "../../../rules/recovery.js";
 import { UNFAMILIAR_PENALTY } from "../../../rules/tech-level.js";
+import { HORIZON_TABLE } from "../../../rules/vision-corrections.js";
 import type { DamageType } from "../../../rules/types.js";
 import { attackWithoutSight } from "../../../rules/visibility.js";
 import { dice, inches, signed, span, times } from "../format.js";
@@ -152,6 +153,25 @@ export const RANGED_SECTIONS: readonly GmSectionDef[] = [
         notes: [t(`${K}.Section.sizeSpeedRange.Note`)],
       };
     },
+  }),
+  section({
+    id: "horizonTable",
+    tab: "ranged",
+    cite: "p. B575",
+    build: ({ t }) => ({
+      parts: [
+        {
+          content: {
+            kind: "table",
+            columns: [t(`${K}.Column.Height`), t(`${K}.Column.SizeModifier`), t(`${K}.Column.Horizon`)],
+            rows: HORIZON_TABLE.map((row) => ({
+              cells: [row.height, signed(row.sm), t(`${K}.Miles`, { miles: row.miles })],
+            })),
+          },
+        },
+      ],
+      notes: [t(`${K}.Section.horizonTable.Note`)],
+    }),
   }),
   section({
     id: "dodgeBlockParry",

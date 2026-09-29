@@ -10,6 +10,13 @@
         {{localize "GWORLD.Slam.ShoveAction"}}
       </button>
     {{/if}}
+    {{#if rules.extraEffort}}
+      {{!-- Rapid Recovery (Basic Set Revised p. 571): 1 FP, before the first parry, so the weapon that attacked may parry. --}}
+      <button type="button" class="ibtn" data-action="rapidRecovery"
+              data-tooltip="{{localize "GWORLD.ExtraEffort.RapidRecoveryHint"}}">
+        {{localize "GWORLD.ExtraEffort.Extra.rapidRecovery"}}
+      </button>
+    {{/if}}
     {{#if rules.evading}}
       <button type="button" class="ibtn" data-action="evade">
         {{localize "GWORLD.Evade.Action"}}

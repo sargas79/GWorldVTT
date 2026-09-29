@@ -37,8 +37,10 @@ import {
 } from "../rules/maneuvers.js";
 import { ADDENDUM_MANEUVERS, ADDENDUM_MANEUVER_ORDER, isAddendumManeuver } from "../rules/more-maneuvers.js";
 import { allowsSameWeaponParry, committedRefusal, slamMovement } from "./more-maneuvers.js";
+import { restrictedDodgeRefusals } from "./revised-ranged.js";
+import { isRuleOn } from "./optional-rules.js";
 import { ACROBATIC_DEFENSES_PER_TURN } from "../rules/defenses.js";
-import { HIT_LOCATIONS, type HitLocation } from "../rules/hit-locations.js";
+import { HIT_LOCATIONS, type HitLocation, type LimbCounts } from "../rules/hit-locations.js";
 import type { DamageType } from "../rules/types.js";
 
 /** A modifier line, as the roll cards show it. */
@@ -332,6 +334,8 @@ export function adjustWeaponAttacks(options: {
     if (entry.row.followUpAlso === undefined) entry.row.followUpAlso = null;
     // Whether the row offers a Feint (since 1.28.0): melee rows do, ranged ones don't.
     if (typeof entry.row.feint !== "boolean") entry.row.feint = entry.kind === "melee";
+    // Ranged Feint (Revised p. 577): with Tricky Shooting on, a ranged row offers one too.
+    if (entry.kind === "ranged" && isRuleOn("trickyShooting")) entry.row.feint = true;
   }
   const before = options.rows.map((entry) => Object.fromEntries(WEAPON_ROW_FIELDS.map((key) => [key, entry.row[key]])));
   const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
@@ -1389,6 +1393,19 @@ export function moduleDefenseRefusals(context: {
     const why = committedRefusal(context.defender, choice.key);
     if (why) Object.assign(choice, { available: false, refusal: why });
   }
+  // Restricted Dodge Against Firearms (Revised p. 577): a gun is dodged only by a
+  // fighter who declared evasive movement against this shooter, and an Acrobatic
+  // Dodge only if the Acrobatics roll was made on their own turn.
+  const restricted = restrictedDodgeRefusals(context.defender, context.attacker, {
+    skill: String(context.attackWeapon?.skill ?? ""),
+    delivery: context.delivery,
+  });
+  if (restricted?.dodge) {
+    for (const choice of hooked.choices ?? []) {
+      if (choice.key === "dodge") Object.assign(choice, { available: false, refusal: restricted.dodge });
+    }
+  }
+  if (restricted?.acrobatic && hooked.acrobatic) hooked.acrobatic = { ...hooked.acrobatic, available: false, refusal: restricted.acrobatic };
   const noRetreat = committedRefusal(context.defender, "retreat");
   if (noRetreat) hooked.retreat = { available: false, refusal: noRetreat };
   const text = (refusal: unknown) => (typeof refusal === "string" && refusal.trim() ? refusal.trim() : "");
@@ -1483,9 +1500,10 @@ export interface HitLocationRegistration {
   wounding?: (type: DamageType) => number | null;
   /**
    * Crippled above max HP divided by this (2 for a limb, 3 for an extremity).
-   * Null: can't be crippled. Missing: as the parent.
+   * Null: can't be crippled. Missing: as the parent. A function is also given
+   * how many arms and legs the body has (since 1.187.0).
    */
-  cripplingDivisor?: number | null | ((type: DamageType) => number | null | undefined);
+  cripplingDivisor?: number | null | ((type: DamageType, limbs?: LimbCounts) => number | null | undefined);
   /** DR the location adds, on top of the parent's. */
   extraDr?: number;
   /** Added to the knockdown roll's modifier. */
@@ -1522,7 +1540,7 @@ export interface AddonHitLocation {
   penalty: number;
   damageTypes: DamageType[];
   wounding: (type: DamageType) => number | null;
-  cripplingDivisor: number | null | undefined | ((type: DamageType) => number | null | undefined);
+  cripplingDivisor: number | null | undefined | ((type: DamageType, limbs?: LimbCounts) => number | null | undefined);
   extraDr: number;
   knockdown: number;
   available: (context: { actor?: any; damageType?: string }) => boolean;
@@ -1587,10 +1605,19 @@ export function missFallbackFor(shot: { hitLocation: HitLocation; addonLocation?
   if (added && added.missFallback !== undefined) {
     if (added.missFallback === null) return null;
     const registered = hitLocations.get(added.missFallback);
-    if (registered) return { hitLocation: registered.parent, addonLocation: registered.key };
+    // A fallback whose own switch is off lands on the Basic Set location it is part of (since 1.187.0).
+    if (registered) return isAvailable(registered) ? { hitLocation: registered.parent, addonLocation: registered.key } : { hitLocation: registered.parent, addonLocation: null };
     return HIT_LOCATIONS[added.missFallback as HitLocation] ? { hitLocation: added.missFallback as HitLocation, addonLocation: null } : null;
   }
   return basicSetFallback(shot.hitLocation) ? { hitLocation: "torso", addonLocation: null } : null;
+}
+
+function isAvailable(location: AddonHitLocation): boolean {
+  try {
+    return location.available({}) === true;
+  } catch {
+    return false;
+  }
 }
 
 /** Whether a registered location may be aimed at from an arc; true when it names none, or the arc is unknown. */
@@ -1608,10 +1635,21 @@ export function registeredHitLocations(): AddonHitLocation[] {
   return [...hitLocations.values()];
 }
 
+/**
+ * Whether a location's damage types take a blow. A location listing `burn`
+ * means tight-beam burning (since 1.187.0), so a burn the caller knows is not
+ * tight-beam (`tightBeam` false) does not match it; where the caller doesn't say
+ * (`tightBeam` left out), any burn does, as before.
+ */
+export function damageTypeMatches(types: readonly DamageType[], type: DamageType, tightBeam?: boolean): boolean {
+  if (type === "burn" && tightBeam === false) return false;
+  return types.includes(type);
+}
+
 /** The registered locations offered for this attack. */
-export function hitLocationsFor(context: { actor?: any; damageType?: string }): AddonHitLocation[] {
+export function hitLocationsFor(context: { actor?: any; damageType?: string; tightBeam?: boolean }): AddonHitLocation[] {
   return [...hitLocations.values()].filter((location) => {
-    if (context.damageType && location.damageTypes.length > 0 && !location.damageTypes.includes(context.damageType as DamageType)) return false;
+    if (context.damageType && location.damageTypes.length > 0 && !damageTypeMatches(location.damageTypes, context.damageType as DamageType, context.tightBeam)) return false;
     try {
       return location.available(context) === true;
     } catch (error) {
@@ -1634,7 +1672,7 @@ export function readLocationValue(value: string): { hitLocation: HitLocation; ad
  * What a registered location changes about a blow: a wounding modifier to use
  * instead of the parent's, the crippling threshold, extra DR and knockdown.
  */
-export function locationOverrides(addonLocation: string | null | undefined, type: DamageType, maxHp: number): {
+export function locationOverrides(addonLocation: string | null | undefined, type: DamageType, maxHp: number, limbs: LimbCounts = {}): {
   woundingModifier: number | null;
   cripplingThreshold: number | null | undefined;
   extraDr: number;
@@ -1655,7 +1693,7 @@ export function locationOverrides(addonLocation: string | null | undefined, type
   return {
     woundingModifier: wounding,
     cripplingThreshold: (() => {
-      const divisor = typeof added.cripplingDivisor === "function" ? added.cripplingDivisor(type) : added.cripplingDivisor;
+      const divisor = typeof added.cripplingDivisor === "function" ? added.cripplingDivisor(type, limbs) : added.cripplingDivisor;
       return divisor === undefined ? undefined : divisor === null ? null : maxHp / divisor;
     })(),
     extraDr: added.extraDr,
@@ -1688,7 +1726,7 @@ export function randomLocationWithHooks(
   roll: number,
   location: HitLocation,
   actor?: any,
-  known: { damageType?: string | null; arc?: "front" | "side" | "back" | null } = {},
+  known: { damageType?: string | null; arc?: "front" | "side" | "back" | null; tightBeam?: boolean } = {},
 ): { hitLocation: HitLocation; addonLocation: string | null } {
   const context = callCombatHook(COMBAT_HOOKS.randomHitLocation, {
     roll,
@@ -1699,6 +1737,8 @@ export function randomLocationWithHooks(
     // system's own for a listener's sub-roll.
     damageType: known.damageType ?? null,
     arc: known.arc ?? null,
+    // Since 1.187.0: whether the blow is a tight-beam burn, where the caller knows.
+    tightBeam: known.tightBeam === true,
     d6: () => {
       const uniform = (globalThis as { CONFIG?: { Dice?: { randomUniform?: () => number } } }).CONFIG?.Dice?.randomUniform ?? Math.random;
       return Math.min(6, Math.max(1, Math.ceil((1 - uniform()) * 6)));

@@ -27,7 +27,8 @@
  */
 
 import { visionApi } from "./vision-corrections.js";
-import { applyHardship, buyOffHardship, clinicianSkillOf, mentalOf, recoverStress, rollDerangementDayEnd } from "./stress.js";
+import { addPermanentDisadvantage, applyHardship, buyOffHardship, clinicianSkillOf, derangementPowerLines, mentalOf, mentalTimePasses, recoverStress, rollDerangementDayEnd } from "./stress.js";
+import { declareRapidRecovery, extrasCapRefusal, extrasThisRound } from "./combat-extras.js";
 import { combiningSt, isSkilledMarcher, postCombiningSt, powerEffortFp, rollPowerExtraEffort, tradeFatigueForBonus } from "./extra-effort-extras.js";
 import { currentBad, endHamClause, hamClauseOf, invokeHamClause, setBad, unstattedNpcSkill } from "./task-rules.js";
 import { gmScreenApi } from "./gm-screen/api.js";
@@ -59,8 +60,10 @@ import type { ControlRating, LegalityClass } from "../rules/legality.js";
 import { currentControlRating, legalityClassOf } from "./legality.js";
 import { surprise, undoKnockdown } from "./knockdown.js";
 import { rollFall } from "./falling.js";
-import { restoreFatigue, spendFatigueFor, spendHitPointsFor } from "./fatigue.js";
+import { useAbility } from "./ability-use.js";
+import { restoreFatigue,spendFatigueFor, spendHitPointsFor } from "./fatigue.js";
 import { chargeReserve, drainReserve, reservesOf, restoreReserve } from "./reserves.js";
+import { payAbilityCost } from "./ability-cost.js";
 import { changeTrait, type TraitChanged } from "./trait-change.js";
 import { stopTowing, tow } from "./towing.js";
 import { cripple, crippledParts, healCrippled, settleCrippling, treatCrippled, type CrippledDuration, type CrippledPart } from "./crippling.js";
@@ -117,7 +120,7 @@ import { simplifiedResourcesApi } from "./simplified-resources.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.183.0";
+export const API_VERSION = "1.190.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -269,6 +272,27 @@ const actors = {
    */
   spendHitPoints(actor: any, hp: number, options: { reason?: string } = {}) {
     return spendHitPointsFor(actor, hp, options);
+  },
+
+  /**
+   * Pays one use of a trait with Costs Fatigue or Costs Hit Points (since
+   * 1.184.0): the FP from an Energy Reserve of the trait's power modifier
+   * origin first, then FP, and the HP. Resolves to `{ fp, reserve, hp }`, or
+   * null for a trait that costs nothing or a user who can't change the actor.
+   */
+  payAbilityCost(actor: any, item: any) {
+    return payAbilityCost(actor, item);
+  },
+
+  /**
+   * Rolls to use a trait that asks for it (Basic Set Revised pp. 330-332;
+   * since 1.186.0): each Requires roll, then the Unreliable/Activation roll,
+   * with Reliable and Hard to Use on them, then the Costs Fatigue and Costs
+   * Hit Points of the attempt. Resolves to `{ success, rolls, fpSpent,
+   * hpSpent }`, or null.
+   */
+  useAbility(actor: any, itemId: string) {
+    return useAbility(actor, itemId);
   },
 
   /**
@@ -963,12 +987,12 @@ const combat = Object.freeze({
  * Rolls a random hit location as the system does (since 1.43.0): 3d on the
  * table, then the modules' `gworld.randomHitLocation` listeners.
  */
-async function rollHitLocation(options: { actor?: any; damageType?: string | null; arc?: "front" | "side" | "back" | null } = {}): Promise<{ hitLocation: string; addonLocation: string | null; roll: number }> {
+async function rollHitLocation(options: { actor?: any; damageType?: string | null; arc?: "front" | "side" | "back" | null; tightBeam?: boolean } = {}): Promise<{ hitLocation: string; addonLocation: string | null; roll: number }> {
   const dice = new Roll("3d6");
   await dice.evaluate();
   const total = Number(dice.total) || 10;
   const base = rules.randomHitLocation(total).location;
-  const picked = randomLocationWithHooks(total, base, options.actor, { damageType: options.damageType ?? null, arc: options.arc ?? null });
+  const picked = randomLocationWithHooks(total, base, options.actor, { damageType: options.damageType ?? null, arc: options.arc ?? null, tightBeam: options.tightBeam === true });
   return { hitLocation: picked.hitLocation, addonLocation: picked.addonLocation, roll: total };
 }
 
@@ -1074,9 +1098,15 @@ const partyApi = Object.freeze({
  */
 const mentalApi = Object.freeze({
   of: mentalOf, add: applyHardship, recover: recoverStress, dayEnd: rollDerangementDayEnd, buyOff: buyOffHardship, clinicianSkill: clinicianSkillOf,
+  // Since 1.189.0: permanent disadvantages from overflow, the world clock, and the powers line.
+  permanentDisadvantage: addPermanentDisadvantage, timePasses: mentalTimePasses, powerLines: derangementPowerLines,
 });
 
-const effortApi = Object.freeze({ rollPower: rollPowerExtraEffort, powerFp: powerEffortFp, tradeFatigue: tradeFatigueForBonus, isSkilledMarcher });
+const effortApi = Object.freeze({
+  rollPower: rollPowerExtraEffort, powerFp: powerEffortFp, tradeFatigue: tradeFatigueForBonus, isSkilledMarcher,
+  // Since 1.189.0: the combat options of extra effort (Basic Set Revised p. 571) and their cap of one a turn.
+  usedThisRound: extrasThisRound, capRefusal: extrasCapRefusal, declareRapidRecovery,
+});
 
 /**
  * The world namespace (since 1.77.0): the campaign's Control Rating (Campaigns

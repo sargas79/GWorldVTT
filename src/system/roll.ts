@@ -8,11 +8,15 @@
  */
 
 import { fromBehindAdjustment } from "../rules/revised-hit-locations.js";
+import { stampKickTarget } from "../rules/addendum-techniques.js";
+import { rigidHelmWorn } from "../rules/natural-attacks.js";
 import { outcomeStep } from "../rules/bonus-points.js";
 import { skillEncumbrancePenalty } from "../rules/physical.js";
 import { isCombatRoll, spendingInPlay } from "./bonus-points.js";
 import { SYSTEM_ID } from "./constants.js";
 import { consumeMightyBlows, recordMightyBlows, spendFatigue } from "./extra-effort.js";
+import { extrasCapRefusal, extrasOfOptions, recordExtras } from "./combat-extras.js";
+import type { CombatExtra } from "../rules/extra-effort-extras.js";
 import { consumeFeint } from "./feint.js";
 import {
   UNAIMED,
@@ -29,11 +33,14 @@ import {
   contactShot,
   readRevisedRanged,
   revisedRangedFields,
+  revisedRangedDefenseModifiers,
   revisedRangedLines,
+  rapidStrikeCheck,
   simplifiedRange,
   simplifiedRangeOn,
   type RevisedRangedInput,
 } from "./revised-ranged.js";
+import { illuminationFields, readVisionPrompt, trackingTerrainLines, visionPromptFields, wireIllumination } from "./vision-prompts.js";
 import { normalizeDamage, rolledDice } from "./modifying-dice.js";
 import { rollBreakdown, signed, type RollBreakdown } from "./roll-breakdown.js";
 import { damageDice, damageDiceRow } from "./damage-dice.js";
@@ -187,7 +194,8 @@ import {
   steeringDuty,
   type Guidance,
 } from "../rules/guided.js";
-import { committedRefusal, moreManeuverDamageLines } from "./more-maneuvers.js";
+import { attackAfterSlamRefusal, committedRefusal, fallRollLines, moreManeuverDamageLines } from "./more-maneuvers.js";
+import { FATIGUE_TRADE_MAX, fatigueForSkillBonus } from "../rules/extra-effort-extras.js";
 import { MOVE_AND_ATTACK_PENALTY, WILD_SWING_SKILL_CAP, allOutAttackBonus, stopThrustBonus, strongAttackDamageBonus, wildSwingPenalty, type AllOutAttackOption } from "../rules/maneuvers.js";
 import { flailKind, type FlailKind } from "../rules/defenses.js";
 import { canTargetFromArc, missByOneHitsTorso, type HitLocation } from "../rules/hit-locations.js";
@@ -196,9 +204,11 @@ import { POSTURE_EFFECTS } from "../rules/posture.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
 import { gunslingerAccuracy, gunslingerWeapon, type GunslingerWeapon } from "../rules/gunslinger.js";
 import { noPerks, offHandWaived } from "../rules/addendum-perks.js";
+import { anyOffered, bonusOffers, offerFieldsHtml, readOffers, type BonusOffers, type BonusRollContext, type BonusRollKind } from "./roll-bonuses.js";
 import { closeCombatBulk } from "../rules/addendum-techniques.js";
 import { techniqueLevelsBoughtByPrefix } from "./technique-lookup.js";
-import { heroicAimBonus, heroicArcherWeapon, type HeroicArcherWeapon } from "../rules/heroic-archer.js";
+import { heroicAimBonus, heroicArcherWeapon, heroicHalvedPenalty, type HeroicArcherWeapon } from "../rules/heroic-archer.js";
+import { consumeQuickReady, pendingQuickReady } from "./heroic-archer.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
 import { rollMalediction } from "./malediction.js";
 import { COMPLEMENTARY_SOURCE, pendingModifierLines, removePendingModifier, spendPendingModifiers } from "./pending-modifiers.js";
@@ -220,7 +230,9 @@ export interface RollModifier {
    * ranged attack, and `zen`, a zen skill's line (with `zen`, the skill's id);
    * since 1.105.0 `afflictionDr`, the DR bonus to an affliction's resistance roll;
    * since 1.153.0 `dualWeapon` (with `hand`) and `strikeAtWeapon` (with `itemId`);
-   * since 1.163.0 `gunslinger` (with `gunslinger`).
+   * since 1.163.0 `gunslinger` (with `gunslinger`);
+   * since 1.188.0 `situational`, a modifier typed at the roll, which Basic
+   * Abstract Difficulty replaces.
    * Blank or absent on lines nobody has named.
    */
   key?: string;
@@ -234,9 +246,12 @@ export interface RollModifier {
   /**
    * On a `heroicArcher` line (since 1.166.0), what Heroic Archer did:
    * `accuracy` (the bow's Acc without an Aim), `aim` (the extra second of
-   * aim) or `moveAndAttack` / `closeCombat` (Bulk ignored).
+   * aim) or `moveAndAttack` / `closeCombat` (Bulk ignored); since 1.184.0
+   * `quickReady` (the penalty of the quick-ready roll and the attack after
+   * it), `stunt` (the halved stunt-shot penalty) and `fastDraw` (the halved
+   * Fast-Draw (Arrow) penalty).
    */
-  heroicArcher?: "accuracy" | "aim" | "moveAndAttack" | "closeCombat";
+  heroicArcher?: "accuracy" | "aim" | "moveAndAttack" | "closeCombat" | "quickReady" | "stunt" | "fastDraw";
   /** On a `dualWeapon` line, the hand rolled: `primary` or `off` (since 1.153.0). */
   hand?: "primary" | "off";
   /** On a `strikeAtWeapon` line, the id of the foe's item struck at (since 1.153.0). */
@@ -786,7 +801,8 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   // A roll that can be bought up with points (Campaigns p. 347)
   // remembers what it was, and an attack that missed remembers the defense
   // card it would have posted on a hit.
-  const successRoll = spendingInPlay(actor) && actor?.uuid
+  // An Assistance Roll reads its own outcome, offering the purchase itself.
+  const successRoll = spendingInPlay(actor) && actor?.uuid && !tags.includes("assistance")
     ? {
         [SYSTEM_ID]: {
           successRoll: {
@@ -1061,6 +1077,8 @@ export function weaponFromDataset(actor: any, dataset: Record<string, unknown>) 
           skill: String(dataset.rollSkill ?? ""),
         })
       : null,
+    // What a quick ready left on this turn's shot (since 1.184.0).
+    quickReady: isRuleOn("heroicArcher") ? pendingQuickReady(actor) : 0,
     closeCombatLevels: techniqueLevelsBoughtByPrefix(actor, "Close Combat"),
     damageType: String(dataset.damageType ?? "cr") as DamageType,
     accuracy: n("accuracy"),
@@ -1688,13 +1706,64 @@ export async function promptForModifier(
   held: HeldLine[] = [],
   onDiscard?: (ids: string[]) => Promise<void>,
 ): Promise<number | null> {
+  const asked = await askForModifier(held, onDiscard);
+  return asked === null ? null : asked.value;
+}
+
+/** The bonuses a roll's dialog offers (Revised pp. 324-325, 328-329, 333), with what the roll is for reading them. */
+export interface DialogOffers {
+  offers: BonusOffers;
+  context: BonusRollContext;
+}
+
+/** What the roll dialog's extra controls offer: FP for a bonus (p. 572) and a roll to avoid a fall. */
+export interface RollDialogExtras {
+  /** Trading Fatigue for Skill, or for Resistance: the most FP that can be traded, or 0 for none offered. */
+  tradeMax?: number;
+  /** Whether the roll may be to avoid falling or tripping, which a kick or a Heroic Charge changes (pp. 571, 576). */
+  fall?: boolean;
+  /** Whether the roll is a resistance roll, for the label. */
+  resistance?: boolean;
+  /** Whether it is a Vision roll, which also offers In Plain Sight and the level of light (p. 574). */
+  vision?: boolean;
+}
+
+/**
+ * The modifier dialog, with what a roll offers besides the situational
+ * modifier: the wildcard, Talent and equipment bonuses the player may tick.
+ * It also asks for the FP to trade for a bonus, as a spinner (Basic Set
+ * Revised p. 572), and whether the roll is to avoid a fall. Returns the typed
+ * modifier, the offered lines chosen and those, or null when the dialog is
+ * dismissed.
+ */
+export async function askForModifier(
+  held: HeldLine[] = [],
+  onDiscard?: (ids: string[]) => Promise<void>,
+  offered?: DialogOffers,
+  extras: RollDialogExtras = {},
+): Promise<{ value: number; lines: RollModifier[]; tradeFp: number; fall: boolean } | null> {
+  const tradeMax = Math.max(0, Math.floor(extras.tradeMax ?? 0));
+  const trade = tradeMax > 0
+    ? `<label style="display:flex;align-items:center;gap:8px">
+        <span>${game.i18n.format(extras.resistance ? "GWORLD.ExtraEffort.ResistSpinner" : "GWORLD.ExtraEffort.TradeSpinner", { max: tradeMax })}</span>
+        <input type="number" name="tradeFp" value="0" min="0" max="${tradeMax}" step="1" style="width:80px">
+      </label>`
+    : "";
+  const fall = extras.fall
+    ? `<label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="fall"><span>${game.i18n.localize("GWORLD.ExtraEffort.FallCheck")}</span>
+      </label>`
+    : "";
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: game.i18n.localize("GWORLD.Chat.ModifierTitle") },
     content: `<div class="gworld">${heldModifiersNote(held, onDiscard !== undefined)}
+      ${offered ? offerFieldsHtml(offered.offers, offered.context) : ""}
       <label style="display:flex;align-items:center;gap:8px">
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
         <input type="number" name="modifier" value="0" step="1" autofocus style="width:80px">
       </label>
+      ${trade}${fall}
+      ${extras.vision ? visionPromptFields() : ""}
     </div>`,
     ok: {
       label: game.i18n.localize("GWORLD.Chat.Roll"),
@@ -1707,13 +1776,37 @@ export async function promptForModifier(
           .map((box) => box.value)
           .filter(Boolean);
         if (discarded.length > 0 && onDiscard) await onDiscard(discarded);
-        return Number(input?.value ?? 0);
+        const value = Number(input?.value ?? 0);
+        const spun = Number(form?.querySelector<HTMLInputElement>('input[name="tradeFp"]')?.value ?? 0) || 0;
+        return {
+          value,
+          lines: [...(offered ? readOffers(form, offered.offers, offered.context) : []), ...(extras.vision ? readVisionPrompt(form) : [])],
+          tradeFp: tradeMax > 0 ? Math.max(0, Math.min(tradeMax, Math.floor(spun))) : 0,
+          fall: form?.querySelector<HTMLInputElement>('input[name="fall"]')?.checked === true,
+        };
       },
     },
     rejectClose: false,
   });
 
-  return typeof result === "number" && Number.isFinite(result) ? result : null;
+  if (!result || typeof result !== "object") return null;
+  const asked = result as { value: number; lines?: RollModifier[]; tradeFp?: number; fall?: boolean };
+  if (!Number.isFinite(asked.value)) return null;
+  return { value: asked.value, lines: asked.lines ?? [], tradeFp: asked.tradeFp ?? 0, fall: asked.fall === true };
+}
+
+/** Asks only for the bonuses a roll offers, where its own dialog has none. Null when dismissed. */
+async function askForOfferedBonuses(offered: DialogOffers): Promise<RollModifier[] | null> {
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: game.i18n.localize("GWORLD.RollBonus.Title") },
+    content: `<div class="gworld">${offerFieldsHtml(offered.offers, offered.context)}</div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => ({ lines: readOffers(button.closest<HTMLElement>(".application"), offered.offers, offered.context) }),
+    },
+    rejectClose: false,
+  });
+  return result && typeof result === "object" && Array.isArray((result as { lines?: unknown }).lines) ? (result as { lines: RollModifier[] }).lines : null;
 }
 
 /** A bonus held for a roll as its dialog lists it: with the id to discard it by, where the rule that holds it lets it be discarded. */
@@ -1758,6 +1851,13 @@ export async function handleRollAction(
   target: HTMLElement,
 ): Promise<SuccessRollResult | null> {
   if (target.dataset.rollType !== "attack" || Number(target.dataset.malediction) > 0) return rollAction(actor, event, target, null);
+
+  // A Double slams last: no other attack follows the slam (Basic Set Revised p. 575).
+  const afterSlam = attackAfterSlamRefusal(actor);
+  if (afterSlam) {
+    ui.notifications?.warn(afterSlam);
+    return null;
+  }
 
   // A maneuver's attacks this turn, as the modules may have changed them: an
   // attack that picks its own target asks for it, and each one made is counted.
@@ -2013,8 +2113,30 @@ async function rollAction(
     ? shot.modifiers
     : melee
       ? melee.modifiers
-      : await maybePromptModifiers(event, heldForRoll(actor, rollType, target.dataset.rollSkill ?? (rollType === "skill" ? rollLabel : undefined), target.dataset), actor);
+      : await maybePromptModifiers(event, heldForRoll(actor, rollType, target.dataset.rollSkill ?? (rollType === "skill" ? rollLabel : undefined), target.dataset), actor, {
+        // A self-control roll is not one a bonus is offered for.
+        kind: rollKind(rollType) === "selfControl" ? "attribute" : rollKind(rollType) as BonusRollKind,
+        skill: target.dataset.rollSkill ?? (rollType === "skill" ? rollLabel : undefined),
+        rollType,
+        basedOn: target.dataset.basedOn,
+        // A Vision roll also offers In Plain Sight and the level of light (Revised p. 574).
+        vision: target.dataset.sense === "vision" && rollType !== "attack",
+      });
   if (modifiers === null) return null;
+  // Terrain Types Redux (Revised p. 573): the terrain's modifier to a Tracking roll.
+  if (rollType === "skill") modifiers.push(...trackingTerrainLines(String(target.dataset.rollSkill ?? rollLabel ?? "")));
+
+  // An attack's own dialog has no room for them, so a wildcard's bonus to hit
+  // (Accuracy, offsetting a penalty; Revised p. 333) is put to the attacker after it.
+  if (rollType === "attack" && (shot || melee)) {
+    const context: BonusRollContext = { kind: "attack", skill: target.dataset.rollSkill };
+    const offers = bonusOffers(actor, context);
+    if (anyOffered(offers)) {
+      const chosen = await askForOfferedBonuses({ offers, context });
+      if (chosen === null) return null;
+      modifiers.push(...chosen);
+    }
+  }
 
   modifiers.push(...standingRollLines(actor, {
     rollType,
@@ -2039,6 +2161,20 @@ async function rollAction(
     ui.notifications?.warn(game.i18n.localize("GWORLD.CalledShot.NotFromBehind"));
     return null;
   }
+  // A Stamp Kick goes only at a lying foe, or a standing foe's foot or leg
+  // (Basic Set Revised p. 334): with the one foe targeted, anything else is
+  // refused, and says how to aim it.
+  if (rollType === "attack" && target.dataset.naturalKey === "stampKick") {
+    const foes = targetedTokens();
+    if (foes.length === 1) {
+      const posture = String(foes[0]?.actor?.system?.posture ?? "standing");
+      // A joint or a vein in a leg is still the leg.
+      if (!stampKickTarget({ foePosture: posture, location: aimedShot?.hitLocation ?? "" })) {
+        ui.notifications?.warn(game.i18n.localize("GWORLD.StampKick.WrongTarget"));
+        return null;
+      }
+    }
+  }
   // From behind the skull is -5 rather than -7, and the face -7 rather than
   // -5 (Basic Set Revised p. 566).
   if (aimedShot && !aimedShot.addonLocation && isRuleOn("finerHitLocations")) {
@@ -2056,6 +2192,8 @@ async function rollAction(
     if (!paid) return null;
     if (melee.mightyBlows) await recordMightyBlows(actor);
   }
+  const boughtExtras = melee ? (melee.extras ?? []) : extrasOfOptions(shot?.options);
+  if (boughtExtras.length > 0) await recordExtras(actor, boughtExtras);
   // A module's option chosen for a shot costs its FP the same way.
   if (shot?.addon && shot.addon.fatigue > 0) {
     const paid = await spendFatigue(actor, shot.addon.fatigue, game.i18n.localize("GWORLD.ExtraEffort.Title"));
@@ -2090,6 +2228,8 @@ async function rollAction(
   if (rollType === "attack") await recordAddonDamage(actor, addon?.damageModifiers ?? []);
   // And the options themselves, which the blow carries to where it lands (since API 1.108.0).
   if (rollType === "attack") await recordAttackOptions(actor, { ...(melee?.options ?? shot?.options ?? {}) });
+  // A bow readied in no time costs the one shot that follows it (Basic Set Revised p. 327).
+  if (rollType === "attack" && ranged && weapon.heroicArcher) await consumeQuickReady(actor);
 
   // A setting that spends more than one shot needs the shots to spend
   // (since 1.50.0). Refused rather than fired, because a weapon cannot use
@@ -2210,7 +2350,7 @@ async function rollAction(
         ranged: Boolean(ranged),
         modifiers,
         defensePenalty: (melee?.defensePenalty ?? shot?.defensePenalty ?? 0) + feint,
-        defenseModifiers: [...(addon?.defenseModifiers ?? [])],
+        defenseModifiers: [...(addon?.defenseModifiers ?? []), ...(shot?.defenseModifiers ?? [])],
         dataset: { ...target.dataset },
         // Move and Attack and a Wild Swing both hold skill to 9.
         skillCap: movingMelee || melee?.wildSwing ? WILD_SWING_SKILL_CAP : (null as number | null),
@@ -2428,8 +2568,16 @@ async function rollAction(
     // The attribute a skill or attribute roll is based on, as a tag a condition's rolls can name (API 1.42.0),
     // and the sense a Perception roll is made by (API 1.63.0).
     // Since 1.65.0 an attack's roll also carries the tags a `gworld.attackModifiers` listener added.
-    ...(target.dataset.basedOn || target.dataset.sense || (hooked?.tags ?? []).length
-      ? { tags: [target.dataset.basedOn, target.dataset.sense, ...(hooked?.tags ?? [])].filter((t): t is string => typeof t === "string" && Boolean(t)) }
+    // A Head Butt says so, so a parry can turn it back on the butter's face (Revised p. 334).
+    ...(target.dataset.basedOn || target.dataset.sense || (hooked?.tags ?? []).length || (rollType === "attack" && target.dataset.naturalKey === "headButt")
+      ? {
+          tags: [
+            target.dataset.basedOn,
+            target.dataset.sense,
+            ...(hooked?.tags ?? []),
+            ...(rollType === "attack" && target.dataset.naturalKey === "headButt" ? ["headButt"] : []),
+          ].filter((t): t is string => typeof t === "string" && Boolean(t)),
+        }
       : {}),
     // Who is being looked for: the one token targeted, on a roll to detect (API 1.63.0).
     ...(rollType !== "attack" && targetedTokens().length === 1 && targetedTokens()[0]?.actor
@@ -3070,6 +3218,8 @@ interface RangedShot {
   cover?: CoverApproach | "none";
   /** +1 to the target's Dodge where they have seen a laser dot within its range. */
   dodgeBonus?: number;
+  /** Lines for the target's defenses: a Prediction Shot's penalty to Dodge only (Revised p. 577). */
+  defenseModifiers?: Array<{ label: string; value: number; defenses?: AddonDefenseKey[] }>;
   /** The laser sight as the dialog left it: on, and whether the target saw the dot (p. 411). */
   laser?: { on: boolean; targetSees: boolean } | null;
   /** What the modules' attack options chosen in the dialog add up to. */
@@ -3426,6 +3576,10 @@ export async function promptForRangedAttack(options: {
   weaponTargets?: WeaponTarget[];
   /** Set for a Gunslinger's gun (Characters p. 58; since 1.163.0). */
   gunslinger?: GunslingerWeapon | null;
+  /** Set for a Heroic Archer's bow (Basic Set Revised p. 327): the dialog asks for a stunt-shot penalty (since 1.184.0). */
+  heroicArcher?: HeroicArcherWeapon | null;
+  /** What a quick ready left on this shot (since 1.184.0). */
+  quickReady?: number;
 }): Promise<RangedShot | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Ranged.${key}`);
   const addonContext = attackContextFor({
@@ -3539,6 +3693,7 @@ export async function promptForRangedAttack(options: {
         </select>
       </label>
       ${field("modifier", game.i18n.localize("GWORLD.Chat.Modifier"), "0")}
+      ${options.heroicArcher ? field("stunt", game.i18n.localize("GWORLD.HeroicArcher.StuntPenalty"), "0") : ""}
       <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>${L("Situation")}</span>
         <select name="situation" style="width:150px">
@@ -3592,6 +3747,8 @@ export async function promptForRangedAttack(options: {
       speed: num("speed"),
       size: num("size"),
       modifier: num("modifier"),
+      // A stunt shot's penalty, entered as a penalty whichever sign it is typed with.
+      stunt: options.heroicArcher ? -Math.abs(num("stunt")) : 0,
       shots: options.fixedShots ? options.fixedShots : rateOfFire > 1 || mayRaise ? num("shots") : 1,
       situation: situation as RangedInput["situation"],
       sight,
@@ -3647,6 +3804,7 @@ export async function promptForRangedAttack(options: {
         const form = root.closest<HTMLElement>(".application") ?? root;
         showRangedBreakdown(root, readForm(form) as Parameters<typeof showRangedBreakdown>[1], options);
       };
+      wireIllumination(root);
       root.addEventListener("change", update);
       root.addEventListener("input", update);
       update();
@@ -3679,6 +3837,15 @@ export async function promptForRangedAttack(options: {
   }
   const shellsFired = burst;
 
+  // A Ranged Rapid Strike (Revised p. 577) needs RoF 2 or more, no Dual-Weapon
+  // Attack, and a split of the RoF that leaves the other target a shot.
+  const rapid = rapidStrikeCheck(input.revised, { rateOfFire: effectiveRateOfFire, shots: burst, dual: input.dual != null });
+  if (rapid && "refusal" in rapid) {
+    ui.notifications?.warn(rapid.refusal);
+    return null;
+  }
+  if (rapid) ui.notifications?.info(game.i18n.format("GWORLD.RevisedRanged.RapidOther", { other: rapid.other }));
+
   // Each shell may be several pellets, which count as shots of their own.
   const pellets = multipleProjectiles({
     shotsFired: shellsFired,
@@ -3710,6 +3877,7 @@ export async function promptForRangedAttack(options: {
     lockedOn: input.lockedOn === true,
     dualWeapon: input.dual ?? null,
     defensePenalty: extras.defensePenalty,
+    defenseModifiers: revisedRangedDefenseModifiers(input.revised),
     weaponStrike: extras.weaponStrike,
     laser: { on: input.laser?.on === true, targetSees: input.laser?.targetSees === true },
     // "But if the target can see it, he gets +1 to Dodge!"
@@ -3757,6 +3925,8 @@ interface RangedInput {
   lockedOn?: boolean;
   /** The Revised edition's optional ranged rules, from the dialog's extra fields (since 1.182.0). */
   revised?: RevisedRangedInput | null;
+  /** The GM's penalty for a stunt shot, negative, which a Heroic Archer halves (since 1.184.0). */
+  stunt?: number;
 }
 
 /** What firing from a vehicle adds to a shot. */
@@ -3875,6 +4045,8 @@ export function rangedModifiers(
     gunslinger?: GunslingerWeapon | null;
     /** A Heroic Archer's bow (Basic Set Revised p. 327; since 1.166.0). */
     heroicArcher?: HeroicArcherWeapon | null;
+    /** The penalty a Heroic Archer's quick ready leaves on this attack, negative, or 0 (since 1.184.0). */
+    quickReady?: number;
     /** Levels bought in Close Combat, which buy back Bulk in close combat (Revised p. 334; since 1.171.0). */
     closeCombatLevels?: number;
   },
@@ -3927,7 +4099,7 @@ export function rangedModifiers(
   // In close combat the speed/range penalty is dropped and Bulk stands in its
   // place: the target is right there, and the weapon is in the way.
   // Simplified Range (Revised p. 577) reads a band in place of the table's range.
-  const banded = simplifiedRangeOn() ? simplifiedRange(seenRange) : null;
+  const banded = simplifiedRangeOn() ? simplifiedRange(seenRange, input.revised?.bandShift ?? "none") : null;
   const rangeValue = banded ? banded.penalty : speedRange;
   if (banded && banded.penalty !== 0 && situation !== "closeCombat" && steering.range) {
     modifiers.push({
@@ -4179,6 +4351,16 @@ export function rangedModifiers(
   // A Heroic Archer's bow gives its Acc without an Aim maneuver, and another
   // +1 or +2 for one or two seconds of it (Revised p. 327); a Move and Attack
   // or close combat ignores Bulk in its place.
+  if (heroic && !gunslinger) {
+    // The bow was readied in no time on this turn, at a price on the shot (p. 327).
+    if ((weapon.quickReady ?? 0) < 0) {
+      modifiers.push({ label: L("HeroicArcherQuickReady"), value: weapon.quickReady as number, key: "heroicArcher", heroicArcher: "quickReady" });
+    }
+    // A stunt shot's penalty, the GM's to set, is halved for a Heroic Archer.
+    if ((input.stunt ?? 0) < 0) {
+      modifiers.push({ label: L("HeroicArcherStunt"), value: heroicHalvedPenalty(input.stunt as number), key: "heroicArcher", heroicArcher: "stunt" });
+    }
+  }
   if (heroic && !gunslinger && !heroicWaived) {
     if (!accuracyClaimed && weapon.accuracy !== 0) {
       modifiers.push({ label: L("HeroicArcherAccuracy"), value: weapon.accuracy, key: "heroicArcher", heroicArcher: "accuracy" });
@@ -4323,7 +4505,8 @@ function sightField(): string {
   <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
     <span>${game.i18n.localize("GWORLD.Sight.Darkness")}</span>
     <input type="number" name="darkness" value="0" min="0" max="9" step="1" style="width:90px">
-  </label>`;
+  </label>
+  ${illuminationFields()}`;
 }
 
 /** What the chosen sight costs, as a modifier line. */
@@ -4616,6 +4799,8 @@ export async function promptForMeleeAttack(options: {
   defensePenalty: number;
   /** FP the chosen options cost, to be paid before the roll. */
   fatigue: number;
+  /** The combat options of extra effort bought for this attack, for the cap of one a turn (Revised p. 571). */
+  extras: CombatExtra[];
   /** True when Mighty Blows was bought, for the damage roll to collect. */
   mightyBlows: boolean;
   /** Whether Flurry of Blows was bought for a Rapid Strike (since 1.27.0). */
@@ -4778,7 +4963,9 @@ export async function promptForMeleeAttack(options: {
         // Move and Attack and a Wild Swing both hold skill to 9 (pp. 365, 388),
         // so the ceiling is shown rather than sprung at roll time. The same
         // pair the roll itself caps on.
-        const cap = options.actor?.system?.maneuver === "moveAndAttack" || answers.wildSwing
+        // A Heroic Charge ignores it (Revised p. 571).
+        const cap = (options.actor?.system?.maneuver === "moveAndAttack" || answers.wildSwing)
+          && !answers.addonValues?.["gworld.heroicCharge"]
           ? WILD_SWING_SKILL_CAP
           : null;
         drawBreakdown(root, rollBreakdown(Number(options.effectiveSkill) || 0, [
@@ -4786,6 +4973,7 @@ export async function promptForMeleeAttack(options: {
           { modifiers, automatic: false },
         ], { cap }));
       };
+      wireIllumination(root);
       root.addEventListener("change", update);
       root.addEventListener("input", update);
       update();
@@ -4865,7 +5053,19 @@ export async function promptForMeleeAttack(options: {
   const { modifiers, deception, flurried, aimed, addon, groundPenalty, dualDefense } = assembled;
 
   const mightyBlows = mighty && effortAllowed;
+  // No more than one offensive option a turn, counting this round's so far (Revised p. 571).
+  const extras: CombatExtra[] = [
+    ...(flurried ? (["flurry"] as const) : []),
+    ...(mightyBlows ? (["mightyBlows"] as const) : []),
+    ...extrasOfOptions(addonValues),
+  ];
+  const overCap = extrasCapRefusal(options.actor, extras);
+  if (overCap) {
+    ui.notifications?.warn(overCap);
+    return null;
+  }
   return {
+    extras,
     wildSwing: wildSwing === true,
     stopThrustBonus: options.stopThrust ? stopThrustBonus(stopThrustYards) : 0,
     addon,
@@ -4952,7 +5152,8 @@ export async function handleDamageAction(
     ? { index: modeIndex, ranged: itemRow.dataset.ranged === "1", ...(itemRow.dataset.derivedMode ? { derived: itemRow.dataset.derivedMode } : {}) }
     : null;
 
-  const modifiers = await maybePromptModifiers(event);
+  // A wildcard's ST and damage bonus (Revised p. 333) is offered on the damage roll's dialog.
+  const modifiers = await maybePromptModifiers(event, [], actor, { kind: "damage", skill: target.dataset.rollSkill });
   if (modifiers === null) return;
 
   // Which hit of the row's last attack this is (since API 1.154.0): each roll
@@ -4988,6 +5189,7 @@ export async function handleDamageAction(
         damageModifier: Number(target.dataset.damageModifier) || 0,
         minSt: target.dataset.minSt ? Number(target.dataset.minSt) || null : null,
         naturalKey: target.dataset.naturalKey ?? "",
+        rigidHelm: rigidHelmWorn([...(actor?.items ?? [])].filter((item: any) => item?.type === "armor")),
         unarmedBonusSkill: target.dataset.unarmedBonusSkill ?? "",
         weaponMasterPerDie: Number(target.dataset.weaponMasterPerDie) || 0,
         dx: Number(actor?.system?.derived?.attributes?.DX) || 10,
@@ -5181,18 +5383,56 @@ function rollKind(rollType: string | undefined): RollKind {
  * Shift-click asks for a situational modifier. Returns null when the prompt is
  * dismissed, meaning the caller should abandon the roll entirely.
  */
-export async function maybePromptModifiers(event: Event, held: HeldLine[] = [], actor: any = null): Promise<RollModifier[] | null> {
+export async function maybePromptModifiers(
+  event: Event,
+  held: HeldLine[] = [],
+  actor: any = null,
+  /**
+   * What the roll is: its `kind` (with `skill`) lets the dialog offer the wildcard, Talent and
+   * equipment bonuses that go with it, and its `rollType` and `basedOn` the Fatigue-for-Skill
+   * spinner and the fall check.
+   */
+  context: Partial<BonusRollContext> & { rollType?: string | undefined; basedOn?: string | undefined; vision?: boolean } = {},
+): Promise<RollModifier[] | null> {
+  const rolling: BonusRollContext | null = context.kind ? { kind: context.kind, ...(context.skill !== undefined ? { skill: context.skill } : {}) } as BonusRollContext : null;
   // A complementary skill's bonus is put to the roller before the roll, not
   // only on shift-click, so that it is seen and can be discarded.
   const discardable = held.some((m) => m.heldId !== undefined);
-  if (!(event as MouseEvent).shiftKey && !discardable) return [];
+  // The Revised edition's bonuses (wildcard, Talent, bonded gear) are offered
+  // in the roll's dialog, which opens for them on a plain click too.
+  const offers = actor && rolling ? bonusOffers(actor, rolling) : null;
+  const offered = offers && rolling && anyOffered(offers) ? { offers, context: rolling } : undefined;
+  if (!(event as MouseEvent).shiftKey && !discardable && !offered) return [];
 
-  const value = await promptForModifier(held, discardable && actor
-    ? async (ids) => { for (const id of ids) await removePendingModifier(actor, id); }
-    : undefined);
-  if (value === null) return null;
-  if (value === 0) return [];
-  return [{ label: game.i18n.localize("GWORLD.Chat.Situational"), value }];
+  // Trading Fatigue for Skill or Resistance is a spinner in the dialog (Basic
+  // Set Revised p. 572), where the switch is on, on a skill or attribute roll.
+  const tradeable = isRuleOn("fatigueForSkill") && actor?.isOwner && (context.rollType === "skill" || context.rollType === "attribute");
+  const tradeMax = tradeable ? Math.min(FATIGUE_TRADE_MAX, Math.max(0, Math.floor(Number(actor?.system?.fp?.value) || 0))) : 0;
+  const asked = await askForModifier(
+    held,
+    discardable && actor
+      ? async (ids) => { for (const id of ids) await removePendingModifier(actor, id); }
+      : undefined,
+    offered,
+    {
+      tradeMax,
+      fall: context.rollType === "attribute" && context.basedOn === "DX",
+      resistance: context.rollType === "attribute",
+      vision: context.vision === true,
+    },
+  );
+  if (asked === null) return null;
+  const lines: RollModifier[] = [];
+  if (asked.value !== 0) lines.push({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: asked.value, key: "situational" });
+  lines.push(...asked.lines);
+  if (asked.tradeFp > 0) {
+    // 1 FP per +1, paid before the roll; a roller who can't pay does not get it.
+    const bonus = fatigueForSkillBonus(asked.tradeFp);
+    if (!(await spendFatigue(actor, bonus, game.i18n.localize("GWORLD.ExtraEffort.TradeTitle")))) return null;
+    lines.push({ label: game.i18n.localize(context.rollType === "attribute" ? "GWORLD.ExtraEffort.TradeResistanceLine" : "GWORLD.ExtraEffort.TradeSkillLine"), value: bonus });
+  }
+  if (asked.fall) lines.push(...fallRollLines(actor, ["fall"]));
+  return lines;
 }
 
 /** The individual d6 faces from an evaluated Roll. */

@@ -17,9 +17,6 @@ export const WILDCARD_SOURCE = "wildcard";
 const L = (key: string) => game.i18n.localize(`GWORLD.Wildcard.${key}`);
 const F = (key: string, data: Record<string, unknown>) => game.i18n.format(`GWORLD.Wildcard.${key}`, data);
 
-/** Categories the book halves as a matter of course: active defenses aside, only Accuracy and direct damage ("best halved"). */
-const HALVED_BY_DEFAULT: ReadonlySet<WildcardCategory> = new Set(["accuracy"]);
-
 /** Asks the GM's category for a wildcard's bonus and holds it for the next roll. */
 export async function grantWildcardBonus(actor: any, skill: { name: string; relativeLevel: number }): Promise<boolean> {
   if (!isRuleOn("wildcardBonus") || !actor?.isOwner) return false;
@@ -53,7 +50,8 @@ export async function grantWildcardBonus(actor: any, skill: { name: string; rela
   const value = wildcardBonus({
     relativeLevel: skill.relativeLevel,
     category,
-    halve: (answer as any).halve === true || HALVED_BY_DEFAULT.has(category),
+    // Accuracy is halved of itself (`wildcardHalved`); the rest as the GM ticks it.
+    halve: (answer as any).halve === true,
   });
   if (value === 0) return false;
   // Never stacks with itself: this wildcard's bonus already held (its name is in the line) is replaced.

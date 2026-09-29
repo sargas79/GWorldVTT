@@ -96,3 +96,49 @@ export function cureByPoints(options: { stress: number; derangement: number; poi
   if (options.target === "stress") return { stress: 0, derangement: options.derangement };
   return { stress: options.stress, derangement: Math.max(0, options.derangement - 2 * points) };
 }
+
+/** Seconds of rest that shed 1 Stress (p. 573): 10 minutes. */
+export const STRESS_SECONDS = 600;
+
+/** Seconds in a day, for the Derangement roll at a day's end (p. 573). */
+export const DAY_SECONDS = 86400;
+
+/**
+ * Stress shed as the world clock moves: 1 per 10 minutes, with the seconds
+ * that did not make a whole 10 minutes carried to the next advance.
+ */
+export function stressShedByClock(carrySeconds: number, elapsedSeconds: number): { shed: number; carry: number } {
+  const total = Math.max(0, carrySeconds) + Math.max(0, elapsedSeconds);
+  const shed = Math.floor(total / STRESS_SECONDS);
+  return { shed, carry: total - shed * STRESS_SECONDS };
+}
+
+/**
+ * The days that ended as the clock went from `from` to `to`, each as the time
+ * it began, oldest first, at most `limit` of the latest: a day's end is a
+ * midnight of world time.
+ */
+export function daysEnded(from: number, to: number, limit = 30): number[] {
+  if (!(to > from)) return [];
+  const first = Math.floor(from / DAY_SECONDS) + 1;
+  const last = Math.floor(to / DAY_SECONDS);
+  const days: number[] = [];
+  for (let boundary = Math.max(first, last - limit + 1); boundary <= last; boundary++) days.push((boundary - 1) * DAY_SECONDS);
+  return days;
+}
+
+/**
+ * Whether a day that began at `dayStart` inflicted no new Stress or
+ * Derangement, given when the last hardship was inflicted (p. 573).
+ */
+export function dayWasQuiet(dayStart: number, lastHardship: number | null): boolean {
+  return lastHardship === null || lastHardship < dayStart || lastHardship >= dayStart + DAY_SECONDS;
+}
+
+/** The Derangement roll for supernatural powers: Derangement/2, worse; a bonus to use an evil power, a penalty to resist it (p. 573). */
+export function derangementPowerModifier(derangement: number, options: { evil: boolean; resisting: boolean }): number {
+  const size = Math.ceil(Math.max(0, derangement) / 2);
+  if (size === 0) return 0;
+  if (options.evil) return options.resisting ? -size : size;
+  return options.resisting ? 0 : -size;
+}

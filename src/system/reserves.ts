@@ -100,6 +100,20 @@ export async function restoreReserve(actor: any, origin: string, amount: number)
 }
 
 /**
+ * Edits a reserve from the sheet: a positive change gives points back, a
+ * negative one spends them, "full" refills it. Only what the reserve holds can
+ * be spent and only what it has used can be restored. Returns the points moved.
+ */
+export async function adjustReserve(actor: any, origin: string, change: number | "full"): Promise<number> {
+  if (!actor?.isOwner && !game.user?.isGM) return 0;
+  const held = reservesOf(actor).find((r) => r.key === originKey(origin));
+  if (!held) return 0;
+  if (change === "full") return restoreReserve(actor, origin, held.max);
+  if (change < 0) return (await chargeReserve(actor, origin, -change)).reserve;
+  return restoreReserve(actor, origin, change);
+}
+
+/**
  * Lets time recharge a character's reserves. Returns the new state where
  * anything changed, or null.
  */
@@ -124,6 +138,25 @@ export async function rechargeFor(actor: any, seconds: number): Promise<void> {
   if (!actor?.isOwner && !game.user?.isGM) return;
   const next = rechargedReserves(actor, seconds);
   if (next) await actor.update({ "system.session.reserves": next });
+}
+
+/**
+ * A rest recharges reserves through the same minutes as it recovers FP
+ * ("if you do rest, you recover FP at the same time", p. 326). Returns the
+ * points each reserve gained, for the rest's card.
+ */
+export async function rechargeForRest(actor: any, seconds: number): Promise<Array<{ origin: string; gained: number; value: number; max: number }>> {
+  if (!actor?.isOwner && !game.user?.isGM) return [];
+  const used = usedOf(actor);
+  const next = rechargedReserves(actor, seconds);
+  if (!next) return [];
+  await actor.update({ "system.session.reserves": next });
+  return reservesOf(actor)
+    .map((r) => {
+      const gained = Math.max(0, (used[r.key]?.spent ?? 0) - (next[r.key]?.spent ?? 0));
+      return { origin: r.origin, gained, value: reserveValue(r.max, next[r.key]?.spent ?? 0), max: r.max };
+    })
+    .filter((r) => r.gained > 0);
 }
 
 /** Registers the world-time hook that recharges every reserve as the clock moves. */
