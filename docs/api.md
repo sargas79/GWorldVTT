@@ -4163,3 +4163,22 @@ runs again on the next load. Each helper returns
   skill, and Close Combat levels buy off a ranged weapon's Bulk. Not done: a
   parried Head Butt hurting the butter's face and a Stamp Kick's target
   restriction are pure rules only, not enforced on the cards.
+- **Pulling Rank** (since 1.172.0; Basic Set Revised pp. 337-341). A Rank trait
+  takes `system.patronValue` (10-30, never paid) beside its `pointsPerLevel`;
+  the modifier record Capricious Assistance (-50%, Rank group) is in the addendum
+  modifiers. `rules.baseAssistanceRoll`, `keyRank`, `assistanceLines`,
+  `assistanceTarget`, `assistanceOutcome` (with the Capricious ladder), `rankUsed`,
+  `rankCostPerLevel`, `costWithinTables`, `patronRangeForCost`, `ASSISTANCE_TYPES`
+  and the numeric rows (`cashAmount`, `cashModifier`, `consultationSkill`,
+  `facilitiesBonus`, `generalizedAssistanceBonus`, `responderCount`,
+  `licenseModifier`, `warrantHours`, `muscleSkill`) are the figures. Wired behind
+  the rules switch `pullingRank` (rolls group, off): an "Assistance roll" button on
+  a Rank trait that has a Patron value opens a dialog (aid type, Rank used,
+  appropriateness, previous requests counted in the actor flag `assistanceRolls`,
+  Reputation, Charisma and Smooth Operator from the sheet), rolls the target as a
+  skill roll tagged `assistance` (skill `Assistance Roll`, so a complementary
+  bonus held for that master skill applies and Luck is honoured as for any skill
+  roll) and posts a card with the outcome ladder and the aid's figures. Not done:
+  the aid itself (money, people, equipment) is reported, never handed over; the
+  two tables are recommendations, not enforced on the item sheet; Buying Success
+  is the roll dialog's own.

@@ -636,6 +636,10 @@
           "Name": "Bonuses for wildcard skills",
           "Hint": "A positive relative level with a wildcard skill also works as a bonus to what the GM judges related to it. A button on the wildcard holds the bonus for the next roll of a category the GM picks (Basic Set Revised p. 333)."
         },
+        "pullingRank": {
+          "Name": "Pulling Rank",
+          "Hint": "Rank as an effective Patron: a Rank trait with the organization’s Patron value gets an Assistance roll, 3d against a number that rises with Rank (Basic Set Revised pp. 337-341)."
+        },
         "teamEfforts": {
           "Name": "Team efforts",
           "Hint": "The party rolls once in a skill, on the Party sheet: the best member’s level, plus one for each who knows it, less the size of the group."
@@ -4664,6 +4668,94 @@
         "off": "not in a slot of its alternative set",
         "disabled": "its alternative set is disabled",
         "unpowered": "no points spent to use it"
+      }
+    },
+    "PullingRank": {
+      "PatronValue": "Patron value",
+      "PatronValueHint": "A Rank trait only: the hypothetical Patron value of the organization, 10 to 30 points, which the character never pays. It sets the Rank an Assistance roll needs.",
+      "Roll": "Assistance roll",
+      "RollHint": "Ask the organization for aid: 3d against the Assistance Rolls Table number for this Rank.",
+      "Reset": "New adventure",
+      "ResetHint": "Start the count of previous Assistance Rolls over.",
+      "NoPatronValue": "Give the Rank trait a Patron value and a cost per level first.",
+      "DialogTitle": "Assistance roll: {name}",
+      "DialogHint": "Patron value {value}, {cost} points a level: key Rank {key}, base roll {base} at the Rank held.",
+      "Aid": "Aid asked for",
+      "RankUsed": "Rank used",
+      "RankHint": "Your own Rank; a group’s highest (+1 with a leader of higher Rank); or a preauthorizing NPC’s.",
+      "InWorld": "In-world appropriateness",
+      "Meta": "Meta-game appropriateness",
+      "Innate": "Aid’s own modifier",
+      "Previous": "Previous requests this adventure",
+      "Reputation": "Reputation with the organization",
+      "PersonToPerson": "Made person to person (Charisma, Smooth Operator)",
+      "ControlRating": "Local CR (License, Shipping)",
+      "LegalityClass": "Item LC (License, Shipping)",
+      "Night": "At night (Warrant)",
+      "Returned": "For show, to be returned (Cash)",
+      "TechLevel": "TL (Facilities)",
+      "Auto": {
+        "charisma": "Charisma {value}",
+        "smoothOperator": "Smooth Operator {value}",
+        "complementary": "Complementary skill held: {value}"
+      },
+      "Label": "{name}: {aid}",
+      "Title": "Assistance roll",
+      "TooLow": "Target {target}: under 3, no attempt is possible.",
+      "Line": {
+        "inWorld": "In-world appropriateness",
+        "meta": "Meta-game appropriateness",
+        "innate": "Type of assistance",
+        "previous": "Previous requests",
+        "charisma": "Charisma",
+        "smoothOperator": "Smooth Operator",
+        "reputation": "Reputation",
+        "complementary": "Complementary skill"
+      },
+      "Outcome": {
+        "aid": "The aid asked for arrives.",
+        "aidComplicated": "The aid comes with a minor downside, or a benefit other than the one asked for.",
+        "none": "No aid.",
+        "noneDrawback": "Nothing, or an unpredictable benefit outweighed by a major drawback.",
+        "disciplinary": "No aid, and disciplinary action.",
+        "disaster": "Disaster."
+      },
+      "Figure": {
+        "cash": "Up to ${amount}.",
+        "consultation": "Contact Group at skill {skill}.",
+        "facilities": "Equipment bonus {bonus}.",
+        "generalized": "Complementary bonus: {crit} on a critical success, {success} on a success, -1 on a failure, -2 on a critical failure.",
+        "people": "Up to {count} people, skills 1d+9.",
+        "warrantDay": "Ready in 1d hours.",
+        "warrantNight": "Ready in 1d+8 hours."
+      },
+      "Type": {
+        "anyAssistance": "Any Assistance Available",
+        "bailout": "Bailout",
+        "cash": "Cash",
+        "consultation": "Consultation",
+        "coverUp": "Cover-Up",
+        "disappearance": "Disappearance",
+        "entryClearance": "Entry Clearance",
+        "evacuation": "Evacuation",
+        "facilities": "Facilities",
+        "falseId": "False ID",
+        "files": "Files",
+        "fireSupport": "Fire Support",
+        "gear": "Gear",
+        "generalizedAssistance": "Generalized Assistance",
+        "insertionExtraction": "Insertion/Extraction",
+        "introduction": "Introduction",
+        "invitation": "Invitation",
+        "license": "License",
+        "muscle": "Muscle",
+        "recordsSearch": "Records Search",
+        "safehouse": "Safehouse",
+        "shipping": "Shipping",
+        "technicalMeans": "Technical Means",
+        "theCavalry": "The Cavalry",
+        "transportation": "Transportation",
+        "warrant": "Warrant"
       }
     },
     "Wildcard": {

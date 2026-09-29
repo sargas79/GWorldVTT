@@ -111,6 +111,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "teamEfforts", reference: "Basic Set Revised p. 185", default: true },
     // A wildcard skill's positive relative level as a bonus to related rolls.
     { key: "wildcardBonus", reference: "Basic Set Revised p. 333", default: false },
+    // Rank as an effective Patron: Assistance Rolls (Addendum 2). Optional, an organization's help by dice.
+    { key: "pullingRank", reference: "Basic Set Revised p. 337", default: false },
   ],
   activities: [
     { key: "physicalActivities", reference: "Campaigns pp. 349-355", default: true },

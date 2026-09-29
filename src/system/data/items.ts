@@ -263,6 +263,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
   declare maxLevels: number;
   declare reactionModifier: number;
   declare noReactionBonus: boolean;
+  declare patronValue: number;
   declare alternativeGroup: string;
   declare alternativeSlots: number;
   declare alternativeActive: boolean;
@@ -391,6 +392,11 @@ export class TraitData extends foundry.abstract.TypeDataModel {
        * with none (Basic Set Revised pp. 324-325): it gives no reaction bonus.
        */
       noReactionBonus: new fields.BooleanField({ required: true, initial: false }),
+      /**
+       * The Patron value of the organization behind a Rank trait, 10 to 30, or 0 for none
+       * (Basic Set Revised p. 337). Never paid: it sets how much Rank an Assistance Roll needs.
+       */
+      patronValue: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
       /**
        * The alternative set this ability belongs to (Basic Set Revised p. 324),
        * blank for none. The dearest abilities of a set pay full price, the rest a

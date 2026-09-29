@@ -62,7 +62,8 @@ describe("the rule catalogue", () => {
     // changes every damage figure a player already knows. Study of attributes
     // is a GM's option, not a book rule (Characters pp. 290, 292).
     // The wildcard bonus is headed "optionally" (Basic Set Revised p. 333).
-    expect(off.sort()).toEqual(["bleeding", "closeCombatAnyWeapon", "damageToShields", "familiarity", "modifyingDiceAdds", "studyAttributes", "wildcardBonus"]);
+    // Pulling Rank is a workaround the book offers for hierarchical organizations (p. 337).
+    expect(off.sort()).toEqual(["bleeding", "closeCombatAnyWeapon", "damageToShields", "familiarity", "modifyingDiceAdds", "pullingRank", "studyAttributes", "wildcardBonus"]);
   });
 
   /**

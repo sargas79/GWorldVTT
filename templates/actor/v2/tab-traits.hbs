@@ -194,6 +194,12 @@
               <button type="button" class="v2-button v2-button-steel" data-action="v2ReadyAlternative"
                       data-tooltip="{{localize 'GWORLD.Alternative.ReadyHint'}}">{{localize "GWORLD.Alternative.Ready"}}</button>
             {{/if}}
+            {{#if (and @root.editable row.assistanceRank)}}
+              <button type="button" class="v2-button v2-button-steel rollable" data-action="v2AssistanceRoll"
+                      data-tooltip="{{localize 'GWORLD.PullingRank.RollHint'}}">{{> "gworld.die"}} {{localize "GWORLD.PullingRank.Roll"}}</button>
+              <button type="button" class="v2-button" data-action="v2AssistanceReset"
+                      data-tooltip="{{localize 'GWORLD.PullingRank.ResetHint'}}">{{localize "GWORLD.PullingRank.Reset"}}</button>
+            {{/if}}
             {{#if (and @root.editable row.pointPowered)}}
               {{#if row.pointPoweredActive}}
                 <button type="button" class="v2-button" data-action="v2EndPointPowered"

@@ -752,5 +752,20 @@
       "description": "",
       "reference": "Basic Set: Characters p. 332"
     }
+  },
+  {
+    "_id": "c2e9a7d41b5f0836",
+    "name": "Capricious Assistance",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -50,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Rank",
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 338"
+    }
   }
 ]

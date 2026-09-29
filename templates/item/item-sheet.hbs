@@ -391,6 +391,15 @@
       </div>
       <p class="ihint">{{localize "GWORLD.Trait.LearnableHint"}}</p>
 
+      {{!-- Rank as an effective Patron (Basic Set Revised p. 337). --}}
+      <div class="ifields">
+        <label>{{localize "GWORLD.PullingRank.PatronValue"}}
+          <input type="number" name="system.patronValue" value="{{system.patronValue}}" min="0" max="30" step="5"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.PullingRank.PatronValueHint"}}</p>
+
       {{!-- Alternative abilities, character point-powered abilities and a
            Talent's replaced reaction bonus (Basic Set Revised pp. 324-325). --}}
       <div class="ifields">

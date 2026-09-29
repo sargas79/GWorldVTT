@@ -61,6 +61,7 @@ import { promptForComplementary, rollComplementary } from "../complementary.js";
 import { endPointPowered, promptPointPowered, readyAlternative } from "../alternative-abilities.js";
 import { alternativeKey } from "../../rules/alternative-abilities.js";
 import { grantWildcardBonus } from "../wildcard-bonus.js";
+import { isAssistanceRank, resetAssistanceCount, rollAssistance } from "../pulling-rank.js";
 import { isWildcardSkill } from "../../rules/skills.js";
 import { armorByArea, asGearSort, canStow, readiedItems, sortGear, type GearSort } from "../sheet-v2/inventory-view.js";
 import {
@@ -127,6 +128,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2Complementary: GWorldCharacterSheetV2.#onComplementary,
       v2WildcardBonus: GWorldCharacterSheetV2.#onWildcardBonus,
       v2ReadyAlternative: GWorldCharacterSheetV2.#onReadyAlternative,
+      v2AssistanceRoll: GWorldCharacterSheetV2.#onAssistanceRoll,
+      v2AssistanceReset: GWorldCharacterSheetV2.#onAssistanceReset,
       v2UsePointPowered: GWorldCharacterSheetV2.#onUsePointPowered,
       v2EndPointPowered: GWorldCharacterSheetV2.#onEndPointPowered,
       v2EditPortrait: GWorldCharacterSheetV2.#onEditPortrait,
@@ -1146,6 +1149,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         reactionModifier: Number(system.reactionModifier ?? 0) || 0,
         selfControl: system.selfControl ?? null,
         alternative: alternativeViewOf(item, context.derived?.alternativeSets ?? []),
+        assistanceRank: isRuleOn("pullingRank") && isAssistanceRank(item),
         pointPowered: system.pointPowered === true,
         pointPoweredActive: system.pointPoweredActive === true,
         weakness: weaknessOf({ name: String(item.name ?? "") }) !== null,
@@ -1810,6 +1814,18 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const score = attribute === "Will" ? Number(derived.will) : attribute === "Per" ? Number(derived.per) : Number(derived.attributes?.[attribute]);
     if (!Number.isFinite(score)) return;
     await grantWildcardBonus(this.actor, { name: String(item.name ?? ""), relativeLevel: level - score });
+  }
+
+  /** Makes an Assistance Roll from a Rank trait with a Patron value (Basic Set Revised pp. 337-339). */
+  static async #onAssistanceRoll(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    if (item) await rollAssistance(this.actor, item);
+  }
+
+  /** Starts the count of previous Assistance Rolls over, for a new adventure. */
+  static async #onAssistanceReset(this: GWorldCharacterSheetV2) {
+    await resetAssistanceCount(this.actor);
   }
 
   /** Readies an alternative ability into its set's slot: a Ready maneuver, or free between attacks (p. 324). */
