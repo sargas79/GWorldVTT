@@ -110,12 +110,13 @@ import { addPendingModifier, pendingModifiers, removePendingModifier, type Pendi
 import { applyItemDamage, type ItemDamaged } from "./item-damage.js";
 import { normalizeDamage } from "./modifying-dice.js";
 import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
+import { simplifiedResourcesApi } from "./simplified-resources.js";
 
 /**
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.179.0";
+export const API_VERSION = "1.183.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -906,6 +907,8 @@ export interface GWorldApi {
   readonly social: typeof socialApi;
   /** Extra effort with powers and FP traded for a bonus (since 1.178.0). */
   readonly effort: typeof effortApi;
+  /** Simplified Resources: ammunition tracked or not, the reload tally (since 1.183.0). */
+  readonly simplifiedResources: typeof simplifiedResourcesApi;
   /** Stress and Derangement (since 1.179.0). */
   readonly mental: typeof mentalApi;
   /** The GM Screen (since 1.157.0): open it, roll on its tables, add a module's tables, lists and tabs. */
@@ -1124,6 +1127,7 @@ export function createApi(): GWorldApi {
     social: socialApi,
     effort: effortApi,
     mental: mentalApi,
+    simplifiedResources: simplifiedResourcesApi,
     gmScreen: gmScreenApi,
     containers: containersApi,
     hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK, partyChanged: PARTY_CHANGED_HOOK, campaignChanged: CAMPAIGN_CHANGED_HOOK }),

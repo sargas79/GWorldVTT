@@ -184,6 +184,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "weaponBreakage", reference: "Campaigns pp. 376, 400, 485", default: true },
     // Shots counted off, Ready maneuvers to put them back, crossbow cocking.
     { key: "reloading", reference: "Campaigns p. 373", default: true },
+    // Five reloads tallied up front; ammunition uncounted until the party is cut off (Addendum 4).
+    { key: "simplifiedResources", reference: "Basic Set Revised p. 578", default: false },
     // Hollow-point, armour-piercing, bodkin points, silver.
     { key: "ammunitionTypes", reference: "Characters pp. 276, 279", default: true },
     // The bruise a mace leaves through mail that stopped it.

@@ -14,7 +14,7 @@ import { COMBAT_HOOKS, callCombatHook } from "./combat-extensions.js";
 import { skillLevelOf } from "./skill-level.js";
 import { isRuleOn } from "./optional-rules.js";
 import { shotsAfterFiring } from "../rules/cinematic.js";
-import { hasInfiniteAmmunition } from "./cinematic.js";
+import { spendsNoAmmunition } from "./simplified-resources.js";
 import { payFor } from "./shopping.js";
 import {
   AMMUNITION_TYPES,
@@ -637,7 +637,7 @@ export async function refundShots(item: any, modeIndex: number, shots: number): 
   const capacity = fullLoad(entry);
   if (entry.thrown || capacity <= 0) return null;
   const loaded = Math.max(0, Number(mode.loaded ?? 0) || 0);
-  if (hasInfiniteAmmunition((item as { actor?: any }).actor ?? null)) return loaded;
+  if (spendsNoAmmunition(item)) return loaded;
   const after = Math.min(capacity, loaded + Math.max(0, Math.floor(Number(shots) || 0)));
   if (after !== loaded) await setLoaded(item, index, after);
   return after;
@@ -662,7 +662,7 @@ export async function spendModeShots(item: any, modeIndex: number, shots: number
   const loaded = Math.max(0, Number(mode.loaded ?? 0) || 0);
   const count = Math.max(0, Math.floor(Number(shots) || 0));
   if (count === 0) return loaded;
-  const infinite = hasInfiniteAmmunition((item as { actor?: any }).actor ?? null);
+  const infinite = spendsNoAmmunition(item);
   const after = shotsAfterFiring({ loaded, fired: count, infinite });
   if (after !== loaded) {
     await setLoaded(item, index, after);
@@ -800,7 +800,7 @@ export async function spendShots(item: any, modeIndex: number, shellsFired: numb
   const after = shotsAfterFiring({
     loaded,
     fired: Math.max(1, Math.floor(shellsFired)),
-    infinite: hasInfiniteAmmunition((item as { actor?: any }).actor ?? null),
+    infinite: spendsNoAmmunition(item),
   });
   if (after === loaded) return;
   await setLoaded(item, modeIndex, after);
