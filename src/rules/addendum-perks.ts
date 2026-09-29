@@ -32,6 +32,8 @@ export interface Perks {
   improvised: string[];
   /** Weapon Bond and Equipment Bond: the items (by name) that are +1. */
   bonds: string[];
+  /** Weapon Bonds and Equipment Bonds held, named or not: each covers one item flagged as bonded. */
+  bondPerks: number;
   /** Alternative Feints: the non-combat skills that may Feint. */
   feintSkills: string[];
   /** Strongbow. */
@@ -44,6 +46,8 @@ export interface Perks {
   noNuisance: string[];
   /** Special Exercises: levels beyond a human maximum, a level a perk. */
   specialExercises: number;
+  /** Special Exercises: those levels by the normalised name of the trait or attribute each raises. */
+  specialExercisesBy: Record<string, number>;
   /** Controllable Disadvantage: the disadvantages that may be inflicted on oneself. */
   controllable: string[];
   /** The Influence Shticks held, and the skill each lets body language carry. */
@@ -71,6 +75,18 @@ export const OFF_HAND_FOR_AMBIDEXTERITY = 5;
 
 /** The name of the technique this perk completely replaces (p. 329). */
 export const OFF_HAND_TECHNIQUE_SUPERSEDED = "Off-Hand Weapon Training";
+
+/** The perk that replaces the technique (p. 329). */
+export const OFF_HAND_PERK = "Off-Hand Training";
+
+/**
+ * The perk that supersedes a technique, or null: Off-Hand Training
+ * "completely replaces" Off-Hand Weapon Training (p. 329), so the sheet
+ * suggests the perk for that technique.
+ */
+export function techniqueSupersededBy(techniqueName: string): string | null {
+  return key(techniqueName) === key(OFF_HAND_TECHNIQUE_SUPERSEDED) ? OFF_HAND_PERK : null;
+}
 
 function key(name: string): string {
   return normalizeSkillName(name).toLowerCase();
@@ -243,6 +259,108 @@ export function maximumWithSpecialExercises(maximum: number, perks: Pick<Perks, 
 }
 
 /**
+ * The levels Special Exercises adds to the maximum of one named trait or
+ * attribute: a level for each perk that names it (p. 329: "one level per
+ * perk"). A perk names what it raises in its specialty.
+ */
+export function specialExercisesFor(perks: Pick<Perks, "specialExercisesBy">, name: string): number {
+  return perks.specialExercisesBy[key(name)] ?? perks.specialExercisesBy[baseKey(name)] ?? 0;
+}
+
+/** A trait's level ceiling once Special Exercises has been counted; null stays null, since no maximum is nothing to raise. */
+export function ceilingWithSpecialExercises(ceiling: number | null, perks: Pick<Perks, "specialExercisesBy">, name: string): number | null {
+  return ceiling === null ? null : ceiling + specialExercisesFor(perks, name);
+}
+
+/** Whether two names are of the same gear or task: the same, or one within the other, without case. */
+function sameThing(a: string, b: string): boolean {
+  const x = a.trim().toLowerCase();
+  const y = b.trim().toLowerCase();
+  return x !== "" && y !== "" && (x === y || x.includes(y) || y.includes(x));
+}
+
+/** Whether a Permit held names this piece of gear (p. 329: each permit is a perk, one for each piece). */
+export function permitCovers(perks: Pick<Perks, "permits">, gearName: string): boolean {
+  return perks.permits.some((permit) => sameThing(permit, gearName));
+}
+
+/**
+ * The No Nuisance Rolls perk that covers a between-scenes task, or null. The
+ * perk's specialty names the task; `names` are the words the task goes by
+ * (a job's title and skill, "travel").
+ */
+export function nuisancePerkFor(perks: Pick<Perks, "noNuisance">, names: readonly string[]): string | null {
+  for (const task of perks.noNuisance) {
+    if (names.some((name) => sameThing(task, name))) return task;
+  }
+  return null;
+}
+
+/** Whether the task's rolls are waived: a perk covers it and every score involved is 16+ (p. 329). */
+export function nuisanceWaivedFor(perks: Pick<Perks, "noNuisance">, names: readonly string[], scores: ReadonlyArray<number>): boolean {
+  return nuisancePerkFor(perks, names) !== null && nuisanceRollsWaived(scores);
+}
+
+/** Whether Controllable Disadvantage names this disadvantage: the specialty without a trailing (P) or (M). */
+export function controllableCovers(perks: Pick<Perks, "controllable">, disadvantage: string): boolean {
+  return perks.controllable.some((c) => sameThing(controllableName(c), disadvantage));
+}
+
+/** The disadvantage a Controllable Disadvantage specialty names, without its (P) or (M) mark. */
+export function controllableName(specialty: string): string {
+  return specialty.replace(/\s*\((?:p|m|physical|mental)\)\s*$/i, "").trim();
+}
+
+/** Whether the specialty marks its disadvantage physical, mental, or neither (p. 328: HT for P, Will for M). */
+export function controllableKind(specialty: string): "physical" | "mental" | null {
+  const mark = /\((p|m|physical|mental)\)\s*$/i.exec(specialty.trim());
+  if (!mark) return null;
+  return mark[1]!.toLowerCase().startsWith("m") ? "mental" : "physical";
+}
+
+/** How long an hour of attempts lasts, in seconds. */
+export const CONTROLLABLE_HOUR = 3600;
+
+/** The attempts made at inflicting one disadvantage in the current hour. */
+export interface ControllableTries {
+  /** World time of the first attempt of this hour. */
+  since: number;
+  count: number;
+}
+
+/**
+ * The attempt this is, given the tries of the hour so far (p. 328: -1 per
+ * additional attempt per hour). A new hour, or none before, is the first.
+ */
+export function nextControllableTry(previous: ControllableTries | null | undefined, now: number): { attempt: number; tries: ControllableTries } {
+  const same = previous && now >= previous.since && now - previous.since < CONTROLLABLE_HOUR;
+  const count = same ? Math.max(0, Math.floor(previous.count)) + 1 : 1;
+  return { attempt: count, tries: { since: same ? previous.since : now, count } };
+}
+
+/**
+ * Whether a piece of gear carries a Weapon Bond or Equipment Bond: it is
+ * flagged as the bonded item, or a bond perk names it (p. 328-329).
+ */
+export function isBonded(perks: Pick<Perks, "bonds" | "bondPerks">, item: { name: string; bonded?: boolean }): boolean {
+  return (item.bonded === true && perks.bondPerks > 0) || bondBonus(perks, item.name) > 0;
+}
+
+/** The +1 a bonded item gives, for a flagged or named item. */
+export function bondFor(perks: Pick<Perks, "bonds" | "bondPerks">, item: { name: string; bonded?: boolean } | null | undefined): number {
+  return item && isBonded(perks, item) ? 1 : 0;
+}
+
+/**
+ * How many more items are flagged as bonded than there are bond perks to
+ * cover: one item for each perk (pp. 328-329). Only the first items covered
+ * count, so this is what the sheet warns about.
+ */
+export function excessBonds(perks: Pick<Perks, "bondPerks">, flaggedItems: number): number {
+  return Math.max(0, Math.floor(flaggedItems) - Math.max(0, perks.bondPerks));
+}
+
+/**
  * Controllable Disadvantage: the number to roll to inflict it on yourself,
  * HT for a physical trait and Will for a mental one, at -1 for each attempt
  * beyond the first in the hour (p. 328).
@@ -259,9 +377,9 @@ export function shtickSkill(perkName: string): string | null {
 /** No perks at all. */
 export function noPerks(): Perks {
   return {
-    dabbler: {}, dabblerSpent: 0, cuttingEdge: {}, offHand: [], improvised: [], bonds: [], feintSkills: [],
-    strongbow: false, classicFeatures: [], permits: [], noNuisance: [], specialExercises: 0, controllable: [],
-    shticks: [],
+    dabbler: {}, dabblerSpent: 0, cuttingEdge: {}, offHand: [], improvised: [], bonds: [], bondPerks: 0, feintSkills: [],
+    strongbow: false, classicFeatures: [], permits: [], noNuisance: [], specialExercises: 0, specialExercisesBy: {},
+    controllable: [], shticks: [],
   };
 }
 
@@ -300,13 +418,19 @@ export function perksOf(traits: readonly HeldPerk[]): Perks {
       case "off-hand training": if (specialty) out.offHand.push(specialty); break;
       case "improvised weapons": if (specialty) out.improvised.push(specialty); break;
       case "weapon bond":
-      case "equipment bond": if (specialty) out.bonds.push(specialty); break;
+      case "equipment bond":
+        out.bondPerks += 1;
+        if (specialty) out.bonds.push(specialty);
+        break;
       case "alternative feints": if (specialty) out.feintSkills.push(specialty); break;
       case "strongbow": out.strongbow = true; break;
       case "classic features": out.classicFeatures.push(specialty); break;
       case "permit": out.permits.push(specialty); break;
       case "no nuisance rolls": out.noNuisance.push(specialty); break;
-      case "special exercises": out.specialExercises += levels; break;
+      case "special exercises":
+        out.specialExercises += levels;
+        if (specialty) out.specialExercisesBy[key(specialty)] = (out.specialExercisesBy[key(specialty)] ?? 0) + levels;
+        break;
       case "controllable disadvantage": if (specialty) out.controllable.push(specialty); break;
       default:
         if (shtickSkill(name)) out.shticks.push(name);

@@ -15,6 +15,8 @@ import { AGED_ATTRIBUTES, agingModifier, agingRoll, diesOfAge } from "../rules/a
 import { CRITICAL_RAISE, jobRoll, type JobKind } from "../rules/jobs.js";
 import { setCondition } from "./conditions.js";
 import { skillLevelOf } from "./skill-level.js";
+import { maximumLevelsOf } from "./advancement.js";
+import { nuisanceWaiver } from "./no-nuisance.js";
 import { resolveSuccess } from "../rules/success.js";
 import { studyLevels, studyPoints, type StudyMethod } from "../rules/study.js";
 import { ATTRIBUTE_COST_PER_LEVEL, BASIC_SPEED_STEP, SECONDARY_COST_PER_LEVEL } from "../rules/attributes.js";
@@ -345,7 +347,8 @@ function traitLevelCost(trait: any): (n: number) => number | null {
   const system = trait?.system ?? {};
   const table: number[] = Array.isArray(system.costTable) ? system.costTable : [];
   const perLevel = Number(system.pointsPerLevel) || 0;
-  const max = Number(system.maxLevels) || 0;
+  // The printed maximum, raised by Special Exercises (Revised p. 329).
+  const max = maximumLevelsOf(trait);
   const levels = Number(system.levels) || 0;
   const cost = (at: number) =>
     traitPoints({
@@ -447,9 +450,13 @@ export async function workAMonth(options: { actor: any; modifier: number }): Pro
 
   const kind = (job.kind === "freelance" ? "freelance" : "wage") as JobKind;
   const target = level + options.modifier;
-  const roll = new Roll("3d6");
-  await roll.evaluate();
-  const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+  // No Nuisance Rolls (Revised p. 329): a month's work is a task between scenes,
+  // and with 16+ in the skill the perk waives the roll. It counts as a roll of 10,
+  // the middle of the curve: paid, no critical.
+  const waived = nuisanceWaiver(actor, [String(job.title ?? ""), String(job.skill ?? ""), "job", "work"], [level]);
+  const roll = waived ? null : new Roll("3d6");
+  if (roll) await roll.evaluate();
+  const outcome = roll ? resolveSuccess(roll.total, target, dieResults(roll)) : resolveSuccess(10, Math.max(target, 11), [3, 3, 4]);
   const result = jobRoll({
     kind,
     success: outcome.success,
@@ -469,6 +476,7 @@ export async function workAMonth(options: { actor: any; modifier: number }): Pro
   if (kind === "freelance" && result.payMultiplier !== 1 && result.payMultiplier > 0) {
     lines.push(game.i18n.format("GWORLD.Life.ByMargin", { percent: Math.round(result.payMultiplier * 100) }));
   }
+  if (waived) lines.push(game.i18n.format("GWORLD.Perks.NuisanceWaived", { task: waived.task }));
   if (result.raise) lines.push(game.i18n.format("GWORLD.Life.Raise", { percent: Math.round(CRITICAL_RAISE * 100) }));
   if (result.disaster) {
     lines.push(
@@ -486,12 +494,12 @@ export async function workAMonth(options: { actor: any; modifier: number }): Pro
       kind: game.i18n.localize(`GWORLD.Life.JobKind.${kind}`),
     }),
     target,
-    dice: dieResults(roll),
-    roll: roll.total,
+    dice: roll ? dieResults(roll) : [],
+    roll: roll ? roll.total : 0,
     lines,
     good: earned > 0,
     bad: result.disaster,
-    rolls: [roll],
+    rolls: roll ? [roll] : [],
   });
 }
 

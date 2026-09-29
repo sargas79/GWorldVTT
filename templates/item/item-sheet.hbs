@@ -419,6 +419,11 @@
           <input type="checkbox" name="system.noReactionBonus" {{checked system.noReactionBonus}}
                  {{#unless editable}}disabled{{/unless}} />
         </label>
+        <label class="wide" data-tooltip="{{localize 'GWORLD.Alternative.TalentBenefitHint'}}">{{localize "GWORLD.Alternative.TalentBenefit"}}
+          <select name="system.talentBenefit" {{#unless editable}}disabled{{/unless}}>
+            {{#each talentBenefits as |option|}}<option value="{{option.key}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>{{/each}}
+          </select>
+        </label>
       </div>
       <p class="ihint">{{localize "GWORLD.Alternative.FieldHint"}}</p>
 
@@ -1101,6 +1106,11 @@
             {{localize check.label}}
           </label>
         {{/each}}
+        <label class="icheck" data-tooltip="{{localize 'GWORLD.Perks.BondedHint'}}">
+          <input type="checkbox" name="system.bonded" {{checked system.bonded}}
+                 {{#unless @root.editable}}disabled{{/unless}} />
+          {{localize "GWORLD.Perks.Bonded"}}
+        </label>
         <label data-tooltip="{{localize 'GWORLD.CostFactor.presentationHint'}}">{{localize "GWORLD.CostFactor.presentation"}}
           <input type="number" name="system.presentation" value="{{system.presentation}}" step="1" min="0" max="3"
                  {{#unless editable}}disabled{{/unless}} />

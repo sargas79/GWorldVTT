@@ -24,6 +24,8 @@ export interface AlternativeMember {
   frozen?: boolean;
   /** An attack, for the free swap between attacks. */
   attack?: boolean;
+  /** Carries a Link enhancement, which a set can't have between its abilities. */
+  linked?: boolean;
 }
 
 /** The divisor of an alternative ability that isn't among the dearest. */
@@ -192,6 +194,112 @@ export function wildcardBonus(options: {
   const level = Math.trunc(Number(options.relativeLevel) || 0);
   if (level <= 0) return 0;
   if ((options.applied ?? []).length > 0) return 0;
-  const halved = options.halve === true || options.activeDefense === true || (options.dice !== undefined && options.dice < 3);
-  return halved ? Math.ceil(level / 2) : level;
+  return wildcardHalved(options) ? Math.ceil(level / 2) : level;
+}
+
+/**
+ * Whether a wildcard's bonus is halved for a roll (p. 333): under three
+ * dice, an active defense, a category the book calls best halved (Accuracy),
+ * or when the GM has said so (a large group all the time, direct damage).
+ */
+export function wildcardHalved(options: { category: WildcardCategory; dice?: number; activeDefense?: boolean; halve?: boolean }): boolean {
+  return options.halve === true
+    || options.category === "accuracy"
+    || options.activeDefense === true
+    || (options.dice !== undefined && options.dice < 3);
+}
+
+/**
+ * The categories of bonus a wildcard can give to a roll of this kind (p. 333):
+ * a to-hit roll takes only Accuracy and an offset against penalties; an
+ * active defense resists, avoids hazards or offsets penalties; a skill or
+ * attribute roll takes the rest but a weapon's Accuracy and ST or damage,
+ * which belong to attacks.
+ */
+export function wildcardCategoriesFor(rollKind: "skill" | "attribute" | "defense" | "attack" | "damage"): readonly WildcardCategory[] {
+  switch (rollKind) {
+    case "attack": return ["accuracy", "penalty"];
+    case "damage": return ["damage"];
+    case "defense": return ["resist", "hazard", "penalty"];
+    default: return ["noSkill", "advantage", "resist", "hazard", "reaction", "penalty", "healing", "others"];
+  }
+}
+
+/** The category a roll offers first: an active defense is resistance; an attack is Accuracy; a plain roll has no skill of its own. */
+export function defaultWildcardCategory(rollKind: "skill" | "attribute" | "defense" | "attack" | "damage"): WildcardCategory {
+  if (rollKind === "defense") return "resist";
+  if (rollKind === "attack") return "accuracy";
+  if (rollKind === "damage") return "damage";
+  return "noSkill";
+}
+
+// ── Links between alternatives (p. 324, drawback 1) ───────────────────────
+
+/** A member of a set that carries a Link enhancement, as the check reads it. */
+export type LinkableMember = Pick<AlternativeMember, "id" | "group"> & {
+  /** The ability has a Link enhancement (p. 106). */
+  linked?: boolean;
+};
+
+/**
+ * The abilities that break the rule "it's impossible to have a Link between"
+ * alternative abilities (p. 324): any member carrying a Link enhancement in a
+ * set of two or more, since a Link ties one ability to another and only the
+ * ones in slots work at a time. Returned by id.
+ */
+export function alternativeLinkConflicts(members: readonly LinkableMember[]): string[] {
+  const sets = new Map<string, LinkableMember[]>();
+  for (const member of members) {
+    const key = alternativeKey(member.group);
+    if (key) sets.set(key, [...(sets.get(key) ?? []), member]);
+  }
+  const out: string[] = [];
+  for (const list of sets.values()) {
+    if (list.length < 2) continue;
+    for (const member of list) if (member.linked === true) out.push(member.id);
+  }
+  return out;
+}
+
+/** Whether a modifier's name is the Link enhancement (with or without a note after it). */
+export function isLinkModifier(name: string): boolean {
+  return /^link\b/i.test(String(name ?? "").trim());
+}
+
+// ── Alternative benefits for Talents (pp. 324-325) ────────────────────────
+
+/**
+ * What a Talent gives in place of its reaction bonus, as the GM chooses
+ * (pp. 324-325): blank keeps the reaction bonus; "none" is no extra benefit;
+ * the rest are the other benefits the book lists, each a bonus the roll
+ * dialog offers as the Talent's levels.
+ */
+export const TALENT_BENEFITS = [
+  "", "none", "influence", "followUp", "defaults", "noSkill", "contests", "advantages", "selfless", "penalty", "feat",
+] as const;
+
+export type TalentBenefit = (typeof TALENT_BENEFITS)[number];
+
+/** A stored value read as one of the benefits; anything unknown is the reaction bonus. */
+export function talentBenefitOf(value: unknown): TalentBenefit {
+  const text = String(value ?? "").trim();
+  return (TALENT_BENEFITS as readonly string[]).includes(text) ? (text as TalentBenefit) : "";
+}
+
+/** Whether a Talent still gives its reaction bonus: no benefit chosen in its place and the flag not set. */
+export function talentGivesReaction(talent: { noReactionBonus?: boolean; benefit?: unknown }): boolean {
+  return talent.noReactionBonus !== true && talentBenefitOf(talent.benefit) === "";
+}
+
+/**
+ * The modifier a Talent's alternative benefit puts on a roll it is offered
+ * for: its levels as a bonus, or for access to a feat (p. 325) the roll at
+ * attribute-4 plus the Talent's level, which is levels - 4 to the attribute.
+ * Nothing for the reaction bonus or for "none".
+ */
+export function talentBenefitBonus(options: { benefit: unknown; levels: number }): number {
+  const benefit = talentBenefitOf(options.benefit);
+  const levels = Math.max(0, Math.floor(Number(options.levels) || 0));
+  if (benefit === "" || benefit === "none") return 0;
+  return benefit === "feat" ? levels - 4 : levels;
 }

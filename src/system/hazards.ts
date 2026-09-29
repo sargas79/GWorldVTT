@@ -41,6 +41,7 @@ import {
   protectedDose, radiationEffect, radiationRow, remainingDose,
 } from "../rules/radiation.js";
 import { skillLevelOf } from "./skill-level.js";
+import { nuisanceWaiver } from "./no-nuisance.js";
 import { dozingOff, sleepRecovery, stayingUpFatigue, wakingDayHours } from "../rules/sleep.js";
 import { resolveSuccess } from "../rules/success.js";
 import type { DamageType } from "../rules/types.js";
@@ -256,9 +257,12 @@ export async function hike(options: {
   // "Hiking defaults to HT-5 for those who have not studied it."
   const hiking = skillLevelOf(actor, "Hiking") ?? attributeOf(actor, "HT") - 5;
   const target = hiking + options.modifier;
-  const roll = new Roll("3d6");
-  await roll.evaluate();
-  const outcome = resolveSuccess(roll.total, target, dieResults(roll));
+  // No Nuisance Rolls (Revised p. 329): getting from A to B is a task between scenes,
+  // and with 16+ in Hiking the perk waives its roll, which counts as made.
+  const waived = nuisanceWaiver(actor, ["hiking", "hike", "travel", "march", "getting from a to b"], [hiking]);
+  const roll = waived ? null : new Roll("3d6");
+  if (roll) await roll.evaluate();
+  const outcome = roll ? resolveSuccess(roll.total, target, dieResults(roll)) : resolveSuccess(10, Math.max(target, 11), [3, 3, 4]);
 
   const miles = dailyMiles({
     move: Number(derived.move) || 0,
@@ -289,17 +293,18 @@ export async function hike(options: {
     F("MarchCost", { hours, perHour, fp: pools.fpLost }),
   ];
   if (pools.hpLost > 0) lines.push(F("FatigueInjury", { hp: pools.hpLost }));
+  if (waived) lines.push(game.i18n.format("GWORLD.Perks.NuisanceWaived", { task: waived.task }));
 
   await post(actor, {
     kind: H("Hike"),
     detail: outcome.success ? H("HikingMade") : H("HikingMissed"),
     target,
-    dice: dieResults(roll),
-    roll: roll.total,
+    dice: roll ? dieResults(roll) : [],
+    roll: roll ? roll.total : 0,
     lines,
     good: outcome.success,
     bad: pools.hpLost > 0,
-    rolls: [roll],
+    rolls: roll ? [roll] : [],
   });
 }
 

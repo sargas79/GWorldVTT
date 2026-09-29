@@ -44,6 +44,7 @@ import {
   calibreOf,
 } from "../../rules/ammunition.js";
 import { EQUIPMENT_QUALITIES } from "../../rules/wealth.js";
+import { TALENT_BENEFITS } from "../../rules/alternative-abilities.js";
 
 const { ItemSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -317,6 +318,12 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       key,
       label: game.i18n.localize(`GWORLD.Modifier.Kinds.${key}`),
       selected: item.system?.kind === key,
+    }));
+    // What a Talent gives in place of its reaction bonus (Revised pp. 324-325).
+    context.talentBenefits = TALENT_BENEFITS.map((key) => ({
+      key,
+      label: game.i18n.localize(key === "" ? "GWORLD.Alternative.Benefit.reaction" : `GWORLD.Alternative.Benefit.${key}`),
+      selected: (item.system?.talentBenefit ?? "") === key,
     }));
     context.locomotions = (["wheels", "tracks", "legs", "runners", "water", "air"] as const).map((key) => ({
       key,

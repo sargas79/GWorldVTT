@@ -6,6 +6,8 @@
 
 import {
   alternativeBilling,
+  alternativeLinkConflicts,
+  isLinkModifier,
   alternativeSets,
   alternativeUsable,
   type AlternativeMember,
@@ -26,6 +28,7 @@ export function memberOf(item: any): AlternativeMember {
     disabled: system.alternativeDisabled === true,
     frozen: system.alternativeFrozen === true,
     attack: attacks,
+    linked: ((system.modifiers ?? []) as Array<{ name?: unknown }>).some((m) => isLinkModifier(String(m?.name ?? ""))),
   };
 }
 
@@ -37,6 +40,8 @@ export interface AlternativeAnalysis {
   billed: Map<string, number>;
   /** Trait ids whose effects don't count, with the reason. */
   inert: Map<string, "off" | "disabled" | "unpowered">;
+  /** Trait ids carrying a Link enhancement inside a set, which p. 324 says can't be (drawback 1). */
+  linkConflicts: string[];
 }
 
 /** Reads a character's trait items for their alternative sets and point-powered abilities. */
@@ -53,6 +58,6 @@ export function analyseAlternatives(items: readonly any[]): AlternativeAnalysis 
       inert.set(member.id, "unpowered");
     }
   });
-  return { members, sets, billed, inert };
+  return { members, sets, billed, inert, linkConflicts: alternativeLinkConflicts(members) };
 }
 

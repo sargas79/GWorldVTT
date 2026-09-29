@@ -27,6 +27,7 @@ import {
   previousTechniquePoints,
 } from "../rules/skills.js";
 import { nextTraitLevel, previousTraitLevel, traitLevelCeiling } from "../rules/traits.js";
+import { specialExercisesFor, type Perks } from "../rules/addendum-perks.js";
 
 export type StepDirection = "up" | "down";
 
@@ -61,6 +62,9 @@ export function steppedPoints(item: PointedItem, direction: StepDirection): numb
 
 /** What stepping levels needs to know about a trait. */
 export interface LevelledTrait {
+  /** The trait's name and its owner, for Special Exercises to raise its maximum (Revised p. 329). */
+  name?: unknown;
+  actor?: { system?: { derived?: { perks?: Pick<Perks, "specialExercisesBy"> } } } | null;
   system?: {
     levels?: unknown;
     maxLevels?: unknown;
@@ -68,11 +72,23 @@ export interface LevelledTrait {
   } | null;
 }
 
+/**
+ * A trait's printed maximum with the levels Special Exercises adds: the perk
+ * lets one human maximum be exceeded by a level (p. 329). A trait with no
+ * maximum has nothing to raise.
+ */
+export function maximumLevelsOf(trait: LevelledTrait): number {
+  const printed = Number(trait.system?.maxLevels ?? 0) || 0;
+  if (printed <= 0) return printed;
+  const perks = trait.actor?.system?.derived?.perks;
+  return perks ? printed + specialExercisesFor(perks, String(trait.name ?? "")) : printed;
+}
+
 function levelShape(trait: LevelledTrait) {
   const system = trait.system ?? {};
   return {
     levels: Number(system.levels ?? 0) || 0,
-    maxLevels: Number(system.maxLevels ?? 0) || 0,
+    maxLevels: maximumLevelsOf(trait),
     costTable: (Array.isArray(system.costTable) ? system.costTable : []) as number[],
   };
 }
