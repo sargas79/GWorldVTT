@@ -895,6 +895,8 @@ interface DefenseFlag {
   calledShot?: { hitLocation: string; addonLocation: string | null };
   /** A strike at a weapon or shield: no parry, or no Defense Bonus (since 1.31.0). */
   strikeLimits?: { noParry: boolean; noDefenseBonus: boolean };
+  /** A ranged attack from concealment, `first` for the attacker's first (Revised pp. 574-575; since 1.191.0). */
+  concealed?: { first: boolean };
 }
 
 function defenseFlag(message: any): DefenseFlag | null {
@@ -984,14 +986,35 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     // or less, or a shot from -10 of range or worse, the defender must see it
     // coming. The roll is made when a defense is chosen, once per attack; one
     // already failed leaves no defense.
+    //
+    // A shot from concealment: "simply grant no active defense" the first time;
+    // after it the Vision roll has no +10, and failing it leaves a dodge at -4.
+    if (flag.concealed?.first && isRuleOn("visionRollsInCombat")) {
+      const note = document.createElement("span");
+      note.className = "gc-warn";
+      note.textContent = game.i18n.localize("GWORLD.Vision.ConcealedFirst");
+      who.append(note);
+      root.append(row);
+      continue;
+    }
+    const concealedLater = flag.concealed !== undefined && !flag.concealed.first;
     const sightNeed = await combatVisionNeed({
       attacker,
       attackerToken: flag.attackerToken,
       defenderToken: entry.tokenUuid,
       delivery: flag.delivery,
+      concealed: concealedLater,
     });
     let sawIt: boolean | null = sightNeed ? combatVisionMemo(defender, String(message.id ?? "")) : null;
-    if (sightNeed && sawIt === false) {
+    // Failed against a shot from concealment: a dodge at -4 and nothing else.
+    let dodgeOnly = false;
+    if (sightNeed && sawIt === false && concealedLater) {
+      dodgeOnly = true;
+      const note = document.createElement("span");
+      note.className = "gc-warn";
+      note.textContent = game.i18n.format("GWORLD.Vision.ConcealedDodgeOnly", { name: String(defender.name ?? "") });
+      who.append(note);
+    } else if (sightNeed && sawIt === false) {
       const note = document.createElement("span");
       note.className = "gc-warn";
       note.textContent = game.i18n.format("GWORLD.Vision.NoDefense", { name: String(defender.name ?? "") });
@@ -1057,6 +1080,12 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
         if (!choice.available) continue;
         if (!mayDodge) Object.assign(choice, { available: false, shown: null, reason: "strappedIn" });
         else if (choice.key !== "dodge") Object.assign(choice, { available: false, shown: null, reason: "occupant" });
+      }
+    }
+
+    if (dodgeOnly) {
+      for (const choice of choices) {
+        if (choice.key !== "dodge" && choice.available) Object.assign(choice, { available: false, shown: null, reason: "maneuver", refusal: game.i18n.localize("GWORLD.Vision.ConcealedOnlyDodge") });
       }
     }
 
@@ -1299,7 +1328,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       void rollDefense({
         defender,
         key: choice.key,
-        unseenPenalty: blind?.modifier ?? 0,
+        unseenPenalty: blind?.modifier ?? (dodgeOnly ? -4 : 0),
         laserDodge: choice.key === "dodge" ? (flag.dodgeBonus ?? 0) : 0,
         total: choice.total,
         attack: flag.attack,
@@ -1343,6 +1372,19 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
           performDefense(choice, technique, parryOverride);
           return;
         }
+        // Failed against a shot from concealment: a dodge at -4 is what is left.
+        if (concealedLater) {
+          dodgeOnly = true;
+          for (const button of row.querySelectorAll<HTMLButtonElement>("button")) {
+            if (button.dataset.defense !== "dodge") button.disabled = true;
+          }
+          const note = document.createElement("span");
+          note.className = "gc-warn";
+          note.textContent = game.i18n.format("GWORLD.Vision.ConcealedDodgeOnly", { name: String(defender.name ?? "") });
+          who.append(note);
+          if (choice.key === "dodge") performDefense(choice, technique, parryOverride);
+          return;
+        }
         for (const button of row.querySelectorAll<HTMLButtonElement>("button")) button.disabled = true;
         const note = document.createElement("span");
         note.className = "gc-warn";
@@ -1359,6 +1401,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       const button = document.createElement("button");
       button.type = "button";
       button.className = "gc-apply-button";
+      button.dataset.defense = choice.key;
       button.textContent = `${game.i18n.localize(DEFENSE_LABELS[choice.key])} ${choice.shown}`;
       button.addEventListener("click", () => defendWith(choice));
       row.append(button);

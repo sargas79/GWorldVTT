@@ -108,7 +108,7 @@ export function recoveryAidsOf(actor: any): ReserveRecoveryAid[] {
 
 /**
  * Uses a trait's Recover Energy or Absorption to refill the reserve of its
- * origin (Basic Set Revised p. 326; since API 1.191.0). The amount is what the
+ * origin (Basic Set Revised p. 326; since API 1.192.0). The amount is what the
  * ability restored, which the table decides; it can give back no more than the
  * reserve has spent. Says so in the log. Returns the points given back, 0 for a
  * trait that is no recovery aid or a user who may not change the actor.

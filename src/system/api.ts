@@ -120,7 +120,7 @@ import { simplifiedResourcesApi } from "./simplified-resources.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.191.0";
+export const API_VERSION = "1.192.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -279,7 +279,7 @@ const actors = {
    * 1.184.0): the FP from an Energy Reserve of the trait's power modifier
    * origin first, then FP, and the HP. Resolves to `{ fp, reserve, hp }`, or
    * null for a trait that costs nothing or a user who can't change the actor.
-   * A cost per second is charged for each of `seconds` (since 1.191.0).
+   * A cost per second is charged for each of `seconds` (since 1.192.0).
    */
   payAbilityCost(actor: any, item: any, seconds = 1) {
     return payAbilityCost(actor, item, seconds);
@@ -306,7 +306,7 @@ const actors = {
    * option); `drain(actor, reserveOrigin, powerOrigin, amount)` is a hostile
    * power depleting a reserve, which only one of the same origin does; and
    * `restore(actor, origin, amount)` gives points back; `recover(actor,
-   * itemId, amount)` (since 1.191.0) gives points back through a trait with a
+   * itemId, amount)` (since 1.192.0) gives points back through a trait with a
    * Recover Energy or Absorption modifier of the reserve's origin, up to what
    * the reserve has spent, and resolves to the points given.
    */

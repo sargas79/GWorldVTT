@@ -289,6 +289,27 @@ export function combatVision(options: {
   return modifier > 0 ? { needsRoll: false, modifier } : { needsRoll: true, modifier };
 }
 
+/**
+ * The Vision modifier against a shot from concealment after the first (p. 575):
+ * the attacker's SM, the distance penalty and the rest, but no +10. It is
+ * rolled whatever the SM and range are; only a bonus above 0 needs no roll.
+ */
+export function concealedVision(options: { attackerSm?: number | undefined; rangePenalty?: number | undefined; other?: number | undefined }): CombatVision {
+  const modifier = (options.attackerSm ?? 0) + Math.min(0, options.rangePenalty ?? 0) + (options.other ?? 0);
+  return modifier > 0 ? { needsRoll: false, modifier } : { needsRoll: true, modifier };
+}
+
+/**
+ * What a shot from concealment leaves a defender, by its card: the first
+ * allows no active defense; after it a Vision roll decides between normal
+ * defenses and a dodge at -4 (p. 575).
+ */
+export function concealedShotDefense(options: { first: boolean; seen: boolean | null }): "none" | "roll" | "normal" | "dodgeMinus4" {
+  if (options.first) return "none";
+  if (options.seen === null) return "roll";
+  return options.seen ? "normal" : "dodgeMinus4";
+}
+
 /** What a surprise ranged attack from concealment leaves a defender: nothing at first, a Vision roll without +10 after. */
 export function concealedAttackDefense(options: { firstAttack: boolean; seen?: boolean }): "none" | "dodgeMinus4" | "normal" {
   if (options.firstAttack) return "none";

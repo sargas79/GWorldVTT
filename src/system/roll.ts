@@ -41,7 +41,17 @@ import {
   simplifiedRangeOn,
   type RevisedRangedInput,
 } from "./revised-ranged.js";
-import { illuminationFields, readVisionPrompt, trackingTerrainLines, visionPromptFields, wireIllumination } from "./vision-prompts.js";
+import {
+  concealmentField,
+  illuminationFields,
+  noteConcealedShot,
+  readConcealed,
+  readVisionPrompt,
+  trackingTerrainLines,
+  visionPromptFields,
+  wireIllumination,
+  type ConcealedShot,
+} from "./vision-prompts.js";
 import { normalizeDamage, rolledDice } from "./modifying-dice.js";
 import { rollBreakdown, signed, type RollBreakdown } from "./roll-breakdown.js";
 import { damageDice, damageDiceRow } from "./damage-dice.js";
@@ -475,6 +485,12 @@ export interface SuccessRollOptions {
   /** What a strike at a weapon or shield allows the defender (since 1.31.0): no parry, and no Defense Bonus. */
   strikeLimits?: { noParry?: boolean; noDefenseBonus?: boolean };
   /**
+   * A ranged attack made from concealment (Revised pp. 574-575; since 1.191.0):
+   * `first` is true for the attacker's first, which allows no active defense.
+   * Recorded on the message for the defense card.
+   */
+  concealed?: ConcealedShot | null;
+  /**
    * The weapon the attack is made with, for the defender's parry to weigh
    * (Campaigns p. 376) and for the Critical Miss Table's resistant weapons
    * (p. 556): its weight, its blade's material, whether it was swung, and
@@ -816,7 +832,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
                   onSuccess: attackFlags(
                     actor, label, defensePenalty, false, noParry, options.weapon, options.delivery, options.damageType,
                     options.guidance?.area === true && !defendsAgainstArea(), options.dodgeBonus ?? 0,
-                    options.defenseModifiers ?? [], null, options.strikeLimits ?? null, tags,
+                    options.defenseModifiers ?? [], null, options.strikeLimits ?? null, tags, options.concealed ?? null,
                   ),
                 }
               : {}),
@@ -864,6 +880,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
             (hitsInstead ? options.missFallbackShot : options.calledShot) ?? null,
             options.strikeLimits ?? null,
             tags,
+            options.concealed ?? null,
           )),
         }
       : {}),
@@ -1272,6 +1289,8 @@ function attackFlags(
   strikeLimits: { noParry?: boolean; noDefenseBonus?: boolean } | null = null,
   /** The attack roll's tags, for the modules' defense hooks (since 1.44.0). */
   tags: readonly string[] = [],
+  /** A shot from concealment, and whether it is the first (since 1.191.0). */
+  concealed: ConcealedShot | null = null,
 ): object {
   const defenders = targetedTokens()
     .filter((token: any) => token?.actor?.uuid)
@@ -1328,6 +1347,7 @@ function attackFlags(
         ...(calledShot ? { calledShot } : {}),
         ...(strikeLimits?.noParry || strikeLimits?.noDefenseBonus ? { strikeLimits: { noParry: strikeLimits.noParry === true, noDefenseBonus: strikeLimits.noDefenseBonus === true } } : {}),
         ...(tags.length > 0 ? { tags: [...tags] } : {}),
+        ...(concealed ? { concealed: { first: concealed.first === true } } : {}),
       },
     },
   };
@@ -2562,11 +2582,15 @@ async function rollAction(
     : rollType === "skill"
       ? toolFor(actor, String(target.dataset.rollSkill ?? rollLabel ?? ""))
       : null;
+  // A shot from concealment: the first one from an unrevealed shooter allows
+  // no active defense, and reveals them (Revised pp. 574-575; since 1.191.0).
+  const concealedShot = shot?.concealed && !spotLost ? await noteConcealedShot(actor) : null;
   const outcome = spotLost ? null : await rollSuccess({
     actor,
     base: guided?.skillLevel ?? base,
     label,
     kind: rollKind(rollType),
+    ...(concealedShot ? { concealed: concealedShot } : {}),
     ...(rollingWith ? { item: rollingWith } : {}),
     // The attribute a skill or attribute roll is based on, as a tag a condition's rolls can name (API 1.42.0),
     // and the sense a Perception roll is made by (API 1.63.0).
@@ -3227,6 +3251,8 @@ interface RangedShot {
   defenseModifiers?: Array<{ label: string; value: number; defenses?: AddonDefenseKey[] }>;
   /** The laser sight as the dialog left it: on, and whether the target saw the dot (p. 411). */
   laser?: { on: boolean; targetSees: boolean } | null;
+  /** True where the shooter said the shot is from concealment (since 1.191.0). */
+  concealed?: boolean;
   /** What the modules' attack options chosen in the dialog add up to. */
   addon?: ReturnType<typeof applyAttackOptions>;
   /**
@@ -3720,6 +3746,7 @@ export async function promptForRangedAttack(options: {
       <label style="display:flex;align-items:center;gap:8px">
         <input type="checkbox" name="laserSeen"><span>${L("LaserSeen")}</span>
       </label>
+      ${concealmentField(options.actor)}
       ${vehicleFields}
       ${mountFields}
       ${revisedRangedFields(rateOfFire)}
@@ -3767,6 +3794,7 @@ export async function promptForRangedAttack(options: {
       reserveOrigin: readReserveOrigin(form),
       weaponStrike: form?.querySelector<HTMLSelectElement>('select[name="weaponStrike"]')?.value ?? "",
       lockedOn: form?.querySelector<HTMLInputElement>('input[name="lockedOn"]')?.checked ?? false,
+      concealed: readConcealed(form),
       laser: {
         on: form?.querySelector<HTMLInputElement>('input[name="laser"]')?.checked ?? false,
         targetSees: form?.querySelector<HTMLInputElement>('input[name="laserSeen"]')?.checked ?? false,
@@ -3888,6 +3916,7 @@ export async function promptForRangedAttack(options: {
     defenseModifiers: revisedRangedDefenseModifiers(input.revised),
     weaponStrike: extras.weaponStrike,
     laser: { on: input.laser?.on === true, targetSees: input.laser?.targetSees === true },
+    concealed: input.concealed === true,
     // "But if the target can see it, he gets +1 to Dodge!"
     dodgeBonus: input.laser?.on
       ? laserSight({
@@ -3935,8 +3964,10 @@ interface RangedInput {
   revised?: RevisedRangedInput | null;
   /** The GM's penalty for a stunt shot, negative, which a Heroic Archer halves (since 1.184.0). */
   stunt?: number;
-  /** The Energy Reserve chosen to pay the FP of extra effort in this shot, or "" for FP (since 1.191.0). */
+  /** The Energy Reserve chosen to pay the FP of extra effort in this shot, or "" for FP (since 1.192.0). */
   reserveOrigin?: string;
+  /** The shooter says the shot is from concealment (since 1.191.0). */
+  concealed?: boolean;
 }
 
 /** What firing from a vehicle adds to a shot. */

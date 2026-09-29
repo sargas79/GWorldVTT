@@ -53,7 +53,7 @@ export interface AbilityPaid {
  *
  * A cost "per second" (Costs Fatigue or Costs Hit Points at the doubled price)
  * is charged for each of `seconds` of use, from the origin's reserve first
- * (since API 1.191.0); a cost per use ignores `seconds`.
+ * (since API 1.192.0); a cost per use ignores `seconds`.
  */
 export async function payAbilityCost(actor: any, item: any, seconds = 1): Promise<AbilityPaid | null> {
   if (!actor?.isOwner || !item) return null;

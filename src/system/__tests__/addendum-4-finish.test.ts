@@ -24,7 +24,14 @@ import {
 import { resolveDamageAgainst } from "../damage.js";
 import { noInjuryTolerance } from "../../rules/injury-tolerance.js";
 import { applyFrostbite, combatVisionNeed, combatVisionMemo, settleCombatVision } from "../vision-corrections.js";
-import { isTrackingSkill, trackingTerrainLines } from "../vision-prompts.js";
+import {
+  concealmentField,
+  concealmentRevealed,
+  hideAttacker,
+  isTrackingSkill,
+  noteConcealedShot,
+  trackingTerrainLines,
+} from "../vision-prompts.js";
 
 const globals = globalThis as Record<string, any>;
 
@@ -50,6 +57,7 @@ function withFlags<T extends Record<string, any>>(base: T) {
     isOwner: true,
     getFlag: (_scope: string, key: string) => flags[key],
     setFlag: vi.fn(async (_scope: string, key: string, value: unknown) => { flags[key] = value; }),
+    unsetFlag: vi.fn(async (_scope: string, key: string) => { delete flags[key]; }),
   });
 }
 
@@ -390,5 +398,40 @@ describe("Vision Rolls in Combat, in the defense flow (Revised pp. 574-575)", ()
     expect(await settleCombatVision(second, "msg2", need)).toBe(false);
     expect(combatVisionMemo(second, "msg2")).toBe(false);
     expect(combatVisionMemo(second, "msg3")).toBeNull();
+  });
+
+  it("marks a shooter revealed by their first shot from concealment, until they hide again", async () => {
+    const shooter = withFlags({ name: "Sniper", system: {} }) as any;
+    expect(concealmentRevealed(shooter)).toBe(false);
+    expect(await noteConcealedShot(shooter)).toEqual({ first: true });
+    expect(concealmentRevealed(shooter)).toBe(true);
+    expect(await noteConcealedShot(shooter)).toEqual({ first: false });
+    await hideAttacker(shooter);
+    expect(await noteConcealedShot(shooter)).toEqual({ first: true });
+  });
+
+  it("shows the box only with the switch on, and says when the shooter is already revealed", async () => {
+    expect(concealmentField({})).toBe("");
+    state.on.add("visionRollsInCombat");
+    expect(concealmentField({})).toContain("GWORLD.Vision.Concealed<");
+    const shooter = withFlags({ name: "Sniper", system: {} }) as any;
+    await noteConcealedShot(shooter);
+    expect(concealmentField(shooter)).toContain("GWORLD.Vision.ConcealedAgain");
+  });
+
+  it("rolls a later shot from concealment without the +10, whatever the SM and range", async () => {
+    state.on.add("visionRollsInCombat");
+    // An ordinary-sized shooter at short range calls for no roll in the open ...
+    expect(await combatVisionNeed({ attacker: { system: { sm: 0 } } })).toBeNull();
+    // ... but from concealment it is Vision at SM 0: Per 12, no bonus.
+    const need = (await combatVisionNeed({ attacker: { system: { sm: 0 } }, concealed: true }))!;
+    expect(need.check).toEqual({ needsRoll: true, modifier: 0 });
+    expect(need.concealed).toBe(true);
+    const guard = defender();
+    globals.Roll = diceOf([4, 4, 4]);
+    expect(await settleCombatVision(guard, "c1", need)).toBe(true);
+    const other = defender();
+    globals.Roll = diceOf([6, 6, 6]);
+    expect(await settleCombatVision(other, "c2", need)).toBe(false);
   });
 });

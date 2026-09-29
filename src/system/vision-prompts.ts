@@ -179,3 +179,50 @@ export function readVisionPrompt(form: HTMLElement | null): Array<{ label: strin
   if (light && light.penalty !== 0) lines.push({ label: L("LightLine", { level: L(`Level_${light.level}`) }), value: light.penalty, key: "illumination" });
   return lines;
 }
+
+// -- a shot from concealment (pp. 574-575) ------------------------------------
+
+/** The attacker's flag: whether a shot from concealment has already given them away. */
+export const CONCEALMENT_KEY = "concealment";
+
+/** What a shot from concealment means for its card: whether it is the attacker's first. */
+export interface ConcealedShot {
+  first: boolean;
+}
+
+/** Whether an earlier shot from concealment has already revealed this attacker. */
+export function concealmentRevealed(actor: any): boolean {
+  const state = actor?.getFlag?.(SYSTEM_ID, CONCEALMENT_KEY) as { revealed?: boolean } | undefined;
+  return state?.revealed === true;
+}
+
+/** The ranged dialog's box, shown only where Vision Rolls in Combat is on. */
+export function concealmentField(actor?: any): string {
+  if (!isRuleOn("visionRollsInCombat")) return "";
+  const key = concealmentRevealed(actor) ? "ConcealedAgain" : "Concealed";
+  return `<label style="display:flex;align-items:center;gap:8px"><input type="checkbox" name="concealed"><span>${L(key)}</span></label>`;
+}
+
+/** Whether the box is ticked. */
+export function readConcealed(form: HTMLElement | null): boolean {
+  return form?.querySelector<HTMLInputElement>('input[name="concealed"]')?.checked ?? false;
+}
+
+/**
+ * A shot from concealment is being made: the first from an unrevealed
+ * attacker is a surprise (no active defense), and it reveals them, so every
+ * later one is met with a Vision roll without the +10. The attacker's flag
+ * keeps the state until `hideAttacker` clears it.
+ */
+export async function noteConcealedShot(actor: any): Promise<ConcealedShot> {
+  const first = !concealmentRevealed(actor);
+  if (first && actor?.isOwner && typeof actor.setFlag === "function") {
+    await actor.setFlag(SYSTEM_ID, CONCEALMENT_KEY, { revealed: true });
+  }
+  return { first };
+}
+
+/** The attacker is hidden again (the GM's call): their next shot from concealment is a surprise once more. */
+export async function hideAttacker(actor: any): Promise<void> {
+  if (typeof actor?.unsetFlag === "function") await actor.unsetFlag(SYSTEM_ID, CONCEALMENT_KEY);
+}
