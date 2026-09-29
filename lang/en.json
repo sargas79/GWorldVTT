@@ -1919,6 +1919,8 @@
       "HeroicArcherAim": "Heroic Archer (aimed)",
       "HeroicArcherMoveAndAttack": "Heroic Archer (no Bulk penalty)",
       "HeroicArcherCloseCombat": "Heroic Archer (no Bulk in close combat)",
+      "HeroicArcherQuickReady": "Heroic Archer (bow readied at once)",
+      "HeroicArcherStunt": "Heroic Archer (stunt shot, halved)",
       "VehicleDodged": "The vehicle dodged",
       "TargetingSystem": "Targeting system",
       "StabilityCap": "Aim capped at SR {sr}",
@@ -2602,6 +2604,8 @@
       "PowerAction": "Power extra effort",
       "PowerHint": "Push a power past its limit: a Will roll, plus the power’s Talent (Basic Set Revised pp. 571-572)",
       "PowerTitle": "Extra effort with a power",
+      "PowerOrigin": "Paid from",
+      "PowerOriginNone": "FP (no Energy Reserve)",
       "Talent": "Power’s Talent",
       "GodlikeFp": "FP to spend (each multiplies the bonus)",
       "PowerSuccess": "Gains +{percent}% effect.",
@@ -4416,7 +4420,30 @@
     },
     "EnergyReserve": {
       "Name": "ER ({origin})",
-      "Hint": "Energy Reserve: pays the FP costs of {origin} abilities and nothing else. It recharges 1 every 10 minutes (slower with Slow Recharge, not at all by itself with Special Recharge), whatever the character does; low ER has none of the effects of low FP (Basic Set Revised p. 326)."
+      "Hint": "Energy Reserve: pays the FP costs of {origin} abilities and nothing else. It recharges 1 every 10 minutes (slower with Slow Recharge, not at all by itself with Special Recharge), whatever the character does; low ER has none of the effects of low FP (Basic Set Revised p. 326).",
+      "Spend": "Spend 1 ER",
+      "Restore": "Give back 1 ER",
+      "Refill": "Full",
+      "RefillHint": "Refill this reserve to its full size."
+    },
+    "AbilityCost": {
+      "Pay": "Pay cost",
+      "PayHint": "Pay what a use of this ability costs: Costs Fatigue from an Energy Reserve of its origin first, then FP, and Costs Hit Points in HP.",
+      "Used": "{ability}: paid {paid}.",
+      "Reserve": "{points} ER ({origin})",
+      "Fp": "{points} FP",
+      "Hp": "{points} HP"
+    },
+    "HeroicArcher": {
+      "QuickReadyAsk": "Ready {name} at once? Heroic Archer rolls Bow at {penalty} (skill {level}); on a success the bow is ready with no Ready maneuver, and the attack this turn is at {penalty} too.",
+      "QuickReadyTitle": "Heroic Archer",
+      "QuickReadyLabel": "Heroic Archer: ready the bow",
+      "QuickReadySuccess": "Heroic Archer readies the bow at once; the attack is at {penalty}.",
+      "QuickReadyFailure": "The quick ready failed; the bow takes its usual Ready maneuver.",
+      "QuickReadyLine": "Heroic Archer (quick ready)",
+      "FastDrawPenalty": "Fast-Draw (Arrow) penalty (a Heroic Archer's is halved)",
+      "StuntPenalty": "Stunt shot penalty (a Heroic Archer's is halved)",
+      "FastDrawLine": "Fast-Draw (Arrow) penalty (halved for a Heroic Archer)"
     },
     "BonusPoints": {
       "Title": "Points to spend",

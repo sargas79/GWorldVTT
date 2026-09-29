@@ -117,7 +117,7 @@ import { supportEffect, supportOf, type Support } from "../../rules/accessories.
 import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalties.js";
 import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { powersOf } from "../../rules/powers.js";
-import { abilityRollModifiers, costsHitPointsCost, requiredRolls } from "../../rules/addendum-modifiers.js";
+import { abilityRollModifiers, costsFatigueCost, costsHitPointsCost, powerModifierOrigin, requiredRolls } from "../../rules/addendum-modifiers.js";
 import { analyseAlternatives } from "../alternative-analysis.js";
 import { sessionPools } from "../../rules/bonus-points.js";
 import {
@@ -3544,8 +3544,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           { combatReflexes: traits.activeDefense > 0 },
         );
         const cost = costsHitPointsCost(modifiers);
-        if (use.bonus === 0 && use.penalty === 0 && needs.length === 0 && cost.hp === 0) return [];
-        return [{ id: String(item.id ?? ""), name: String(item.name ?? ""), ...use, needs, hpCost: cost.hp, hpCostPerSecond: cost.perSecond }];
+        const fatigue = costsFatigueCost(modifiers);
+        if (use.bonus === 0 && use.penalty === 0 && needs.length === 0 && cost.hp === 0 && fatigue.fp === 0) return [];
+        return [{
+          id: String(item.id ?? ""), name: String(item.name ?? ""), ...use, needs,
+          hpCost: cost.hp, hpCostPerSecond: cost.perSecond,
+          fpCost: fatigue.fp, fpCostPerSecond: fatigue.perSecond,
+          origin: powerModifierOrigin(modifiers.map((m) => m.name))?.origin ?? "",
+        }];
       }),
       // "In a few cases, skill 20+ gives an automatic +2 to reactions.
       // Diplomacy and Fast-Talk work this way if you are allowed to talk -- as

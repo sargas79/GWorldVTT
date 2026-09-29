@@ -18,6 +18,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { applyFatigue } from "./fatigue.js";
+import { reservePlan } from "./reserves.js";
 import { afterFatigue, fatigueCost } from "./procedure-extensions.js";
 import { EXTRA_EFFORT_FP, extraEffortModifier, extraEffortTarget } from "../rules/extra-effort.js";
 import { resolveSuccess } from "../rules/success.js";
@@ -37,7 +38,7 @@ export const MIGHTY_BLOWS_FLAG = "mightyBlows";
  * whether it worked, so buying it with hit points is a decision worth making
  * deliberately rather than one a button press makes for you.
  */
-export async function spendFatigue(actor: any, points: number, what: string): Promise<boolean> {
+export async function spendFatigue(actor: any, points: number, what: string, origin?: string): Promise<boolean> {
   if (points <= 0) return true;
   if (!actor?.isOwner) return false;
 
@@ -47,8 +48,12 @@ export async function spendFatigue(actor: any, points: number, what: string): Pr
   const cost = costed.fp;
   if (cost <= 0) return true;
 
+  // Extra effort with an ability of an origin is paid from an Energy Reserve
+  // of that origin first (Basic Set Revised p. 326; since 1.184.0), so what
+  // the reserve holds counts toward what the character can afford.
+  const fromReserve = origin ? reservePlan(actor, origin, cost).reserve : 0;
   const current = Number(actor.system?.fp?.value);
-  if (!Number.isFinite(current) || current < cost) {
+  if (!Number.isFinite(current) || current + fromReserve < cost) {
     ui.notifications?.warn(
       game.i18n.format("GWORLD.ExtraEffort.NoFatigue", { what, cost }),
     );
@@ -57,7 +62,12 @@ export async function spendFatigue(actor: any, points: number, what: string): Pr
 
   // Charged as given: the listeners were asked above. The reason still goes
   // along, for the `gworld.afterFatigue` listeners (API 1.138.0).
-  await applyFatigue(actor, cost, { reason: "extraEffort", details: { what }, costed: { sources: costed.sources, parts: costed.parts } });
+  await applyFatigue(actor, cost, {
+    reason: "extraEffort",
+    details: { what },
+    costed: { sources: costed.sources, parts: costed.parts },
+    ...(origin ? { origin } : {}),
+  });
   return true;
 }
 

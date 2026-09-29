@@ -61,6 +61,7 @@ import { surprise, undoKnockdown } from "./knockdown.js";
 import { rollFall } from "./falling.js";
 import { restoreFatigue, spendFatigueFor, spendHitPointsFor } from "./fatigue.js";
 import { chargeReserve, drainReserve, reservesOf, restoreReserve } from "./reserves.js";
+import { payAbilityCost } from "./ability-cost.js";
 import { changeTrait, type TraitChanged } from "./trait-change.js";
 import { stopTowing, tow } from "./towing.js";
 import { cripple, crippledParts, healCrippled, settleCrippling, treatCrippled, type CrippledDuration, type CrippledPart } from "./crippling.js";
@@ -117,7 +118,7 @@ import { simplifiedResourcesApi } from "./simplified-resources.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.183.0";
+export const API_VERSION = "1.184.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -269,6 +270,16 @@ const actors = {
    */
   spendHitPoints(actor: any, hp: number, options: { reason?: string } = {}) {
     return spendHitPointsFor(actor, hp, options);
+  },
+
+  /**
+   * Pays one use of a trait with Costs Fatigue or Costs Hit Points (since
+   * 1.184.0): the FP from an Energy Reserve of the trait's power modifier
+   * origin first, then FP, and the HP. Resolves to `{ fp, reserve, hp }`, or
+   * null for a trait that costs nothing or a user who can't change the actor.
+   */
+  payAbilityCost(actor: any, item: any) {
+    return payAbilityCost(actor, item);
   },
 
   /**

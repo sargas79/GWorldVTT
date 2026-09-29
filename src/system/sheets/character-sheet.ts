@@ -42,6 +42,7 @@ import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
 import { buyOffHardship, clinicianSkillOf, rollDerangementDayEnd, stressOn } from "../stress.js";
 import { rollPowerExtraEffort, tradeFatigueForBonus } from "../extra-effort-extras.js";
+import { reservesOf } from "../reserves.js";
 import { rollFall } from "../falling.js";
 import { rollBleeding } from "../bleeding.js";
 import { rollCripplingDuration, rollMortalWound } from "../dying.js";
@@ -2154,12 +2155,29 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       if (fp === null) return;
       fpSpent = Math.max(1, fp);
     }
+    // A power of an origin the character has an Energy Reserve for is paid
+    // from that reserve first (Basic Set Revised p. 326).
+    let origin = "";
+    const reserves = reservesOf(this.actor);
+    if (reserves.length > 0) {
+      const chosen = await promptForChoice({
+        title: game.i18n.localize("GWORLD.ExtraEffort.PowerTitle"),
+        label: game.i18n.localize("GWORLD.ExtraEffort.PowerOrigin"),
+        options: [
+          { value: "none", label: game.i18n.localize("GWORLD.ExtraEffort.PowerOriginNone") },
+          ...reserves.map((r) => ({ value: r.key, label: game.i18n.format("GWORLD.EnergyReserve.Name", { origin: r.origin }) })),
+        ],
+      });
+      if (chosen === null) return;
+      origin = chosen === "none" ? "" : chosen;
+    }
     await rollPowerExtraEffort({
       actor: this.actor,
       percentIncrease: asked.percentIncrease,
       motivated: asked.motivated,
       talent,
       fpSpent,
+      ...(origin ? { origin } : {}),
     });
   }
 

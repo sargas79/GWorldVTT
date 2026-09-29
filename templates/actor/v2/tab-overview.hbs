@@ -62,6 +62,17 @@
             <span class="v2-pool-name">{{localize "GWORLD.EnergyReserve.Name" origin=reserve.origin}}</span>
             <span class="v2-pool-value">{{reserve.value}} <span class="v2-muted">/ {{reserve.max}}</span></span>
           </div>
+          {{!-- The sheet's own edit of the pool: spend one, get one back, refill. --}}
+          {{#if @root.editable}}
+          <div class="v2-pool-status">
+            <button type="button" class="v2-button v2-button-small" data-action="v2ReserveAdjust" data-reserve="{{reserve.key}}" data-change="-1"
+                    aria-label="{{localize 'GWORLD.EnergyReserve.Spend'}}" data-tooltip="{{localize 'GWORLD.EnergyReserve.Spend'}}">&minus;</button>
+            <button type="button" class="v2-button v2-button-small" data-action="v2ReserveAdjust" data-reserve="{{reserve.key}}" data-change="1"
+                    aria-label="{{localize 'GWORLD.EnergyReserve.Restore'}}" data-tooltip="{{localize 'GWORLD.EnergyReserve.Restore'}}">+</button>
+            <button type="button" class="v2-button v2-button-small" data-action="v2ReserveAdjust" data-reserve="{{reserve.key}}" data-change="full"
+                    data-tooltip="{{localize 'GWORLD.EnergyReserve.RefillHint'}}">{{localize "GWORLD.EnergyReserve.Refill"}}</button>
+          </div>
+          {{/if}}
           <div class="v2-bar v2-bar-fp"><span style="width: {{percent reserve.value reserve.max}}%"></span></div>
         </div>
         {{/each}}
