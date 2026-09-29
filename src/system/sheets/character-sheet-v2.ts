@@ -49,7 +49,7 @@ import { ammoToggleFor, gadgetDays, toggleAmmoTracked } from "../simplified-reso
 import { lacksSpecialty, traitDisplayName } from "../../rules/traits.js";
 import { successChance } from "../sheet-v2/success-chance.js";
 import { mechanicFallbackLabel, mechanicsOf } from "../sheet-v2/trait-mechanics.js";
-import { handleRollAction, previewAttack } from "../roll.js";
+import { handleRollAction, previewAttack, promptForNumber } from "../roll.js";
 import { DEFENSE_KEYS, defendUpdate, withDefenseOptions, type DefenseKey } from "../sheet-v2/defense-options.js";
 import { targetedTokens } from "../targets.js";
 import { combatLog } from "../sheet-v2/combat-log.js";
@@ -61,7 +61,7 @@ import { isRuleOn } from "../optional-rules.js";
 import { promptForComplementary, rollComplementary } from "../complementary.js";
 import { endPointPowered, promptPointPowered, readyAlternative } from "../alternative-abilities.js";
 import { abilityCostOf, payAbilityCost } from "../ability-cost.js";
-import { adjustReserve } from "../reserves.js";
+import { adjustReserve, recoverReserve, recoveryAidsOf } from "../reserves.js";
 import { alternativeKey } from "../../rules/alternative-abilities.js";
 import { grantWildcardBonus } from "../wildcard-bonus.js";
 import { noPerks, specialExercisesFor, techniqueSupersededBy } from "../../rules/addendum-perks.js";
@@ -144,6 +144,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2InflictControllable: GWorldCharacterSheetV2.#onInflictControllable,
       v2EndPointPowered: GWorldCharacterSheetV2.#onEndPointPowered,
       v2PayAbilityCost: GWorldCharacterSheetV2.#onPayAbilityCost,
+      v2RecoverReserve: GWorldCharacterSheetV2.#onRecoverReserve,
       v2ReserveAdjust: GWorldCharacterSheetV2.#onReserveAdjust,
       v2EditPortrait: GWorldCharacterSheetV2.#onEditPortrait,
       v2RollPlain: GWorldCharacterSheetV2.#onRollPlain,
@@ -1198,6 +1199,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         weakness: weaknessOf({ name: String(item.name ?? "") }) !== null,
         // What a use costs in FP or HP, where the trait has Costs Fatigue or Costs Hit Points.
         abilityCost: abilityCostOf(actor, String(item.id)),
+        // Recover Energy or Absorption of an origin the character holds a reserve of: refills that reserve (p. 326).
+        reserveRecovery: recoveryAidsOf(actor).find((a) => a.id === String(item.id)) ?? null,
         applied: isReadTrait(String(item.name ?? ""), system.talentSkills ?? []),
         // What the trait is of, where the book makes the player say, shown
         // with the name as the book writes it.
@@ -1920,7 +1923,32 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
   static async #onPayAbilityCost(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     const item = id ? this.actor.items.get(id) : null;
-    if (item) await payAbilityCost(this.actor, item);
+    if (!item) return;
+    // A cost per second is paid for the seconds the ability was in use (Basic Set Revised p. 111).
+    let seconds = 1;
+    if (abilityCostOf(this.actor, String(item.id))?.perSecond) {
+      const asked = await promptForNumber({
+        title: game.i18n.localize("GWORLD.AbilityCost.SecondsTitle"),
+        label: game.i18n.localize("GWORLD.AbilityCost.Seconds"),
+        initial: 1,
+      });
+      if (asked === null) return;
+      seconds = Math.max(1, Math.floor(asked));
+    }
+    await payAbilityCost(this.actor, item, seconds);
+  }
+
+  /** Uses a Recover Energy or Absorption trait to refill the reserve of its origin (Basic Set Revised p. 326). */
+  static async #onRecoverReserve(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    if (!id) return;
+    const asked = await promptForNumber({
+      title: game.i18n.localize("GWORLD.EnergyReserve.RecoverTitle"),
+      label: game.i18n.localize("GWORLD.EnergyReserve.RecoverPoints"),
+      initial: 1,
+    });
+    if (asked === null) return;
+    await recoverReserve(this.actor, id, asked);
   }
 
   /** Rolls to inflict a Controllable Disadvantage on oneself (Revised p. 328). */

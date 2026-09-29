@@ -179,7 +179,7 @@ describe("paying a Costs Fatigue ability", () => {
 
   it("finds the cost on the derived list", () => {
     const actor = character({ abilities: [ability] });
-    expect(abilityCostOf(actor, "a1")).toEqual({ fp: 3, hp: 0, origin: "Magical" });
+    expect(abilityCostOf(actor, "a1")).toEqual({ fp: 3, hp: 0, origin: "Magical", perSecond: false, fpPerSecond: false, hpPerSecond: false });
     expect(abilityCostOf(actor, "other")).toBeNull();
   });
 

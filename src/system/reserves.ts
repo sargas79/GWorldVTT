@@ -13,6 +13,7 @@ import {
   payFromReserve,
   rechargeReserve,
   reserveValue,
+  type ReserveRecoveryAid,
   type ReserveUse,
 } from "../rules/energy-reserve.js";
 import { everyActor } from "./every-actor.js";
@@ -97,6 +98,55 @@ export async function restoreReserve(actor: any, origin: string, amount: number)
   if (gained <= 0) return 0;
   await actor.update({ "system.session.reserves": { ...used, [key]: { spent: before.spent - gained, carry: before.carry } } });
   return gained;
+}
+
+/** The recovery aids a character has: traits with Recover Energy or Absorption for an origin they hold a reserve of. */
+export function recoveryAidsOf(actor: any): ReserveRecoveryAid[] {
+  const list = actor?.system?.derived?.reserveRecoveries;
+  return Array.isArray(list) ? (list as ReserveRecoveryAid[]) : [];
+}
+
+/**
+ * Uses a trait's Recover Energy or Absorption to refill the reserve of its
+ * origin (Basic Set Revised p. 326; since API 1.191.0). The amount is what the
+ * ability restored, which the table decides; it can give back no more than the
+ * reserve has spent. Says so in the log. Returns the points given back, 0 for a
+ * trait that is no recovery aid or a user who may not change the actor.
+ */
+export async function recoverReserve(actor: any, itemId: string, amount: number): Promise<number> {
+  if (!actor?.isOwner && !game.user?.isGM) return 0;
+  const aid = recoveryAidsOf(actor).find((a) => a.id === String(itemId));
+  if (!aid) return 0;
+  const gained = await restoreReserve(actor, aid.origin, amount);
+  const text = game.i18n.format("GWORLD.EnergyReserve.Recovered", { ability: aid.name, points: gained, origin: aid.origin });
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content: `<p>${foundry.utils.escapeHTML(text)}</p>`,
+  });
+  return gained;
+}
+
+/**
+ * The select of the attack dialogs that says which Energy Reserve pays the
+ * FP of extra effort chosen there: none where the character has no reserve.
+ */
+export function reserveOriginField(actor: any): string {
+  const reserves = reservesOf(actor);
+  if (reserves.length === 0) return "";
+  const options = [
+    `<option value="">${game.i18n.localize("GWORLD.ExtraEffort.PowerOriginNone")}</option>`,
+    ...reserves.map((r) => `<option value="${foundry.utils.escapeHTML(r.key)}">${foundry.utils.escapeHTML(game.i18n.format("GWORLD.EnergyReserve.Name", { origin: r.origin }))}</option>`),
+  ].join("");
+  return `<label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>${game.i18n.localize("GWORLD.ExtraEffort.PowerOrigin")}</span>
+        <select name="reserveOrigin" style="width:150px">${options}</select>
+      </label>`;
+}
+
+/** The origin the dialog's select chose, or "" for plain FP. */
+export function readReserveOrigin(form: HTMLElement | null): string {
+  return form?.querySelector<HTMLSelectElement>('select[name="reserveOrigin"]')?.value ?? "";
 }
 
 /**

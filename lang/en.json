@@ -4516,12 +4516,20 @@
       "Spend": "Spend 1 ER",
       "Restore": "Give back 1 ER",
       "Refill": "Full",
-      "RefillHint": "Refill this reserve to its full size."
+      "RefillHint": "Refill this reserve to its full size.",
+      "Recover": "Recover ER",
+      "RecoverHint": "Use this ability to give points back to ER ({origin}), up to what it has spent (Basic Set Revised p. 326).",
+      "RecoverTitle": "Recover Energy",
+      "RecoverPoints": "Points of ER recovered",
+      "Recovered": "{ability}: {points} ER ({origin}) recovered."
     },
     "AbilityCost": {
       "Pay": "Pay cost",
       "PayHint": "Pay what a use of this ability costs: Costs Fatigue from an Energy Reserve of its origin first, then FP, and Costs Hit Points in HP.",
       "Used": "{ability}: paid {paid}.",
+      "UsedSeconds": "{ability}, {seconds} s: paid {paid}.",
+      "SecondsTitle": "Cost per second",
+      "Seconds": "Seconds of use",
       "Reserve": "{points} ER ({origin})",
       "Fp": "{points} FP",
       "Hp": "{points} HP"
