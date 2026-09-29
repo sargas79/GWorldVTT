@@ -178,6 +178,7 @@ import {
   steeringDuty,
   type Guidance,
 } from "../rules/guided.js";
+import { committedRefusal, moreManeuverDamageLines } from "./more-maneuvers.js";
 import { MOVE_AND_ATTACK_PENALTY, WILD_SWING_SKILL_CAP, allOutAttackBonus, stopThrustBonus, strongAttackDamageBonus, wildSwingPenalty, type AllOutAttackOption } from "../rules/maneuvers.js";
 import { flailKind, type FlailKind } from "../rules/defenses.js";
 import { canTargetFromArc, missByOneHitsTorso, type HitLocation } from "../rules/hit-locations.js";
@@ -886,7 +887,10 @@ export function standingRollLines(actor: any, options: {
 
   // A retreat the sheet chose for this defense, a line of its own on the card
   // as it is on a defense rolled from an attack (GWorldVTT #877).
-  const retreat = rollType === "dodge" || rollType === "parry" || rollType === "block" ? Number(options.retreat) || 0 : 0;
+  // A Committed Attack forbids one (Revised p. 576).
+  const retreat = (rollType === "dodge" || rollType === "parry" || rollType === "block") && !committedRefusal(actor, "retreat")
+    ? Number(options.retreat) || 0
+    : 0;
   if (retreat > 0) lines.push({ label: game.i18n.localize("GWORLD.Tactical.Retreat"), value: retreat });
 
   // Something has temporarily knocked an attribute down (p. 421). It comes off
@@ -5010,6 +5014,11 @@ export async function handleDamageAction(
       value: strongAttackDamageBonus(parseDiceAdds(damageFormula)?.dice ?? 0),
     });
   }
+
+  // Committed Attack (Strong) and Defensive Attack (Revised pp. 575-576).
+  modifiers.push(...moreManeuverDamageLines(
+    actor, parseDiceAdds(damageFormula)?.dice ?? 0, target.dataset.melee === "1", target.dataset.stBased === "1",
+  ));
 
   // Damage a module's option chosen at the attack added.
   modifiers.push(...(await consumeAddonDamage(actor)));

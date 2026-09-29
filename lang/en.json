@@ -888,6 +888,26 @@
           "Name": "Chest and abdomen",
           "Hint": "The torso is split into chest (9-10 on the random table) and abdomen, which replaces the groin at 11. Armour listing the chest protects only there (Basic Set Revised p. 566)."
         },
+        "allOutSlams": {
+          "Name": "All-Out Attack slams",
+          "Hint": "An All-Out Attack (Determined, Feint or Strong) that slams may travel a full Move, forward only. Double allows another melee attack before the slam, at half Move (Basic Set Revised p. 575)."
+        },
+        "allOutConcentrate": {
+          "Name": "All-Out Concentrate",
+          "Hint": "A maneuver for +1 to the skill or spell concentrated on, with no active defense and a step; a distraction takes Will-2 (Basic Set Revised p. 575)."
+        },
+        "mentalDefense": {
+          "Name": "Mental Defense",
+          "Hint": "An All-Out Defense option: +2 to rolls to resist supernatural attacks until the next turn, active defenses unchanged (Basic Set Revised p. 575)."
+        },
+        "committedAttack": {
+          "Name": "Committed Attack",
+          "Hint": "A maneuver between Attack and All-Out Attack: Determined +2 to hit or Strong +1 damage, up to two steps, other defenses at -2, and some defenses lost (Basic Set Revised pp. 575-576)."
+        },
+        "defensiveAttack": {
+          "Name": "Defensive Attack",
+          "Hint": "A maneuver between Attack and All-Out Defense: -2 damage or -1 a die, and +1 to Parry or Block (Basic Set Revised p. 576)."
+        },
         "flatSignatureGear": {
           "Name": "Flat-cost Signature Gear",
           "Hint": "Signature Gear becomes a 1-point perk: plot protection against permanent loss for each item you flag as Signature Gear, of any value, however it was acquired. It no longer buys goods with starting wealth (Basic Set Revised p. 342)."
@@ -2231,6 +2251,9 @@
       "allOutDefense": "All-Out Defense",
       "concentrate": "Concentrate",
       "wait": "Wait",
+      "committedAttack": "Committed Attack",
+      "defensiveAttack": "Defensive Attack",
+      "allOutConcentrate": "All-Out Concentrate",
       "Increased": "Increased Defense",
       "Double": "Double Defense",
       "Option": "AOD Option",
@@ -4843,6 +4866,39 @@
       "Saw": "{name} sees the attack coming (Vision {target}, rolled {roll}).",
       "Missed": "{name} does not see the attack coming (Vision {target}, rolled {roll}): no active defense.",
       "Frostbitten": "{name} suffers frostbite: {hp} HP ({where})."
+    },
+    "MoreManeuvers": {
+      "Slam": "Slam: full Move, forward only",
+      "SlamRefused": "Only Determined, Feint, Strong or Double may slam",
+      "CommittedKind": "Committed Attack",
+      "SecondStep": "Second step (-2 to hit)",
+      "CommittedWith": "Attacking with",
+      "DefensiveBenefit": "Defensive benefit",
+      "MentalDefense": "Mental Defense (+2 to resist supernatural attacks)",
+      "MentalDefenseLine": "Mental Defense",
+      "DeterminedLine": "Committed Attack (Determined)",
+      "SecondStepLine": "Second step",
+      "GrappleLine": "Defensive Attack: a grab or grapple",
+      "NoRetreat": "A Committed Attack forbids a retreat",
+      "Kind": {
+        "determined": "Determined: +2 to hit",
+        "strong": "Strong: +1 damage (or +1 per two dice)"
+      },
+      "With": {
+        "hand": "A hand: no parry with it",
+        "shield": "A shield or cloak: no block",
+        "kick": "A kick: no dodge"
+      },
+      "Benefit": {
+        "parry": "+1 to Parry (one weapon)",
+        "block": "+1 to Block (balanced weapon)",
+        "sameWeapon": "Parry with the unbalanced weapon that attacked"
+      },
+      "Refuses": {
+        "parry": "A Committed Attack: no parry with the attacking hand",
+        "block": "A Committed Attack: no block with the attacking shield",
+        "dodge": "A Committed Attack with a kick: no dodge"
+      }
     },
     "Stress": {
       "Stress": "Stress",

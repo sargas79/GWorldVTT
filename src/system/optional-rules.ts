@@ -89,6 +89,12 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "chestAbdomenSplit", reference: "Basic Set Revised p. 566", default: false },
     // A Vision roll decides whether a very small or very distant attacker is seen coming (Addendum 4).
     { key: "visionRollsInCombat", reference: "Basic Set Revised pp. 574-575", default: false },
+    // More maneuvers (Addendum 4): each its own switch, off.
+    { key: "allOutSlams", reference: "Basic Set Revised p. 575", default: false },
+    { key: "allOutConcentrate", reference: "Basic Set Revised p. 575", default: false },
+    { key: "mentalDefense", reference: "Basic Set Revised p. 575", default: false },
+    { key: "committedAttack", reference: "Basic Set Revised pp. 575-576", default: false },
+    { key: "defensiveAttack", reference: "Basic Set Revised p. 576", default: false },
   ],
   injury: [
     { key: "hitLocations", reference: "Campaigns p. 398", default: true },

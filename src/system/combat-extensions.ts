@@ -35,6 +35,8 @@ import {
   type Maneuver,
   type MovementAllowance,
 } from "../rules/maneuvers.js";
+import { ADDENDUM_MANEUVERS, ADDENDUM_MANEUVER_ORDER, isAddendumManeuver } from "../rules/more-maneuvers.js";
+import { allowsSameWeaponParry, committedRefusal, slamMovement } from "./more-maneuvers.js";
 import { ACROBATIC_DEFENSES_PER_TURN } from "../rules/defenses.js";
 import { HIT_LOCATIONS, type HitLocation } from "../rules/hit-locations.js";
 import type { DamageType } from "../rules/types.js";
@@ -547,13 +549,17 @@ export function registeredManeuvers(): AddonManeuver[] {
 
 /** Every value `system.maneuver` may hold: the system's maneuvers and the registered ones. */
 export function maneuverKeys(): string[] {
-  return [...MANEUVER_ORDER, ...maneuvers.keys()];
+  return [...MANEUVER_ORDER, ...ADDENDUM_MANEUVER_ORDER, ...maneuvers.keys()];
 }
 
 /** What a maneuver allows, for the system's own and registered ones alike. Unknown keys read as Do Nothing. */
 export function maneuverInfo(key: string): { key: string; label: string; movement: MovementAllowance; defense: DefenseAllowance; attacks: boolean } {
   const own = MANEUVERS[key as Maneuver];
   if (own) return { key: own.key, label: own.label, movement: own.movement, defense: own.defense, attacks: own.attacks };
+  if (isAddendumManeuver(key)) {
+    const more = ADDENDUM_MANEUVERS[key];
+    return { key: more.key, label: more.label, movement: more.movement, defense: more.defense, attacks: more.attacks };
+  }
   const added = maneuvers.get(key);
   if (added) return { key, label: added.label, movement: added.movement, defense: added.defense, attacks: added.attacks };
   return { ...MANEUVERS.doNothing, key: "doNothing" };
@@ -566,9 +572,11 @@ export function maneuverInfo(key: string): { key: string; label: string; movemen
  */
 export function maneuverAllowancesFor(actor: any, maneuver: string, option: string): { movement: MovementAllowance; defense: DefenseAllowance } {
   const info = maneuverInfo(maneuver);
-  const hooked = callCombatHook(COMBAT_HOOKS.maneuverAllowances, { actor, maneuver, option, movement: info.movement, defense: info.defense });
+  // An All-Out Attack that slams goes a full Move, forward only (Revised p. 575).
+  const movement = slamMovement(actor, maneuver, option) ?? info.movement;
+  const hooked = callCombatHook(COMBAT_HOOKS.maneuverAllowances, { actor, maneuver, option, movement, defense: info.defense });
   return {
-    movement: MOVEMENTS.includes(hooked.movement) ? hooked.movement : info.movement,
+    movement: MOVEMENTS.includes(hooked.movement) ? hooked.movement : movement,
     defense: DEFENSES.includes(hooked.defense) ? hooked.defense : info.defense,
   };
 }
@@ -1376,6 +1384,13 @@ export function moduleDefenseRefusals(context: {
     // Since 1.43.0: a listener may offer a bare-handed parry beside the weapon's.
     bareHandedParry: { available: false },
   });
+  // What a Committed Attack rules out (Revised p. 576), whatever a listener said.
+  for (const choice of hooked.choices ?? []) {
+    const why = committedRefusal(context.defender, choice.key);
+    if (why) Object.assign(choice, { available: false, refusal: why });
+  }
+  const noRetreat = committedRefusal(context.defender, "retreat");
+  if (noRetreat) hooked.retreat = { available: false, refusal: noRetreat };
   const text = (refusal: unknown) => (typeof refusal === "string" && refusal.trim() ? refusal.trim() : "");
   const choices = new Map<DefenseKey, string>();
   for (const choice of hooked.choices ?? []) {
@@ -1434,7 +1449,8 @@ export function parryWeaponRows<T extends { itemId?: string; modeIndex?: number;
     modeIndex: Number(row.modeIndex ?? 0) || 0,
     name: String(row.name ?? ""),
     unbalanced: Boolean(row.unbalanced),
-    excluded: attackedThisTurn && Boolean(row.unbalanced),
+    // Defensive Attack lets the weapon that attacked parry again (Revised p. 576).
+    excluded: attackedThisTurn && Boolean(row.unbalanced) && !allowsSameWeaponParry(actor),
     reason: attackedThisTurn && row.unbalanced ? "unbalanced" : "",
   }));
   const hooked = callCombatHook(COMBAT_HOOKS.parryWeapons, { actor, attackedThisTurn, candidates });
