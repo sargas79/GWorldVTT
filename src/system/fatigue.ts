@@ -15,11 +15,14 @@
 import { setCondition, syncHealthConditions } from "./conditions.js";
 import { spendFatigue, type FatigueStatus } from "../rules/fatigue.js";
 import { afterFatigue, fatigueCost, type FatigueCostPart } from "./procedure-extensions.js";
+import { reservePlan } from "./reserves.js";
 
 /** What a loss of fatigue cost, once the chart was applied. */
 export interface FatigueApplied {
   fpLost: number;
   hpLost: number;
+  /** What an Energy Reserve of the ability's origin paid instead of FP (since 1.167.0). */
+  reserveLost: number;
   /** What the `gworld.fatigueCost` listeners said changed the cost (since 1.76.0). */
   sources: string[];
   /** The keyed pieces of the cost as the listeners left them (since 1.147.0); empty where none were given. */
@@ -65,6 +68,12 @@ export async function applyFatigue(
      * `gworld.afterFatigue` listeners.
      */
     costed?: { sources: string[]; parts?: FatigueCostPart[] };
+    /**
+     * The origin of the ability the fatigue pays for -- "magical", "psionic",
+     * "chi" -- which an Energy Reserve of that origin pays first, and no other
+     * (Basic Set Revised p. 326; since API 1.167.0). Without one no reserve pays.
+     */
+    origin?: string;
   } = {},
 ): Promise<FatigueApplied> {
   const fp = actor?.system?.fp ?? { value: 0, max: 0 };
@@ -86,17 +95,23 @@ export async function applyFatigue(
     })
     : { fp: lost, sources: [] as string[], parts: [] as FatigueCostPart[] };
 
+  // A reserve of the ability's origin pays before FP does, and leaves the FP
+  // chart, Very Fit and all, only what it could not cover.
+  const plan = options.origin ? reservePlan(actor, options.origin, costed.fp) : null;
+  const reserveLost = plan?.reserve ?? 0;
+
   const spent = spendFatigue({
     currentFp: fpBefore,
     maxFp: fpMax,
-    lost: costed.fp,
+    lost: plan ? plan.rest : costed.fp,
     // Very Fit: "you lose FP at only half the normal rate" (Characters p. 55).
     halved:
       options.exertion !== false &&
       actor?.system?.derived?.traitEffects?.fatigueLossHalved === true,
   });
 
-  const changes: Record<string, number> = {};
+  const changes: Record<string, unknown> = {};
+  if (plan && reserveLost > 0) changes["system.session.reserves"] = plan.reserves;
   if (spent.fpLost !== 0) changes["system.fp.value"] = spent.fp;
   if (spent.hpLost > 0) changes["system.hp.value"] = hpBefore - spent.hpLost;
 
@@ -115,6 +130,7 @@ export async function applyFatigue(
   const applied: FatigueApplied = {
     fpLost: spent.fpLost,
     hpLost: spent.hpLost,
+    reserveLost,
     sources: costed.sources,
     parts: costed.parts,
     fp: { previous: fpBefore, now: spent.fp, max: fpMax },
@@ -154,7 +170,7 @@ export async function applyFatigue(
 export async function spendFatigueFor(
   actor: any,
   fp: number,
-  options: { reason?: string; details?: Record<string, unknown>; exertion?: boolean } = {},
+  options: { reason?: string; details?: Record<string, unknown>; exertion?: boolean; origin?: string } = {},
 ): Promise<FatigueApplied | null> {
   const amount = Math.floor(Number(fp));
   if (!actor?.isOwner || !Number.isFinite(amount) || amount <= 0) return null;
@@ -162,6 +178,7 @@ export async function spendFatigueFor(
     reason: String(options.reason ?? "").trim() || "module",
     exertion: options.exertion !== false,
     ...(options.details ? { details: options.details } : {}),
+    ...(options.origin ? { origin: options.origin } : {}),
   });
 }
 

@@ -56,6 +56,7 @@ import { currentControlRating, legalityClassOf } from "./legality.js";
 import { surprise, undoKnockdown } from "./knockdown.js";
 import { rollFall } from "./falling.js";
 import { restoreFatigue, spendFatigueFor } from "./fatigue.js";
+import { chargeReserve, drainReserve, reservesOf, restoreReserve } from "./reserves.js";
 import { changeTrait, type TraitChanged } from "./trait-change.js";
 import { stopTowing, tow } from "./towing.js";
 import { cripple, crippledParts, healCrippled, settleCrippling, treatCrippled, type CrippledDuration, type CrippledPart } from "./crippling.js";
@@ -111,7 +112,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.166.0";
+export const API_VERSION = "1.167.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -250,8 +251,34 @@ const actors = {
    * here: the cost is not itemized), or null for a user who can't change
    * the actor or an amount that isn't a positive number.
    */
-  spendFatigue(actor: any, fp: number, options: { reason?: string; details?: Record<string, unknown>; exertion?: boolean } = {}) {
+  spendFatigue(actor: any, fp: number, options: { reason?: string; details?: Record<string, unknown>; exertion?: boolean; origin?: string } = {}) {
     return spendFatigueFor(actor, fp, options);
+  },
+
+  /**
+   * Energy Reserves (Basic Set Revised p. 326; since 1.167.0). `list(actor)`
+   * gives `{ key, origin, max, value, interval }` for each reserve a character
+   * has (`interval` in seconds, null where only energy theft refills it);
+   * `charge(actor, origin, cost)` takes what the reserve of that origin holds
+   * of a cost of FP and resolves to `{ reserve, rest }`, the rest for the
+   * caller to charge as FP (`spendFatigue` does the same with its `origin`
+   * option); `drain(actor, reserveOrigin, powerOrigin, amount)` is a hostile
+   * power depleting a reserve, which only one of the same origin does; and
+   * `restore(actor, origin, amount)` gives points back.
+   */
+  reserves: {
+    list(actor: any) {
+      return reservesOf(actor);
+    },
+    charge(actor: any, origin: string, cost: number) {
+      return chargeReserve(actor, origin, cost);
+    },
+    drain(actor: any, reserveOrigin: string, powerOrigin: string, amount: number) {
+      return drainReserve(actor, reserveOrigin, powerOrigin, amount);
+    },
+    restore(actor: any, origin: string, amount: number) {
+      return restoreReserve(actor, origin, amount);
+    },
   },
 
   /**

@@ -4171,6 +4171,10 @@
       "CannonFodderDefense": "Cannon fodder: automatically fails",
       "Collapses": "{name} goes down."
     },
+    "EnergyReserve": {
+      "Name": "ER ({origin})",
+      "Hint": "Energy Reserve: pays the FP costs of {origin} abilities and nothing else. It recharges 1 every 10 minutes (slower with Slow Recharge, not at all by itself with Special Recharge), whatever the character does; low ER has none of the effects of low FP (Basic Set Revised p. 326)."
+    },
     "BonusPoints": {
       "Title": "Points to spend",
       "Unspent": "Unspent {value}",

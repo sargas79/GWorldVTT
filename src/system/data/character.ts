@@ -116,6 +116,7 @@ import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalti
 import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { powersOf } from "../../rules/powers.js";
 import { sessionPools } from "../../rules/bonus-points.js";
+import { energyReserves, reserveValue } from "../../rules/energy-reserve.js";
 import { suitedLevel,
   defaultCreditPoints,
   effectiveSkillLevel,
@@ -671,7 +672,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     label: string;
     source: string;
   };
-  declare session: { impulseSpent: number; foresightUsed: number };
+  declare session: { impulseSpent: number; foresightUsed: number; reserves: Record<string, { spent: number; carry: number }> };
   declare points: {
     starting: number;
     disadvantageLimit: number;
@@ -843,6 +844,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       session: new fields.SchemaField({
         impulseSpent: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
         foresightUsed: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+        /** What each Energy Reserve has spent, by origin, and the seconds counted toward its next point (p. 326). */
+        reserves: new fields.ObjectField({ required: true, nullable: false, initial: () => ({}) }),
       }),
 
       /**
@@ -3560,6 +3563,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         foresightMax: traits.foresight,
         foresightUsed: this.session?.foresightUsed ?? 0,
       }),
+      // Energy Reserves (Basic Set Revised p. 326): one to an origin, with what each holds.
+      reserves: energyReserves(heldTraits).map((r) => ({
+        ...r,
+        value: reserveValue(r.max, Number((this.session?.reserves as any)?.[r.key]?.spent ?? 0) || 0),
+      })),
       // The suit worn that DX and DX-based rolls are held to (Characters p. 192).
       environmentSuit,
       magic: { ...magic, mana, items: magicItems },

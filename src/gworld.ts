@@ -60,6 +60,7 @@ import { GWorldVehicleSheet } from "./system/sheets/vehicle-sheet.js";
 import { READY_HOOK, createApi, warnIncompatibleModules } from "./system/api.js";
 import { registerCombatStateHooks } from "./system/combat-extensions.js";
 import { registerProcedureHooks } from "./system/procedure-extensions.js";
+import { registerReserveHooks } from "./system/reserves.js";
 import { configureDeprecatedData, migrateContainers, migrateLearnableTraits, migrateRenamedTraits, registerMigrationSettings, warnUncoveredData } from "./system/migration.js";
 import { closeRuleRegistration, openRuleRegistration, registerRule, registerRuleGroup } from "./system/rule-registry.js";
 import { registerSettings } from "./system/settings.js";
@@ -157,6 +158,7 @@ Hooks.once("init", () => {
   // boundary it asked for.
   registerCombatStateHooks();
   registerProcedureHooks(setCondition);
+  registerReserveHooks();
   registerConsciousnessTurns();
   // A disarm changes the foe's weapon, which a player rarely owns, so the
   // GM's client makes the change when asked.

@@ -4045,3 +4045,24 @@ Each step is recorded in the world under the module once every document it
 touched has saved, so it runs once. A step with a failure isn't recorded and
 runs again on the next load. Each helper returns
 `{ skipped, changed, failed }`, and a long step reports its progress.
+
+- **Energy Reserve** (since 1.167.0; Basic Set Revised p. 326). A trait
+  "Energy Reserve" taken with a specialty for its origin (Magical, Psionic,
+  Chi, a power's name) is a pool of that origin; `derived.reserves` lists
+  `{ key, origin, max, value, interval }` for each (two of one origin are one
+  reserve), from `system.session.reserves`, which holds what each has spent
+  and the seconds counted toward its next point. `interval` is 600 seconds
+  unless Slow Recharge (1 ER/hour or 1 ER/day) says otherwise, and null where
+  Special Recharge (energy theft only) means nothing recharges it by itself.
+  `spendFatigue(actor, fp, { origin })` and the system's own spell costs
+  (`origin: "magical"`) draw on a reserve of that origin before FP, leaving
+  the FP chart only what it could not cover; the result gains `reserveLost`.
+  `api.reserves` has `list(actor)`, `charge(actor, origin, cost)` (resolves to
+  `{ reserve, rest }`), `drain(actor, reserveOrigin, powerOrigin, amount)`
+  (only a power of the same origin depletes it) and `restore(actor, origin,
+  amount)`. The world clock recharges every reserve on `updateWorldTime`. The
+  sheet shows each reserve beside FP. `rules.energyReserves`,
+  `rules.payFromReserve`, `rules.rechargeReserve`, `rules.drainsReserve` and
+  `rules.originKey` are the pieces. Extra effort with an ability of an origin
+  and Costs Fatigue are for the module that owns the ability, which charges
+  through `spendFatigue` with `origin`.

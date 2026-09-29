@@ -32,6 +32,16 @@
           <div class="v2-bar v2-bar-fp"><span style="width: {{v2.vitals.fp.percent}}%"></span></div>
           {{#if v2.vitals.fp.tired}}<span class="v2-pool-status v2-bad">{{v2.vitals.fp.statusLabel}}</span>{{/if}}
         </div>
+        {{!-- Energy Reserves, one to an origin (Basic Set Revised p. 326). --}}
+        {{#each system.derived.reserves as |reserve|}}
+        <div class="v2-pool" data-tooltip="{{localize 'GWORLD.EnergyReserve.Hint' origin=reserve.origin}}">
+          <div class="v2-pool-head">
+            <span class="v2-pool-name">{{localize "GWORLD.EnergyReserve.Name" origin=reserve.origin}}</span>
+            <span class="v2-pool-value">{{reserve.value}} <span class="v2-muted">/ {{reserve.max}}</span></span>
+          </div>
+          <div class="v2-bar v2-bar-fp"><span style="width: {{percent reserve.value reserve.max}}%"></span></div>
+        </div>
+        {{/each}}
         <div class="v2-stat-pair">
           <div class="v2-stat">
             <span class="v2-stat-label">{{localize "GWORLD.Secondary.Move"}}</span>

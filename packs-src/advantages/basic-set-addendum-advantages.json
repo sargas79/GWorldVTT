@@ -682,5 +682,30 @@
       "description": "",
       "reference": "Basic Set: Characters p. 325"
     }
+  },
+  {
+    "_id": "4ca8664d4c8a71aa",
+    "name": "Energy Reserve",
+    "type": "trait",
+    "system": {
+      "category": "advantage",
+      "points": 0,
+      "levels": 1,
+      "pointsPerLevel": 3,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "specialty": "",
+      "needsSpecialty": true,
+      "selfControl": null,
+      "reactionModifier": 0,
+      "talentSkills": [],
+      "power": "",
+      "powerTalent": false,
+      "meleeModes": [],
+      "rangedModes": [],
+      "description": "",
+      "reference": "Basic Set: Characters p. 326"
+    }
   }
 ]

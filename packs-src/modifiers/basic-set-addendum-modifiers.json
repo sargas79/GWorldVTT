@@ -1,0 +1,62 @@
+[
+  {
+    "_id": "88f43f0928ea768f",
+    "name": "Slow Recharge (1 ER/hour)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -20,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Energy Reserve",
+      "description": "",
+      "reference": "Basic Set: Characters p. 326"
+    }
+  },
+  {
+    "_id": "d383e8a76343a78a",
+    "name": "Slow Recharge (1 ER/day)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -60,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Energy Reserve",
+      "description": "",
+      "reference": "Basic Set: Characters p. 326"
+    }
+  },
+  {
+    "_id": "bd3c7a5ed789b45b",
+    "name": "Special Recharge (energy theft only)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -70,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Energy Reserve",
+      "description": "",
+      "reference": "Basic Set: Characters p. 326"
+    }
+  },
+  {
+    "_id": "d36436a47f5a5fe6",
+    "name": "Special Recharge (accessibility, half value)",
+    "type": "modifier",
+    "system": {
+      "kind": "limitation",
+      "value": -5,
+      "costTable": [],
+      "levelNames": [],
+      "maxLevels": 0,
+      "group": "Energy Reserve",
+      "description": "",
+      "reference": "Basic Set: Characters p. 326"
+    }
+  }
+]

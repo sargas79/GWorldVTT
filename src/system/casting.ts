@@ -362,16 +362,22 @@ async function promptForCast(options: {
 // ── paying and rolling ───────────────────────────────────────────────────────
 
 /** Takes energy off the caster: HP first where they chose to burn it, the rest as fatigue. */
-async function payEnergy(actor: any, total: number, hpBurn: number): Promise<{ fp: number; hp: number }> {
+async function payEnergy(actor: any, total: number, hpBurn: number): Promise<{ fp: number; hp: number; er: number }> {
   const hp = Math.max(0, Math.min(Math.floor(hpBurn), total));
-  const fp = total - hp;
-  if (fp > 0) await applyFatigue(actor, fp, { exertion: false, reason: "spell" });
+  let fp = total - hp;
+  let er = 0;
+  if (fp > 0) {
+    // A Magical Energy Reserve pays first (Basic Set Revised p. 326).
+    const applied = await applyFatigue(actor, fp, { exertion: false, reason: "spell", origin: "magical" });
+    er = Math.min(fp, applied.reserveLost);
+    fp -= er;
+  }
   if (hp > 0) {
     // "Treat HP lost this way just like any other injury" (p. 237).
     await actor.update({ "system.hp.value": (Number(actor.system?.hp?.value) || 0) - hp });
     await syncHealthConditions(actor);
   }
-  return { fp, hp };
+  return { fp, hp, er };
 }
 
 function dieResults(roll: any): number[] {
@@ -445,7 +451,7 @@ async function resolveCasting(casting: Casting): Promise<SuccessRollResult | nul
   const drawn = owed > 0 && casting.energySource
     ? await drawEnergy(actor, item, casting.energySource, owed, casting.castingContext)
     : { energy: 0, points: 0, label: "" };
-  const paid = owed - drawn.energy > 0 ? await payEnergy(actor, owed - drawn.energy, hpBurn) : { fp: 0, hp: 0 };
+  const paid = owed - drawn.energy > 0 ? await payEnergy(actor, owed - drawn.energy, hpBurn) : { fp: 0, hp: 0, er: 0 };
 
   // ── a critical failure ───────────────────────────────────────────────
   const rolls: any[] = [roll];
@@ -554,6 +560,7 @@ async function resolveCasting(casting: Casting): Promise<SuccessRollResult | nul
   const paidText = owed > 0
     ? [
         drawn.energy > 0 ? `${drawn.energy} (${drawn.label})` : "",
+        paid.er > 0 ? `${paid.er} ER` : "",
         paid.fp > 0 ? `${paid.fp} FP` : "",
         paid.hp > 0 ? `${paid.hp} HP` : "",
       ].filter(Boolean).join(" + ")
@@ -884,7 +891,7 @@ export async function maintainSpell(actor: any, id: string): Promise<void> {
     ui.notifications?.warn(game.i18n.format("GWORLD.Cast.CannotMaintain", { spell: spell.name }));
     return;
   }
-  if (spell.maintainCost > 0) await applyFatigue(actor, spell.maintainCost, { exertion: false, reason: "spell", details: { maintain: true } });
+  if (spell.maintainCost > 0) await applyFatigue(actor, spell.maintainCost, { exertion: false, reason: "spell", origin: "magical", details: { maintain: true } });
   const now = Number((game as any).time?.worldTime ?? 0) || 0;
   list[index] = { ...spell, expiresAt: maintainedExpiry(spell.expiresAt, spell.durationSeconds, now) };
   await actor.update({ "system.activeSpells": list });
@@ -902,7 +909,7 @@ export async function dropSpell(actor: any, id: string): Promise<void> {
   if (!spell) return;
   const now = Number((game as any).time?.worldTime ?? 0) || 0;
   const cost = cancelCost(spell.expiresAt, now);
-  if (cost > 0) await applyFatigue(actor, cost, { exertion: false, reason: "spell" });
+  if (cost > 0) await applyFatigue(actor, cost, { exertion: false, reason: "spell", origin: "magical" });
   list.splice(index, 1);
   await actor.update({ "system.activeSpells": list });
   ui.notifications?.info(
