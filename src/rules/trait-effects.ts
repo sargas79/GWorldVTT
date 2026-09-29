@@ -64,6 +64,24 @@ export interface TraitEffects {
    * read it with a Beam Weapons, Gunner, Guns or Liquid Projector weapon.
    */
   gunslinger: boolean;
+  /**
+   * Jack of All Trades (Basic Set Revised p. 327; since API 1.166.0): a
+   * bonus of its level, to at most three, on a roll at an attribute default
+   * for a skill with no points in it.
+   */
+  jackOfAllTrades: number;
+  /**
+   * Impulse Points (Basic Set Revised p. 327; since API 1.166.0): the size
+   * of the pool, a level each.
+   */
+  impulsePoints: number;
+  /**
+   * Foresight (p. 326; since API 1.166.0): the retroactive actions a session
+   * allows, a level each, of the whole or a limited kind.
+   */
+  foresight: number;
+  /** Heroic Archer (Basic Set Revised p. 327; since API 1.166.0), a cinematic advantage. */
+  heroicArcher: boolean;
   /** Influence rolls fail against them outright (Indomitable, Characters p. 60). */
   indomitable: boolean;
   /** Influence rolls against them win outright (Heteronomy, Characters p. 138). */
@@ -278,6 +296,10 @@ export function noTraitEffects(): TraitEffects {
     aquatic: false,
     ambidextrous: false,
     gunslinger: false,
+    jackOfAllTrades: 0,
+    impulsePoints: 0,
+    foresight: 0,
+    heroicArcher: false,
     indomitable: false,
     heteronomy: false,
     attributes: { ST: 0, DX: 0, IQ: 0, HT: 0 },
@@ -419,6 +441,13 @@ const TRAIT_EFFECTS: Record<string, EffectOf> = {
   // "You have uncanny talent with firearms" (Characters p. 58): what it does
   // to a shot is worked out where the shot is (rules/gunslinger.ts).
   gunslinger: () => ({ gunslinger: true }),
+
+  // "You get a bonus equal to your Jack of All Trades level (maximum three)"
+  // to attribute-default rolls for skills you have no points in (Revised
+  // p. 327), and "you can draw and shoot a bow quickly" (p. 326).
+  "jack of all trades": (levels) => ({ jackOfAllTrades: Math.min(3, Math.max(0, levels)) }),
+  "heroic archer": () => ({ heroicArcher: true }),
+  "impulse points": (levels) => ({ impulsePoints: Math.max(0, levels) }),
 
   // "You cannot be affected by Influence rolls" (Characters p. 60), and its
   // opposite: "you win automatically against those with Heteronomy"
@@ -605,6 +634,13 @@ function temperatureTolerance(trait: HeldTrait): { coldF: number; heatF: number 
  */
 const INJURY_TOLERANCE = /^injury tolerance\b/;
 
+/**
+ * Foresight comes whole or limited to a kind -- "Foresight (Ambushes)" -- so
+ * it is matched by prefix, and each level is a use a session (Basic Set
+ * Revised p. 326).
+ */
+const FORESIGHT = /^foresight\b/;
+
 /** Radiation Tolerance's divisor comes off a table rather than adding up. */
 const RADIATION_TOLERANCE = "radiation tolerance";
 
@@ -654,6 +690,7 @@ export function isReadTrait(name: string, talentSkills: readonly string[] = []):
     key === RADIATION_TOLERANCE ||
     FRAGILE.test(key) ||
     INJURY_TOLERANCE.test(key) ||
+    FORESIGHT.test(key) ||
     TEMPERATURE_TOLERANCE.test(key) ||
     isTalent(key, talentSkills) ||
     isSocialTrait(key)
@@ -683,6 +720,10 @@ export function traitEffects(traits: readonly HeldTrait[]): TraitEffects {
         [trait.name, ...(trait.modifiers ?? [])],
         total.injuryTolerance,
       );
+      continue;
+    }
+    if (FORESIGHT.test(key)) {
+      total.foresight += Math.max(1, Math.floor(trait.levels ?? 0) || 1);
       continue;
     }
     if (key === RADIATION_TOLERANCE) {
@@ -785,6 +826,11 @@ export function addTraitEffects(total: TraitEffects, applied: Partial<TraitEffec
   total.aquatic ||= applied.aquatic ?? false;
   total.ambidextrous ||= applied.ambidextrous ?? false;
   total.gunslinger ||= applied.gunslinger ?? false;
+  // Two of the trait share the cap of three levels.
+  total.jackOfAllTrades = Math.min(3, total.jackOfAllTrades + (applied.jackOfAllTrades ?? 0));
+  total.heroicArcher ||= applied.heroicArcher ?? false;
+  total.impulsePoints += applied.impulsePoints ?? 0;
+  total.foresight += applied.foresight ?? 0;
   total.indomitable ||= applied.indomitable ?? false;
   total.heteronomy ||= applied.heteronomy ?? false;
   if (applied.electrical) total.electrical = true;

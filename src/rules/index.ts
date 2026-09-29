@@ -71,6 +71,7 @@ export * from "./scale.js";
 export * from "./natural-attacks.js";
 export * from "./aim.js";
 export * from "./gunslinger.js";
+export * from "./heroic-archer.js";
 export * from "./readiness.js";
 export * from "./shotguns.js";
 export * from "./injury-tolerance.js";

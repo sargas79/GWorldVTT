@@ -7,6 +7,7 @@ import { criticalDr, type CriticalDamage } from "./criticals.js";
 import { addModifier, parseDiceAdds } from "./dice.js";
 import {
   diffuseInjuryCap,
+  reducedInjury,
   toleratedLocation,
   toleratedWoundingModifier,
   type InjuryTolerance,
@@ -344,10 +345,8 @@ export function computeInjury({
   // A Diffuse body is barely there to hurt: a point from anything that
   // pierces, two from anything else, however hard it was hit.
   const cap = tolerance ? diffuseInjuryCap(type, tolerance) : null;
-  const raw = Math.min(
-    cap ?? Number.POSITIVE_INFINITY,
-    Math.max(1, Math.floor(penetrating * Math.max(1, vulnerability) * woundingModifier)),
-  );
+  const wounded = Math.max(1, Math.floor(penetrating * Math.max(1, vulnerability) * woundingModifier));
+  const raw = Math.min(cap ?? Number.POSITIVE_INFINITY, tolerance ? reducedInjury(wounded, tolerance) : wounded);
 
   // A threshold given in place of the location's: none at all, or a figure
   // past which the excess is lost as it is for a limb.

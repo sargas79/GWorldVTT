@@ -189,6 +189,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "cinematicExplosions", reference: "Campaigns p. 417", default: false },
     // A bullet that shoves like a club, and leaves the mind reeling.
     { key: "cinematicKnockback", reference: "Campaigns p. 417", default: false },
+    // A bow drawn and shot in no time, and never missed for want of aim.
+    { key: "heroicArcher", reference: "Basic Set Revised p. 327", default: false },
     // A character point to make a wound a scratch.
     { key: "fleshWounds", reference: "Campaigns p. 417", default: false },
     // A point of fatigue and the next turn to undo a failed defense.

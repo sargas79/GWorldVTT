@@ -74,7 +74,8 @@ describe("the rule catalogue", () => {
     const state = defaultRuleState();
     for (const rule of OPTIONAL_RULES.cinematic) {
       expect(state[rule.key]).toBe(false);
-      expect(rule.reference).toBe("Campaigns p. 417");
+      // The Campaigns chapter's own list, and the Revised edition's cinematic advantage.
+      expect(rule.reference).toBe(rule.key === "heroicArcher" ? "Basic Set Revised p. 327" : "Campaigns p. 417");
     }
   });
 });

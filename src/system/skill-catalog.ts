@@ -63,6 +63,8 @@ export function defaultLevelFrom(
   defaults: readonly CatalogDefault[],
   attributeScore: (attribute: SkillAttribute) => number,
   skillLevel: (name: string) => number | null,
+  /** What an attribute default gains, as from Jack of All Trades (Revised p. 327). */
+  attributeBonus = 0,
 ): number | null {
   let best: number | null = null;
   for (const entry of defaults) {
@@ -71,7 +73,7 @@ export function defaultLevelFrom(
       const source = entry.skill ? skillLevel(entry.skill) : null;
       level = source === null ? null : source + entry.modifier;
     } else {
-      level = namedDefaultLevel(attributeScore(entry.attribute), entry.modifier);
+      level = namedDefaultLevel(attributeScore(entry.attribute), entry.modifier) + attributeBonus;
     }
     if (level !== null && (best === null || level > best)) best = level;
   }
