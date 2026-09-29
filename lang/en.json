@@ -640,6 +640,14 @@
           "Name": "Pulling Rank",
           "Hint": "Rank as an effective Patron: a Rank trait with the organization’s Patron value gets an Assistance roll, 3d against a number that rises with Rank (Basic Set Revised pp. 337-341)."
         },
+        "expandedInfluence": {
+          "Name": "Expanded Influence Rolls",
+          "Hint": "An Influence roll gives a reaction by the margin of the Quick Contest, from Disastrous to Excellent, instead of only Good or Bad (Basic Set Revised p. 571)."
+        },
+        "basicAbstractDifficulty": {
+          "Name": "Basic Abstract Difficulty",
+          "Hint": "One penalty from 0 to -10, set in the system settings or per scene, on the rolls of tasks; an NPC without a sheet has skill 10 + BAD (Basic Set Revised p. 578)."
+        },
         "teamEfforts": {
           "Name": "Team efforts",
           "Hint": "The party rolls once in a skill, on the Party sheet: the best member’s level, plus one for each who knows it, less the size of the group."
@@ -4750,6 +4758,17 @@
         "unpowered": "no points spent to use it"
       }
     },
+    "Tasks": {
+      "Ham": "Ham Clause",
+      "HamHint": "Play this disadvantage up for the scene: -1 to every success roll per -5 points of it (Basic Set Revised p. 570).",
+      "HamEnd": "End Ham Clause",
+      "HamEndHint": "The scene is over; the penalty ends. It also ends with the battle.",
+      "HamInvoked": "{name} plays up {trait}: {penalty} to every success roll this scene.",
+      "HamLine": "Ham Clause ({trait})",
+      "BadLine": "Basic Abstract Difficulty",
+      "BadSetting": "Basic Abstract Difficulty",
+      "BadSettingHint": "The penalty, 0 to -10, on every task while the rule is on; a scene may set its own (Basic Set Revised p. 578)."
+    },
     "PullingRank": {
       "PatronValue": "Patron value",
       "PatronValueHint": "A Rank trait only: the hypothetical Patron value of the organization, 10 to 30 points, which the character never pays. It sets the Rank an Assistance roll needs.",
@@ -5512,6 +5531,8 @@
         "checks": "Fright"
       },
       "Column": {
+        "Who": "Who",
+        "Fraction": "Fraction",
         "Roll": "Roll",
         "Effect": "Effect",
         "Score": "Score",
@@ -5781,6 +5802,29 @@
           "Title": "Throwing Distance",
           "Summary": "How far something can be thrown, by its weight against Basic Lift.",
           "Note": "Divide the weight by the thrower's Basic Lift and read the row at or above it: the distance in yards is ST times the modifier. Nothing over {max}×BL can be thrown."
+        },
+        "peopleSucceed": {
+          "Title": "How Many People Succeed",
+          "Summary": "The fraction of a large group who succeed or fail at a target number.",
+          "Succeed": "Succeed",
+          "Fail": "Fail",
+          "Note": "Apply the fraction and round down; the rest have the opposite result, and under 1 person means all do. A target under 3 counts as 3. For a Contest, roll the attacker once and take the margin off the group’s resistance (never under 3)."
+        },
+        "collectiveSkill": {
+          "Title": "Collective Skill",
+          "Summary": "The effective score when only one of a big group must succeed.",
+          "Note": "The columns are the number of people; use the lower size when between two, and 16 over 500. Roll once against the score, or as a Quick Contest."
+        },
+        "abstractDifficulty": {
+          "Title": "Basic Abstract Difficulty",
+          "Summary": "One penalty for the scene, and the quick ways to modify a roll.",
+          "Current": "This scene",
+          "CurrentOff": "Off, or 0. Switch it on in the rules to set a penalty from 0 to -10 in the system settings.",
+          "CurrentText": "{bad} on tasks; an NPC without a sheet has effective skill {skill}.",
+          "Suggest": "A suggestion",
+          "SuggestText": "A known enemy group’s points as an Enemy, divided by 4, dropping fractions.",
+          "Quick": "Quick-and-dirty modifiers",
+          "QuickText": "-1 per complication and per intensifier, +1 per favourable qualifier: a slimy, twisting, smoke-obscured path is {example}."
         },
         "coverDr": {
           "Title": "Cover DR",

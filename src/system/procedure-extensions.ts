@@ -22,6 +22,7 @@
  */
 
 import { sceneAreaLines } from "./modifier-areas.js";
+import { taskRuleLines } from "./task-rules.js";
 import { SYSTEM_ID } from "./constants.js";
 import { endAttackedThisTurn } from "./feint.js";
 import { isFightingRoll, noteFought } from "./combat-participation.js";
@@ -628,6 +629,8 @@ function hookedSuccessRoll(context: SuccessRollContext, refusable: boolean): { m
   if (ctx.tags.includes("detection")) ctx.modifiers.push(...detectionModifiers(ctx));
   // Smoke, fog and the like on the scene (since 1.63.0).
   ctx.modifiers.push(...sceneAreaLines(ctx));
+  // A disadvantage played up, and the scene's Basic Abstract Difficulty (Revised pp. 570, 578).
+  ctx.modifiers.push(...taskRuleLines(ctx));
   // A DX roll while suited up is held to the Environment Suit skill (Characters p. 192).
   const suit = ctx.actor?.system?.derived?.environmentSuit;
   if (ctx.kind === "attribute" && ctx.tags.includes("DX") && suit && typeof suit.level === "number" && ctx.base > suit.level) {

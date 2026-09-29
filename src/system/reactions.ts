@@ -22,6 +22,8 @@ import {
 } from "../rules/reactions.js";
 import { quickContest, resolveSuccess } from "../rules/success.js";
 import { procedureRoll, reactionModifiers } from "./procedure-extensions.js";
+import { isRuleOn } from "./optional-rules.js";
+import { expandedInfluenceReaction } from "../rules/tasks-and-feats.js";
 
 const REACTION_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/reaction.hbs`;
 
@@ -178,6 +180,8 @@ export async function rollInfluence(options: {
 
   const rolls: any[] = [];
   let won: boolean;
+  // The Quick Contest's margin, positive for the influencer, for Expanded Influence Rolls.
+  let margin: number | null = null;
 
   if (settled === null) {
     const ours = new Roll("3d6");
@@ -193,6 +197,7 @@ export async function rollInfluence(options: {
       resolveSuccess(against.total, resisted, dieResults(against)),
     );
     won = contest.outcome === "first";
+    margin = contest.outcome === "first" ? contest.marginOfVictory : contest.outcome === "second" ? -contest.marginOfVictory : 0;
   } else {
     won = settled;
   }
@@ -202,6 +207,12 @@ export async function rollInfluence(options: {
     won,
     ...(options.specious === undefined ? {} : { specious: options.specious }),
   });
+
+  // Expanded Influence Rolls (Revised p. 571): the margin gives the reaction, unless
+  // something else settled the roll -- an automatic result, or specious intimidation lost.
+  if (isRuleOn("expandedInfluence") && margin !== null && !(options.specious && String(options.skill) === "Intimidation" && !won)) {
+    result.reaction = expandedInfluenceReaction(margin);
+  }
 
   // "If you used Diplomacy, the GM will also make a regular reaction roll and
   // use the better of the two reactions."

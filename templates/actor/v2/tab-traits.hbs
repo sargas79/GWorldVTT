@@ -200,6 +200,14 @@
               <button type="button" class="v2-button" data-action="v2AssistanceReset"
                       data-tooltip="{{localize 'GWORLD.PullingRank.ResetHint'}}">{{localize "GWORLD.PullingRank.Reset"}}</button>
             {{/if}}
+            {{#if (and @root.editable row.hamClause)}}
+              <button type="button" class="v2-button" data-action="v2HamClause"
+                      data-tooltip="{{localize 'GWORLD.Tasks.HamHint'}}">{{localize "GWORLD.Tasks.Ham"}}</button>
+            {{/if}}
+            {{#if (and @root.editable row.hamClauseActive)}}
+              <button type="button" class="v2-button v2-button-steel" data-action="v2HamClauseEnd"
+                      data-tooltip="{{localize 'GWORLD.Tasks.HamEndHint'}}">{{localize "GWORLD.Tasks.HamEnd"}}</button>
+            {{/if}}
             {{#if (and @root.editable row.pointPowered)}}
               {{#if row.pointPoweredActive}}
                 <button type="button" class="v2-button" data-action="v2EndPointPowered"

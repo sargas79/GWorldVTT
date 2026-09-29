@@ -3794,7 +3794,7 @@ The ids, tab by tab (parts in brackets):
 | Tab | Ids |
 |---|---|
 | Criticals | `criticalHit`, `criticalHeadBlow`, `criticalMiss`, `unarmedCriticalMiss` |
-| Tables | `attributeSkillLevels` (`attributeLevels`, `successChances`), `thrownDamage`, `throwingDistance`, `coverDr` (`coverShots`, `coverWalls`) |
+| Tables | `attributeSkillLevels` (`attributeLevels`, `successChances`), `thrownDamage`, `throwingDistance`, `peopleSucceed`, `collectiveSkill`, `abstractDifficulty`, `coverDr` (`coverShots`, `coverWalls`) |
 | Wounds | `hitLocations`, `shock`, `knockback`, `majorWound`, `knockdownStunning`, `effectsOfStun`, `cripplingInjury`, `mortalWounds`, `bleeding` |
 | Melee | `meleeAttackModifiers`, `activeDefenseModifiers`, `lostHitPoints`, `lostFatiguePoints`, `criticals`, `rulesOf` (`ruleOf14`, `ruleOf16`, `ruleOf20`) |
 | Ranged | `rangedAttackModifiers`, `sizeSpeedRange`, `dodgeBlockParry`, `woundingModifiers`, `firstAid`, `naturalRecovery`, `unconsciousness` |
@@ -4254,3 +4254,29 @@ runs again on the next load. Each helper returns
   written to the character as traits; extra limbs do not change a joint's threshold;
   a miss by one at the ear, nose, jaw, spine or pelvis lands on the torso whether or not
   the split is on.
+- **Tasks and feats** (since 1.177.0; Basic Set Revised pp. 570-571, 578). Switches
+  `expandedInfluence` and `basicAbstractDifficulty` (rolls group, off). Ham Clause needs
+  no switch: a disadvantage's row on the sheet has a button that keeps it as an actor
+  flag, and every success roll of the actor (through `successRollModifiers`, a line
+  labelled "Ham Clause") takes -1 per -5 points or fraction of it until the button
+  ends it or the combat is deleted. `social.hamClause(actor)` reads it,
+  `social.invokeHamClause(actor, item)` and `social.endHamClause(actor)` set and end it.
+  With Expanded Influence Rolls on, an Influence roll's reaction is the margin of the
+  Quick Contest read on the table (excellent 8+, very good 5-7, good 1-4, neutral on a
+  tie, poor -1 to -2, bad -3 to -4, very bad -5 to -7, disastrous -8 or worse); an
+  automatic result and lost specious intimidation keep the standard outcome.
+  Basic Abstract Difficulty is a world setting (0 to -10, `basicAbstractDifficulty`)
+  with a scene flag of the same name overriding it; with the switch on it is one line,
+  "Basic Abstract Difficulty", on every task roll (not an attack or a defense, nor the
+  player's side of a Contest against an opponent with no actor).
+  `social.basicAbstractDifficulty(scene?)`, `social.setBasicAbstractDifficulty(value,
+  scene?)` and `social.unstattedNpcSkill(scene?)` (10 + |BAD|) read and set it. The GM
+  screen's Tables tab gains "How Many People Succeed", "Collective Skill" and "Basic
+  Abstract Difficulty" (with the quick-and-dirty rule and the suggestion).
+  `rules.hamClausePenalty`, `quickAndDirtyModifier`, `groupFraction`, `groupOutcome`,
+  `adjustedResistance`, `collectiveScore`, `expandedInfluenceReaction`, `clampBad`,
+  `abstractNpcSkill` and `suggestedBad` are the pure pieces. Not done: BAD does not
+  remove the detailed situational modifiers the automation adds (it is one more line;
+  the GM turns the others off), the roll dialog does not show BAD apart from its line,
+  the "critical for 8 or more" option of Expanded Influence is the GM's, and there is
+  no button for the unstatted NPC's roll (the GM screen states its skill).

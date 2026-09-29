@@ -63,7 +63,7 @@ describe("the rule catalogue", () => {
     // is a GM's option, not a book rule (Characters pp. 290, 292).
     // The wildcard bonus is headed "optionally" (Basic Set Revised p. 333).
     // Pulling Rank is a workaround the book offers for hierarchical organizations (p. 337).
-    expect(off.sort()).toEqual(["bleeding", "chestAbdomenSplit", "closeCombatAnyWeapon", "damageToShields", "familiarity", "finerHitLocations", "flatSignatureGear", "modifyingDiceAdds", "pullingRank", "studyAttributes", "wildcardBonus"]);
+    expect(off.sort()).toEqual(["basicAbstractDifficulty", "bleeding", "chestAbdomenSplit", "closeCombatAnyWeapon", "damageToShields", "expandedInfluence", "familiarity", "finerHitLocations", "flatSignatureGear", "modifyingDiceAdds", "pullingRank", "studyAttributes", "wildcardBonus"]);
   });
 
   /**

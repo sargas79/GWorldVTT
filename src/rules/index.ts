@@ -144,3 +144,4 @@ export * from "./skill-availability.js";
 export * from "./cost-factors.js";
 export * from "./flat-signature-gear.js";
 export * from "./revised-hit-locations.js";
+export * from "./tasks-and-feats.js";

@@ -26,6 +26,7 @@
  *      and every part of the API may be used.
  */
 
+import { currentBad, endHamClause, hamClauseOf, invokeHamClause, setBad, unstattedNpcSkill } from "./task-rules.js";
 import { gmScreenApi } from "./gm-screen/api.js";
 import { containersApi } from "./container-moves.js";
 import * as rules from "../rules/index.js";
@@ -112,7 +113,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.176.0";
+export const API_VERSION = "1.177.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -1000,7 +1001,16 @@ const hazardsApi = Object.freeze({
 });
 
 /** The social namespace (since 1.103.0): a module's Influence skills (Campaigns p. 359). */
-const socialApi = Object.freeze({ registerInfluenceSkill });
+const socialApi = Object.freeze({
+  registerInfluenceSkill,
+  // Tasks and feats (since 1.177.0; Basic Set Revised pp. 570, 578).
+  hamClause: hamClauseOf,
+  invokeHamClause,
+  endHamClause,
+  basicAbstractDifficulty: (scene?: any) => currentBad(scene),
+  setBasicAbstractDifficulty: setBad,
+  unstattedNpcSkill: (scene?: any) => unstattedNpcSkill(scene),
+});
 
 /**
  * The areas namespace (since 1.63.0): smoke, fog, a field that blinds a sense.

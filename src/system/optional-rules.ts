@@ -117,6 +117,10 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "wildcardBonus", reference: "Basic Set Revised p. 333", default: false },
     // Rank as an effective Patron: Assistance Rolls (Addendum 2). Optional, an organization's help by dice.
     { key: "pullingRank", reference: "Basic Set Revised p. 337", default: false },
+    // Influence rolls giving the whole Reaction Table by margin, not Good or Bad (Addendum 4).
+    { key: "expandedInfluence", reference: "Basic Set Revised p. 571", default: false },
+    // One penalty for the scene instead of detailed modifiers; 10 + |BAD| for NPCs without a sheet (Addendum 4).
+    { key: "basicAbstractDifficulty", reference: "Basic Set Revised p. 578", default: false },
   ],
   activities: [
     { key: "physicalActivities", reference: "Campaigns pp. 349-355", default: true },

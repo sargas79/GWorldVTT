@@ -26,6 +26,7 @@ import { registerSupersededPackHiding } from "./system/compendium-sources.js";
 import { registerEvaluateTracking } from "./system/evaluate.js";
 import { registerConcentrateTracking } from "./system/zen.js";
 import { registerBattleFatigue } from "./system/battle-fatigue.js";
+import { registerTaskRules } from "./system/task-rules.js";
 import { loadSkillCatalog } from "./system/skill-catalog.js";
 import { setCondition, registerConditions, registerPostureSync, registerStunSync } from "./system/conditions.js";
 import { GWorldCombat } from "./system/combat.js";
@@ -157,6 +158,7 @@ Hooks.once("init", () => {
   registerEvaluateTracking();
   registerConcentrateTracking();
   registerBattleFatigue();
+  registerTaskRules();
   // What a module keeps per combatant runs out at the turn, round or combat
   // boundary it asked for.
   registerCombatStateHooks();

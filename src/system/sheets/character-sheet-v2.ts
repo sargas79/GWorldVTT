@@ -61,6 +61,7 @@ import { promptForComplementary, rollComplementary } from "../complementary.js";
 import { endPointPowered, promptPointPowered, readyAlternative } from "../alternative-abilities.js";
 import { alternativeKey } from "../../rules/alternative-abilities.js";
 import { grantWildcardBonus } from "../wildcard-bonus.js";
+import { canInvokeHamClause, endHamClause, hamClauseOf, invokeHamClause } from "../task-rules.js";
 import { isAssistanceRank, resetAssistanceCount, rollAssistance } from "../pulling-rank.js";
 import { isWildcardSkill } from "../../rules/skills.js";
 import { firstTechLevel, firstTlLabel, skillAvailableAt } from "../../rules/skill-availability.js";
@@ -131,6 +132,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2ReadyAlternative: GWorldCharacterSheetV2.#onReadyAlternative,
       v2AssistanceRoll: GWorldCharacterSheetV2.#onAssistanceRoll,
       v2AssistanceReset: GWorldCharacterSheetV2.#onAssistanceReset,
+      v2HamClause: GWorldCharacterSheetV2.#onHamClause,
+      v2HamClauseEnd: GWorldCharacterSheetV2.#onHamClauseEnd,
       v2UsePointPowered: GWorldCharacterSheetV2.#onUsePointPowered,
       v2EndPointPowered: GWorldCharacterSheetV2.#onEndPointPowered,
       v2EditPortrait: GWorldCharacterSheetV2.#onEditPortrait,
@@ -1156,6 +1159,9 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         selfControl: system.selfControl ?? null,
         alternative: alternativeViewOf(item, context.derived?.alternativeSets ?? []),
         assistanceRank: isRuleOn("pullingRank") && isAssistanceRank(item),
+        // A disadvantage the player may play up for the scene (Revised p. 570), and the one invoked.
+        hamClause: canInvokeHamClause(item) && hamClauseOf(actor)?.trait !== String(item.name ?? ""),
+        hamClauseActive: hamClauseOf(actor)?.trait === String(item.name ?? ""),
         pointPowered: system.pointPowered === true,
         pointPoweredActive: system.pointPoweredActive === true,
         weakness: weaknessOf({ name: String(item.name ?? "") }) !== null,
@@ -1827,6 +1833,18 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
     const item = id ? this.actor.items.get(id) : null;
     if (item) await rollAssistance(this.actor, item);
+  }
+
+  /** Invokes a disadvantage for the scene: -1 to every success roll per -5 points of it (Revised p. 570). */
+  static async #onHamClause(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    if (item) await invokeHamClause(this.actor, item);
+  }
+
+  /** Ends the Ham Clause. */
+  static async #onHamClauseEnd(this: GWorldCharacterSheetV2) {
+    await endHamClause(this.actor);
   }
 
   /** Starts the count of previous Assistance Rolls over, for a new adventure. */
