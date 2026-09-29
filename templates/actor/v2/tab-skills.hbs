@@ -178,6 +178,10 @@
               <button type="button" class="v2-button" data-action="v2Complementary"
                       data-tooltip="{{localize 'GWORLD.Complementary.Hint'}}">{{localize "GWORLD.Complementary.Action"}}</button>
             {{/if}}
+            {{#if (and @root.editable @root.rules.wildcardBonus row.wildcardLevel)}}
+              <button type="button" class="v2-button" data-action="v2WildcardBonus"
+                      data-tooltip="{{localize 'GWORLD.Wildcard.Hint' level=row.wildcardLevel}}">{{localize "GWORLD.Wildcard.Action"}}</button>
+            {{/if}}
             {{#if (and @root.editable (eq row.kind "skill"))}}
               <button type="button" class="v2-button" data-action="v2PinSkill">{{#if row.pinned}}{{localize "GWORLD.SheetV2.Unpin"}}{{else}}{{localize "GWORLD.SheetV2.Pin"}}{{/if}}</button>
             {{/if}}

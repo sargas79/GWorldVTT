@@ -137,3 +137,4 @@ export * from "./zen-archery.js";
 export * from "./surprise.js";
 export * from "./task-difficulty.js";
 export * from "./addendum-modifiers.js";
+export * from "./alternative-abilities.js";

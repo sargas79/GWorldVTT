@@ -116,6 +116,7 @@ import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalti
 import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { powersOf } from "../../rules/powers.js";
 import { abilityRollModifiers, costsHitPointsCost, requiredRolls } from "../../rules/addendum-modifiers.js";
+import { analyseAlternatives } from "../alternative-analysis.js";
 import { sessionPools } from "../../rules/bonus-points.js";
 import {
   cuttingEdgeFor, dabblerBonusFor, dabblerGain, isBowSkill, perksOf, strongbowAllowance, strongbowMinSt,
@@ -1727,7 +1728,26 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // read, and everything below reads it.
     // A module may say a trait isn't in play right now (since 1.61.0): it is
     // still the character's, and still paid for, but none of it counts.
-    const traitsInPlay = moduleTraitsInPlay(this.parent, this.itemsOfType("trait"));
+    const moduleInPlay = moduleTraitsInPlay(this.parent, this.itemsOfType("trait"));
+    // An ability of an alternative set that isn't in a slot, a disabled set, and
+    // a point-powered ability nobody has paid to use are the character's and
+    // paid for, but count for nothing (Basic Set Revised pp. 324-325).
+    const alternatives = analyseAlternatives(this.itemsOfType("trait"));
+    const traitsInPlay = alternatives.inert.size === 0
+      ? moduleInPlay
+      : {
+          ...moduleInPlay,
+          inPlay: moduleInPlay.inPlay.filter((item: any) => !alternatives.inert.has(String(item.id))),
+          outOfPlay: [
+            ...moduleInPlay.outOfPlay,
+            ...moduleInPlay.inPlay
+              .filter((item: any) => alternatives.inert.has(String(item.id)))
+              .map((item: any) => ({
+                name: String(item.name ?? ""),
+                reason: `GWORLD.Alternative.Inert.${alternatives.inert.get(String(item.id))}`,
+              })),
+          ],
+        };
     const heldTraits = traitsInPlay.inPlay.map((item: any) => ({
       name: String(item.name ?? ""),
       levels: Number(item.system?.levels ?? 0),
@@ -1740,6 +1760,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ),
       // A reaction modifier typed onto the trait by the GM.
       reactionModifier: Number(item.system?.reactionModifier ?? 0) || 0,
+      noReactionBonus: item.system?.noReactionBonus === true,
       // A Talent's own list of skills, which is all a Talent from another book has.
       talentSkills: ((item.system?.talentSkills ?? []) as unknown[]).map((s) => String(s)),
       // The weapons a Weapon Master's class takes in, where the trait lists them.
@@ -1754,7 +1775,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // disadvantage the character suffers again (since 1.63.0).
     for (const restored of traitsInPlay.restored) {
       heldTraits.push({
-        name: restored.name, levels: Number(restored.levels ?? 0) || 0, specialty: "", modifiers: [], reactionModifier: 0,
+        name: restored.name, levels: Number(restored.levels ?? 0) || 0, specialty: "", modifiers: [], reactionModifier: 0, noReactionBonus: false,
         talentSkills: [], masteredWeapons: [], power: "", powerTalent: false, maxLevels: 0,
       });
     }
@@ -3322,7 +3343,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const sumTraits = (category: string) =>
       this.itemsOfType("trait")
         .filter((i) => i.system?.category === category)
-        .reduce((sum, i) => sum + (i.system?.totalPoints ?? i.system?.points ?? 0), 0);
+        .reduce((sum, i) => sum + (alternatives.billed.get(String(i.id)) ?? i.system?.totalPoints ?? i.system?.points ?? 0), 0);
 
     // Billed on what was bought as an attribute; a level of Extra ST is
     // billed by the trait that bought it.
@@ -3499,6 +3520,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       radiationTolerance: Math.max(1, Number(traits.radiationTolerance) || 1),
       traitEffectSources,
       traitsOutOfPlay: traitsInPlay.outOfPlay,
+      // Alternative sets (Basic Set Revised p. 324): slots, what is on, what each ability is billed.
+      alternativeSets: alternatives.sets.map((set) => ({
+        key: set.key,
+        slots: set.slots,
+        disabled: set.disabled,
+        free: set.free,
+        active: set.active,
+        members: set.members.map((id) => ({ id, billed: alternatives.billed.get(id) ?? 0 })),
+      })),
       regeneration: regenerationRate(traits.regeneration),
       // The attributes as everything else reads them: bought plus what traits
       // add. The sheet's inputs edit the bought figure and show this one.

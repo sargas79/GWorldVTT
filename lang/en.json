@@ -628,6 +628,10 @@
           "Name": "Complementary skills",
           "Hint": "Roll a skill that helps another: +2 to -2 on the next roll of the skill it assists, discarded from the roll dialog if the GM rules it out."
         },
+        "wildcardBonus": {
+          "Name": "Bonuses for wildcard skills",
+          "Hint": "A positive relative level with a wildcard skill also works as a bonus to what the GM judges related to it. A button on the wildcard holds the bonus for the next roll of a category the GM picks (Basic Set Revised p. 333)."
+        },
         "teamEfforts": {
           "Name": "Team efforts",
           "Hint": "The party rolls once in a skill, on the Party sheet: the best member’s level, plus one for each who knows it, less the size of the group."
@@ -4593,6 +4597,74 @@
       "Traits": "Hard to Subdue, Fit",
       "Out": "{name} falls unconscious",
       "TurnStart": "{name} is at 0 HP or less: roll HT to stay conscious, unless this turn is Do Nothing with no defense rolls."
+    },
+    "Alternative": {
+      "Heading": "Alternative abilities",
+      "Set": "Alternative set",
+      "SetPlaceholder": "Name of the set, blank for none",
+      "Slots": "Slots",
+      "PointPowered": "Point-powered",
+      "NoReactionBonus": "No reaction bonus",
+      "FieldHint": "Abilities that share a set name are alternatives: the dearest, as many as there are slots, cost full price and the rest a fifth, rounded up. Point-powered abilities cost a fifth and are inert until points are spent to use them. Tick No reaction bonus on a Talent whose reaction bonus the GM replaced (Basic Set Revised pp. 324-325).",
+      "Billed": "Billed",
+      "TagOn": "on",
+      "TagOff": "off",
+      "TagDisabled": "disabled",
+      "RowHint": "An alternative ability of {group}.",
+      "PoweredOn": "powered",
+      "PoweredOff": "inert",
+      "PoweredHint": "A character point-powered ability: inert until points are spent to use it.",
+      "DisabledLabel": "Disabled (the whole set is off)",
+      "DisabledNote": "Something disabled an ability of this set, so none of them is available until it recovers.",
+      "FrozenLabel": "Running for a duration (can't be swapped out)",
+      "SwapNote": "Changing what fills a slot takes a Ready maneuver; from one attack to another it is free.",
+      "Ready": "Ready this ability",
+      "ReadyHint": "Swap it into a slot of its set.",
+      "Use": "Spend points to use",
+      "UseHint": "1 point when the use fits the scene perfectly, 2 when believable, 3 up to the ability's cost when showing off. Impulse Points pay first.",
+      "End": "End use",
+      "EndHint": "The scene or turn is over and the ability is inert again.",
+      "Disabled": "That set is disabled, so none of its abilities can be readied.",
+      "Frozen": "Every slot holds an ability still running for its duration.",
+      "Already": "That ability is already in a slot.",
+      "SwappedReady": "{actor} takes a Ready maneuver to switch to {ability}.",
+      "SwappedFree": "{actor} switches attacks to {ability} as a free action.",
+      "NoPoints": "Not enough Impulse Points or unspent character points.",
+      "SpendNote": "Used {ability}",
+      "PoweredUsed": "{actor} spends {points} point(s) to use {ability}.",
+      "PromptTitle": "Use {ability}",
+      "PromptHint": "How well the use suits the story: 1 point if it fits the scene perfectly, 2 if believable, 3 up to the ability's cost for showing off.",
+      "PromptPoints": "Points",
+      "Spend": "Spend",
+      "Inert": {
+        "off": "not in a slot of its alternative set",
+        "disabled": "its alternative set is disabled",
+        "unpowered": "no points spent to use it"
+      }
+    },
+    "Wildcard": {
+      "Action": "Wildcard bonus",
+      "Title": "{skill}: wildcard bonus",
+      "Hint": "Holds the wildcard's positive relative level ({level}) as a bonus for the next related roll.",
+      "Category": "Bonus to",
+      "Skill": "Skill rolled",
+      "SkillPlaceholder": "Blank for an attribute roll",
+      "Halve": "Halve the bonus (under three dice, active defenses, a large group, direct damage)",
+      "Grant": "Hold the bonus",
+      "Line": "{skill} wildcard ({category})",
+      "Held": "{value} held from {skill} for the next related roll.",
+      "Categories": {
+        "noSkill": "Rolls with no skill",
+        "advantage": "Related advantages",
+        "resist": "Resisting covered skills",
+        "hazard": "Hazards while using it",
+        "reaction": "Reactions and Influence",
+        "penalty": "Offsetting penalties",
+        "accuracy": "Accuracy",
+        "damage": "ST and damage",
+        "healing": "HP healed",
+        "others": "Another's roll"
+      }
     },
     "Complementary": {
       "Action": "Complementary roll",

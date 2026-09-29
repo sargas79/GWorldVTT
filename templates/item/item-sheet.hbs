@@ -391,6 +391,28 @@
       </div>
       <p class="ihint">{{localize "GWORLD.Trait.LearnableHint"}}</p>
 
+      {{!-- Alternative abilities, character point-powered abilities and a
+           Talent's replaced reaction bonus (Basic Set Revised pp. 324-325). --}}
+      <div class="ifields">
+        <label class="wide">{{localize "GWORLD.Alternative.Set"}}
+          <input type="text" name="system.alternativeGroup" value="{{system.alternativeGroup}}"
+                 placeholder="{{localize 'GWORLD.Alternative.SetPlaceholder'}}" {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Alternative.Slots"}}
+          <input type="number" name="system.alternativeSlots" value="{{system.alternativeSlots}}" min="1" step="1"
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Alternative.PointPowered"}}
+          <input type="checkbox" name="system.pointPowered" {{checked system.pointPowered}}
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+        <label>{{localize "GWORLD.Alternative.NoReactionBonus"}}
+          <input type="checkbox" name="system.noReactionBonus" {{checked system.noReactionBonus}}
+                 {{#unless editable}}disabled{{/unless}} />
+        </label>
+      </div>
+      <p class="ihint">{{localize "GWORLD.Alternative.FieldHint"}}</p>
+
       {{!-- Enhancements and limitations, and the self-control number: what
            changes a trait's cost from the figure the book prints. --}}
       <div class="isub">

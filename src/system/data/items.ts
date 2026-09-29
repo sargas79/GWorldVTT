@@ -11,6 +11,7 @@ import {
   traitPoints,
   traitLevelName,
 } from "../../rules/traits.js";
+import { pointPoweredCost } from "../../rules/alternative-abilities.js";
 import type { Enchantment } from "../../rules/enchanting.js";
 import { AMMUNITION_TYPES, ammunitionFitOfName, type AmmunitionType } from "../../rules/ammunition.js";
 import { EQUIPMENT_QUALITIES, type EquipmentQuality } from "../../rules/wealth.js";
@@ -261,6 +262,14 @@ export class TraitData extends foundry.abstract.TypeDataModel {
   declare levelNames: string[];
   declare maxLevels: number;
   declare reactionModifier: number;
+  declare noReactionBonus: boolean;
+  declare alternativeGroup: string;
+  declare alternativeSlots: number;
+  declare alternativeActive: boolean;
+  declare alternativeDisabled: boolean;
+  declare alternativeFrozen: boolean;
+  declare pointPowered: boolean;
+  declare pointPoweredActive: boolean;
   declare modifiers: Array<{ name: string; value: number }>;
   declare selfControl: number | null;
   declare talentSkills: string[];
@@ -378,6 +387,31 @@ export class TraitData extends foundry.abstract.TypeDataModel {
         initial: 0,
       }),
       /**
+       * A Talent whose reaction bonus the GM replaced with another benefit, or
+       * with none (Basic Set Revised pp. 324-325): it gives no reaction bonus.
+       */
+      noReactionBonus: new fields.BooleanField({ required: true, initial: false }),
+      /**
+       * The alternative set this ability belongs to (Basic Set Revised p. 324),
+       * blank for none. The dearest abilities of a set pay full price, the rest a
+       * fifth; the slots are how many of them work at once.
+       */
+      alternativeGroup: new fields.StringField({ required: true, blank: true, initial: "" }),
+      alternativeSlots: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 1, min: 1 }),
+      /** In one of its set's slots. */
+      alternativeActive: new fields.BooleanField({ required: true, initial: false }),
+      /** Burned out, crippled, neutralized or drained: the whole set is off. */
+      alternativeDisabled: new fields.BooleanField({ required: true, initial: false }),
+      /** Running for a duration that hasn't expired, so it can't be swapped out. */
+      alternativeFrozen: new fields.BooleanField({ required: true, initial: false }),
+      /**
+       * A character point-powered ability (Basic Set Revised p. 325): a fifth of
+       * the cost, inert until points are spent to use it.
+       */
+      pointPowered: new fields.BooleanField({ required: true, initial: false }),
+      /** Invoked: points were spent, and it works until the scene or turn ends. */
+      pointPoweredActive: new fields.BooleanField({ required: true, initial: false }),
+      /**
        * The skills a Talent adds its level to (Characters pp. 89-91), one name
        * each; a specialty matches its base skill. Empty for every other
        * trait. A Talent from another book is only known this way; one of the
@@ -417,7 +451,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
 
   /** Total character points this trait costs, counting levels, modifiers and self-control. */
   get totalPoints(): number {
-    return traitPoints({
+    const cost = traitPoints({
       points: this.points,
       levels: this.levels,
       pointsPerLevel: this.pointsPerLevel,
@@ -425,6 +459,8 @@ export class TraitData extends foundry.abstract.TypeDataModel {
       modifiers: (this.modifiers ?? []).map((m) => Number(m.value) || 0),
       selfControl: this.selfControl ?? null,
     });
+    // Built normally, divided by 5 and rounded up (Basic Set Revised p. 325).
+    return this.pointPowered ? pointPoweredCost(cost) : cost;
   }
 
   /** The net of the modifiers, as a percentage, for showing beside the cost. */

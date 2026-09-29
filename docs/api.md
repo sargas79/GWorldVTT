@@ -4118,3 +4118,27 @@ runs again on the next load. Each helper returns
   the pieces. The either/or and limitations-on-disadvantages rules are text
   for a module's journal; `eitherOrPercent` and `disadvantageLimitation` only
   work out their sums.
+
+- **Alternative Abilities, point-powered abilities and wildcard bonuses**
+  (since 1.170.0; Basic Set Revised pp. 324-325, 333). A trait carries
+  `alternativeGroup` (the set's name, blank for none), `alternativeSlots`,
+  `alternativeActive`, `alternativeDisabled` and `alternativeFrozen`, plus
+  `pointPowered`, `pointPoweredActive` and `noReactionBonus` (a Talent whose
+  reaction bonus the GM replaced). `rules.alternativeBilling(members)` maps each
+  ability of a set to what it is billed (full price for the dearest, as many as
+  the slots; a fifth, rounded up, for the rest); `rules.alternativeSets`,
+  `alternativeUsable` and `swapAlternative` give a set's state and what bringing
+  an ability in takes (a Ready, free between attacks, refused for a disabled or
+  frozen set); `pointPoweredCost`, `pointPoweredUse` and `pointPoweredCeiling`
+  price a point-powered ability and its uses (1, 2, or 3 up to its cost);
+  `wildcardBonus` is a wildcard's positive relative level, halved where the book
+  halves it. Wired: the ledger bills a set as above, an ability out of its slot
+  or in a disabled set, and a point-powered one nobody paid to use, count for
+  nothing (listed in `derived.traitsOutOfPlay`), `derived.alternativeSets` lists
+  `{ key, slots, disabled, free, active, members: [{ id, billed }] }`, the trait's
+  panel offers Ready, Spend points to use (Impulse Points, then character
+  points) and End use, and the optional `wildcardBonus` rule (off) puts a button
+  on a wildcard skill that holds its bonus as a pending modifier of source
+  `wildcard`. Not done: a Link between alternatives is not refused, and the
+  wildcard bonus is held for the GM's category rather than added by each roll's
+  own dialog.

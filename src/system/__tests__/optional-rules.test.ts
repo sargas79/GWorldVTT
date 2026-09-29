@@ -61,7 +61,8 @@ describe("the rule catalogue", () => {
     // Modifying Dice + Adds is headed "Optional Rule" (Characters p. 269), and
     // changes every damage figure a player already knows. Study of attributes
     // is a GM's option, not a book rule (Characters pp. 290, 292).
-    expect(off.sort()).toEqual(["bleeding", "damageToShields", "familiarity", "modifyingDiceAdds", "studyAttributes"]);
+    // The wildcard bonus is headed "optionally" (Basic Set Revised p. 333).
+    expect(off.sort()).toEqual(["bleeding", "damageToShields", "familiarity", "modifyingDiceAdds", "studyAttributes", "wildcardBonus"]);
   });
 
   /**

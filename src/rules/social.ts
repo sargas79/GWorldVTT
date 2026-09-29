@@ -51,6 +51,8 @@ export interface SocialTrait {
   levels?: number;
   /** A flat reaction modifier typed on the trait itself, which is the GM's. */
   reactionModifier?: number;
+  /** A Talent whose reaction bonus the GM replaced or removed (Revised pp. 324-325). */
+  noReactionBonus?: boolean;
 }
 
 /**
@@ -148,7 +150,7 @@ export function reactionSources(traits: readonly SocialTrait[]): ReactionSource[
     } else if (key === "fashion sense") {
       // "+1 to reactions ... in any situation where clothing might matter" (p. 21).
       out.push({ label: trait.name, value: 1, condition: "stylish" });
-    } else if (key in TALENT_REACTION) {
+    } else if (key in TALENT_REACTION && trait.noReactionBonus !== true) {
       // "A bonus of +1 per level on all reaction rolls made by anyone in a
       // position to notice your Talent, if he would be impressed" (p. 89).
       out.push({ label: trait.name, value: levels, condition: "impressed" });

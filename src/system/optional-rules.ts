@@ -106,6 +106,8 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     // standard rules: a skill that helps another, and a party rolling as one.
     { key: "complementarySkills", reference: "Basic Set Revised p. 206", default: true },
     { key: "teamEfforts", reference: "Basic Set Revised p. 185", default: true },
+    // A wildcard skill's positive relative level as a bonus to related rolls.
+    { key: "wildcardBonus", reference: "Basic Set Revised p. 333", default: false },
   ],
   activities: [
     { key: "physicalActivities", reference: "Campaigns pp. 349-355", default: true },
