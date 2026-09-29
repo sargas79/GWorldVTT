@@ -55,12 +55,14 @@ import { combatLog } from "../sheet-v2/combat-log.js";
 import { locationDrTooltip } from "../sheet-v2/location-dr.js";
 import { effectiveCost, effectiveWeight } from "../data-extensions.js";
 import { gearGroupOf } from "../gear-groups.js";
-import { legalityClassOf, legalityNote } from "../legality.js";
+import { legalityClassOf, legalityNote, permitFor } from "../legality.js";
 import { isRuleOn } from "../optional-rules.js";
 import { promptForComplementary, rollComplementary } from "../complementary.js";
 import { endPointPowered, promptPointPowered, readyAlternative } from "../alternative-abilities.js";
 import { alternativeKey } from "../../rules/alternative-abilities.js";
 import { grantWildcardBonus } from "../wildcard-bonus.js";
+import { noPerks, specialExercisesFor, techniqueSupersededBy } from "../../rules/addendum-perks.js";
+import { inflictControllableDisadvantage } from "../controllable-disadvantage.js";
 import { canInvokeHamClause, endHamClause, hamClauseOf, invokeHamClause } from "../task-rules.js";
 import { isAssistanceRank, resetAssistanceCount, rollAssistance } from "../pulling-rank.js";
 import { isWildcardSkill } from "../../rules/skills.js";
@@ -135,6 +137,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2HamClause: GWorldCharacterSheetV2.#onHamClause,
       v2HamClauseEnd: GWorldCharacterSheetV2.#onHamClauseEnd,
       v2UsePointPowered: GWorldCharacterSheetV2.#onUsePointPowered,
+      v2InflictControllable: GWorldCharacterSheetV2.#onInflictControllable,
       v2EndPointPowered: GWorldCharacterSheetV2.#onEndPointPowered,
       v2EditPortrait: GWorldCharacterSheetV2.#onEditPortrait,
       v2RollPlain: GWorldCharacterSheetV2.#onRollPlain,
@@ -433,7 +436,9 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         equippable: item.type !== "equipment" || armed(item),
         // The equipment's own figures: what the book prints and the player looks for.
         stats: gearStatistics({ type: item.type, system: item.system, objectStats: item.type === "shield" ? objectStats(item) : null }, attacks, localize),
-        legality: legalityNote(legalityClassOf(item)),
+        legality: legalityNote(legalityClassOf(item), undefined, permitFor(actor, item)),
+        // The one item a Weapon Bond or Equipment Bond makes +1 (Revised pp. 328-329).
+        bonded: s.bonded === true && (actor.system?.derived?.perks?.bondPerks ?? 0) > 0,
         signature: isRuleOn("flatSignatureGear") && item.system?.signature === true,
         vehicle: s.category === "vehicle" && isRuleOn("vehicles"),
         // Whether the character knows this make (Characters p. 169), for any
@@ -1063,6 +1068,9 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
           modifier: Number(system.derived?.defaultModifier ?? system.defaultModifier) || 0,
         }),
         kindLabel: system.derived?.kindLabel ?? "",
+        // A technique the Revised edition's perk replaces: the sheet suggests the perk (Revised p. 329).
+        supersededBy: techniqueSupersededBy(String(item.name ?? "")),
+        supersededHeld: techniqueSupersededBy(String(item.name ?? "")) !== null && (derived.perks?.offHand?.length ?? 0) > 0,
         descriptionHtml: await this.enriched(system.description, item),
         reference: system.reference ?? "",
         bonusLines: [],
@@ -1157,13 +1165,16 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         modifiers: system.modifiers ?? [],
         reactionModifier: Number(system.reactionModifier ?? 0) || 0,
         selfControl: system.selfControl ?? null,
-        alternative: alternativeViewOf(item, context.derived?.alternativeSets ?? []),
+        alternative: alternativeViewOf(item, context.derived?.alternativeSets ?? [], context.derived?.alternativeLinkConflicts ?? []),
         assistanceRank: isRuleOn("pullingRank") && isAssistanceRank(item),
         // A disadvantage the player may play up for the scene (Revised p. 570), and the one invoked.
         hamClause: canInvokeHamClause(item) && hamClauseOf(actor)?.trait !== String(item.name ?? ""),
         hamClauseActive: hamClauseOf(actor)?.trait === String(item.name ?? ""),
         pointPowered: system.pointPowered === true,
         pointPoweredActive: system.pointPoweredActive === true,
+        // Controllable Disadvantage rolls to inflict its trait (Revised p. 328); Special Exercises raises this trait's maximum (p. 329).
+        controllable: /^controllable disadvantage\b/i.test(String(item.name ?? "")),
+        specialExercises: specialExercisesFor(context.derived?.perks ?? noPerks(), String(item.name ?? "")),
         weakness: weaknessOf({ name: String(item.name ?? "") }) !== null,
         applied: isReadTrait(String(item.name ?? ""), system.talentSkills ?? []),
         // What the trait is of, where the book makes the player say, shown
@@ -1868,6 +1879,13 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
     if (item) await promptPointPowered(this.actor, item);
   }
 
+  /** Rolls to inflict a Controllable Disadvantage on oneself (Revised p. 328). */
+  static async #onInflictControllable(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
+    const item = id ? this.actor.items.get(id) : null;
+    if (item) await inflictControllableDisadvantage(this.actor, item);
+  }
+
   /** Ends the use of a point-powered ability: it is inert again. */
   static async #onEndPointPowered(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
     const id = target.closest<HTMLElement>("[data-item-id]")?.dataset.itemId;
@@ -1917,7 +1935,7 @@ export function attackKey(atk: { itemId?: unknown; modeIndex?: unknown; derivedM
 
 
 /** What a trait's detail panel says of its alternative set: its slots, what is on and what it is billed (Revised p. 324). */
-function alternativeViewOf(item: any, sets: ReadonlyArray<any>) {
+function alternativeViewOf(item: any, sets: ReadonlyArray<any>, linkConflicts: ReadonlyArray<string> = []) {
   const group = String(item.system?.alternativeGroup ?? "").trim();
   if (!group) return null;
   const set = sets.find((s) => s.key === alternativeKey(group));
@@ -1929,5 +1947,7 @@ function alternativeViewOf(item: any, sets: ReadonlyArray<any>) {
     disabled: set?.disabled === true,
     frozen: item.system?.alternativeFrozen === true,
     billed: member ? Number(member.billed) : null,
+    // A Link can't be had between alternative abilities (p. 324, drawback 1).
+    linkConflict: linkConflicts.includes(String(item.id)),
   };
 }

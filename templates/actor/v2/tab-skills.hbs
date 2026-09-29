@@ -72,6 +72,7 @@
                     {{row.name}}
                     {{#if row.talentMark}}{{> "gworld.v2.talentMark" mark=row.talentMark}}{{/if}}
                     {{#if row.techLevel}}<span class="v2-tag">TL{{row.techLevel}}</span>{{/if}}
+                    {{#if row.supersededBy}}<span class="v2-tag v2-tag-warn" data-tooltip="{{localize 'GWORLD.Perks.SupersededHint' perk=row.supersededBy}}">{{localize "GWORLD.Perks.Superseded"}}</span>{{/if}}
                     {{#if row.earlyWarning}}<span class="v2-tag v2-tag-warn" data-tooltip="{{row.earlyWarning}}" aria-label="{{row.earlyWarning}}">&#9888;</span>{{/if}}
                     {{#unless row.trained}}<span class="v2-tag" data-tooltip="{{localize 'GWORLD.Section.RolledAtDefault'}}">{{localize "GWORLD.Skill.Untrained"}}</span>{{/unless}}
                   </span>
@@ -158,6 +159,9 @@
               </div>
             {{/if}}
           </div>
+          {{#if row.supersededBy}}
+            <p class="v2-note">{{#if row.supersededHeld}}{{localize "GWORLD.Perks.SupersededHeld" perk=row.supersededBy}}{{else}}{{localize "GWORLD.Perks.SupersededNote" perk=row.supersededBy}}{{/if}}</p>
+          {{/if}}
           <ul class="v2-breakdown">
             {{#if (eq row.kind "skill")}}
               <li><span>{{localize "GWORLD.Column.Relative"}}</span><b>{{relativeLabel row.item}}</b></li>

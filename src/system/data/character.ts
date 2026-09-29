@@ -119,6 +119,7 @@ import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { powersOf } from "../../rules/powers.js";
 import { abilityRollModifiers, costsHitPointsCost, requiredRolls } from "../../rules/addendum-modifiers.js";
 import { analyseAlternatives } from "../alternative-analysis.js";
+import { talentGivesReaction } from "../../rules/alternative-abilities.js";
 import { sessionPools } from "../../rules/bonus-points.js";
 import {
   cuttingEdgeFor, dabblerBonusFor, dabblerGain, isBowSkill, perksOf, strongbowAllowance, strongbowMinSt,
@@ -1789,7 +1790,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       ),
       // A reaction modifier typed onto the trait by the GM.
       reactionModifier: Number(item.system?.reactionModifier ?? 0) || 0,
-      noReactionBonus: item.system?.noReactionBonus === true,
+      // A Talent whose reaction bonus was replaced by another benefit, or by none (Revised pp. 324-325).
+      noReactionBonus: !talentGivesReaction({ noReactionBonus: item.system?.noReactionBonus === true, benefit: item.system?.talentBenefit }),
       // A Talent's own list of skills, which is all a Talent from another book has.
       talentSkills: ((item.system?.talentSkills ?? []) as unknown[]).map((s) => String(s)),
       // The weapons a Weapon Master's class takes in, where the trait lists them.
@@ -3594,6 +3596,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         active: set.active,
         members: set.members.map((id) => ({ id, billed: alternatives.billed.get(id) ?? 0 })),
       })),
+      // Abilities of a set carrying a Link, which p. 324 says can't be.
+      alternativeLinkConflicts: alternatives.linkConflicts,
       regeneration: regenerationRate(traits.regeneration),
       // The attributes as everything else reads them: bought plus what traits
       // add. The sheet's inputs edit the bought figure and show this one.

@@ -11,6 +11,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { DATA_HOOKS } from "./data-extensions.js";
 import { isRuleOn } from "./optional-rules.js";
+import { noPerks, permitCovers } from "../rules/addendum-perks.js";
 import {
   CONTROL_RATINGS,
   isLegalityClass,
@@ -68,17 +69,31 @@ export interface LegalityNote {
   status: Legality | "";
   /** True when an ordinary citizen may not simply carry it here. */
   restricted: boolean;
+  /** True when a Permit the character holds (Basic Set Revised p. 329) covers carrying it here. */
+  permitted: boolean;
 }
 
-/** The legality note for an item, from its LC and the campaign's CR. */
+/**
+ * The legality note for an item, from its LC and the campaign's CR. `permitted`
+ * says the carrier holds a Permit for this piece of gear: it is still below
+ * the Control Rating, but carrying it is legal for them.
+ */
 export function legalityNote(
   lc: unknown,
   controlRating: ControlRating | null = currentControlRating(),
+  permitted = false,
 ): LegalityNote {
   if (!isRuleOn("legalityClass") || !isLegalityClass(lc))
-    return { label: "", status: "", restricted: false };
+    return { label: "", status: "", restricted: false, permitted: false };
   const label = `LC${lc}`;
-  if (controlRating === null) return { label, status: "", restricted: false };
+  if (controlRating === null) return { label, status: "", restricted: false, permitted: false };
   const status = legalityUnder(lc, controlRating);
-  return { label, status, restricted: isRestricted(status) };
+  const restricted = isRestricted(status);
+  return { label, status, restricted: restricted && !permitted, permitted: restricted && permitted };
+}
+
+/** Whether the item's carrier holds a Permit for it (Revised p. 329): only gear below the Control Rating needs one. */
+export function permitFor(actor: any, item: any): boolean {
+  const perks = actor?.system?.derived?.perks ?? noPerks();
+  return permitCovers(perks, String(item?.name ?? ""));
 }

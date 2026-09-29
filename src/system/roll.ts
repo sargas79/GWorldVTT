@@ -196,6 +196,7 @@ import { POSTURE_EFFECTS } from "../rules/posture.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
 import { gunslingerAccuracy, gunslingerWeapon, type GunslingerWeapon } from "../rules/gunslinger.js";
 import { noPerks, offHandWaived } from "../rules/addendum-perks.js";
+import { anyOffered, bonusOffers, offerFieldsHtml, readOffers, type BonusOffers, type BonusRollContext, type BonusRollKind } from "./roll-bonuses.js";
 import { closeCombatBulk } from "../rules/addendum-techniques.js";
 import { techniqueLevelsBoughtByPrefix } from "./technique-lookup.js";
 import { heroicAimBonus, heroicArcherWeapon, type HeroicArcherWeapon } from "../rules/heroic-archer.js";
@@ -1688,9 +1689,31 @@ export async function promptForModifier(
   held: HeldLine[] = [],
   onDiscard?: (ids: string[]) => Promise<void>,
 ): Promise<number | null> {
+  const asked = await askForModifier(held, onDiscard);
+  return asked === null ? null : asked.value;
+}
+
+/** The bonuses a roll's dialog offers (Revised pp. 324-325, 328-329, 333), with what the roll is for reading them. */
+export interface DialogOffers {
+  offers: BonusOffers;
+  context: BonusRollContext;
+}
+
+/**
+ * The modifier dialog, with what a roll offers besides the situational
+ * modifier: the wildcard, Talent and equipment bonuses the player may tick.
+ * Returns the typed modifier and the offered lines chosen, or null when the
+ * dialog is dismissed.
+ */
+export async function askForModifier(
+  held: HeldLine[] = [],
+  onDiscard?: (ids: string[]) => Promise<void>,
+  offered?: DialogOffers,
+): Promise<{ value: number; lines: RollModifier[] } | null> {
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: game.i18n.localize("GWORLD.Chat.ModifierTitle") },
     content: `<div class="gworld">${heldModifiersNote(held, onDiscard !== undefined)}
+      ${offered ? offerFieldsHtml(offered.offers, offered.context) : ""}
       <label style="display:flex;align-items:center;gap:8px">
         <span>${game.i18n.localize("GWORLD.Chat.Modifier")}</span>
         <input type="number" name="modifier" value="0" step="1" autofocus style="width:80px">
@@ -1707,13 +1730,34 @@ export async function promptForModifier(
           .map((box) => box.value)
           .filter(Boolean);
         if (discarded.length > 0 && onDiscard) await onDiscard(discarded);
-        return Number(input?.value ?? 0);
+        const value = Number(input?.value ?? 0);
+        // Number is what the dialog has always answered with; the offered lines ride beside it.
+        if (!offered) return value;
+        return { value, lines: readOffers(form, offered.offers, offered.context) };
       },
     },
     rejectClose: false,
   });
 
-  return typeof result === "number" && Number.isFinite(result) ? result : null;
+  if (typeof result === "number" && Number.isFinite(result)) return { value: result, lines: [] };
+  if (result && typeof result === "object" && Number.isFinite((result as { value: number }).value)) {
+    return { value: (result as { value: number }).value, lines: (result as { lines: RollModifier[] }).lines ?? [] };
+  }
+  return null;
+}
+
+/** Asks only for the bonuses a roll offers, where its own dialog has none. Null when dismissed. */
+async function askForOfferedBonuses(offered: DialogOffers): Promise<RollModifier[] | null> {
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: game.i18n.localize("GWORLD.RollBonus.Title") },
+    content: `<div class="gworld">${offerFieldsHtml(offered.offers, offered.context)}</div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) => ({ lines: readOffers(button.closest<HTMLElement>(".application"), offered.offers, offered.context) }),
+    },
+    rejectClose: false,
+  });
+  return result && typeof result === "object" && Array.isArray((result as { lines?: unknown }).lines) ? (result as { lines: RollModifier[] }).lines : null;
 }
 
 /** A bonus held for a roll as its dialog lists it: with the id to discard it by, where the rule that holds it lets it be discarded. */
@@ -2013,8 +2057,24 @@ async function rollAction(
     ? shot.modifiers
     : melee
       ? melee.modifiers
-      : await maybePromptModifiers(event, heldForRoll(actor, rollType, target.dataset.rollSkill ?? (rollType === "skill" ? rollLabel : undefined), target.dataset), actor);
+      : await maybePromptModifiers(event, heldForRoll(actor, rollType, target.dataset.rollSkill ?? (rollType === "skill" ? rollLabel : undefined), target.dataset), actor, {
+        // A self-control roll is not one a bonus is offered for.
+        kind: rollKind(rollType) === "selfControl" ? "attribute" : rollKind(rollType) as BonusRollKind,
+        skill: target.dataset.rollSkill ?? (rollType === "skill" ? rollLabel : undefined),
+      });
   if (modifiers === null) return null;
+
+  // An attack's own dialog has no room for them, so a wildcard's bonus to hit
+  // (Accuracy, offsetting a penalty; Revised p. 333) is put to the attacker after it.
+  if (rollType === "attack" && (shot || melee)) {
+    const context: BonusRollContext = { kind: "attack", skill: target.dataset.rollSkill };
+    const offers = bonusOffers(actor, context);
+    if (anyOffered(offers)) {
+      const chosen = await askForOfferedBonuses({ offers, context });
+      if (chosen === null) return null;
+      modifiers.push(...chosen);
+    }
+  }
 
   modifiers.push(...standingRollLines(actor, {
     rollType,
@@ -4952,7 +5012,8 @@ export async function handleDamageAction(
     ? { index: modeIndex, ranged: itemRow.dataset.ranged === "1", ...(itemRow.dataset.derivedMode ? { derived: itemRow.dataset.derivedMode } : {}) }
     : null;
 
-  const modifiers = await maybePromptModifiers(event);
+  // A wildcard's ST and damage bonus (Revised p. 333) is offered on the damage roll's dialog.
+  const modifiers = await maybePromptModifiers(event, [], actor, { kind: "damage", skill: target.dataset.rollSkill });
   if (modifiers === null) return;
 
   // Which hit of the row's last attack this is (since API 1.154.0): each roll
@@ -5181,18 +5242,29 @@ function rollKind(rollType: string | undefined): RollKind {
  * Shift-click asks for a situational modifier. Returns null when the prompt is
  * dismissed, meaning the caller should abandon the roll entirely.
  */
-export async function maybePromptModifiers(event: Event, held: HeldLine[] = [], actor: any = null): Promise<RollModifier[] | null> {
+export async function maybePromptModifiers(
+  event: Event,
+  held: HeldLine[] = [],
+  actor: any = null,
+  /** What the roll is, so its dialog can offer the wildcard, Talent and equipment bonuses that go with it. */
+  rolling: BonusRollContext | null = null,
+): Promise<RollModifier[] | null> {
   // A complementary skill's bonus is put to the roller before the roll, not
   // only on shift-click, so that it is seen and can be discarded.
   const discardable = held.some((m) => m.heldId !== undefined);
-  if (!(event as MouseEvent).shiftKey && !discardable) return [];
+  // The Revised edition's bonuses (wildcard, Talent, bonded gear) are offered
+  // in the roll's dialog, which opens for them on a plain click too.
+  const offers = actor && rolling ? bonusOffers(actor, rolling) : null;
+  const offered = offers && rolling && anyOffered(offers) ? { offers, context: rolling } : undefined;
+  if (!(event as MouseEvent).shiftKey && !discardable && !offered) return [];
 
-  const value = await promptForModifier(held, discardable && actor
+  const asked = await askForModifier(held, discardable && actor
     ? async (ids) => { for (const id of ids) await removePendingModifier(actor, id); }
-    : undefined);
-  if (value === null) return null;
-  if (value === 0) return [];
-  return [{ label: game.i18n.localize("GWORLD.Chat.Situational"), value }];
+    : undefined, offered);
+  if (asked === null) return null;
+  const lines: RollModifier[] = [...asked.lines];
+  if (asked.value !== 0) lines.unshift({ label: game.i18n.localize("GWORLD.Chat.Situational"), value: asked.value });
+  return lines;
 }
 
 /** The individual d6 faces from an evaluated Roll. */

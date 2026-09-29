@@ -4086,9 +4086,9 @@ runs again on the next load. Each helper returns
   `rules.dabblerChoices`, `rules.dabblerGain`, `rules.strongbowAllowance`,
   `rules.needsPermit`, `rules.nuisanceRollsWaived`,
   `rules.maximumWithSpecialExercises` and `rules.controllableTarget` are the
-  pieces; the last four are not yet read by a roll. The Off-Hand Weapon
-  Training technique stays in the pack, its reference saying the perk replaces
-  it.
+  pieces; since 1.185.0 all of them are read (see the entry for 1.185.0
+  below). The Off-Hand Weapon Training technique stays in the pack, its
+  reference saying the perk replaces it.
 
 - **The Revised modifiers and Self-Control "N/A"** (since 1.169.0; Basic Set
   Revised pp. 328-332). The modifiers pack carries Affects Others, Costs Hit
@@ -4139,9 +4139,42 @@ runs again on the next load. Each helper returns
   panel offers Ready, Spend points to use (Impulse Points, then character
   points) and End use, and the optional `wildcardBonus` rule (off) puts a button
   on a wildcard skill that holds its bonus as a pending modifier of source
-  `wildcard`. Not done: a Link between alternatives is not refused, and the
-  wildcard bonus is held for the GM's category rather than added by each roll's
-  own dialog.
+  `wildcard`. Since 1.185.0 a Link between alternatives is flagged and each
+  roll's own dialog offers the wildcard bonus (see the entry for 1.185.0 below).
+
+- **The rest of the Revised perks, Alternative Abilities and wildcard bonuses** (since 1.185.0;
+  Basic Set Revised pp. 324-325, 328-329, 333). Perks: an equipment item (or armor or shield)
+  carries `bonded`, the one item a Weapon Bond or Equipment Bond makes +1; a bond perk needs no
+  name in its specialty any more (`derived.perks.bondPerks` counts them; `bonds` still holds the
+  named ones, and a named item is +1 as before), and `rules.bondFor`, `isBonded` and `excessBonds`
+  are the pieces. An Equipment Bond item is offered in a tool-skill roll's dialog with its TL and
+  familiarity lines. Permit: `legalityNote(lc, cr, permitted)` gains `permitted` (a gear whose LC
+  is below the Control Rating, carried by a holder of a Permit whose specialty names it, is not
+  `restricted`), `permitFor(actor, item)` reads it, and the gear row tags it. No Nuisance Rolls:
+  `noNuisance` names the task and a month's work (`workAMonth`) or a day's hike waives its roll
+  when every score is 16+ (`nuisanceWaiver(actor, names, scores)`; the card says so).
+  Special Exercises: `derived.perks.specialExercisesBy` maps a trait's name to the levels the perk
+  adds, `maximumLevelsOf(trait)` reads it and the step buttons, typed levels and study stop at the
+  raised maximum (`rules.specialExercisesFor`, `ceilingWithSpecialExercises`). Controllable
+  Disadvantage: the trait panel's "Inflict on myself" rolls HT (physical) or Will (mental), at -1
+  per further try in the hour, kept on the actor's flag `controllableTries`
+  (`rules.nextControllableTry`, `controllableKind`, `controllableName`). The Off-Hand Weapon
+  Training technique row says the perk replaces it (`rules.techniqueSupersededBy`). Alternative
+  Abilities: `derived.alternativeLinkConflicts` lists the trait ids that carry a Link in a set of
+  two or more (`rules.alternativeLinkConflicts`, `isLinkModifier`), tagged on the sheet. Talents:
+  a trait's `talentBenefit` (blank keeps the reaction bonus; `none`, `influence`, `followUp`,
+  `defaults`, `noSkill`, `contests`, `advantages`, `selfless`, `penalty`, `feat`) replaces the
+  reaction bonus and is offered in roll dialogs as the Talent's levels (`feat`: levels - 4)
+  (`rules.TALENT_BENEFITS`, `talentBenefitBonus`, `talentGivesReaction`). Wildcard: with the
+  `wildcardBonus` rule on, a skill, attribute or defense roll's dialog opens on a plain click when
+  a bonus is on offer and lists the wildcard (category select limited to what fits the roll,
+  halved for an active defense, Accuracy, fewer than three dice or the GM's tick, never stacked),
+  the Talent benefits and the bonded gear; an attack asks for its wildcard's Accuracy or penalty
+  offset after its own dialog, and a damage roll's dialog offers the ST and damage bonus
+  (`rules.wildcardHalved`, `wildcardCategoriesFor`, `defaultWildcardCategory`). The sheet's
+  button still holds a bonus for the next roll of any category, which the dialog then doesn't
+  offer a second time. Not done: a bonus to another character's roll (the `others` category) is
+  only a number the player relays; nothing adds it to the other actor's roll.
 
 - **New techniques** (since 1.171.0; Basic Set Revised pp. 333-334). Records for
   Acrobatic Stand, Armed Grapple (Cloak, and any melee weapon), Close Combat,
