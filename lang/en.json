@@ -2293,7 +2293,12 @@
       "PelvisBroken": "The pelvis gives out: the victim falls, cannot stand, and fights only sitting or lying, Lame (Missing Legs) until healed",
       "JointCrippled": "The joint is crippled; recovery rolls are at -2",
       "VeinsBleedOut": "GM's ruling: a failed HT roll to avoid death means bleeding to death, with no Mortal Wounds rolls",
-      "Decapitation": "GM's ruling: a failed HT roll to avoid death from a cut to the neck means decapitation"
+      "Decapitation": "GM's ruling: a failed HT roll to avoid death from a cut to the neck means decapitation",
+      "Apply": "Write to sheet: {traits}",
+      "ApplyHint": "The GM adds these traits to the character (Basic Set Revised p. 566). Roll to recover first, where the wound allows it.",
+      "Applied": "{name}: {traits} written to the sheet.",
+      "NothingApplied": "{name} already has what this wound gives, or the compendia lack the trait.",
+      "AppearanceLoss": "Appearance -{levels}"
     },
     "Maneuver": {
       "AddonOptions": "Options",
@@ -3786,7 +3791,13 @@
     },
     "StampKick": {
       "Balance": "DX to stay on balance after a missed Stamp Kick",
-      "NoRetreat": "{name} is off balance and cannot retreat until their next turn."
+      "NoRetreat": "{name} is off balance and cannot retreat until their next turn.",
+      "WrongTarget": "A Stamp Kick goes only at a lying foe, or a standing foe's foot or leg: aim it (shift-click the attack) at the foot or leg."
+    },
+    "HeadButt": {
+      "Parried": "Head Butt parried",
+      "Backlash": "{name} butts the parry: {damage} crushing to the face, less DR {dr}, is {injury} injury (Basic Set Revised p. 334).",
+      "Take": "Take {injury} injury to the face"
     },
     "AcrobaticStand": {
       "Label": "Acrobatic Stand",
@@ -3795,7 +3806,8 @@
       "standsAsManeuver": "On your feet as one Change Posture maneuver.",
       "sits": "You end up sitting.",
       "staysDown": "You stay down, and the turn is wasted.",
-      "falls": "You fall down."
+      "falls": "You fall down.",
+      "StepSpent": "Your step is already spent this turn: you stand as a Change Posture maneuver instead."
     },
     "Natural": {
       "punch": "Punch",

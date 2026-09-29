@@ -857,7 +857,7 @@ function resolvePlaced(actor: any, damage: IncomingDamage, context: {
   // A location a module registered changes what it says it changes -- the
   // wounding modifier, the crippling threshold, DR of its own, the knockdown
   // roll -- and takes everything else from the Basic Set location it is part of.
-  const overrides = locationOverrides(damage.addonLocation, damage.type, Number(hp.max) || 0);
+  const overrides = locationOverrides(damage.addonLocation, damage.type, Number(hp.max) || 0, { arms: 2 + traits.extraArms, legs: 2 + traits.extraLegs });
 
   // A body with a Vulnerability is hurt worse by the thing it fears, and so
   // is one wearing something that makes it vulnerable (since API 1.106.0):
@@ -1336,7 +1336,7 @@ export async function takeInjury(actor: any, options: TakeInjuryOptions): Promis
   // A registered location changes the wounding modifier and the threshold
   // where it says so, and takes the rest from its parent.
   const added = place.registered ? registeredHitLocation(place.registered) : undefined;
-  const overrides = place.registered && type ? locationOverrides(place.registered, type, maxHp) : null;
+  const overrides = place.registered && type ? locationOverrides(place.registered, type, maxHp, { arms: 2 + traits.extraArms, legs: 2 + traits.extraLegs }) : null;
   const threshold = overrides
     ? overrides.cripplingThreshold
     : added && typeof added.cripplingDivisor === "number"

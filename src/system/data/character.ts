@@ -13,7 +13,7 @@ import {
   secondaryCharacteristics,
   secondaryPointCost,
 } from "../../rules/attributes.js";
-import { beastAttacks, beastTraitsFrom, naturalAttacks, weaponUnarmedBonus } from "../../rules/natural-attacks.js";
+import { beastAttacks, beastTraitsFrom, naturalAttacks, rigidHelmWorn, weaponUnarmedBonus } from "../../rules/natural-attacks.js";
 import { becomesUnreadyAfterAttack } from "../../rules/readiness.js";
 import { aimBonus } from "../../rules/aim.js";
 import { flaggedSignatureItems, flatSignatureBilling } from "../../rules/flat-signature-gear.js";
@@ -85,7 +85,8 @@ import {
   type WeaponCondition,
 } from "../../rules/breakage.js";
 import { usableInCloseCombat } from "../../rules/tactical.js";
-import { closeCombatDamageModifier, closeCombatPenalty } from "../../rules/addendum-techniques.js";
+import { closeCombatDamageModifier, closeCombatPenalty, longestReach } from "../../rules/addendum-techniques.js";
+import { withChestCoverage } from "../../rules/revised-hit-locations.js";
 import { isRuleOn } from "../optional-rules.js";
 import { encumbranceState } from "../../rules/encumbrance.js";
 import { canPull, towedWeight, wheelchairMove, type Conveyance } from "../../rules/towing.js";
@@ -1423,14 +1424,26 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     return 0;
   }
 
-  /** Levels bought in the techniques whose names start with a prefix (the most of any). */
-  private techniqueLevelsByPrefix(prefix: string): number {
-    let most = 0;
+  /**
+   * The Close Combat levels bought for a weapon's longest reach (Revised p. 334):
+   * the record named for that reach, else the plain "Close Combat" one, which
+   * is the reach 1 record and serves any reach as far as half its penalty goes.
+   */
+  private closeCombatLevels(reach: string): number {
+    const yards = Math.min(3, longestReach(reach));
+    const named = yards >= 2 ? this.techniqueLevelsExactly(`Close Combat (Reach ${yards})`) : null;
+    return named ?? this.techniqueLevelsExactly("Close Combat") ?? 0;
+  }
+
+  /** The levels bought in the technique of exactly this name, or null where the character has none. */
+  private techniqueLevelsExactly(name: string): number | null {
+    let found: number | null = null;
     for (const item of this.itemsOfType("technique")) {
-      if (!String(item.name ?? "").toLowerCase().startsWith(prefix.toLowerCase())) continue;
-      most = Math.max(most, Number((item.system as { derived?: { levels?: number } })?.derived?.levels) || 0);
+      if (String(item.name ?? "").trim().toLowerCase() !== name.toLowerCase()) continue;
+      const levels = Number((item.system as { derived?: { levels?: number } })?.derived?.levels) || 0;
+      found = Math.max(found ?? 0, levels);
     }
-    return most;
+    return found;
   }
 
   /** The level of the best technique whose name starts with a prefix, or null (Revised p. 334). */
@@ -2334,7 +2347,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     // divides, is then shown as the pipeline will subtract it. There is no
     // blow to read an arc from, so front-only armour counts.
     const profiles = Object.fromEntries(
-      HIT_LOCATION_ORDER.map((loc) => [loc, previewBands(previewDrAt(this.parent, loc, traits, worn, DAMAGE_TYPES))]),
+      // Armour that covers the chest alone is what a blow at the torso meets
+      // (Basic Set Revised p. 566), so the torso row shows it.
+      HIT_LOCATION_ORDER.map((loc) => [loc, previewBands(previewDrAt(this.parent, loc, traits, loc === "torso" ? withChestCoverage(worn, "chest", true) as ArmorPiece[] : worn, DAMAGE_TYPES))]),
     ) as Record<HitLocation, ReturnType<typeof previewBands>>;
     for (const loc of HIT_LOCATION_ORDER) drByLocation[loc] = profiles[loc].bands[0]?.dr ?? 0;
 
@@ -2631,7 +2646,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         // Close Combat technique bought back; swing damage down a point a yard.
         const closeNonC = isRuleOn("closeCombat") && isRuleOn("closeCombatAnyWeapon") &&
           this.conditions.closeCombat && !usableInCloseCombat(String(mode.reach ?? "C"));
-        const closePenalty = closeNonC ? closeCombatPenalty(String(mode.reach ?? ""), this.techniqueLevelsByPrefix("Close Combat")) : 0;
+        const closePenalty = closeNonC ? closeCombatPenalty(String(mode.reach ?? ""), this.closeCombatLevels(String(mode.reach ?? ""))) : 0;
         const closeDamage = closeNonC ? closeCombatDamageModifier(String(mode.reach ?? ""), mode.damageBase === "sw") : 0;
         const found = short(
           short(enchantedSkill(weaponSkill(rolledSkill, true, mastered)), lacking(mode.minSt ?? null)),
@@ -2719,7 +2734,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           unarmed: isUnarmedSkill(rolledSkill),
           stBased: mode.damageBase === "thr" || mode.damageBase === "sw",
           damageBase: String(mode.damageBase ?? ""),
-          damageModifier: Number(mode.damageModifier ?? 0) || 0,
+          // With the close-combat swing penalty in it, so a pulled blow rereads it (Revised p. 334).
+          damageModifier: (Number(mode.damageModifier ?? 0) || 0) + closeDamage,
           // The skill the bonus is read for, so a pulled blow can work it out
           // again at the lower ST it is struck with.
           unarmedBonusSkill: mode.unarmedBonus ? rolledSkill : "",
@@ -3029,9 +3045,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         headButt: this.techniqueLevelByPrefix("Head Butt"),
         stampKick: this.techniqueLevelByPrefix("Stamp Kick"),
       },
-      rigidHelm: this.itemsOfType("armor").some((item: any) =>
-        item.system?.equipped === true && item.system?.flexible !== true &&
-        ((item.system?.drByLocation ?? []) as Array<{ locations?: string[] }>).some((e) => (e.locations ?? []).includes("skull"))),
+      rigidHelm: rigidHelmWorn(this.itemsOfType("armor")),
       // A punch and a kick are DX-based like any weapon skill, so an extra
       // layer of armour costs them the same -1 (Characters p. 286).
       dx: attrs.DX + layering,

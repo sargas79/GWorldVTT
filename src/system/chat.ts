@@ -11,7 +11,9 @@
  * rules change.
  */
 
-import { revisedLocation, woundNotes as revisedNotes } from "../rules/revised-hit-locations.js";
+import { revisedLocation, woundNotes as revisedNotes, woundTraits, type WoundTrait } from "../rules/revised-hit-locations.js";
+import { applyWoundTraits } from "./wound-traits.js";
+import { headButtSelfInjury } from "../rules/addendum-techniques.js";
 import { SYSTEM_ID } from "./constants.js";
 import { applyDamageToActor, takeInjury, traitsOf, type AppliedDamage, type IncomingDamage } from "./damage.js";
 import { isUndoable, undoDamage, type DamageTransaction } from "./damage-undo.js";
@@ -231,7 +233,7 @@ function addApplyControls(message: any, html: HTMLElement): void {
   // Locations a module registered, offered for this damage type -- and the one
   // the attack was aimed at, even if it no longer would be.
   const aimedAt = flag.addonLocation ? registeredHitLocation(flag.addonLocation) : undefined;
-  const added = hitLocationsFor({ damageType: flag.damageType });
+  const added = hitLocationsFor({ damageType: flag.damageType, ...(flag.damageType === "burn" ? { tightBeam: flag.tightBeam === true } : {}) });
   if (aimedAt && !added.includes(aimedAt)) added.push(aimedAt);
   for (const location of added) {
     const option = document.createElement("option");
@@ -808,6 +810,12 @@ async function applyFromCard(options: {
             uuid: String(entry.actor.uuid ?? ""),
             name: String(entry.actor.name ?? ""),
           })),
+        // A lasting wound at a finer hit location writes traits to the sheet
+        // (Basic Set Revised p. 566), on the GM's say.
+        woundTraits: knockdowns.flatMap((entry) => {
+          const traits = revisedWoundNoteEntries(entry.result, flag.damageType).flatMap((note) => woundTraits(note.key));
+          return traits.length > 0 ? [{ uuid: String(entry.actor.uuid ?? ""), name: String(entry.actor.name ?? ""), traits }] : [];
+        }),
         // "Immediately after you suffer damage, you may declare that the
         // attack that damaged you ... was just a flesh wound" (p. 417). The
         // offer stands on the card that did the damage, which is the only
@@ -1543,6 +1551,59 @@ async function strikeParriedLimb(defender: any, itemId: string, attackSkill: str
   });
 }
 
+/** The tag a Head Butt's attack roll carries to the defense, so a parry can tell it (Revised p. 334). */
+export const HEAD_BUTT_TAG = "headButt";
+
+/**
+ * A parried Head Butt hurts the butter's own face (Revised p. 334): the damage
+ * the butt would have done is rolled, less the face's DR, and the injury is
+ * offered to whoever owns the attacker on a card, since the defender's client
+ * cannot write to their sheet.
+ */
+async function parriedHeadButt(attacker: any): Promise<void> {
+  const row = ((attacker?.system?.derived?.melee ?? []) as any[]).find((entry) => entry?.naturalKey === "headButt" && entry.damageRollable);
+  if (!row) return;
+  const roll = new Roll(String(row.damage));
+  await roll.evaluate();
+  const damage = Math.max(0, Number(roll.total) || 0);
+  const faceDr = Number(attacker.system?.derived?.drByLocation?.face) || 0;
+  const hurt = headButtSelfInjury({ parried: true, targetDr: 0, damage, skullDr: 0, faceDr });
+  const name = String(attacker.name ?? "");
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker({ actor: attacker }),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    content: `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${game.i18n.localize("GWORLD.HeadButt.Parried")}</span></div>
+      <div class="gc-result">${foundry.utils.escapeHTML(game.i18n.format("GWORLD.HeadButt.Backlash", { name, damage, dr: faceDr, injury: hurt.injury }))}</div></div>`,
+    rolls: [roll],
+    flags: { [SYSTEM_ID]: { headButtBacklash: { uuid: String(attacker.uuid ?? ""), name, injury: hurt.injury } } },
+  });
+}
+
+/** The button that takes a parried Head Butt's injury to the butter's face, for whoever owns them. */
+async function addHeadButtBacklashControls(message: any, html: HTMLElement): Promise<void> {
+  const entry = message?.getFlag?.(SYSTEM_ID, "headButtBacklash") as { uuid: string; name: string; injury: number } | undefined;
+  if (!entry?.uuid || !(entry.injury > 0)) return;
+
+  const root = html.querySelector<HTMLElement>(".gworld-chat");
+  if (!root || root.querySelector("[data-gworld-head-butt]")) return;
+  const actor: any = await fromUuid(entry.uuid).catch(() => null);
+  if (!actor?.isOwner) return;
+
+  const row = document.createElement("div");
+  row.className = "gc-apply";
+  row.dataset.gworldHeadButt = entry.uuid;
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "gc-apply-button";
+  button.textContent = game.i18n.format("GWORLD.HeadButt.Take", { injury: entry.injury });
+  button.addEventListener("click", rollOnce(button, async () => {
+    await takeInjury(actor, { amount: entry.injury, label: game.i18n.localize("GWORLD.HeadButt.Parried") });
+    return true;
+  }));
+  row.append(button);
+  root.append(row);
+}
+
 /** The card's line for what a Surge blow did to a victim with Electrical (Characters pp. 105, 134). */
 function surgeNote(surged: { effect: SurgeEffect; disabled: SurgeDisabled | null } | undefined): string {
   if (!surged) return "";
@@ -1901,6 +1962,11 @@ async function rollDefense(options: {
   // And a weapon that turned an unarmed attack may strike the limb (p. 376).
   if (outcome?.success && key === "parry" && parryWeapon && !parryWeapon.natural && options.delivery === "unarmed") {
     await strikeParriedLimb(defender, parryWeapon.itemId, options.attackWeapon?.skill);
+  }
+
+  // "If they parry, any damage this causes affects your face" (Revised p. 334).
+  if (outcome?.success && key === "parry" && options.attackTags?.includes(HEAD_BUTT_TAG) && options.attacker) {
+    await parriedHeadButt(options.attacker);
   }
 
   // Counted for the rest of the turn, whether or not it worked (pp. 375-376).
@@ -2388,6 +2454,8 @@ export function registerChatHooks(): void {
     void addDamageUndoControls(message, html);
     void addKnockdownControls(message, html);
     void addDeathCheckControls(message, html);
+    void addWoundTraitControls(message, html);
+    void addHeadButtBacklashControls(message, html);
     void addFragileControls(message, html);
     void addConsciousnessControls(message, html);
     void addResistControls(message, html);
@@ -2414,8 +2482,8 @@ function addRulesLinks(html: HTMLElement): void {
   }
 }
 
-/** The lasting outcomes of a blow at one of the finer hit locations, worded for the card. */
-function revisedWoundNotes(result: AppliedDamage, damageType: DamageType): Array<{ text: string; grave: boolean }> {
+/** The lasting outcomes of a blow at one of the finer hit locations, by their keys. */
+function revisedWoundNoteEntries(result: AppliedDamage, damageType: DamageType): Array<{ key: string; data?: Record<string, number>; grave: boolean }> {
   if (result.costsFatigue || !isRuleOn("finerHitLocations")) return [];
   return revisedNotes({
     row: revisedLocation(result.addonLocation)?.key ?? null,
@@ -2427,5 +2495,54 @@ function revisedWoundNotes(result: AppliedDamage, damageType: DamageType): Array
     majorWound: result.consequences.majorWound === true,
     crippled: result.crippled,
     deathCheck: result.consequences.deathCheckRequired === true,
-  }).map((note) => ({ text: game.i18n.format(`GWORLD.RevisedWound.${note.key}`, note.data ?? {}), grave: note.grave === true }));
+  }).map((note) => ({ key: note.key, ...(note.data ? { data: note.data } : {}), grave: note.grave === true }));
+}
+
+/** The lasting outcomes of a blow at one of the finer hit locations, worded for the card. */
+function revisedWoundNotes(result: AppliedDamage, damageType: DamageType): Array<{ text: string; grave: boolean }> {
+  return revisedWoundNoteEntries(result, damageType).map((note) => ({ text: game.i18n.format(`GWORLD.RevisedWound.${note.key}`, note.data ?? {}), grave: note.grave }));
+}
+
+/**
+ * Adds the button that writes a finer hit location's lasting wound to the
+ * sheet (Basic Set Revised p. 566): Bad Back and Lame from a crippled spine,
+ * Quadriplegic from a broken neck, and the rest. The GM's, since it rewrites
+ * what the character is; pressed once.
+ */
+async function addWoundTraitControls(message: any, html: HTMLElement): Promise<void> {
+  const entries = message?.getFlag?.(SYSTEM_ID, "woundTraits") as Array<{ uuid: string; name: string; traits: WoundTrait[] }> | undefined;
+  if (!Array.isArray(entries) || entries.length === 0 || game.user?.isGM !== true) return;
+
+  const root = html.querySelector<HTMLElement>(".gworld-chat");
+  if (!root || root.querySelector("[data-gworld-wound-traits]")) return;
+
+  for (const entry of entries) {
+    const actor: any = await fromUuid(entry.uuid).catch(() => null);
+    if (!actor) continue;
+
+    const row = document.createElement("div");
+    row.className = "gc-apply";
+    row.dataset.gworldWoundTraits = entry.uuid;
+
+    const who = document.createElement("div");
+    who.className = "gc-who";
+    who.textContent = entry.name;
+
+    const names = entry.traits.map((trait) => trait.appearance
+      ? game.i18n.format("GWORLD.RevisedWound.AppearanceLoss", { levels: trait.appearance })
+      : `${trait.name}${trait.level && trait.level > 1 ? ` ${trait.level}` : ""}`);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "gc-apply-button";
+    button.textContent = game.i18n.format("GWORLD.RevisedWound.Apply", { traits: names.join(", ") });
+    button.title = game.i18n.localize("GWORLD.RevisedWound.ApplyHint");
+    button.addEventListener("click", rollOnce(button, async () => {
+      const written = await applyWoundTraits(actor, entry.traits);
+      ui.notifications?.info(game.i18n.format(written.length > 0 ? "GWORLD.RevisedWound.Applied" : "GWORLD.RevisedWound.NothingApplied", { name: entry.name, traits: written.join(", ") }));
+      return written.length > 0;
+    }));
+
+    row.append(who, button);
+    root.append(row);
+  }
 }

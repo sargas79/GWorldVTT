@@ -4212,9 +4212,8 @@ runs again on the next load. Each helper returns
   their technique; the combat switch `closeCombatAnyWeapon` (off) lets a weapon
   without a C reach fight in close combat at -4 skill per yard of reach (the
   technique buys half back), swing damage -1 per yard and Parry from the reduced
-  skill, and Close Combat levels buy off a ranged weapon's Bulk. Not done: a
-  parried Head Butt hurting the butter's face and a Stamp Kick's target
-  restriction are pure rules only, not enforced on the cards.
+  skill, and Close Combat levels buy off a ranged weapon's Bulk. What this left
+  undone is finished in 1.187.0 (see "The finished addenda" below).
 - **Pulling Rank** (since 1.172.0; Basic Set Revised pp. 337-341). A Rank trait
   takes `system.patronValue` (10-30, never paid) beside its `pointsPerLevel`;
   the modifier record Capricious Assistance (-50%, Rank group) is in the addendum
@@ -4300,12 +4299,8 @@ runs again on the next load. Each helper returns
   crippled joint, and the GM's rulings on the veins and a cut neck; a neck snap says
   the neck breaks over HP. `rules.REVISED_LOCATIONS`, `refineRandomHit`, `woundNotes`,
   `isMissingPart`, `withChestCoverage`, `fromBehindAdjustment` and `neckSnapBreaksNeck`
-  are the pure pieces. Not done: a tight-beam burn is not told from other burning when
-  aiming or on a random hit, so `burn` counts as tight-beam for the rows that take it
-  and the random refinements leave it out; the outcomes are on the card and are not
-  written to the character as traits; extra limbs do not change a joint's threshold;
-  a miss by one at the ear, nose, jaw, spine or pelvis lands on the torso whether or not
-  the split is on.
+  are the pure pieces. What this left undone is finished in 1.187.0 (see "The finished
+  addenda" below).
 - **Tasks and feats** (since 1.177.0; Basic Set Revised pp. 570-571, 578). Switches
   `expandedInfluence` and `basicAbstractDifficulty` (rolls group, off). Ham Clause needs
   no switch: a disadvantage's row on the sheet has a button that keeps it as an actor
@@ -4485,3 +4480,36 @@ runs again on the next load. Each helper returns
   done: extra effort chosen in a melee or ranged attack's dialog has no ability origin to pass, so
   it pays FP; recovery aids of an origin (Recover Energy, Absorption) are for the module that owns
   them to apply through `reserves.restore`.
+
+- **The finished addenda** (since 1.187.0; Basic Set Revised pp. 333-334, 566). What #912 and
+  #917 left undone. Techniques: a parried Head Butt (its attack roll carries the tag
+  `headButt` to the defense) rolls the butt's damage and posts a card naming the injury to the
+  butter's face less its DR, with a button for the butter's owner to take it
+  (`rules.headButtSelfInjury`); a Stamp Kick at one targeted foe is refused unless the foe is
+  lying or the shot is aimed at the foot or leg (`rules.stampKickTarget`); a pulled Head Butt or
+  Stamp Kick rereads its damage at the pulled ST (with a rigid helm's +1, `rules.rigidHelmWorn`),
+  and a pulled weapon blow keeps the close-combat swing penalty; the Close Combat records
+  are `Close Combat` (reach 1, default -4, up to -2), `Close Combat (Reach 2)` (-8, up to -4) and
+  `Close Combat (Reach 3)` (-12, up to -6), and a weapon reads the record for its longest reach
+  (the plain one serves any reach as far as half the penalty goes); rising as a step on an
+  Acrobatic Stand spends the turn's step, kept as the turn state `stepTaken` of module `gworld`
+  (`getCombatState(actor, "gworld", "stepTaken")`), and a second one the same turn stands as a
+  Change Posture instead. Hit locations: a registered location that lists `burn` in its
+  `damageTypes` now means tight-beam burning, so `hitLocationsFor({ damageType, tightBeam })`
+  and the called-shot list leave a torch or flamethrower out where the caller says
+  `tightBeam: false` (calls that give no `tightBeam` match any burn, as before);
+  `randomLocationWithHooks` and `roll.hitLocation` take `tightBeam`, the
+  `gworld.randomHitLocation` context has it, and the random 1d treats a tight-beam burn as
+  piercing where the book lists it (`rules.refineRandomHit`); `cripplingDivisor` given as a
+  function is also passed `{ arms, legs }`, and a joint cripples over HP/(n+1) for a limb and
+  HP/(1.5n+1) for an extremity of a body with n of them (`rules.jointDivisor`), so
+  `locationOverrides` takes the limb counts; a miss by one at the ear, nose or jaw lands on the
+  chest and at the pelvis on the abdomen while `chestAbdomenSplit` is on, and on the torso when
+  it is off (`missFallbackFor` reads a fallback's `available`); the sheet's torso DR shows armour
+  that covers the chest alone. The damage card offers the GM a button that writes a finer
+  location's lasting wound to the character (`rules.woundTraits`): Bad Back (Severe) and Lame
+  (Paraplegic) for a crippled spine, Quadriplegic for a broken neck, Lame (Missing Legs) for a
+  pelvis that gives out, No Sense of Smell/Taste for a broken nose, and the levels of Appearance
+  an ear or nose lost (`rules.appearanceAfter`), through `changeTrait`. Not done: a neck snap's
+  card says the neck breaks but has no button of its own (the damage card's does, when the
+  injury is applied at the spine).

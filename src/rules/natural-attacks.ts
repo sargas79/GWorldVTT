@@ -46,6 +46,16 @@ export interface NaturalAttackInput {
   rigidHelm?: boolean;
 }
 
+/**
+ * Whether one of these armour items is a rigid helm that is worn: equipped, not
+ * flexible, and covering the skull (Revised p. 334).
+ */
+export function rigidHelmWorn(armor: ReadonlyArray<{ system?: Record<string, unknown> }>): boolean {
+  return armor.some((item) =>
+    item.system?.["equipped"] === true && item.system?.["flexible"] !== true &&
+    ((item.system?.["drByLocation"] ?? []) as Array<{ locations?: string[] }>).some((e) => (e.locations ?? []).includes("skull")));
+}
+
 /** The unarmed skills that hit harder with training, and from what level. */
 export type UnarmedSkill = "Brawling" | "Boxing" | "Karate";
 

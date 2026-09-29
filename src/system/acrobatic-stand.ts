@@ -6,6 +6,22 @@
 import { acrobaticStand, acrobaticStandModifier, type StandFrom, type StandOutcome } from "../rules/addendum-techniques.js";
 import { techniqueLevelByPrefix } from "./technique-lookup.js";
 import { rollSuccess } from "./roll.js";
+import { SYSTEM_ID } from "./constants.js";
+import { getCombatState, setCombatState } from "./combat-extensions.js";
+
+/** The per-turn state key that says the fighter's step is spent (the turn ends it). */
+export const STEP_TAKEN_KEY = "stepTaken";
+
+/** Whether the fighter has spent their step this turn, on an Acrobatic Stand or any flow that records one. */
+export function stepTakenThisTurn(actor: any): boolean {
+  return getCombatState(actor, SYSTEM_ID, STEP_TAKEN_KEY) === true;
+}
+
+/** Spends the step for the rest of the fighter's turn; nothing outside a combat is tracked. */
+export async function recordStepTaken(actor: any): Promise<void> {
+  if (!game.combat?.started) return;
+  await setCombatState(actor, SYSTEM_ID, STEP_TAKEN_KEY, true, "turn");
+}
 
 const STAND_FROM: readonly string[] = ["lying", "sitting", "crawling"];
 
@@ -34,7 +50,17 @@ export async function rollAcrobaticStand(actor: any, from: StandFrom): Promise<{
       : [],
   });
   if (!result) return null;
-  const outcome = acrobaticStand({ from, success: result.success, critical: result.criticalSuccess || result.criticalFailure });
+  let outcome = acrobaticStand({ from, success: result.success, critical: result.criticalSuccess || result.criticalFailure });
+  // Rising as a step spends the turn's step: with it already spent, the rise
+  // costs a Change Posture maneuver instead (p. 333).
+  if (outcome === "standsAsStep") {
+    if (stepTakenThisTurn(actor)) {
+      outcome = "standsAsManeuver";
+      ui.notifications?.warn(game.i18n.localize("GWORLD.AcrobaticStand.StepSpent"));
+    } else {
+      await recordStepTaken(actor);
+    }
+  }
   const posture =
     outcome === "standsAsStep" || outcome === "standsAsManeuver" ? "standing"
     : outcome === "sits" ? "sitting"
