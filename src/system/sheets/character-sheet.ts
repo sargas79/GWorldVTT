@@ -195,6 +195,7 @@ import {
   secondaryPointCost,
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
+import { moreManeuverChoices } from "../more-maneuvers.js";
 import { allOutAttackOptionsFor, feintModifiers, registeredManeuvers } from "../combat-extensions.js";
 import { evaluateBonusFor } from "../evaluate.js";
 import { setCondition } from "../conditions.js";
@@ -887,6 +888,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
           label: game.i18n.localize(`GWORLD.Maneuver.${key}`),
           selected: system.maneuver === key,
         })),
+        // The addendum's, while their switches are on (Basic Set Revised pp. 575-576).
+        ...moreManeuverChoices(String(system.maneuver ?? "")),
         // A module's maneuvers, where it offers them to this character -- and
         // the one they are on, even if it no longer would, so the select says
         // what is actually stored.

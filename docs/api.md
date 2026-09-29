@@ -4327,3 +4327,25 @@ runs again on the next load. Each helper returns
   the day's-end roll is the GM's call (no check that the day was free of new hardship), the
   rolls for supernatural powers and the Physician (Psychiatric) hint on the injuries chapter are
   not wired, and the permanent-disadvantage overflow is reported, not added as a trait.
+- **More maneuvers** (since 1.181.0; Basic Set Revised pp. 575-576). Five combat-group switches,
+  each off: `allOutSlams`, `allOutConcentrate`, `mentalDefense`, `committedAttack`,
+  `defensiveAttack`. `system.maneuver` may now be `committedAttack`, `defensiveAttack` or
+  `allOutConcentrate` (a step each; Committed and Defensive attack, All-Out Concentrate allows no
+  defense). The choices each asks for are maneuver options under the system's own module id
+  `gworld` (`gworld.slam`, `gworld.committedKind`, `gworld.committedStep`, `gworld.committedWith`,
+  `gworld.defensiveBenefit`, `gworld.mentalDefense`), kept and drawn like a module's.
+  All-Out Attack with `gworld.slam` ticked gets a full Move (`gworld.maneuverAllowances` still has
+  the last word). Committed Attack: Determined +2 to hit, a second step -2, Strong +1 damage or +1
+  per two dice for ST-based melee, every defense at -2, and the defense the attack used refused on
+  the defense card (parry with the hand, block with the shield, dodge after a kick), never a
+  retreat. Defensive Attack: -2 damage or -1 a die, +1 to Parry or to Block as chosen, or the
+  unbalanced weapon that attacked parries again (`gworld.parryWeapons` sees it as not excluded),
+  and a grab or grapple (an attack that does no damage) gives the target +1 on its defenses.
+  All-Out Concentrate is +1 to skill and spell rolls, which makes the distraction roll Will-2;
+  Mental Defense is +2 on resistance rolls while All-Out Defense is the maneuver.
+  `registerManeuverOption` and `registerManeuver` stay for other books. Not done: the +1 of
+  All-Out Concentrate is on every skill and spell roll (the GM removes it from others) and does
+  not check that the maneuver was held for the whole task; the second step's count and the
+  Defensive kick's +2 on falling rolls are not enforced; the defense buttons' figures do not show
+  the -2 or +1 (the roll's lines do); Double's extra melee attack before a slam is the ordinary
+  second All-Out Attack.

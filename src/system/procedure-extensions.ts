@@ -23,6 +23,7 @@
 
 import { sceneAreaLines } from "./modifier-areas.js";
 import { taskRuleLines } from "./task-rules.js";
+import { allOutConcentrateLines, mentalDefenseLines, moreManeuverAttackEffect, moreManeuverDefenseLines } from "./more-maneuvers.js";
 import { SYSTEM_ID } from "./constants.js";
 import { endAttackedThisTurn } from "./feint.js";
 import { isFightingRoll, noteFought } from "./combat-participation.js";
@@ -362,6 +363,9 @@ export function maneuverOptionAttackEffect(context: AttackContext): ReturnType<t
   // A module's All-Out Attack option, where the attacker took one.
   const allOut = allOutAttackOptionEffect(context);
   if (allOut) effects.push(allOut);
+  // Committed Attack and Defensive Attack (Revised pp. 575-576).
+  const more = moreManeuverAttackEffect(context);
+  if (more) effects.push(more);
   for (const { option, value } of optionsInForce(context.actor)) {
     if (!option.attack) continue;
     const effect = safely(`maneuver option ${option.id}`, () => option.attack!(context, value), null);
@@ -638,9 +642,14 @@ function hookedSuccessRoll(context: SuccessRollContext, refusable: boolean): { m
   }
   if (ctx.kind === "defense") {
     for (const defense of ["dodge", "parry", "block"]) {
-      if (ctx.tags.includes(defense)) ctx.modifiers.push(...maneuverOptionDefenseLines(ctx.actor, defense));
+      if (ctx.tags.includes(defense)) {
+        ctx.modifiers.push(...maneuverOptionDefenseLines(ctx.actor, defense));
+        ctx.modifiers.push(...moreManeuverDefenseLines(ctx.actor, defense));
+      }
     }
   }
+  // All-Out Concentrate's +1 (which makes a distraction Will-2), and Mental Defense's +2 (Revised p. 575).
+  ctx.modifiers.push(...allOutConcentrateLines(ctx.actor, ctx.kind), ...mentalDefenseLines(ctx.actor, ctx.tags));
   callCombatHook(PROCEDURE_HOOKS.successRollModifiers, ctx);
   // Text, not merely something truthy: the card and the warning show it.
   const refusal = refusable && typeof ctx.refusal === "string" && ctx.refusal.trim() ? ctx.refusal.trim() : null;

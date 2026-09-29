@@ -22,6 +22,7 @@ import { registerSuppressionFire } from "./system/suppression-fire.js";
 import { registerFacing } from "./system/facing.js";
 import { registerAimTracking } from "./system/aim.js";
 import { registerRevisedHitLocations } from "./system/revised-hit-locations.js";
+import { registerMoreManeuvers } from "./system/more-maneuvers.js";
 import { registerSupersededPackHiding } from "./system/compendium-sources.js";
 import { registerEvaluateTracking } from "./system/evaluate.js";
 import { registerConcentrateTracking } from "./system/zen.js";
@@ -242,6 +243,8 @@ Hooks.once("setup", () => closeRuleRegistration());
 
 Hooks.once("ready", () => {
   console.log(`${SYSTEM_ID} | Ready`);
+  // The choices the addendum's maneuvers ask for, on the combat tab (Basic Set Revised pp. 575-576).
+  registerMoreManeuvers();
   // What the compendia know about skills nobody on the sheet has learned,
   // so a weapon whose skill is missing is rolled at the book's default.
   void loadSkillCatalog();
