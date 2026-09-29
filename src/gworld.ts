@@ -23,6 +23,7 @@ import { registerFacing } from "./system/facing.js";
 import { registerAimTracking } from "./system/aim.js";
 import { registerRevisedHitLocations } from "./system/revised-hit-locations.js";
 import { registerConcentrationRun, registerMoreManeuvers } from "./system/more-maneuvers.js";
+import { registerRestrictedDodge } from "./system/revised-ranged.js";
 import { registerSupersededPackHiding } from "./system/compendium-sources.js";
 import { registerEvaluateTracking } from "./system/evaluate.js";
 import { registerConcentrateTracking } from "./system/zen.js";
@@ -251,6 +252,7 @@ Hooks.once("ready", () => {
   registerMoreManeuvers();
   // Giant Step, Great Lunge and Heroic Charge, beside Flurry and Mighty Blows (Basic Set Revised p. 571).
   registerCombatExtras();
+  registerRestrictedDodge();
   // What the compendia know about skills nobody on the sheet has learned,
   // so a weapon whose skill is missing is rolled at the book's default.
   void loadSkillCatalog();

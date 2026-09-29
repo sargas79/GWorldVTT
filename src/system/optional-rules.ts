@@ -102,6 +102,7 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "trickyShooting", reference: "Basic Set Revised p. 577", default: false },
     { key: "simplifiedRange", reference: "Basic Set Revised p. 577", default: false },
     { key: "largeTargetDamage", reference: "Basic Set Revised p. 577", default: false },
+    { key: "restrictedDodge", reference: "Basic Set Revised p. 577", default: false },
   ],
   injury: [
     { key: "hitLocations", reference: "Campaigns p. 398", default: true },

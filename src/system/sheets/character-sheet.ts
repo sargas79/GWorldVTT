@@ -199,6 +199,9 @@ import {
 } from "../../rules/attributes.js";
 import { MANEUVER_ORDER } from "../../rules/maneuvers.js";
 import { moreManeuverChoices } from "../more-maneuvers.js";
+import { rangedFeintLines } from "../revised-ranged.js";
+import { forage } from "../vision-corrections.js";
+import { currentTerrain } from "../vision-prompts.js";
 import { allOutAttackOptionsFor, feintModifiers, registeredManeuvers } from "../combat-extensions.js";
 import { evaluateBonusFor } from "../evaluate.js";
 import { setCondition } from "../conditions.js";
@@ -236,6 +239,7 @@ import {
   promptForNumber,
   beyondHalfDamage,
   yardsBetween,
+  measuredShot,
   rollSuccess,
   lineDropped,
   secondLineOf,
@@ -288,6 +292,7 @@ import {
   promptForMotionSickness,
   promptForStayingUp,
   promptForHike,
+  promptForForage,
   promptForCollision,
   promptForShock,
   promptForFire,
@@ -558,6 +563,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       stayAwake: GWorldCharacterSheet.#onStayAwake,
       sleep: GWorldCharacterSheet.#onSleep,
       hike: GWorldCharacterSheet.#onHike,
+      forage: GWorldCharacterSheet.#onForage,
       struckBy: GWorldCharacterSheet.#onStruckBy,
       shock: GWorldCharacterSheet.#onShock,
       burn: GWorldCharacterSheet.#onBurn,
@@ -1993,6 +1999,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       return;
     }
     const evaluated = evaluateBonusFor(this.actor);
+    // A ranged Feint takes the ranged attack's modifiers: range and size (Revised p. 577).
+    const rangedLines = ranged && isRuleOn("trickyShooting") ? rangedFeintLines(measuredShot(this.actor)) : [];
 
     // Alternative Feints: a non-combat skill may stand in for the weapon's (Revised p. 328).
     const feintBasis = await chooseFeintSkill(this.actor, base, String(target.dataset.rollLabel ?? ""));
@@ -2005,7 +2013,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
         foe: String(foe.name),
       }),
       // A Feint takes what Evaluate maneuvers before it earned (Campaigns p. 364).
-      feinter: { actor: this.actor, base: feintBasis.base, modifiers: [...(evaluated ? [{ label: game.i18n.localize("GWORLD.Maneuver.evaluate"), value: evaluated }] : []), ...added.modifiers] },
+      feinter: { actor: this.actor, base: feintBasis.base, modifiers: [...(evaluated ? [{ label: game.i18n.localize("GWORLD.Maneuver.evaluate"), value: evaluated }] : []), ...rangedLines, ...added.modifiers] },
       // Naming what they rolled against matters here: the rule lets them roll
       // their best of several things, and the card should say which it was.
       defender: { actor: foe, base: defense.score, note: defense.source },
@@ -3776,6 +3784,19 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const asked = await promptForHike(dayWeather(this.actor).hot);
     if (!asked) return;
     await hike({ actor: this.actor, ...asked });
+  }
+
+  /** Foraging in a terrain (Campaigns p. 427; Basic Set Revised p. 573). */
+  static async #onForage(this: GWorldCharacterSheet) {
+    if (!isRuleOn("terrainTypes")) return;
+    const asked = await promptForForage(currentTerrain()?.terrain ?? "");
+    if (!asked) return;
+    await forage({
+      actor: this.actor,
+      terrain: asked.terrain,
+      average: asked.average,
+      ...(asked.exceptional ? { exceptional: asked.exceptional } : {}),
+    });
   }
 
   /** Struck by something moving (Campaigns pp. 430-432). */

@@ -319,31 +319,41 @@ export function frostbiteDamage(fpLost: number, exposed: readonly string[]): Arr
   return exposed.map((location) => ({ location, hp: fp }));
 }
 
+/**
+ * Whether the frostbite a location has taken cripples it (p. 574: "This can
+ * cripple extremities or even limbs"): the same as any injury, over the
+ * location's crippling threshold (Campaigns p. 421). A location with no
+ * threshold (the face, an ear) is never crippled.
+ */
+export function frostbiteCripples(cumulativeHp: number, threshold: number | null): boolean {
+  return threshold !== null && Number(cumulativeHp) > threshold;
+}
+
 // -- visual signals and the horizon (p. 575) --------------------------------
 
 /** The Horizon Table: SM, height in yards, and the horizon in miles. */
-export const HORIZON_TABLE: ReadonlyArray<{ sm: number; yards: number; miles: number }> = [
-  { sm: -10, yards: 1.5 / 36, miles: 0.4 },
-  { sm: -9, yards: 2 / 36, miles: 0.5 },
-  { sm: -8, yards: 3 / 36, miles: 0.6 },
-  { sm: -7, yards: 5 / 36, miles: 0.8 },
-  { sm: -6, yards: 8 / 36, miles: 1 },
-  { sm: -5, yards: 1 / 3, miles: 1.2 },
-  { sm: -4, yards: 0.5, miles: 1.5 },
-  { sm: -3, yards: 2 / 3, miles: 1.75 },
-  { sm: -2, yards: 1, miles: 2 },
-  { sm: -1, yards: 1.5, miles: 2.5 },
-  { sm: 0, yards: 2, miles: 3 },
-  { sm: 1, yards: 3, miles: 3.5 },
-  { sm: 2, yards: 5, miles: 4.5 },
-  { sm: 3, yards: 7, miles: 5.5 },
-  { sm: 4, yards: 10, miles: 6.5 },
-  { sm: 5, yards: 15, miles: 8 },
-  { sm: 6, yards: 20, miles: 9.5 },
-  { sm: 7, yards: 30, miles: 12 },
-  { sm: 8, yards: 50, miles: 15 },
-  { sm: 9, yards: 70, miles: 18 },
-  { sm: 10, yards: 100, miles: 21 },
+export const HORIZON_TABLE: ReadonlyArray<{ height: string; sm: number; yards: number; miles: number }> = [
+  { height: "1.5\"", sm: -10, yards: 1.5 / 36, miles: 0.4 },
+  { height: "2\"", sm: -9, yards: 2 / 36, miles: 0.5 },
+  { height: "3\"", sm: -8, yards: 3 / 36, miles: 0.6 },
+  { height: "5\"", sm: -7, yards: 5 / 36, miles: 0.8 },
+  { height: "8\"", sm: -6, yards: 8 / 36, miles: 1 },
+  { height: "1 ft", sm: -5, yards: 1 / 3, miles: 1.2 },
+  { height: "1.5 ft", sm: -4, yards: 0.5, miles: 1.5 },
+  { height: "2 ft", sm: -3, yards: 2 / 3, miles: 1.75 },
+  { height: "1 yd", sm: -2, yards: 1, miles: 2 },
+  { height: "1.5 yd", sm: -1, yards: 1.5, miles: 2.5 },
+  { height: "2 yd", sm: 0, yards: 2, miles: 3 },
+  { height: "3 yd", sm: 1, yards: 3, miles: 3.5 },
+  { height: "5 yd", sm: 2, yards: 5, miles: 4.5 },
+  { height: "7 yd", sm: 3, yards: 7, miles: 5.5 },
+  { height: "10 yd", sm: 4, yards: 10, miles: 6.5 },
+  { height: "15 yd", sm: 5, yards: 15, miles: 8 },
+  { height: "20 yd", sm: 6, yards: 20, miles: 9.5 },
+  { height: "30 yd", sm: 7, yards: 30, miles: 12 },
+  { height: "50 yd", sm: 8, yards: 50, miles: 15 },
+  { height: "70 yd", sm: 9, yards: 70, miles: 18 },
+  { height: "100 yd", sm: 10, yards: 100, miles: 21 },
 ];
 
 /**

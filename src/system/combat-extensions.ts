@@ -37,6 +37,8 @@ import {
 } from "../rules/maneuvers.js";
 import { ADDENDUM_MANEUVERS, ADDENDUM_MANEUVER_ORDER, isAddendumManeuver } from "../rules/more-maneuvers.js";
 import { allowsSameWeaponParry, committedRefusal, slamMovement } from "./more-maneuvers.js";
+import { restrictedDodgeRefusals } from "./revised-ranged.js";
+import { isRuleOn } from "./optional-rules.js";
 import { ACROBATIC_DEFENSES_PER_TURN } from "../rules/defenses.js";
 import { HIT_LOCATIONS, type HitLocation, type LimbCounts } from "../rules/hit-locations.js";
 import type { DamageType } from "../rules/types.js";
@@ -332,6 +334,8 @@ export function adjustWeaponAttacks(options: {
     if (entry.row.followUpAlso === undefined) entry.row.followUpAlso = null;
     // Whether the row offers a Feint (since 1.28.0): melee rows do, ranged ones don't.
     if (typeof entry.row.feint !== "boolean") entry.row.feint = entry.kind === "melee";
+    // Ranged Feint (Revised p. 577): with Tricky Shooting on, a ranged row offers one too.
+    if (entry.kind === "ranged" && isRuleOn("trickyShooting")) entry.row.feint = true;
   }
   const before = options.rows.map((entry) => Object.fromEntries(WEAPON_ROW_FIELDS.map((key) => [key, entry.row[key]])));
   const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
@@ -1389,6 +1393,19 @@ export function moduleDefenseRefusals(context: {
     const why = committedRefusal(context.defender, choice.key);
     if (why) Object.assign(choice, { available: false, refusal: why });
   }
+  // Restricted Dodge Against Firearms (Revised p. 577): a gun is dodged only by a
+  // fighter who declared evasive movement against this shooter, and an Acrobatic
+  // Dodge only if the Acrobatics roll was made on their own turn.
+  const restricted = restrictedDodgeRefusals(context.defender, context.attacker, {
+    skill: String(context.attackWeapon?.skill ?? ""),
+    delivery: context.delivery,
+  });
+  if (restricted?.dodge) {
+    for (const choice of hooked.choices ?? []) {
+      if (choice.key === "dodge") Object.assign(choice, { available: false, refusal: restricted.dodge });
+    }
+  }
+  if (restricted?.acrobatic && hooked.acrobatic) hooked.acrobatic = { ...hooked.acrobatic, available: false, refusal: restricted.acrobatic };
   const noRetreat = committedRefusal(context.defender, "retreat");
   if (noRetreat) hooked.retreat = { available: false, refusal: noRetreat };
   const text = (refusal: unknown) => (typeof refusal === "string" && refusal.trim() ? refusal.trim() : "");

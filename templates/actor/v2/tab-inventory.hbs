@@ -8,6 +8,9 @@
           data-tooltip="{{#if v2.inventory.strip.overloaded}}{{localize 'GWORLD.Hint.Overloaded'}}{{/if}}">{{v2.inventory.strip.level}}</span>
     <span>{{localize "GWORLD.Secondary.Move"}} <b>{{v2.inventory.strip.move}}</b></span>
     <span>{{localize "GWORLD.Secondary.Dodge"}} <b>{{#if v2.inventory.strip.dodge}}{{v2.inventory.strip.dodge}}{{else}}&mdash;{{/if}}</b>{{#if v2.inventory.strip.dodgePenalty}} <em class="v2-warn">({{v2.inventory.strip.dodgePenalty}})</em>{{/if}}</span>
+    {{#if v2.inventory.strip.gadgetDays}}
+      <span data-tooltip="{{localize 'GWORLD.SimplifiedResources.GadgetHint'}}">{{localize "GWORLD.SimplifiedResources.Gadgets"}} <b>{{localize "GWORLD.SimplifiedResources.Days" days=v2.inventory.strip.gadgetDays.days}}</b></span>
+    {{/if}}
     <span class="v2-load-money">{{localize "GWORLD.Life.Cash"}} <b>${{v2.inventory.strip.money}}</b></span>
   </div>
   <div class="v2-tiers">
@@ -233,6 +236,13 @@
                 {{!-- Buying rounds is shopping and stays here; loading them is on the Combat tab. --}}
                 <button type="button" class="v2-button" data-action="buyAmmunition" data-mode-index="{{item.loadModeIndex}}"
                         data-tooltip="{{localize 'GWORLD.Ammunition.BuyHint'}}">{{localize "GWORLD.Ammunition.Buy"}}</button>
+              {{/if}}
+              {{#if item.ammoToggle}}
+                {{!-- Simplified Resources: shots are not counted until this is on (Revised p. 578). --}}
+                <button type="button" class="v2-button{{#if item.ammoToggle.tracked}} v2-button-steel{{/if}}" data-action="v2ToggleAmmoTracked"
+                        aria-pressed="{{#if item.ammoToggle.tracked}}true{{else}}false{{/if}}"
+                        {{#if item.ammoToggle.forced}}disabled{{/if}}
+                        data-tooltip="{{#if item.ammoToggle.forced}}{{localize 'GWORLD.SimplifiedResources.ForcedHint'}}{{else}}{{localize 'GWORLD.SimplifiedResources.ToggleHint'}}{{/if}}">{{#if item.ammoToggle.tracked}}{{localize "GWORLD.SimplifiedResources.Counting"}}{{else}}{{localize "GWORLD.SimplifiedResources.NotCounting"}}{{/if}}</button>
               {{/if}}
               {{!-- More of it, paid for out of the cash on the sheet. --}}
               <button type="button" class="v2-button v2-button-gold" data-action="buyItem"

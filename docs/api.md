@@ -3797,7 +3797,7 @@ The ids, tab by tab (parts in brackets):
 | Tables | `attributeSkillLevels` (`attributeLevels`, `successChances`), `thrownDamage`, `throwingDistance`, `peopleSucceed`, `collectiveSkill`, `abstractDifficulty`, `coverDr` (`coverShots`, `coverWalls`) |
 | Wounds | `hitLocations`, `shock`, `knockback`, `majorWound`, `knockdownStunning`, `effectsOfStun`, `cripplingInjury`, `mortalWounds`, `bleeding` |
 | Melee | `meleeAttackModifiers`, `activeDefenseModifiers`, `lostHitPoints`, `lostFatiguePoints`, `criticals`, `rulesOf` (`ruleOf14`, `ruleOf16`, `ruleOf20`) |
-| Ranged | `rangedAttackModifiers`, `sizeSpeedRange`, `dodgeBlockParry`, `woundingModifiers`, `firstAid`, `naturalRecovery`, `unconsciousness` |
+| Ranged | `rangedAttackModifiers`, `sizeSpeedRange`, `horizonTable`, `dodgeBlockParry`, `woundingModifiers`, `firstAid`, `naturalRecovery`, `unconsciousness` |
 | Maneuvers | `maneuvers`, `extraEffort`, `posture` |
 | Combat | `skillModifiers` (`taskDifficulty`, `equipmentModifiers`, `timeSpent`), `damageTable`, `combatRules` (`bluntTrauma`, `rapidFire`, `hurtingYourself`), `closeCombat` (`evade`, `slam`), `unarmedCombat` (`grabbing`, `grappling`, `takedown`, `pin`, `strangle`), `visionHexDiagram` |
 | Afflictions | `afflictions` (`afflictions.irritating`, `afflictions.incapacitating`, `afflictions.mortal`, `pain`) |
@@ -4420,13 +4420,30 @@ runs again on the next load. Each helper returns
   `travelMultiplier`, `arcticTravelFor`, `AQUATIC_FORAGING`, `ILLUMINATION_LEVELS`,
   `illuminationPenalty`, `pointSourcePenalty`, `adaptationMinutes`, `plainSightBonus`,
   `combatVision`, `concealedAttackDefense`, `exposedLocations`, `frostbiteDamage`,
-  `HORIZON_TABLE`, `horizonMiles`, `horizonMilesForHeight`, `signalRange`. Not done: no
-  foraging or Tracking button on the sheet, Tracking's terrain modifier is not added to the
-  Tracking roll, the illumination levels are not a picker in the attack dialog, plain sight is
-  not a checkbox on a Vision roll (there is no Vision prompt), `rollCombatVision` is not called
-  by the defense flow (a module or the GM calls it), frostbite is charged as one HP sum and
-  does not cripple a location, the Horizon Table is not yet on the GM screen, and the add-on's
-  `frostbite` is not retired here.
+  `HORIZON_TABLE` (each row now also has `height`, as printed), `horizonMiles`,
+  `horizonMilesForHeight`, `signalRange`, `frostbiteCripples`.
+  Finished in 1.190.0: the GM sets the terrain in the world settings (`currentTerrain`, with
+  `terrainSurface` for the table's loose-snow-or-sand footnote), and with `terrainTypes` on every
+  roll of a skill named Tracking carries a line keyed `terrain` (-2 Arctic, Desert, Island/Beach
+  and Mountain; -4 Swampland; 0 for loose snow or sand without wind or water). A Forage button
+  in the sheet's Hazards drawer (`vision.forage({ actor, terrain, average, exceptional })`) rolls
+  Survival in the terrain's specialty (Fishing under water; Naturalist-3 or Per-5 where the
+  character has neither) with the terrain's foraging modifier. The attack dialogs (melee and
+  ranged) gain a Light picker of the named illumination levels, with flicker and an
+  eyes-not-adapted box, that fills in the Darkness field (total darkness selects the
+  "nothing at all" sight); a Vision roll's shift-click prompt (a sense roll, never an attack)
+  gains In Plain Sight (+10, or +20 for details of a located target) and the same light picker,
+  as lines keyed `plainSight` and `illumination`. With `visionRollsInCombat` on, a defense card
+  whose attacker is SM -10 or smaller, or whose range is -10 or worse on the map, asks the
+  defender for the Vision roll when a defense button is pressed (`vision.combatVisionNeed`,
+  `vision.settleCombatVision`; once per attack and defender, kept in the defender's
+  `combatVision` flag); a defender who fails it has no active defense. Frostbite keeps a
+  running tally per location in the actor's `frostbite` flag and cripples (`crippling.cripple`,
+  undecided duration, labelled Frostbite) a hand, foot, arm or leg once the tally passes its
+  crippling threshold (Campaigns p. 421); the tally starts over at full HP. The Horizon Table
+  is a GM Screen section (`horizonTable`, Ranged tab). Not done: a shot from concealment (no
+  defense on the first attack, a Vision roll without the +10 after) is the GM's call and has no
+  control on the card, and the add-on's `frostbite` is not retired here.
 - **More maneuvers** (since 1.181.0; Basic Set Revised pp. 575-576). Five combat-group switches,
   each off: `allOutSlams`, `allOutConcentrate`, `mentalDefense`, `committedAttack`,
   `defensiveAttack`. `system.maneuver` may now be `committedAttack`, `defensiveAttack` or
@@ -4460,13 +4477,35 @@ runs again on the next load. Each helper returns
   `rules.closeContactShot`, `nonCombatBonus`, `combinedCoverage`, `coverageProtects`,
   `strikeAroundPenalty`, `mayDodgeFirearm`, `evasiveBonuses`, `rangedRapidStrikeAllowed`,
   `splitRateOfFire`, `bandForYards`, `bandPenalty`, `shiftBand`, `largeTargetRow` and
-  `largeTargetWounding` are the pure pieces. Not done: Restricted Dodge Against Firearms (the
-  evasive-movement declaration and defense gate) and Ranged Feint are rules only, with no maneuver
-  option or defense hook; Prediction Shot and Ranged Rapid Strike add their to-hit line but do not
-  lower the target's Dodge, split RoF between two targets or forbid Dual-Weapon Attack in the
-  flow; Simplified Range reads the band from the measured range, with no Move shift of bands
-  between turns; the coverage roll is made when damage is resolved (a preview re-rolls), and the
-  armour sheet has no coverage field yet; the add-on's own rules are not retired.
+  `largeTargetWounding` are the pure pieces (1.190.0 adds `firearmAttack`,
+  `evasiveManeuverAllowed` and `rapidStrikeShare`).
+  Finished in 1.190.0: a seventh combat-group switch, `restrictedDodge` (off), gives the seven
+  maneuvers of the rule (All-Out Defense, Attack, Change Posture, Defensive Attack, Feint, Move,
+  Move and Attack) three maneuver options each under the system's `gworld` module id: the shooter
+  evasive movement is taken against (a choice of the other combatants, or of the scene's tokens
+  where no combat runs; keys `evasive<Maneuver>`), Acrobatics rolled this turn
+  (`evasiveAcrobatic<Maneuver>`) and diving prone at the end of the turn
+  (`evasiveDrop<Maneuver>`). A maneuver option's `input` may now be a function of the actor, for
+  a choice that changes. With the switch on, the defense card refuses the dodge against a firearm
+  attack (a Guns, Beam Weapons or Gunner attack) unless the defender's declared shooter is the
+  attacker, and the acrobatic option unless the Acrobatics roll was declared on the turn
+  (`evasiveDeclaration(actor)`, `restrictedDodgeRefusals`). Ranged Feint: with `trickyShooting`
+  on, ranged attack rows offer the Feint button (`feint: true`) and the feint roll takes the
+  range and target-size lines of a ranged attack. Prediction Shot also puts its penalty on the
+  defender's Dodge alone, as a defense modifier limited to `dodge`. Ranged Rapid Strike is refused
+  with Dual-Weapon Attack, or unless the shots asked for leave at least one for the second target
+  (`rapidStrikeCheck`), and says how many shots the second target has. Simplified Range: the
+  dialog asks whether the shooter moved to a closer or a farther band, which `shiftBand` applies
+  at Close and Short. The coverage roll is a field of the blow (`IncomingDamage.coverageRoll`)
+  and is reported on the result (`AppliedDamage.coverage`: `{ coverage, roll, protected }`) and in
+  chat, so the same blow worked out again with the same roll gives the same answer; the armour
+  sheet has a Coverage (n in 6) field. Damage to Shields' pointer to the large-target table
+  (p. 484): `items.applyDamage` gives a vehicle item's SM to the wounding of an Unliving or
+  Homogenous object while `largeTargetDamage` is on. Not done: the Move maneuver alone shifts no
+  band (there is no roll to carry it; the next shot's dialog takes the move), the second target
+  of a Ranged Rapid Strike is not tied to the first shot's split (it is checked per attack), and
+  Dodge and Drop has no rule in the system to gate, so the drop is only recorded; the add-on's
+  own rules are not retired.
 
 - **Simplified Resources and batteries** (since 1.183.0; Basic Set Revised p. 578). Switch
   `simplifiedResources` (equipment group, off). With it on, a character's ranged weapons stop
@@ -4601,3 +4640,21 @@ runs again on the next load. Each helper returns
   that is not the concentrated task; Heroic Charge's ranged penalty is a note, since the ranged
   Move and Attack penalty is the weapon's Bulk; the add-on's retirement of its options is for the
   add-on.
+
+  compendium; a rechargeable battery costs five times as much. Finished in 1.190.0: the Gear
+  tab's detail panel has a Counting shots / Not counting shots toggle on a character's ranged
+  weapon while the switch is on (`simplifiedResources.toggle(item)`, `toggleFor(item)`), and the
+  weapon is always counted where its ammunition is explosive (a ranged mode of damage type `ex`),
+  fine or very fine (the box it was loaded from, or the carried boxes that fit), or magical (a box
+  with an enchantment): `isTracked` reads `simplifiedResources.ammunitionKind(item)` through
+  `trackedRegardless`, and the toggle is shown pressed and disabled. `simplifiedResources.gadgetDays(actor,
+  { tl })` works out the days the gadgets run from the batteries and power cells carried (items
+  named Battery... or Power Cell...) with `daysOfPower`, at the character's TL unless given, and
+  the Gear tab's load strip shows it. The add-on's six battery items are for the add-on to drop.
+- **Addendum 4, finished** (since 1.190.0). The three entries above (terrain, vision and frostbite;
+  the optional ranged rules; Simplified Resources) say what 1.190.0 finished of each. New in the
+  API: the switch `restrictedDodge`; `vision.forage`, `vision.forageSkill`,
+  `vision.combatVisionNeed` and `vision.settleCombatVision`; `simplifiedResources.toggle`,
+  `toggleFor`, `ammunitionKind` and `gadgetDays`; `AppliedDamage.coverage` and
+  `IncomingDamage.coverageRoll`; a maneuver option's `input` as a function of the actor; the
+  `horizonTable` GM Screen section; and the world settings `currentTerrain` and `terrainSurface`.

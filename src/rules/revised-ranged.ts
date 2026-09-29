@@ -125,6 +125,20 @@ export interface EvasiveDeclaration {
   droppedProneAtEnd: boolean;
 }
 
+/** Whether evasive movement may be declared on this maneuver. */
+export function evasiveManeuverAllowed(maneuver: string): boolean {
+  return EVASIVE_MANEUVERS.includes(maneuver);
+}
+
+/**
+ * Whether an attack is a firearm's, which the restricted-dodge rule covers:
+ * bullets and beams, the weapons "You cannot block" (Campaigns p. 375).
+ */
+export function firearmAttack(skill: string | undefined): boolean {
+  const base = String(skill ?? "").replace(/\s*\(.*$/, "").trim().toLowerCase();
+  return ["guns", "beam weapons", "gunner"].includes(base);
+}
+
 /** Whether a fighter may dodge an attack by this shooter: only the one declared. */
 export function mayDodgeFirearm(declared: EvasiveDeclaration | null, shooter: string): boolean {
   return !!declared && declared.shooter === shooter && EVASIVE_MANEUVERS.includes(declared.maneuver);
@@ -142,6 +156,16 @@ export const RANGED_RAPID_STRIKE_PENALTY = -6;
 
 export function rangedRapidStrikeAllowed(rateOfFire: number, dualWeapon: boolean): boolean {
   return rateOfFire >= 2 && !dualWeapon;
+}
+
+/**
+ * The shots a Ranged Rapid Strike gives each of its two targets: the shooter
+ * names this target's share, the other gets the rest, and neither may be
+ * left with none. Null where the weapon's RoF cannot be split so.
+ */
+export function rapidStrikeShare(rateOfFire: number, here: number): { here: number; other: number } | null {
+  const split = splitRateOfFire(rateOfFire, here);
+  return split ? { here: split[0], other: split[1] } : null;
 }
 
 /** Splitting RoF between two targets: each gets at least 1 shot; the rest as chosen. */
