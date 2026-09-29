@@ -4395,3 +4395,20 @@ runs again on the next load. Each helper returns
   flow; Simplified Range reads the band from the measured range, with no Move shift of bands
   between turns; the coverage roll is made when damage is resolved (a preview re-rolls), and the
   armour sheet has no coverage field yet; the add-on's own rules are not retired.
+
+- **Simplified Resources and batteries** (since 1.183.0; Basic Set Revised p. 578). Switch
+  `simplifiedResources` (equipment group, off). With it on, a character's ranged weapons stop
+  counting shots (the same way Infinite Ammunition does, though weapons still malfunction) until a
+  weapon's `ammoTracked` flag is set. `game.gworld.api.simplifiedResources` has `isTracked(item)`,
+  `setTracked(item, bool)`, `cutOff(actor)` (the party is cut off, the character ditched the
+  ammunition or was captured: every ranged weapon counts shots again) and `tally(...)`, the cost and
+  weight of five reloads (`reloads`) and their containers. The pure rules are under `rules`:
+  `reloadTally`, `sparesPerDay` and `daysOfPower` (a day for every gizmo, one more per $3 and 1 lb
+  at TL6-8 or $10 and 0.5 lb at TL9+), `trackedRegardless` (explosives, fine and magical ammunition
+  are always tracked), the `BATTERY_TYPES` and `CELL_TYPES` tables, and `substituteCount` and
+  `substituteUptime`, the substitution of one size for another (x10 or /10 per line, x2 or /2 per
+  TL). The thirteen records (six batteries T to VL, seven power cells AA to F) are in the Equipment
+  compendium; a rechargeable battery costs five times as much. Not done: no sheet toggle for
+  `ammoTracked` (the API and the flag only), nothing yet calls `daysOfPower` for gadgets, and
+  explosive or fine ammunition in a weapon is not detected, so a weapon holding it should be set
+  tracked by hand. The add-on's six battery items are for the add-on to drop.

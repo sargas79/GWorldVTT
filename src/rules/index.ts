@@ -149,3 +149,4 @@ export * from "./extra-effort-extras.js";
 export * from "./stress.js";
 export * from "./vision-corrections.js";
 export * from "./revised-ranged.js";
+export * from "./simplified-resources.js";

@@ -976,6 +976,10 @@
           "Name": "Cannon fodder",
           "Hint": "Minor NPCs fail every defense, never go all out, and drop the moment anything gets through their DR (Campaigns p. 417)."
         },
+        "simplifiedResources": {
+          "Name": "Simplified resources",
+          "Hint": "Ammunition is not counted for heroes until the party is cut off, someone ditches it or they are captured; toggle a weapon to count its shots (Basic Set Revised p. 578)."
+        },
         "infiniteAmmunition": {
           "Name": "Infinite ammunition",
           "Hint": "Heroes never run out of ammunition or power cells, and their weapons never malfunction (Campaigns p. 417)."
@@ -4922,6 +4926,7 @@
         "parry": "A Committed Attack: no parry with the attacking hand",
         "block": "A Committed Attack: no block with the attacking shield",
         "dodge": "A Committed Attack with a kick: no dodge"
+      }
     },
     "RevisedRanged": {
       "CloseContact": "Close-Contact Shot",
