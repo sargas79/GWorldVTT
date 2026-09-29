@@ -1748,6 +1748,13 @@
       "MarginOfFailure": "Margin of failure",
       "TooLowToAttempt": "{label}: effective {effective} is below 3, so the roll cannot be attempted."
     },
+    "Perks": {
+      "BondLine": "Bond: {item}",
+      "FeintTitle": "Feint with",
+      "FeintChoose": "Skill to Feint with",
+      "FeintWeapon": "The weapon's skill",
+      "FeintOk": "Feint"
+    },
     "Ranged": {
       "NotEnoughShots": "{name} needs {needed} shots for that and has {ready}.",
       "BurstTooShort": "{name} fires at least {min} shots at a time, in steps of {step}, and can fire only {rof} now.",
@@ -1934,6 +1941,7 @@
       "FromTraits": "From the sheet",
       "When": {
         "attracted": "from those attracted to your sex",
+        "fancied": "from those who fancy the look",
         "knowing": "from those who know of it",
         "respectful": "from those in your culture who respect Status",
         "pitying": "from those who might feel pity",

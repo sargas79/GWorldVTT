@@ -15,6 +15,7 @@
  * one of its own.
  */
 
+import { bondBonus, cuttingEdgeFor, noPerks } from "../rules/addendum-perks.js";
 import { normalizeSkillName } from "../rules/skills.js";
 import {
   familiarityKey,
@@ -30,7 +31,7 @@ import { isRuleOn } from "./optional-rules.js";
 /** One line an item's use puts on a roll. */
 export interface EquipmentUseLine {
   /** `techLevel` for the Tech-Level Modifiers table, `unfamiliar` for the familiarity penalty. */
-  key: "techLevel" | "unfamiliar";
+  key: "techLevel" | "unfamiliar" | "bond";
   label: string;
   value: number;
 }
@@ -120,6 +121,16 @@ export function familiarityApplies(actor: any, item: any, skillName: string): bo
  * not IQ-based.
  */
 export function equipmentUseLines(actor: any, item: any, skillName: string | undefined): EquipmentUse {
+  const use = techLevelUseLines(actor, item, skillName);
+  // Weapon Bond and Equipment Bond: +1 with the one item the perk names (Revised pp. 328-329).
+  const bond = item ? bondBonus(actor?.system?.derived?.perks ?? noPerks(), String(item.name ?? "")) : 0;
+  if (bond === 0) return use;
+  const label = format("GWORLD.Perks.BondLine", { item: String(item.name ?? "") }, `Bond: ${String(item.name ?? "")}`);
+  const lines: EquipmentUseLine[] = [...use.lines, { key: "bond", label, value: bond }];
+  return { ...use, lines, tags: lines.map((line) => line.key) };
+}
+
+function techLevelUseLines(actor: any, item: any, skillName: string | undefined): EquipmentUse {
   const name = String(skillName ?? "").trim();
   if (!item || !name) return NONE;
   const skill = skillItem(actor, name);
@@ -132,7 +143,7 @@ export function equipmentUseLines(actor: any, item: any, skillName: string | und
   const personal = parseTechLevel(actor?.system?.tl);
   const equipmentTL = parseTechLevel(item?.system?.tl);
   if (isRuleOn("techLevelModifiers") && equipmentTL !== null && (personal !== null || parseTechLevel(recorded) !== null || /\/TL\d/i.test(shownName))) {
-    const skillTL = skillTechLevel(shownName, recorded, personal ?? 0);
+    const skillTL = skillTechLevel(shownName, recorded, personal ?? 0, cuttingEdgeFor(actor?.system?.derived?.perks ?? noPerks(), shownName));
     const value = techLevelModifier({ skillTechLevel: skillTL, equipmentTechLevel: equipmentTL, iqBased: skill?.system?.attribute === "IQ" });
     if (value === null) {
       impossible = format("GWORLD.TechLevel.Impossible", { item: String(item.name ?? ""), equipment: equipmentTL, skill: skillTL },

@@ -184,6 +184,7 @@ import { facingAgainstTarget } from "./attack-arc.js";
 import { POSTURE_EFFECTS } from "../rules/posture.js";
 import { drivingAttackPenalty, type VehicleAttackKind } from "../rules/scale.js";
 import { gunslingerAccuracy, gunslingerWeapon, type GunslingerWeapon } from "../rules/gunslinger.js";
+import { noPerks, offHandWaived } from "../rules/addendum-perks.js";
 import { heroicAimBonus, heroicArcherWeapon, type HeroicArcherWeapon } from "../rules/heroic-archer.js";
 import { mayFireMountedWeapon, vehicleAboard, type Aboard } from "./vehicle-aboard.js";
 import { rollMalediction } from "./malediction.js";
@@ -1920,7 +1921,7 @@ async function rollAction(
           effectiveSkill: base + equipmentShift,
           // Two pistols at once (Campaigns p. 417; since 1.153.0).
           dualWeaponTechnique: Number(actor?.system?.derived?.techniques?.dualWeaponAttack) || 0,
-          ambidextrous: actor?.system?.derived?.traitEffects?.ambidextrous === true,
+          ambidextrous: actor?.system?.derived?.traitEffects?.ambidextrous === true || offHandWaived(actor?.system?.derived?.perks ?? noPerks(), String(target.dataset.rollSkill ?? "")),
           offHandTraining: Number(actor?.system?.derived?.techniques?.offHandWeaponTraining) || 0,
           // A shot at the one foe's weapon, to break it (Campaigns p. 400; since 1.153.0).
           // Not for an explosive or fragmenting row, whose blast a blow to the item would lose.
@@ -1953,7 +1954,7 @@ async function rollAction(
         damageType: (target.dataset.damageType ?? "cr") as DamageType,
         mounted: actor?.system?.mounted === true && isRuleOn("mountedCombat"),
         dualWeaponTechnique: Number(actor?.system?.derived?.techniques?.dualWeaponAttack) || 0,
-        ambidextrous: actor?.system?.derived?.traitEffects?.ambidextrous === true,
+        ambidextrous: actor?.system?.derived?.traitEffects?.ambidextrous === true || offHandWaived(actor?.system?.derived?.perks ?? noPerks(), String(target.dataset.rollSkill ?? "")),
         offHandTraining: Number(actor?.system?.derived?.techniques?.offHandWeaponTraining) || 0,
         eyes: eyesOf(actor),
         // "C, 1" and "1, 2" both reach as far as their last number does.

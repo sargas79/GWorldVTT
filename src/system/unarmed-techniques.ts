@@ -12,6 +12,7 @@
 import { SYSTEM_ID } from "./constants.js";
 import { rollQuickContest } from "./contest.js";
 import { resolveSuccess } from "../rules/success.js";
+import { improvisedWaived, noPerks } from "../rules/addendum-perks.js";
 import { swingDamage } from "../rules/damage.js";
 import { formatDiceAdds } from "../rules/dice.js";
 import {
@@ -184,7 +185,8 @@ export async function useTechnique(options: {
     return;
   }
 
-  const clumsy = improvisedPenalty(options.clumsiness);
+  // Improvised Weapons: the penalty is ignored for the skill the perk names (Revised p. 328).
+  const clumsy = improvisedWaived(actor.system?.derived?.perks ?? noPerks(), aim.skill) ? 0 : improvisedPenalty(options.clumsiness);
   const target = aim.target + clumsy;
   const roll = new Roll("3d6");
   await roll.evaluate();

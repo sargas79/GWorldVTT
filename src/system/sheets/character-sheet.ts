@@ -33,6 +33,7 @@ import {
   liftingSkillCapacity,
   maximumDrag,
 } from "../../rules/physical.js";
+import { chooseFeintSkill } from "../alternative-feints.js";
 import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
 import { rollFall } from "../falling.js";
@@ -1957,14 +1958,18 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     }
     const evaluated = evaluateBonusFor(this.actor);
 
+    // Alternative Feints: a non-combat skill may stand in for the weapon's (Revised p. 328).
+    const feintBasis = await chooseFeintSkill(this.actor, base, String(target.dataset.rollLabel ?? ""));
+    if (!feintBasis) return;
+
     const defense = feintDefenseScore(foe);
     const result = await rollFeint({
       label: game.i18n.format("GWORLD.Feint.Label", {
-        weapon: target.dataset.rollLabel ?? "",
+        weapon: feintBasis.skill || (target.dataset.rollLabel ?? ""),
         foe: String(foe.name),
       }),
       // A Feint takes what Evaluate maneuvers before it earned (Campaigns p. 364).
-      feinter: { actor: this.actor, base, modifiers: [...(evaluated ? [{ label: game.i18n.localize("GWORLD.Maneuver.evaluate"), value: evaluated }] : []), ...added.modifiers] },
+      feinter: { actor: this.actor, base: feintBasis.base, modifiers: [...(evaluated ? [{ label: game.i18n.localize("GWORLD.Maneuver.evaluate"), value: evaluated }] : []), ...added.modifiers] },
       // Naming what they rolled against matters here: the rule lets them roll
       // their best of several things, and the card should say which it was.
       defender: { actor: foe, base: defense.score, note: defense.source },

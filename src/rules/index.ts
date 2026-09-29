@@ -71,6 +71,7 @@ export * from "./scale.js";
 export * from "./natural-attacks.js";
 export * from "./aim.js";
 export * from "./gunslinger.js";
+export * from "./addendum-perks.js";
 export * from "./heroic-archer.js";
 export * from "./energy-reserve.js";
 export * from "./readiness.js";

@@ -14,6 +14,8 @@
  * added up; the conditional ones are offered, and the GM says which apply.
  */
 
+import { classicFeaturesGain } from "./addendum-perks.js";
+
 /** One source of a reaction modifier, as the roll dialog lists it. */
 export interface ReactionSource {
   /** The trait it comes from, as named on the sheet. */
@@ -38,7 +40,9 @@ export interface ReactionSource {
     /** Diplomacy or Fast-Talk at 20+, "if you are allowed to talk" (p. 494). */
     | "talking"
     /** Merchant at 20+, "during commercial transactions" (p. 494). */
-    | "commercial";
+    | "commercial"
+    /** Classic Features: from those who fancy the look, who treat Appearance a level higher (Revised p. 328). */
+    | "fancied";
 }
 
 /** A trait as the sheet holds it, for reading the modifiers off. */
@@ -68,6 +72,17 @@ const APPEARANCE_ADVANTAGE: readonly { everyone: number; attracted: number }[] =
  * -4, Monstrous -5, Horrific -6.
  */
 const APPEARANCE_DISADVANTAGE: readonly number[] = [-1, -2, -4, -5, -6];
+
+/**
+ * The reaction Appearance gives from everyone, for a signed level: negative
+ * for the disadvantage, zero for Average, 1 to 6 for the advantage.
+ */
+export function appearanceReaction(signed: number): number {
+  const level = Math.trunc(signed);
+  if (level === 0) return 0;
+  if (level > 0) return APPEARANCE_ADVANTAGE[Math.min(level, APPEARANCE_ADVANTAGE.length) - 1]!.everyone;
+  return APPEARANCE_DISADVANTAGE[Math.min(-level, APPEARANCE_DISADVANTAGE.length) - 1]!;
+}
 
 function levelsOf(trait: SocialTrait): number {
   return Math.max(1, Math.floor(trait.levels ?? 0) || 1);
@@ -140,6 +155,19 @@ export function reactionSources(traits: readonly SocialTrait[]): ReactionSource[
     }
   }
 
+  // Classic Features: someone who fancies the look treats Appearance a level
+  // higher, whatever it is (Revised p. 328).
+  if (traits.some((t) => t.name.trim().toLowerCase().startsWith("classic features"))) {
+    let signed = 0;
+    for (const t of traits) {
+      const k = t.name.trim().toLowerCase();
+      if (k === "appearance") signed = levelsOf(t);
+      else if (k === "appearance (disadvantage)") signed = -levelsOf(t);
+    }
+    const gain = classicFeaturesGain(signed, appearanceReaction);
+    if (gain !== 0) out.push({ label: "Classic Features", value: gain, condition: "fancied" });
+  }
+
   // "Your total reaction modifier from reputations cannot be better than +4
   // or worse than -4 in a given situation" (p. 28).
   return capReputations(out);
@@ -200,6 +228,7 @@ export function isSocialTrait(name: string): boolean {
   return (
     key === "appearance" ||
     key === "appearance (disadvantage)" ||
+    key.startsWith("classic features") ||
     key === "charisma" ||
     key === "voice" ||
     key === "reputation" ||

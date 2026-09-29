@@ -48,12 +48,13 @@ export function isTechnologicalSkill(name: string, techLevel?: unknown): boolean
  * it, else the one written into its name ("Guns/TL7 (Pistol)"), else the
  * character's own -- "You learn technological skills at your personal TL".
  */
-export function skillTechLevel(name: string, techLevel: unknown, personalTechLevel: number): number {
+export function skillTechLevel(name: string, techLevel: unknown, personalTechLevel: number, cuttingEdge = 0): number {
   const recorded = parseTechLevel(techLevel);
   if (recorded !== null) return recorded;
   const inName = /\/TL(\d+)/i.exec(String(name ?? ""));
   if (inName) return Number(inName[1]);
-  return Math.max(0, Math.floor(Number(personalTechLevel) || 0));
+  // Cutting-Edge Training: taught beyond the personal TL in this one skill (Revised p. 328).
+  return Math.max(0, Math.floor(Number(personalTechLevel) || 0)) + Math.max(0, Math.floor(cuttingEdge));
 }
 
 /**

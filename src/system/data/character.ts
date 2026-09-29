@@ -116,6 +116,9 @@ import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalti
 import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { powersOf } from "../../rules/powers.js";
 import { sessionPools } from "../../rules/bonus-points.js";
+import {
+  cuttingEdgeFor, dabblerBonusFor, dabblerGain, isBowSkill, perksOf, strongbowAllowance, strongbowMinSt,
+} from "../../rules/addendum-perks.js";
 import { energyReserves, reserveValue } from "../../rules/energy-reserve.js";
 import { suitedLevel,
   defaultCreditPoints,
@@ -1755,6 +1758,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       });
     }
     const traits = traitEffects(heldTraits);
+    // The Revised perks that name what they are for (Basic Set Revised pp. 328-329).
+    const perks = perksOf(heldTraits);
 
     // Worn gear grants what the armour table's notes describe in trait terms:
     // a vacc suit and its helmet seal the wearer, a gas mask filters what is
@@ -1959,7 +1964,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // (Characters p. 168).
       const technological = isTechnologicalSkill(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel);
       const skillTL = isRuleOn("techLevelModifiers") && technological
-        ? skillTechLevel(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel, Number(this.tl) || 0)
+        ? skillTechLevel(String(item.name ?? ""), (sys as { techLevel?: string }).techLevel, Number(this.tl) || 0, cuttingEdgeFor(perks, String(item.name ?? "")))
         : null;
       // Each tool's grade read for this skill, so improvised gear is -5 for
       // a technological skill and -2 for another (since API 1.145.0).
@@ -2009,8 +2014,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const jackBonus = resolved?.fromDefault && attributeDefaults.length && !(Number(sys.points) > 0)
         ? traits.jackOfAllTrades
         : 0;
+      // Dabbler adds to the attribute default of the skills it names, never
+      // past what a point in the skill would buy (Revised p. 328).
+      const dabbled = resolved?.fromDefault && attributeDefaults.length && !(Number(sys.points) > 0)
+        ? dabblerGain({
+            bonus: dabblerBonusFor(perks, String(item.name ?? "")),
+            level: resolved.level + jackBonus,
+            onePointLevel: attributeScore(sys.attribute) + (relativeLevelForPoints(1, sys.difficulty) ?? 0),
+          })
+        : 0;
       sys.derived = {
-        level: resolved ? resolved.level + jackBonus : null,
+        level: resolved ? resolved.level + jackBonus + dabbled : null,
         fromDefault: resolved?.fromDefault ?? true,
         relativeLevel: relativeLevelForPoints(sys.points + credit, sys.difficulty),
         // What the best default is worth toward buying the skill up
@@ -2445,7 +2459,15 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       const level = listed
         ? defaultLevelFrom(listed.defaults, attributeScore, (other) => this.skillLevelByName(other), traits.jackOfAllTrades)
         : null;
-      const best = improved === null ? level : Math.max(level ?? improved, improved);
+      const dabbled = level !== null && listed
+        ? dabblerGain({
+            bonus: dabblerBonusFor(perks, name),
+            level,
+            onePointLevel: attributeScore(listed.attribute) + (relativeLevelForPoints(1, (listed.difficulty ?? "A") as Difficulty) ?? 0),
+          })
+        : 0;
+      const raised = level === null ? null : level + dabbled;
+      const best = improved === null ? raised : Math.max(raised ?? improved, improved);
       return { level: best === null ? null : best + penalty, atDefault: best !== null };
     };
 
@@ -2740,7 +2762,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         const shotsCapacity = isRuleOn("reloading") && !shotsEntry.thrown ? fullLoad(shotsEntry) : 0;
         const shotsLoaded = shotsCapacity > 0 ? Math.min(shotsCapacity, Math.max(0, Number(mode.loaded ?? 0) || 0)) : 0;
         const offMount = mode.mount === "mounted" && Boolean(mode.offMount);
-        const rangedStPenalty = lacking(mode.minSt ?? null, supportOf(String(mode.mount ?? ""), offMount));
+        // Strongbow: Bow at DX+1 draws a bow of ST+1 unpenalised, DX+2 one of ST+2 (Revised p. 329).
+        const bowAllowance = perks.strongbow && isBowSkill(rolledSkill)
+          ? strongbowAllowance((art.level ?? Number.NEGATIVE_INFINITY) - attrs.DX)
+          : 0;
+        const rangedStPenalty = lacking(strongbowMinSt(mode.minSt ?? null, bowAllowance), supportOf(String(mode.mount ?? ""), offMount));
         const foundRanged = short(enchantedSkill(art), rangedStPenalty);
         const skillLevel = foundRanged.level;
         const atDefault = foundRanged.atDefault;
@@ -3539,6 +3565,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         ]),
       ),
 
+      // The Revised perks that name what they are for (Basic Set Revised pp. 328-329).
+      perks,
       // The two techniques that change a roll made from a dialog rather than
       // from their own line on the sheet (Campaigns p. 417).
       techniques: {

@@ -4066,3 +4066,26 @@ runs again on the next load. Each helper returns
   `rules.originKey` are the pieces. Extra effort with an ability of an origin
   and Costs Fatigue are for the module that owns the ability, which charges
   through `spendFatigue` with `origin`.
+
+- **The Revised perks** (since 1.168.0; Basic Set Revised pp. 328-329). Each
+  perk that names what it is for is read from its specialty into
+  `derived.perks`: `dabbler` (skill to bonus, from a specialty written
+  "Biology, Chemistry, Physics +2, Mathematics (Applied) +3", eight choices,
+  never past what a point buys), `cuttingEdge` (skill to levels of TL above
+  personal, which `skillTechLevel` takes as its fourth argument), `offHand`,
+  `improvised`, `bonds`, `feintSkills`, `strongbow`, `classicFeatures`,
+  `permits`, `noNuisance`, `specialExercises`, `controllable` and `shticks`.
+  Wired: Dabbler on a skill at an attribute default; Cutting-Edge Training in
+  the tech-level line of an attack; Off-Hand Training in place of Ambidexterity
+  for that skill's Dual-Weapon Attack; Improvised Weapons waiving the
+  improvised-weapon penalty of an unarmed technique; Weapon Bond and Equipment
+  Bond as a `bond` line (+1) on an attack with the item named in the specialty;
+  Strongbow lowering the ST a bow is held against by 1 (Bow at DX+1) or 2
+  (DX+2); Classic Features as a `fancied` reaction source; Alternative Feints
+  as a choice of skill when Feint is clicked. `rules.perksOf`,
+  `rules.dabblerChoices`, `rules.dabblerGain`, `rules.strongbowAllowance`,
+  `rules.needsPermit`, `rules.nuisanceRollsWaived`,
+  `rules.maximumWithSpecialExercises` and `rules.controllableTarget` are the
+  pieces; the last four are not yet read by a roll. The Off-Hand Weapon
+  Training technique stays in the pack, its reference saying the perk replaces
+  it.
