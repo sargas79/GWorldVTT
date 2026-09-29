@@ -63,6 +63,7 @@ import { alternativeKey } from "../../rules/alternative-abilities.js";
 import { grantWildcardBonus } from "../wildcard-bonus.js";
 import { isAssistanceRank, resetAssistanceCount, rollAssistance } from "../pulling-rank.js";
 import { isWildcardSkill } from "../../rules/skills.js";
+import { firstTechLevel, firstTlLabel, skillAvailableAt } from "../../rules/skill-availability.js";
 import { armorByArea, asGearSort, canStow, readiedItems, sortGear, type GearSort } from "../sheet-v2/inventory-view.js";
 import {
   asProgressionMode,
@@ -1010,6 +1011,10 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
         attribute,
         difficulty: system.difficulty,
         techLevel: system.techLevel,
+        // A skill taken before it exists (Revised p. 341): advice, shown as a warning.
+        earlyWarning: skillAvailableAt(String(item.name ?? ""), actor.system?.tl, system.firstTl)
+          ? ""
+          : game.i18n.format("GWORLD.Skill.NotYetAvailable", { first: firstTlLabel(firstTechLevel(String(item.name ?? ""), system.firstTl) ?? 0), tl: actor.system?.tl }),
         points,
         level,
         trained: points > 0,

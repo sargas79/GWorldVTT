@@ -1110,6 +1110,7 @@
       "SpendLess": "Take back the last step of points",
       "NoDefault": "No default",
       "BoughtUpFromDefault": "Bought up from its default: the default counts toward the points spent",
+      "NotYetAvailable": "Not yet available: this skill first exists at {first} and the campaign is at TL{tl} (Basic Set Revised p. 341). The GM decides.",
       "RaisedByTalent": "Raised +{bonus} by a Talent",
       "RaisedByTalents": "Raised +{bonus} by {talents}",
       "Trained": "skills trained",

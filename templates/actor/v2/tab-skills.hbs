@@ -72,6 +72,7 @@
                     {{row.name}}
                     {{#if row.talentMark}}{{> "gworld.v2.talentMark" mark=row.talentMark}}{{/if}}
                     {{#if row.techLevel}}<span class="v2-tag">TL{{row.techLevel}}</span>{{/if}}
+                    {{#if row.earlyWarning}}<span class="v2-tag v2-tag-warn" data-tooltip="{{row.earlyWarning}}" aria-label="{{row.earlyWarning}}">&#9888;</span>{{/if}}
                     {{#unless row.trained}}<span class="v2-tag" data-tooltip="{{localize 'GWORLD.Section.RolledAtDefault'}}">{{localize "GWORLD.Skill.Untrained"}}</span>{{/unless}}
                   </span>
                   <span class="v2-row-type">

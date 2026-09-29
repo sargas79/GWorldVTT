@@ -4182,3 +4182,13 @@ runs again on the next load. Each helper returns
   the aid itself (money, people, equipment) is reported, never handed over; the
   two tables are recommendations, not enforced on the item sheet; Buying Success
   is the roll dialog's own.
+- **Tech Level and Skill Availability** (since 1.173.0; Basic Set Revised p. 341).
+  A skill record takes `system.firstTl` (integer or null; TL^ is 12): the first
+  tech level it exists at, stamped on 130 skill and specialty records.
+  `rules.firstTechLevel(name, recorded?)` reads the record's figure, else the
+  book's list by specialty then skill (`rules.FIRST_TL` is the table);
+  `rules.skillAvailableAt(name, tl, recorded?)` is true when the list says
+  nothing or no TL is known, and `rules.firstTlLabel` writes "TL7" or "TL^".
+  Advice only, with no switch: the compendium picker greys a skill above the
+  character's TL (the campaign's when no actor) with a tooltip, and the skills
+  tab shows a warning tag on one already taken; nothing is refused.

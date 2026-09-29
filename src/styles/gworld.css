@@ -1419,6 +1419,7 @@
 /* Keyboard focus anywhere in a row marks the whole row, not just the control. */
 .gworld-picker .gp-row:focus-within { background: color-mix(in srgb, var(--v2-steel) 14%, transparent); }
 /* Already taken this session: still addable, since a character may want two. */
+.gworld-picker .gp-row.too-early { opacity: 0.55; }
 .gworld-picker .gp-row.added .gp-name { color: var(--v2-ink-muted); font-style: italic; }
 .gworld-picker .gp-name { min-width: 0; overflow-wrap: anywhere; }
 /* Which pack a row came from, shown only when more than one contributes. */
