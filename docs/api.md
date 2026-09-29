@@ -4089,3 +4089,32 @@ runs again on the next load. Each helper returns
   pieces; the last four are not yet read by a roll. The Off-Hand Weapon
   Training technique stays in the pack, its reference saying the perk replaces
   it.
+
+- **The Revised modifiers and Self-Control "N/A"** (since 1.169.0; Basic Set
+  Revised pp. 328-332). The modifiers pack carries Affects Others, Costs Hit
+  Points (and its per-second and converted-FP forms), Fixed Duration, Game
+  Time, Hard to Use, Reliable, Maximum, Minimum and Reduced Duration, the
+  Requires Roll modifiers (attribute, Quick Contest, skill, Active Defense),
+  Switchable and the power modifiers (Biological, Chi, Cosmic, Divine, Magical,
+  Moral, Nature, Psionic, Spirit, Super, Superscience). Wired:
+  `derived.abilityRolls` lists, for each trait carrying Hard to Use, Reliable,
+  a Requires roll or Costs Hit Points, `{ id, name, bonus, penalty,
+  talentBarred, conflict, needs, hpCost, hpCostPerSecond }` -- Reliable's
+  bonus and Hard to Use's penalty (which bars a power Talent), each Requires
+  roll with its target (a Requires Active Defense Roll's is DX/2 + 3, +1 Combat
+  Reflexes) and the HP a use takes; `actors.spendHitPoints(actor, hp, { reason
+  })` charges Costs Hit Points and resolves to `{ hpLost, hp, reason }`;
+  `gworld.afflictionEffect` gets `margin` read as 3 for an item with Fixed
+  Duration and `durationDivisor` for Reduced Duration (1 for none); a trait
+  whose modifier is one of the power modifiers is a power of that origin in
+  `derived.powers` unless it names one already. Self-Control "N/A" is a
+  `selfControl` of 0 (no roll, 2.5 times the cost, fractions dropped before
+  modifiers), offered by the item sheet's selector. `rules.abilityRollModifiers`,
+  `abilityRollTotal`, `requiresRollOf`, `requiredRolls`, `activeDefenseRollTarget`,
+  `costsHitPointsPercent`, `costsHitPointsCost`, `durationMargin`,
+  `reducedDurationPercent`, `maximumDurationPercent`, `minimumDurationPercent`,
+  `gameTimeUses`, `affectsOthersPercent`, `eitherOrPercent`,
+  `disadvantageLimitation`, `powerModifierOrigin` and `natureTechPenalty` are
+  the pieces. The either/or and limitations-on-disadvantages rules are text
+  for a module's journal; `eitherOrPercent` and `disadvantageLimitation` only
+  work out their sums.

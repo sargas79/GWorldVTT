@@ -55,7 +55,7 @@ import type { ControlRating, LegalityClass } from "../rules/legality.js";
 import { currentControlRating, legalityClassOf } from "./legality.js";
 import { surprise, undoKnockdown } from "./knockdown.js";
 import { rollFall } from "./falling.js";
-import { restoreFatigue, spendFatigueFor } from "./fatigue.js";
+import { restoreFatigue, spendFatigueFor, spendHitPointsFor } from "./fatigue.js";
 import { chargeReserve, drainReserve, reservesOf, restoreReserve } from "./reserves.js";
 import { changeTrait, type TraitChanged } from "./trait-change.js";
 import { stopTowing, tow } from "./towing.js";
@@ -112,7 +112,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.168.0";
+export const API_VERSION = "1.169.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -253,6 +253,17 @@ const actors = {
    */
   spendFatigue(actor: any, fp: number, options: { reason?: string; details?: Record<string, unknown>; exertion?: boolean; origin?: string } = {}) {
     return spendFatigueFor(actor, fp, options);
+  },
+
+  /**
+   * Takes hit points off an actor for an ability with Costs Hit Points (Basic
+   * Set Revised p. 330; since 1.169.0): `rules.costsHitPointsCost(modifiers)`
+   * reads the cost from the trait. Resolves to `{ hpLost, hp, reason }`, or
+   * null for a user who can't change the actor or an amount that isn't a
+   * positive number.
+   */
+  spendHitPoints(actor: any, hp: number, options: { reason?: string } = {}) {
+    return spendHitPointsFor(actor, hp, options);
   },
 
   /**

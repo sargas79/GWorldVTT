@@ -1428,6 +1428,8 @@
       "SelfControl9Hint": "Resisted on a 9 or less: one and a half times the printed value.",
       "SelfControl12Hint": "Resisted on a 12 or less. The book's standard, and the one number that leaves the printed value alone.",
       "SelfControl15Hint": "Resisted on a 15 or less, so the disadvantage is worth half the printed value.",
+      "SelfControlNA": "N/A (no roll, ×2.5)",
+      "SelfControlNAHint": "For an Affliction's Disadvantage enhancement, a Temporary Disadvantage, or a being that always behaves one way: no self-control roll, and 2.5 times the printed value, fractions dropped.",
       "SelfControlStandard": "— standard",
       "DescriptionHint": "Show the full description",
       "ShowLess": "Show less",

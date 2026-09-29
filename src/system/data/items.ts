@@ -312,7 +312,7 @@ export class TraitData extends foundry.abstract.TypeDataModel {
         nullable: true,
         integer: true,
         initial: null,
-        choices: [6, 9, 12, 15],
+        choices: [0, 6, 9, 12, 15],
       }),
       /** Flat point cost, used when the trait has no levels. */
       points: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),

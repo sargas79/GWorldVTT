@@ -115,6 +115,7 @@ import { supportEffect, supportOf, type Support } from "../../rules/accessories.
 import { penaltyEffects, strengthForDamage } from "../../rules/attribute-penalties.js";
 import { afflictionsOn, painThresholdOf } from "../afflictions.js";
 import { powersOf } from "../../rules/powers.js";
+import { abilityRollModifiers, costsHitPointsCost, requiredRolls } from "../../rules/addendum-modifiers.js";
 import { sessionPools } from "../../rules/bonus-points.js";
 import {
   cuttingEdgeFor, dabblerBonusFor, dabblerGain, isBowSkill, perksOf, strongbowAllowance, strongbowMinSt,
@@ -3443,6 +3444,23 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // Talent is worth to a roll using them (Characters pp. 254-255): the
       // Basic Set's six, and any a book's entries name.
       powers: powersOf(heldTraits),
+      // What Hard to Use, Reliable, the Requires rolls and Costs Hit Points ask
+      // of a roll to use each trait that carries them (Basic Set Revised
+      // pp. 330-332): the modifiers on the roll, the rolls it asks for with
+      // their targets, and the HP each use takes.
+      abilityRolls: traitsInPlay.inPlay.flatMap((item: any) => {
+        const modifiers = ((item.system?.modifiers ?? []) as Array<{ name?: string; value?: number }>)
+          .map((m) => ({ name: String(m?.name ?? ""), value: Number(m?.value) || 0 }));
+        const use = abilityRollModifiers(modifiers);
+        const needs = requiredRolls(
+          modifiers,
+          { dx: attrs.DX, iq: attrs.IQ, ht: attrs.HT, will: secondary.will, per: secondary.per },
+          { combatReflexes: traits.activeDefense > 0 },
+        );
+        const cost = costsHitPointsCost(modifiers);
+        if (use.bonus === 0 && use.penalty === 0 && needs.length === 0 && cost.hp === 0) return [];
+        return [{ id: String(item.id ?? ""), name: String(item.name ?? ""), ...use, needs, hpCost: cost.hp, hpCostPerSecond: cost.perSecond }];
+      }),
       // "In a few cases, skill 20+ gives an automatic +2 to reactions.
       // Diplomacy and Fast-Talk work this way if you are allowed to talk -- as
       // does Merchant skill, during commercial transactions" (p. 494). Offered

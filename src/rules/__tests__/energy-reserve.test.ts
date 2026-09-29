@@ -64,6 +64,6 @@ describe("Energy Reserve", () => {
     expect(er?.system.pointsPerLevel).toBe(3);
     expect(er?.system.needsSpecialty).toBe(true);
     const mods = JSON.parse(readFileSync(join(root, "modifiers/basic-set-addendum-modifiers.json"), "utf8")) as Array<{ name: string; system: { pointsPerLevel: number; needsSpecialty: boolean; value: number } }>;
-    expect(mods.map((m) => m.system.value)).toEqual([-20, -60, -70, -5]);
+    expect(mods.slice(0, 4).map((m) => m.system.value)).toEqual([-20, -60, -70, -5]);
   });
 });

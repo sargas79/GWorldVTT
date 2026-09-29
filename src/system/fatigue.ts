@@ -207,3 +207,25 @@ export async function restoreFatigue(actor: any, fp: number, options: { reason?:
   if (to !== current) await actor.update({ "system.fp.value": to });
   return { from: current, to, max, reason: String(options.reason ?? "") };
 }
+
+/**
+ * Charges hit points for an ability with Costs Hit Points (Basic Set Revised
+ * p. 330; since API 1.169.0), which "works exactly like Costs Fatigue, except
+ * that it depletes HP instead of FP". The health conditions follow from the HP
+ * left, as they do for any other loss. Null for a user who can't change the
+ * actor or an amount that isn't a positive number.
+ */
+export async function spendHitPointsFor(
+  actor: any,
+  hp: number,
+  options: { reason?: string } = {},
+): Promise<{ hpLost: number; hp: { previous: number; now: number; max: number }; reason: string } | null> {
+  const amount = Math.floor(Number(hp));
+  if (!actor?.isOwner || !Number.isFinite(amount) || amount <= 0) return null;
+  const previous = Number(actor.system?.hp?.value) || 0;
+  const max = Number(actor.system?.hp?.max) || 0;
+  const now = previous - amount;
+  await actor.update({ "system.hp.value": now });
+  await syncHealthConditions(actor);
+  return { hpLost: amount, hp: { previous, now, max }, reason: String(options.reason ?? "") };
+}

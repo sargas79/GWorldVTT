@@ -13,6 +13,7 @@
  */
 
 import { SYSTEM_ID } from "./constants.js";
+import { durationMargin, reducedDurationDivisor } from "../rules/addendum-modifiers.js";
 import { conditionLabel, setCondition } from "./conditions.js";
 import { callCombatHook } from "./combat-extensions.js";
 import { PROCEDURE_HOOKS, applyCondition, type ConditionApplication } from "./procedure-extensions.js";
@@ -380,8 +381,14 @@ export async function applyAfflictionEffects(context: {
   /** The module's location it struck, or null (since 1.130.0). */
   addonLocation?: string | null;
 }): Promise<string[]> {
+  // Fixed Duration reads the margin as 3 and Reduced Duration says how much of
+  // the duration is left (Basic Set Revised pp. 330, 332; since 1.169.0).
+  const modifiers = ((context.item?.system?.modifiers ?? []) as Array<{ name?: string; value?: number }>)
+    .map((m) => ({ name: String(m?.name ?? ""), value: Number(m?.value) || 0 }));
   const fired = callCombatHook(PROCEDURE_HOOKS.afflictionEffect, {
     ...context,
+    margin: durationMargin(context.margin, modifiers),
+    durationDivisor: reducedDurationDivisor(modifiers),
     // A caller from before 1.130.0 says nothing of where the attack struck.
     hitLocation: context.hitLocation ?? null,
     addonLocation: context.addonLocation ?? null,
