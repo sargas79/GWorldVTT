@@ -39,6 +39,7 @@ import { crippledPartName, crippledParts } from "../crippling.js";
 import { attackAttribute, levelledDamage } from "../../rules/trait-attacks.js";
 import { talentBonusFor, talentBonuses, talentsRaising, traitSkillBonuses, traitSkillBonusesFor } from "../../rules/talents.js";
 import { charismaInfluenceBonus, reactionSources } from "../../rules/social.js";
+import { balancedBonus, presentationReactions } from "../../rules/cost-factors.js";
 import { nudityDefenseBonus, nudityMoveBonus, type Dress } from "../../rules/cinematic.js";
 import { senseScores } from "../../rules/senses.js";
 import {
@@ -2532,7 +2533,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // its basic damage (Campaigns pp. 480-481).
       const magic = magicOf(item);
       const enchantedSkill = (found: { level: number | null; atDefault: boolean }) =>
-        found.level === null ? found : { ...found, level: found.level + magic.accuracy };
+        found.level === null ? found : { ...found, level: found.level + magic.accuracy + balance.skill };
 
       // The grade it was bought in and what it is made of (Characters
       // pp. 274-275): a fine blade cuts a point deeper, a fine rifle is a
@@ -2557,6 +2558,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           isFencing: (sys.meleeModes ?? []).some((m: any) => m.isFencing),
         })) as WeaponClass;
       const firearm = weaponClass === "firearm";
+      // Balanced: +1 to skill, or +1 Acc with a bow (Basic Set Revised p. 342).
+      const balance = item.type === "trait" ? { skill: 0, accuracy: 0 } : balancedBonus(weaponClass, (sys as any).balanced === true);
       const weight = effectiveWeight(item);
       const objectHp = item.type === "trait"
         ? 0
@@ -2901,7 +2904,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           twoHanded: Boolean(mode.twoHanded),
           swung: mode.damageBase === "sw",
           // "+1 to Acc" for a fine firearm, "-1 Acc" for a cheap thrown weapon.
-          accuracy: (mode.accuracy ?? 0) + qualityAccuracyBonus(weaponClass, quality, Boolean(mode.thrown)),
+          accuracy: (mode.accuracy ?? 0) + qualityAccuracyBonus(weaponClass, quality, Boolean(mode.thrown)) + balance.accuracy,
           scopeBonus: mode.scopeBonus ?? 0,
           scopeFixed: mode.scopeFixed === true,
           range: range.halfDamage ? `${range.halfDamage} / ${range.max}` : String(range.max),
@@ -3553,6 +3556,12 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       // as conditional sources, since only the table knows who is talking.
       reactions: [
         ...reactionSources(heldTraits),
+        // Presentation gear worn or carried: +1 to +3 to reactions (Basic Set Revised p. 342).
+        ...presentationReactions(
+          this.items
+            .filter((i: any) => ["equipment", "armor", "shield"].includes(i.type) && i.system?.equipped === true)
+            .map((i: any) => ({ name: String(i.name ?? ""), presentation: Number(i.system?.presentation) || 0 })),
+        ),
         ...(["Diplomacy", "Fast-Talk"] as const)
           .filter((skill) => automaticSkillBonus(this.skillLevelByName(skill) ?? 0))
           .map((skill) => ({ label: skill, value: 2, condition: "talking" as const })),

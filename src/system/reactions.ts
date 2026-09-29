@@ -23,7 +23,7 @@ import {
 import { quickContest, resolveSuccess } from "../rules/success.js";
 import { procedureRoll, reactionModifiers } from "./procedure-extensions.js";
 import { isRuleOn } from "./optional-rules.js";
-import { expandedInfluenceReaction } from "../rules/tasks-and-feats.js";
+import { expandedInfluenceReaction, type InfluenceCriticals } from "../rules/tasks-and-feats.js";
 
 const REACTION_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/reaction.hbs`;
 
@@ -182,6 +182,8 @@ export async function rollInfluence(options: {
   let won: boolean;
   // The Quick Contest's margin, positive for the influencer, for Expanded Influence Rolls.
   let margin: number | null = null;
+  // Which side rolled a critical, for the GM's option of a critical standing for 8 or more.
+  let criticals: InfluenceCriticals | null = null;
 
   if (settled === null) {
     const ours = new Roll("3d6");
@@ -192,10 +194,15 @@ export async function rollInfluence(options: {
     await mySide.spend();
     await theirSide.spend();
 
-    const contest = quickContest(
-      resolveSuccess(ours.total, skill, dieResults(ours)),
-      resolveSuccess(against.total, resisted, dieResults(against)),
-    );
+    const mine1 = resolveSuccess(ours.total, skill, dieResults(ours));
+    const theirs1 = resolveSuccess(against.total, resisted, dieResults(against));
+    criticals = {
+      influencerSuccess: mine1.criticalSuccess,
+      subjectSuccess: theirs1.criticalSuccess,
+      influencerFailure: mine1.criticalFailure,
+      subjectFailure: theirs1.criticalFailure,
+    };
+    const contest = quickContest(mine1, theirs1);
     won = contest.outcome === "first";
     margin = contest.outcome === "first" ? contest.marginOfVictory : contest.outcome === "second" ? -contest.marginOfVictory : 0;
   } else {
@@ -211,7 +218,7 @@ export async function rollInfluence(options: {
   // Expanded Influence Rolls (Revised p. 571): the margin gives the reaction, unless
   // something else settled the roll -- an automatic result, or specious intimidation lost.
   if (isRuleOn("expandedInfluence") && margin !== null && !(options.specious && String(options.skill) === "Intimidation" && !won)) {
-    result.reaction = expandedInfluenceReaction(margin);
+    result.reaction = expandedInfluenceReaction(margin, isRuleOn("expandedInfluenceCritical") ? criticals : null);
   }
 
   // "If you used Diplomacy, the GM will also make a regular reaction roll and

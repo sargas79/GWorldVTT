@@ -7,6 +7,7 @@
 import { settleObjectStats, weaponObjectStats, type ObjectStats } from "../rules/breakage.js";
 import { weaponClassOf, type WeaponClass, type WeaponMaterial } from "../rules/weapon-quality.js";
 import type { DamageType } from "../rules/types.js";
+import { ruggedObjectStats } from "../rules/cost-factors.js";
 import { DATA_HOOKS, effectiveWeight } from "./data-extensions.js";
 
 /** A weapon's or shield's DR, HP and HT as an object, and what modules said about them. */
@@ -59,13 +60,15 @@ export function weaponMakeOf(item: any) {
  */
 export function objectStats(item: any, make: WeaponMake = weaponMakeOf(item)): ItemObjectStats {
   const sys = item?.system ?? {};
-  const base = weaponObjectStats({
+  const plain = weaponObjectStats({
     material: make.material,
     skill: make.skill,
     firearm: make.firearm,
     weightLbs: make.weight,
     ...(item?.type === "shield" ? { shield: { dr: Number(sys.dr ?? 0) || 0, hp: Number(sys.hp ?? 0) || 0 } } : {}),
   });
+  // Rugged: "+2 HT, DR x2" (Basic Set Revised p. 342), a fact of the item itself.
+  const base = sys.rugged === true ? ruggedObjectStats(plain) : plain;
   const context = { item, actor: item?.actor ?? null, kind: base.kind, dr: base.dr, hp: base.hp, ht: base.ht, notes: [] as string[] };
   const hooks = (globalThis as { Hooks?: { callAll?: (event: string, ...args: unknown[]) => unknown } }).Hooks;
   try {

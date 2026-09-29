@@ -15,6 +15,7 @@
 import { SYSTEM_ID } from "../constants.js";
 import { assembleScreen, proseTargets, type ScreenTab } from "../gm-screen/assemble.js";
 import { moduleProseHtml, proseEntries, proseHtml } from "../gm-screen/prose.js";
+import { runSectionAction } from "../gm-screen/actions.js";
 import { ROLLED_HOOK, foundryContext, rollOnSection, type ScreenRoll } from "../gm-screen/roll.js";
 import { K } from "../gm-screen/sections/shared.js";
 import {
@@ -54,6 +55,7 @@ export class GmScreen extends HandlebarsApplicationMixin(ApplicationV2) {
       showTab: GmScreen.#onTab,
       collapse: GmScreen.#onCollapse,
       roll: GmScreen.#onRoll,
+      sectionAction: GmScreen.#onSectionAction,
       rollGeneric: GmScreen.#onRollGeneric,
       clearSearch: GmScreen.#onClearSearch,
       toggleMenu: GmScreen.#onToggleMenu,
@@ -262,6 +264,20 @@ export class GmScreen extends HandlebarsApplicationMixin(ApplicationV2) {
         this.element?.querySelector<HTMLElement>(".gs-generic-last") ?? null,
         this.#genericLast,
       );
+    } finally {
+      target.removeAttribute("disabled");
+    }
+  }
+
+  /** A button on a card's header that acts rather than rolls: the handler is named by the button. */
+  static async #onSectionAction(this: GmScreen, _event: Event, target: HTMLElement): Promise<void> {
+    const section = target.closest<HTMLElement>(".gs-card")?.dataset.section;
+    const action = target.dataset.sectionAction;
+    if (!section || !action) return;
+    target.setAttribute("disabled", "");
+    try {
+      await runSectionAction(section, action);
+      await this.render();
     } finally {
       target.removeAttribute("disabled");
     }

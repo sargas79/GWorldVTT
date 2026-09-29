@@ -37,6 +37,7 @@ import {
   shieldComposition,
 } from "../../rules/weapon-quality.js";
 import { pricingOf, type PricedFields, type PricedKind } from "../../rules/cost-factors.js";
+import { costRangeForPatron, enforceRankTables } from "../../rules/pulling-rank.js";
 import {
   AMMUNITION_TYPES,
   ammunitionCost,
@@ -53,7 +54,7 @@ const TEMPLATE_ROOT = `systems/${SYSTEM_ID}/templates/item`;
 /** The fields that price an item (Revised p. 342): changing one reprices it from the list price. */
 const PRICING_FIELDS = [
   "quality", "material", "equipmentQuality", "composition", "fine", "balanced", "cuttingEdge",
-  "disguised", "presentation", "rugged",
+  "disguised", "presentation", "rugged", "qualityAddsTools",
 ];
 
 /** Types that live in an inventory and so carry quantity, weight and cost. */
@@ -247,7 +248,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       const names = kind === "armor" ? ["fine"]
         : kind === "shield" ? ["fine", "balanced"]
         : kind === "weapon" ? ["balanced"]
-        : ["cuttingEdge", "rugged"];
+        : ["cuttingEdge", "rugged", "qualityAddsTools"];
       // Flat-cost Signature Gear (Revised p. 342): the flag lives on the gear.
       if (item.type !== "shield" && isRuleOn("flatSignatureGear")) names.push("signature");
       context.costChecks = [...names, "disguised"].map((name) => ({
@@ -552,6 +553,7 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       disguised: Boolean(read("disguised")),
       presentation: Number(read("presentation")) || 0,
       rugged: Boolean(read("rugged")),
+      qualityAddsTools: Boolean(read("qualityAddsTools")),
     };
   }
 
@@ -672,8 +674,31 @@ export class GWorldItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       if (typeof data.system.masteredWeapons === "string") {
         data.system.masteredWeapons = parseLevelNames(data.system.masteredWeapons).filter(Boolean);
       }
+      // A Rank's Patron value and level cost keep to the Patron-to-Rank and
+      // Rank-to-Patron Tables (Basic Set Revised pp. 337-338); the GM may go
+      // outside them and is told that it is an exception.
+      if (data.system.patronValue !== undefined || data.system.pointsPerLevel !== undefined) {
+        const current = this.item.system as any;
+        const held = enforceRankTables(
+          data.system.patronValue ?? current.patronValue,
+          data.system.pointsPerLevel ?? current.pointsPerLevel,
+          game.user?.isGM === true,
+        );
+        if (held.patronValue > 0) {
+          const t = (key: string, values: Record<string, unknown>) => game.i18n.format(`GWORLD.PullingRank.${key}`, values);
+          const range = costRangeForPatron(held.patronValue);
+          if (data.system.patronValue !== undefined) data.system.patronValue = held.patronValue;
+          if (held.changed.includes("patronValue")) ui.notifications?.info(t("TableSnap", { value: held.patronValue }));
+          if (held.changed.includes("costPerLevel") && range) {
+            data.system.pointsPerLevel = held.costPerLevel;
+            ui.notifications?.warn(t("TableClamp", { value: held.patronValue, min: range[0], max: range[1], cost: held.costPerLevel }));
+          } else if (held.outside) {
+            ui.notifications?.warn(t("TableOutside", { value: held.patronValue, cost: held.costPerLevel }));
+          }
+        }
+      }
       // The select submits "" for none, which the number field cannot hold.
-      if (data.system.selfControl === "" || data.system.selfControl === undefined) {
+      if (data.system.selfControl === ""|| data.system.selfControl === undefined) {
         if (Object.hasOwn(data.system, "selfControl")) data.system.selfControl = null;
       } else {
         data.system.selfControl = Number(data.system.selfControl);

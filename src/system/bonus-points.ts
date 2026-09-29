@@ -211,6 +211,34 @@ export async function addBuySuccessControls(message: any, html: HTMLElement): Pr
   root.append(row);
 }
 
+/**
+ * Offers to buy a roll's outcome up before anything is done with it, for a
+ * roll whose result is read at once (the Assistance Roll, Basic Set Revised
+ * p. 339). Resolves to the step bought, or null where nothing was.
+ */
+export async function buyOutcomeBeforeReading(actor: any, roll: { skill: string; step: OutcomeStep; combat?: boolean }): Promise<OutcomeStep | null> {
+  if (!spendingInPlay(actor) || !actor?.isOwner) return null;
+  const combat = roll.combat === true;
+  const steps = purchasableSteps(roll.step, { combat });
+  if (!steps.length) return null;
+  const sources = sourcesFor(actor, "buySuccess", { skill: roll.skill });
+  const picked = await choose(
+    L("BuySuccess"),
+    sources,
+    steps.map((s) => ({ value: s.step, label: F("StepCost", { step: L(`Step.${s.step}`), cost: s.cost }) })),
+    L("BuySuccessHint"),
+  );
+  if (!picked) return null;
+  const step = steps.find((s) => s.step === picked.option);
+  if (!step) return null;
+  if (picked.source.source.kind !== "unspent" && picked.source.available < step.cost) {
+    ui.notifications?.warn(L("NotEnough"));
+    return null;
+  }
+  if (!(await spendPoints(actor, picked.source.source, step.cost, F("BoughtNote", { step: L(`Step.${step.step}`) }), "buySuccess", { skill: roll.skill }))) return null;
+  return step.step;
+}
+
 async function buySuccess(message: any, actor: any, flag: SuccessRollFlag): Promise<void> {
   const steps = purchasableSteps(flag.step, { combat: flag.combat });
   const sources = sourcesFor(actor, "buySuccess", { skill: flag.skill });

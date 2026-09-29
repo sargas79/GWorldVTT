@@ -26,6 +26,8 @@ export interface ScreenSection {
   gmOnly: boolean;
   /** How the roll button asks before rolling, or null for a table that is not rolled on. */
   roll: { formula: string; ask: "margin" | "modifier" | null } | null;
+  /** Buttons that act rather than roll, labelled for this user; GM only. */
+  actions: Array<{ id: string; label: string; hint: string }>;
   /** A module's own prose: HTML or a journal entry's uuid. */
   prose: string | null;
   /** Takes the whole width of the screen. */
@@ -128,6 +130,7 @@ export function buildSection(def: GmSectionDef, context: BuildContext): ScreenSe
     source: def.module ? context.moduleTitle(def.module) : null,
     gmOnly: def.gmOnly === true,
     roll: def.roll ? { formula: def.roll.formula, ask: def.roll.ask ?? null } : null,
+    actions: (def.actions ?? []).map((a) => ({ id: a.id, label: t(a.label), hint: a.hint ? t(a.hint) : "" })),
     prose: def.prose ?? null,
     wide: def.wide === true,
     placeholder: def.slot === true,

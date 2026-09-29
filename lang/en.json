@@ -644,9 +644,13 @@
           "Name": "Expanded Influence Rolls",
           "Hint": "An Influence roll gives a reaction by the margin of the Quick Contest, from Disastrous to Excellent, instead of only Good or Bad (Basic Set Revised p. 571)."
         },
+        "expandedInfluenceCritical": {
+          "Name": "Expanded Influence: criticals",
+          "Hint": "With Expanded Influence Rolls: a critical success by the influencer that the subject does not match counts as a victory by 8 or more, and a critical failure the subject does not share as a loss by 8 or more (Basic Set Revised p. 571)."
+        },
         "basicAbstractDifficulty": {
           "Name": "Basic Abstract Difficulty",
-          "Hint": "One penalty from 0 to -10, set in the system settings or per scene, on the rolls of tasks; an NPC without a sheet has skill 10 + BAD (Basic Set Revised p. 578)."
+          "Hint": "One penalty from 0 to -10, set from the GM Screen (for the world or for the scene) on the rolls of tasks, replacing the situational modifiers typed at the roll and the scene’s own; an NPC without a sheet has skill 10 + BAD, rolled from the GM Screen (Basic Set Revised p. 578)."
         },
         "powerExtraEffort": {
           "Name": "Extra effort with powers",
@@ -4314,6 +4318,8 @@
       "balancedHint": "+1 to skill with a melee or thrown weapon or shield, or +1 Acc with a muscle-powered missile weapon: +4 CF (Revised p. 342).",
       "cuttingEdge": "Cutting-edge",
       "cuttingEdgeHint": "Made of the latest materials: weight x2/3 for +1 CF. Anything but armor or weapons (Revised p. 342).",
+      "qualityAddsTools": "Grade adds tools",
+      "qualityAddsToolsHint": "The good or fine grade of this kit adds more tools, so its weight is x5 or x20 (Revised p. 342).",
       "signature": "Signature Gear",
       "signatureHint": "One of your Signature Gear items: a 1-point perk that protects it from permanent loss by the plot, whatever it is worth (Basic Set Revised p. 342).",
       "disguised": "Disguised",
@@ -4998,7 +5004,24 @@
       "Ham": "Ham Clause",
       "HamHint": "Play this disadvantage up for the scene: -1 to every success roll per -5 points of it (Basic Set Revised p. 570).",
       "HamEnd": "End Ham Clause",
-      "HamEndHint": "The scene is over; the penalty ends. It also ends with the battle.",
+      "HamEndHint": "The scene is over; the penalty ends. It also ends with the battle, and when another scene is made active.",
+      "SceneEnded": "Scene ended: {count} Ham Clause(s) ended.",
+      "BadDialogTitle": "Basic Abstract Difficulty",
+      "BadDialogHint": "Now {bad}. A known enemy group’s points as an Enemy, divided by 4, is a suggestion.",
+      "BadValue": "Penalty (0 to 10)",
+      "BadWhere": "For",
+      "BadScene": "This scene: {name}",
+      "BadWorld": "The world",
+      "BadClear": "Drop this scene’s own",
+      "BadSet": "Set",
+      "BadOff": "Switch the Basic Abstract Difficulty rule on first.",
+      "NpcRollTitle": "NPC without a sheet",
+      "NpcRollHint": "Effective skill {skill} (10 + the penalty of {bad}). Do not modify for skill, equipment, time or tactics.",
+      "NpcRollWho": "Who",
+      "NpcRollWhoPlaceholder": "the guard captain",
+      "NpcRollAnon": "An NPC",
+      "NpcRollCard": "{who}",
+      "NpcRollLine": "Rolled {total} against {skill} (10 + |{bad}|).",
       "HamInvoked": "{name} plays up {trait}: {penalty} to every success roll this scene.",
       "HamLine": "Ham Clause ({trait})",
       "BadLine": "Basic Abstract Difficulty",
@@ -5035,6 +5058,30 @@
         "complementary": "Complementary skill held: {value}"
       },
       "Label": "{name}: {aid}",
+      "LuckLabel": "{label} (Luck)",
+      "LuckTitle": "Luck",
+      "LuckAsk": {
+        "1": "Spend Luck: roll again and keep the better roll? (Luck can be used once an hour of play.)",
+        "2": "Spend Extraordinary Luck: roll again and keep the better roll? (Once every 30 minutes of play.)",
+        "3": "Spend Ridiculous Luck: roll again and keep the better roll? (Once every 10 minutes of play.)"
+      },
+      "Responders": "{aid} from {organization}",
+      "RespondersDescription": "Sent by the organization to help {owner}.",
+      "RespondersSkilled": "Sent by the organization to help {owner}. Skill {skill}.",
+      "Delivered": {
+        "cash": "${amount} added to the sheet’s money.",
+        "cashReturned": "${amount} added to the sheet’s money, to be returned.",
+        "cashNote": "Cash from {name}",
+        "facilities": "Equipment bonus {bonus} held for the next skill roll.",
+        "bonus": "Complementary bonus {bonus} held for the next skill roll.",
+        "people": "{count} people created as an NPC in the world.",
+        "peopleGm": "{count} people arrive; the GM makes them as an NPC.",
+        "warrant": "Ready in {hours} hours."
+      },
+      "TableClamp": "Patron value {value} takes a level cost of {min} to {max} (Patron-to-Rank Table); the cost was set to {cost}.",
+      "TableSnap": "Patron values are 10, 15, 20, 25 or 30 points; the value was set to {value}.",
+      "TableOutside": "Patron value {value} and {cost} points a level are outside the Patron-to-Rank and Rank-to-Patron Tables; allowed as the GM’s exception.",
+      "TableRange": "The tables allow {min} to {max} points a level at this value.",
       "Title": "Assistance roll",
       "TooLow": "Target {target}: under 3, no attempt is possible.",
       "Line": {
@@ -5045,7 +5092,9 @@
         "charisma": "Charisma",
         "smoothOperator": "Smooth Operator",
         "reputation": "Reputation",
-        "complementary": "Complementary skill"
+        "complementary": "Complementary skill",
+        "facilities": "Facilities",
+        "generalized": "Generalized Assistance"
       },
       "Outcome": {
         "aid": "The aid asked for arrives.",
@@ -6055,7 +6104,13 @@
           "Title": "Basic Abstract Difficulty",
           "Summary": "One penalty for the scene, and the quick ways to modify a roll.",
           "Current": "This scene",
-          "CurrentOff": "Off, or 0. Switch it on in the rules to set a penalty from 0 to -10 in the system settings.",
+          "CurrentOff": "Off, or 0. Switch the rule on, then set a penalty from 0 to -10 with the button above.",
+          "ActionSet": "Set BAD",
+          "ActionSetHint": "Set the penalty for the world or for the scene being viewed, or drop the scene’s own.",
+          "ActionRoll": "Roll an NPC",
+          "ActionRollHint": "Roll 3d for an NPC without a sheet, at skill 10 + the penalty.",
+          "ActionEnd": "End scene",
+          "ActionEndHint": "Ends every Ham Clause and drops the viewed scene’s own penalty.",
           "CurrentText": "{bad} on tasks; an NPC without a sheet has effective skill {skill}.",
           "Suggest": "A suggestion",
           "SuggestText": "A known enemy group’s points as an Enemy, divided by 4, dropping fractions.",

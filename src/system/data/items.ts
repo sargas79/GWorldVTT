@@ -1353,6 +1353,7 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
   declare missedMaintenance: number;
   declare complexity: number;
   declare equipmentQuality: EquipmentQuality;
+  declare qualityAddsTools: boolean;
   declare ammunition: { kind: AmmunitionType; fits: string };
   declare equipmentModifier: number | null;
   declare forSkills: string[];
@@ -1420,6 +1421,8 @@ export class EquipmentData extends foundry.abstract.TypeDataModel {
         initial: "basic",
         choices: [...EQUIPMENT_QUALITIES],
       }),
+      /** A kit whose good or fine grade adds tools weighs x5 or x20 (Basic Set Revised p. 342). */
+      qualityAddsTools: new fields.BooleanField({ initial: false }),
       /**
        * A stated modifier to the skills in `forSkills`, for a tool no grade
        * describes (a kit that gives -2). When set it replaces the grade's

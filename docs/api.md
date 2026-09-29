@@ -4178,10 +4178,23 @@ runs again on the next load. Each helper returns
   Reputation, Charisma and Smooth Operator from the sheet), rolls the target as a
   skill roll tagged `assistance` (skill `Assistance Roll`, so a complementary
   bonus held for that master skill applies and Luck is honoured as for any skill
-  roll) and posts a card with the outcome ladder and the aid's figures. Not done:
-  the aid itself (money, people, equipment) is reported, never handed over; the
-  two tables are recommendations, not enforced on the item sheet; Buying Success
-  is the roll dialog's own.
+  roll) and posts a card with the outcome ladder and the aid's figures. Since
+  1.188.0 the aid is delivered: Cash is added to the sheet's money
+  (`system.money`, x10 when it is to be returned), Muscle and The Cavalry create an
+  NPC actor with `groupSize` the headcount (Muscle's skill 1d+9 is rolled and
+  written in `tactics`; only a user who may create actors, else the card says the
+  GM does it), Facilities' equipment bonus and Generalized Assistance's
+  complementary bonus (also -1 or -2 on a failure) are held as pending modifiers
+  (source `assistance`, tag `skill`) for the next skill roll, and a Warrant's hours
+  are rolled. The roll reads its outcome after Luck (a character with Luck,
+  Extraordinary Luck or Ridiculous Luck may roll again and keep the better; the
+  held complementary bonus goes on the second roll too) and Buying Success (points
+  spent before the outcome is read: `rules.luckLevel`, `rules.betterRoll`,
+  `rules.aidDelivery`). The tag `assistance` keeps the roll card's own buy button
+  off, since the outcome card is where it is bought. The two tables are enforced
+  on the item sheet: a Rank trait's `patronValue` is held to 10, 15, 20, 25 or 30
+  and its `pointsPerLevel` to the Patron-to-Rank Table's range (`rules.enforceRankTables`);
+  the GM may go outside them and is warned that it is an exception.
 - **Tech Level and Skill Availability** (since 1.173.0; Basic Set Revised p. 341).
   A skill record takes `system.firstTl` (integer or null; TL^ is 12): the first
   tech level it exists at, stamped on 130 skill and specialty records.
@@ -4211,9 +4224,18 @@ runs again on the next load. Each helper returns
   `presentation`, and the composition `mirrored` (silver-coated, +6 CF). The item
   sheet reprices cost and weight from `listCost` and `listWeight` when any of them
   changes, adding the CFs instead of multiplying, and shows the sum and the stat
-  effects (reactions, +1 skill or Acc, +2 HT and DR x2 for rugged). The stat
-  effects are shown, not applied to rolls. Modules that price their own Balanced,
-  Cutting-Edge, Disguised or Rugged fields should read these and `pricingOf`.
+  effects (reactions, +1 skill or Acc, +2 HT and DR x2 for rugged). Since 1.188.0 the
+  stat effects are applied: a Balanced weapon or shield adds +1 to the skill of its
+  attack rows (or +1 Acc to a bow's ranged rows; `rules.balancedBonus`), worn or
+  carried Presentation gear adds a reaction source of +1 to +3 to
+  `derived.reactions` (`rules.presentationReactions`), and a Rugged item's object
+  stats have DR x2 and +2 HT (`objectStats`, `rules.ruggedObjectStats`, before
+  `gworld.objectStats` listeners). Equipment takes `system.qualityAddsTools`
+  (Boolean): a kit whose good or fine grade adds tools weighs x5 or x20
+  (`rules.equipmentGradeWeightFactor`, read by `pricingOf` as part of
+  `weightFactor`, and by the item sheet when it reweighs). Modules that price
+  their own Balanced, Cutting-Edge, Disguised or Rugged fields should read these
+  and `pricingOf`.
 - **Flat-cost Signature Gear** (since 1.175.0; Basic Set Revised p. 342). The rules
   switch `flatSignatureGear` (equipment group, off): Signature Gear becomes a 1-point
   perk whose count is the number of gear items flagged. Equipment and armor items
@@ -4275,11 +4297,21 @@ runs again on the next load. Each helper returns
   Abstract Difficulty" (with the quick-and-dirty rule and the suggestion).
   `rules.hamClausePenalty`, `quickAndDirtyModifier`, `groupFraction`, `groupOutcome`,
   `adjustedResistance`, `collectiveScore`, `expandedInfluenceReaction`, `clampBad`,
-  `abstractNpcSkill` and `suggestedBad` are the pure pieces. Not done: BAD does not
-  remove the detailed situational modifiers the automation adds (it is one more line;
-  the GM turns the others off), the roll dialog does not show BAD apart from its line,
-  the "critical for 8 or more" option of Expanded Influence is the GM's, and there is
-  no button for the unstatted NPC's roll (the GM screen states its skill).
+  `abstractNpcSkill` and `suggestedBad` are the pure pieces. Since 1.188.0: with BAD in
+  force on a task roll, the situational modifiers are replaced, not added to (a modifier
+  typed at the roll, now a line with key `situational`, and the scene's smoke and detection
+  lines are dropped; the character's own lines, held bonuses, conditions and the Ham Clause
+  stay; `procedureRoll` and `roll.success` both do it). The switch `expandedInfluenceCritical`
+  (rolls, off; needs Expanded Influence Rolls) is the GM's option: a critical success by the
+  influencer that the subject does not match reads as a victory by 8 or more, a critical
+  failure the subject does not share as a loss by 8 or more
+  (`rules.expandedInfluenceReaction(margin, criticals)`, `InfluenceCriticals`). The GM
+  screen's Basic Abstract Difficulty card has buttons (a section may now declare `actions`,
+  run by `gm-screen/actions.ts`): "Set BAD" for the world, the viewed scene, or to drop the
+  scene's own; "Roll an NPC", 3d against 10 + |BAD| for an unstatted NPC with a chat card;
+  and "End scene", which ends every Ham Clause and drops the viewed scene's BAD. A Ham
+  Clause also ends by itself when a scene is made active or inactive (the GM's client).
+  Not done: an unstatted NPC's roll is not a Contest input for a player's roll.
 - **Extra effort extras** (since 1.178.0; Basic Set Revised pp. 571-572). Switches (rolls
   group, off): `powerExtraEffort`, `godlikeExtraEffort`, `fatigueForSkill`; and in the
   activities group `realisticMarching`. With `powerExtraEffort` on, the sheet's "Power

@@ -113,14 +113,28 @@ export function collectiveScore(target: number, size: number): number {
 
 // ── Expanded Influence Rolls (p. 571) ───────────────────────────────────────
 
+/** Which of the two sides of an Influence roll rolled a critical. */
+export interface InfluenceCriticals {
+  influencerSuccess: boolean;
+  subjectSuccess: boolean;
+  influencerFailure: boolean;
+  subjectFailure: boolean;
+}
+
 /**
  * The reaction an Influence roll gives under the optional rule, from the
  * margin of the Quick Contest: positive for the influencer's victory, negative
- * for a loss, 0 for a tie. (The GM's option of a critical for 8 or more either
- * way is left to the table.)
+ * for a loss, 0 for a tie. With the GM's option (`criticals` given), a critical
+ * success by the influencer that the subject does not match stands for a
+ * victory by 8 or more, and a critical failure the subject does not share for
+ * a loss by 8 or more.
  */
-export function expandedInfluenceReaction(margin: number): Reaction {
+export function expandedInfluenceReaction(margin: number, criticals: InfluenceCriticals | null = null): Reaction {
   const m = Math.trunc(Number(margin) || 0);
+  if (criticals) {
+    if (criticals.influencerSuccess && !criticals.subjectSuccess) return "excellent";
+    if (criticals.influencerFailure && !criticals.subjectFailure) return "disastrous";
+  }
   if (m >= 8) return "excellent";
   if (m >= 5) return "veryGood";
   if (m >= 1) return "good";

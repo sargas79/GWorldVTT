@@ -89,6 +89,44 @@ export const MODIFIER_WEIGHT = Object.freeze({
   plastic: 0.5,
 });
 
+/**
+ * The reaction sources gear with Presentation gives its wearer (p. 342): +1,
+ * +2 or +3 each, as an unconditional reaction line named for the item.
+ * Presentation gear stacks with other sources; the largest single figure of
+ * a set of items is not capped by the book, so each one counts.
+ */
+export function presentationReactions(
+  items: ReadonlyArray<{ name: string; presentation: number }>,
+): Array<{ label: string; value: number; condition: "" }> {
+  return items
+    .map((item) => ({ label: item.name, value: Math.max(0, Math.min(3, Math.trunc(Number(item.presentation) || 0))), condition: "" as const }))
+    .filter((line) => line.value > 0);
+}
+
+/** An item's DR, HP and HT as an object once it is Rugged: +2 HT and DR x2 (p. 342). */
+export function ruggedObjectStats<T extends { dr: number; ht: number }>(stats: T): T {
+  return { ...stats, dr: stats.dr * 2, ht: stats.ht + 2 };
+}
+
+/**
+ * What Balanced adds to a weapon (p. 342): +1 to skill, or +1 Accuracy for
+ * a bow (a muscle-powered missile weapon).
+ */
+export function balancedBonus(weaponClass: string, balanced: boolean): { skill: number; accuracy: number } {
+  if (!balanced) return { skill: 0, accuracy: 0 };
+  return weaponClass === "bow" ? { skill: 0, accuracy: 1 } : { skill: 1, accuracy: 0 };
+}
+
+/**
+ * The weight factor of a grade of equipment that adds tools (p. 342): good
+ * quality x5, fine quality x20. Kit that is not a set of tools keeps its
+ * weight.
+ */
+export function equipmentGradeWeightFactor(quality: EquipmentQuality | undefined, addsTools: boolean): number {
+  if (!addsTools) return 1;
+  return quality === "fine" ? 20 : quality === "good" ? 5 : 1;
+}
+
 /** What an item is, for pricing: a weapon (grades), a tool, armor or a shield. */
 export type PricedKind = "weapon" | "tool" | "armor" | "shield";
 
@@ -106,6 +144,8 @@ export interface PricedFields {
   disguised?: boolean;
   presentation?: number;
   rugged?: boolean;
+  /** The grade of a tool adds tools, so it weighs x5 (good) or x20 (fine). */
+  qualityAddsTools?: boolean;
 }
 
 export interface CostFactorLine {
@@ -181,6 +221,7 @@ export function pricingOf(fields: PricedFields): Pricing {
   if (fields.kind === "tool") {
     if (fields.equipmentQuality === "good") add("goodEquipment", MODIFIER_CF.goodEquipment);
     if (fields.equipmentQuality === "fine") add("fineEquipment", MODIFIER_CF.fineEquipment);
+    weight *= equipmentGradeWeightFactor(fields.equipmentQuality, fields.qualityAddsTools === true);
     if (fields.cuttingEdge) {
       add("cuttingEdge", MODIFIER_CF.cuttingEdge);
       weight *= MODIFIER_WEIGHT.cuttingEdge;

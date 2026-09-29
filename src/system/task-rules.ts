@@ -15,6 +15,7 @@ import { SYSTEM_ID } from "./constants.js";
 import { isRuleOn } from "./optional-rules.js";
 import { stressRollLines } from "./stress.js";
 import { abstractNpcSkill, clampBad, hamClausePenalty } from "../rules/tasks-and-feats.js";
+import { resolveSuccess } from "../rules/success.js";
 
 /** The actor flag holding the invoked disadvantage. */
 export const HAM_CLAUSE_FLAG = "hamClause";
@@ -123,14 +124,134 @@ export function taskRuleLines(context: { actor: any; kind: string; skill?: strin
   const lines: Array<{ label: string; value: number }> = stressRollLines(context);
   const ham = hamClauseOf(context.actor);
   if (ham) lines.push({ label: L("HamLine", { trait: ham.trait }), value: ham.penalty });
-  const fighting = context.kind === "attack" || context.kind === "defense";
-  const againstUnstatted = context.tags.includes("contest") && !context.opponent;
-  const bad = fighting || againstUnstatted ? 0 : currentBad();
+  const bad = badAppliesTo(context) ? currentBad() : 0;
   if (bad !== 0) lines.push({ label: L("BadLine"), value: bad });
   return lines;
 }
 
-/** Registers the hook that ends a Ham Clause with the battle it was invoked in. */
+/** Whether Basic Abstract Difficulty is the penalty of this roll: a task, not a fight and not a Contest against an NPC with no sheet. */
+function badAppliesTo(context: { kind: string; tags: readonly string[]; opponent?: any }): boolean {
+  const fighting = context.kind === "attack" || context.kind === "defense";
+  const againstUnstatted = context.tags.includes("contest") && !context.opponent;
+  return !fighting && !againstUnstatted;
+}
+
+/**
+ * Whether Basic Abstract Difficulty, being in force for this roll, replaces
+ * its situational modifiers (Revised p. 578): those typed at the roll and the
+ * scene's own. What the character brings (equipment, disadvantages, held
+ * bonuses) stays.
+ */
+export function badReplacesSituational(context: { kind: string; tags: readonly string[]; opponent?: any }): boolean {
+  return badAppliesTo(context) && currentBad() !== 0;
+}
+
+/** Ends the Ham Clause of every character in the world: the scene it was invoked in is over. */
+export async function endSceneHamClauses(): Promise<number> {
+  let ended = 0;
+  for (const actor of (game as any).actors ?? []) {
+    if (!hamClauseOf(actor)) continue;
+    await endHamClause(actor);
+    ended += 1;
+  }
+  return ended;
+}
+
+/** Ends the scene's rule effects by hand: every Ham Clause, and the viewed scene's own BAD. */
+export async function endScene(scene?: any): Promise<void> {
+  const ended = await endSceneHamClauses();
+  const target = scene ?? (globalThis as any).canvas?.scene;
+  if (target?.getFlag?.(SYSTEM_ID, BAD_KEY) !== undefined && target?.getFlag?.(SYSTEM_ID, BAD_KEY) !== null) await clearSceneBad(target);
+  ui.notifications?.info(L("SceneEnded", { count: ended }));
+}
+
+/**
+ * Sets Basic Abstract Difficulty from a prompt: a penalty, and whether it is
+ * the world's, the viewed scene's, or the scene's own dropped again.
+ */
+export async function promptBad(): Promise<void> {
+  const scene = (globalThis as any).canvas?.scene ?? null;
+  const own = scene?.getFlag?.(SYSTEM_ID, BAD_KEY);
+  const esc = foundry.utils.escapeHTML;
+  const result = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("BadDialogTitle") },
+    content: `<div class="gworld" style="display:flex;flex-direction:column;gap:6px">
+      <p class="hint">${esc(L("BadDialogHint", { bad: currentBad() }))}</p>
+      <label style="display:flex;justify-content:space-between;gap:8px"><span>${esc(L("BadValue"))}</span>
+        <input type="number" name="bad" value="${Math.abs(currentBad())}" min="0" max="10" step="1" style="width:70px"></label>
+      <label style="display:flex;justify-content:space-between;gap:8px"><span>${esc(L("BadWhere"))}</span>
+        <select name="where">
+          ${scene ? `<option value="scene">${esc(L("BadScene", { name: String(scene.name ?? "") }))}</option>` : ""}
+          <option value="world">${esc(L("BadWorld"))}</option>
+          ${scene && own !== undefined && own !== null ? `<option value="clear">${esc(L("BadClear"))}</option>` : ""}
+        </select></label>
+    </div>`,
+    ok: {
+      label: L("BadSet"),
+      callback: (_event: Event, button: HTMLElement) => {
+        const root = button.closest<HTMLElement>(".application");
+        return {
+          bad: Number(root?.querySelector<HTMLInputElement>('input[name="bad"]')?.value) || 0,
+          where: String(root?.querySelector<HTMLSelectElement>('select[name="where"]')?.value ?? "world"),
+        };
+      },
+    },
+    rejectClose: false,
+  });
+  if (!result || typeof result !== "object") return;
+  const { bad, where } = result as { bad: number; where: string };
+  if (where === "clear") await clearSceneBad(scene);
+  else await setBad(bad, where === "scene" ? scene : undefined);
+}
+
+/**
+ * Rolls for an NPC without a sheet at 10 + |BAD| (Revised p. 578) and says
+ * how it went. Resolves to the outcome, or null where the switch is off or
+ * the dialog was cancelled.
+ */
+export async function rollUnstattedNpc(): Promise<{ success: boolean; total: number; skill: number } | null> {
+  if (!isRuleOn("basicAbstractDifficulty")) {
+    ui.notifications?.warn(L("BadOff"));
+    return null;
+  }
+  const esc = foundry.utils.escapeHTML;
+  const skill = unstattedNpcSkill();
+  const name = await foundry.applications.api.DialogV2.prompt({
+    window: { title: L("NpcRollTitle") },
+    content: `<div class="gworld"><p class="hint">${esc(L("NpcRollHint", { skill, bad: currentBad() }))}</p>
+      <label style="display:flex;justify-content:space-between;gap:8px"><span>${esc(L("NpcRollWho"))}</span>
+        <input type="text" name="who" placeholder="${esc(L("NpcRollWhoPlaceholder"))}"></label></div>`,
+    ok: {
+      label: game.i18n.localize("GWORLD.Chat.Roll"),
+      callback: (_event: Event, button: HTMLElement) =>
+        String(button.closest<HTMLElement>(".application")?.querySelector<HTMLInputElement>('input[name="who"]')?.value ?? "").trim(),
+    },
+    rejectClose: false,
+  });
+  if (typeof name !== "string") return null;
+  const roll = new Roll("3d6");
+  await roll.evaluate();
+  const dice: number[] = (roll as any).dice?.[0]?.results?.map((r: { result: number }) => r.result) ?? [];
+  const resolved = resolveSuccess(Number(roll.total), skill, dice);
+  const key = resolved.criticalSuccess ? "CriticalSuccess" : resolved.criticalFailure ? "CriticalFailure" : resolved.success ? "Success" : "Failure";
+  await ChatMessage.implementation.create({
+    speaker: ChatMessage.implementation.getSpeaker(),
+    style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+    rolls: [roll],
+    content:
+      `<div class="gworld gworld-chat"><div class="gc-head"><span class="gc-label">${esc(L("NpcRollCard", { who: name || L("NpcRollAnon") }))}</span>` +
+      `<span class="gc-target">${esc(String(skill))}</span></div>` +
+      `<div class="gc-note">${esc(L("NpcRollLine", { total: Number(roll.total), skill, bad: currentBad() }))}</div>` +
+      `<div class="gc-result ${resolved.success ? "success" : "failure"}">${esc(game.i18n.localize(`GWORLD.Roll.${key}`))}</div></div>`,
+  });
+  return { success: resolved.success, total: Number(roll.total), skill };
+}
+
+/**
+ * Registers the hooks that end a Ham Clause: with the battle it was invoked
+ * in, and with the scene (when another scene is made active, or the active
+ * one is turned off).
+ */
 export function registerTaskRules(): void {
   Hooks.on("deleteCombat", (combat: any, _options: unknown, userId: string) => {
     if (userId !== game.user?.id) return;
@@ -138,5 +259,9 @@ export function registerTaskRules(): void {
       const actor = combatant.actor;
       if (actor && hamClauseOf(actor)) void endHamClause(actor);
     }
+  });
+  Hooks.on("updateScene", (_scene: any, change: Record<string, unknown>, _options: unknown, userId: string) => {
+    if (userId !== game.user?.id || !game.user?.isGM) return;
+    if (change?.active === true || change?.active === false) void endSceneHamClauses();
   });
 }
