@@ -4327,3 +4327,28 @@ runs again on the next load. Each helper returns
   the day's-end roll is the GM's call (no check that the day was free of new hardship), the
   rolls for supernatural powers and the Physician (Psychiatric) hint on the injuries chapter are
   not wired, and the permanent-disadvantage overflow is reported, not added as a trait.
+- **Terrain, illumination, vision, frostbite and the horizon** (since 1.180.0; Basic Set
+  Revised pp. 573-575). Switches: `terrainTypes` (activities), `frostbite` (injury) and
+  `visionRollsInCombat` (combat), all off. With `terrainTypes` on, the sheet's hike prompt
+  offers a terrain type and `hike({ biome })` uses its average travel multiplier in place of
+  the four generic grounds (`dailyMiles` takes `terrainMultiplier`). `vision.forageModifier({
+  actor, terrain, average, exceptional })` rolls (2d-7, 1d-7, 2d-6...) or averages the foraging
+  modifier of a terrain or aquatic terrain and says it in chat. With `frostbite` on, a failed
+  roll against the cold that costs FP also costs 1 HP per FP on every hit location no worn armor
+  or clothing piece covers (`vision.exposedOf(actor)`, `vision.applyFrostbite(actor, fp)`). With
+  `visionRollsInCombat` on, `vision.rollCombatVision({ actor, attackerSm, rangePenalty, other,
+  fromConcealment })` rolls Vision (with +10 for plain sight, none after the first shot from
+  concealment) against an SM -10 or smaller attacker or a range penalty of -10 or worse, and
+  says whether the defender sees the attack coming. `vision.signalRange(smA, smB)`,
+  `signalVisionBonus` and `plainSightBonus` are the Visual Signals and In Plain Sight figures.
+  Pure pieces under `rules`: `TERRAIN_TYPES`, `foragingModifier`, `trackingModifier`,
+  `travelMultiplier`, `arcticTravelFor`, `AQUATIC_FORAGING`, `ILLUMINATION_LEVELS`,
+  `illuminationPenalty`, `pointSourcePenalty`, `adaptationMinutes`, `plainSightBonus`,
+  `combatVision`, `concealedAttackDefense`, `exposedLocations`, `frostbiteDamage`,
+  `HORIZON_TABLE`, `horizonMiles`, `horizonMilesForHeight`, `signalRange`. Not done: no
+  foraging or Tracking button on the sheet, Tracking's terrain modifier is not added to the
+  Tracking roll, the illumination levels are not a picker in the attack dialog, plain sight is
+  not a checkbox on a Vision roll (there is no Vision prompt), `rollCombatVision` is not called
+  by the defense flow (a module or the GM calls it), frostbite is charged as one HP sum and
+  does not cripple a location, the Horizon Table is not yet on the GM screen, and the add-on's
+  `frostbite` is not retired here.

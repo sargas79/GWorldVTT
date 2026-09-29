@@ -676,6 +676,18 @@
           "Name": "Realistic marching",
           "Hint": "A day’s march is 8 hours, or 12 with a skilled guide, at half the Move an hour: 4 or 6 x Move miles, in place of 10 x Move (Basic Set Revised p. 572)."
         },
+        "terrainTypes": {
+          "Name": "Terrain types",
+          "Hint": "The quick terrain table: named terrains for a hike’s travel speed and for foraging rolls (Basic Set Revised p. 573)."
+        },
+        "frostbite": {
+          "Name": "Frostbite",
+          "Hint": "1 HP on each exposed hit location per FP lost to cold; gloves and a face covering prevent it (Basic Set Revised p. 574)."
+        },
+        "visionRollsInCombat": {
+          "Name": "Vision rolls in combat",
+          "Hint": "A Vision roll decides whether a very small or distant attacker is seen coming; failure leaves no active defense (Basic Set Revised pp. 574-575)."
+        },
         "teamEfforts": {
           "Name": "Team efforts",
           "Hint": "The party rolls once in a skill, on the Party sheet: the best member’s level, plus one for each who knows it, less the size of the group."
@@ -4807,6 +4819,30 @@
         "disabled": "its alternative set is disabled",
         "unpowered": "no points spent to use it"
       }
+    },
+    "Vision": {
+      "Biome": "Terrain type",
+      "Terrain_generic": "Generic ground",
+      "Terrain_arctic": "Arctic",
+      "Terrain_desert": "Desert",
+      "Terrain_island": "Island/Beach",
+      "Terrain_jungle": "Jungle",
+      "Terrain_mountain": "Mountain",
+      "Terrain_plains": "Plains",
+      "Terrain_swampland": "Swampland",
+      "Terrain_woodlands": "Woodlands",
+      "Terrain_bank": "Bank",
+      "Terrain_deepOceanVent": "Deep Ocean Vent",
+      "Terrain_reef": "Reef",
+      "Terrain_tropicalLagoon": "Tropical Lagoon",
+      "Terrain_freshWaterLake": "Fresh-Water Lake",
+      "Terrain_riverStream": "River/Stream",
+      "Terrain_openOcean": "Open Ocean",
+      "Terrain_saltWaterSea": "Salt-Water Sea",
+      "Forage": "Foraging in {terrain}: modifier {modifier}.",
+      "Saw": "{name} sees the attack coming (Vision {target}, rolled {roll}).",
+      "Missed": "{name} does not see the attack coming (Vision {target}, rolled {roll}): no active defense.",
+      "Frostbitten": "{name} suffers frostbite: {hp} HP ({where})."
     },
     "Stress": {
       "Stress": "Stress",

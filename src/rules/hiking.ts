@@ -49,9 +49,11 @@ export function dailyMiles(options: {
   hikingSuccess?: boolean;
   /** Miles per point of Move in ideal conditions, in place of 10: 4 or 6 with Humping, Tramping, and Yomping (Revised p. 572). */
   milesPerMove?: number;
+  /** The ground's multiplier in place of the four generic ones: a terrain type's, from Terrain Types Redux (Revised p. 573). */
+  terrainMultiplier?: number;
 }): number {
   const base = (options.milesPerMove ?? MILES_PER_MOVE) * Math.max(0, options.move) * Math.max(1, options.enhancedMove ?? 1);
-  const ground = TERRAIN_MULTIPLIER[options.terrain ?? "average"];
+  const ground = options.terrainMultiplier ?? TERRAIN_MULTIPLIER[options.terrain ?? "average"];
   const sky = WEATHER_MULTIPLIER[options.weather ?? "fair"];
   const skill = options.hikingSuccess ? HIKING_ROLL_BONUS : 1;
   return Math.round(base * ground * sky * skill * 10) / 10;
