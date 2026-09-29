@@ -46,6 +46,7 @@ import { normalizeSkillName } from "../rules/skills.js";
 import { PHYSICIAN_STAND_INS } from "../rules/medicine.js";
 import { parseTechLevel, skillTechLevel, techLevelModifier } from "../rules/tech-level.js";
 import { isRuleOn } from "./optional-rules.js";
+import { recoverStress } from "./stress.js";
 
 const RECOVERY_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/recovery.hbs`;
 
@@ -201,9 +202,13 @@ export async function restForFatigue(options: {
   actor: any;
   minutes: number;
   meal: boolean;
+  /** An indulgence (dance, drink, massage) that erases 1 more Stress (Basic Set Revised p. 573). */
+  indulgence?: boolean;
 }): Promise<number> {
   const { actor, minutes, meal } = options;
   if (!mayChange(actor)) return 0;
+  // Stress bleeds off in the same rest, 1 per 10 minutes (Basic Set Revised p. 573).
+  await recoverStress(actor, { minutes, ...(options.indulgence ? { indulgence: true } : {}) });
 
   const fp = actor.system?.fp ?? { value: 0, max: 0 };
   const current = Number(fp.value) || 0;

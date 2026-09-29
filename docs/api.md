@@ -4303,3 +4303,27 @@ runs again on the next load. Each helper returns
   offensive and one defensive a turn are rules only, not yet in the maneuver flow (the add-on's
   Martial Arts options still serve); the fatigue trades are a sheet button holding a bonus, not
   spinners inside the roll and resistance dialogs; Combining ST has no button on the Party sheet.
+- **Stress and Derangement** (since 1.179.0; Basic Set Revised pp. 572-573). Switch
+  `stressAndDerangement` (rolls group, off) with sub-options `stressRollPenalties` and
+  `derangementRollPenalties` (off). A character gains `system.stress` and
+  `system.derangement`, counts of 0 or more (the book's "-3 Stress" is 3), shown beside FP on
+  the overview and editable there, each limited to Will. The Fright Check dialog asks the kind:
+  ordinary (Unfazeable is immune; a failure adds 1 Stress, a critical failure 3) or
+  sanity-blasting (Unfazeable gets +8; a failure adds 1 Derangement, a critical failure 3). Every
+  Fright Check takes -(Stress + Derangement)/2 rounded against the character. Stress past
+  Will becomes Derangement, and Derangement past Will is reported as points of permanent
+  mental disadvantages. Resting (the sheet's Rest, `restForFatigue`) sheds 1 Stress per 10
+  minutes, plus 1 for an indulgence (a checkbox). "Day's end (Derangement)" rolls Will to shed 1
+  Derangement, +1 with a clinician of skill 12 or better, whose own roll sheds another; "Buy off"
+  removes all Stress or 2 Derangement per point of a new mental disadvantage. The optional
+  penalties are a line on the roll: Stress/2 (less Fearlessness, never a bonus) on
+  self-control rolls, Explosives and Surgery, and HT rolls against disease; Derangement/2 on
+  Influence rolls. `mental.of(actor)`, `add(actor, { kind, amount })`, `recover(actor, { minutes,
+  indulgence })`, `dayEnd({ actor, clinicianSkill })`, `buyOff(actor, { points, target })` and
+  `clinicianSkill(actor)`; `rules.addHardship`, `frightHardship`, `stressFrightPenalty`,
+  `stressRecovered`, `stressRollPenalty`, `derangementRollPenalty`, `derangementRecoveryTarget` and
+  `cureByPoints` are the pure pieces. `roll.frightCheck` still rolls an ordinary check. Not done:
+  no rest hook for time passing outside the Rest button (the world clock does not bleed Stress off),
+  the day's-end roll is the GM's call (no check that the day was free of new hardship), the
+  rolls for supernatural powers and the Physician (Psychiatric) hint on the injuries chapter are
+  not wired, and the permanent-disadvantage overflow is reported, not added as a trait.

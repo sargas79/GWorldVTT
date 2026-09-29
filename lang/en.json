@@ -660,6 +660,18 @@
           "Name": "Trading Fatigue for Skill and Resistance",
           "Hint": "1 FP per +1, up to +4, on a success roll or a contested resistance, with no Will roll (Basic Set Revised p. 572)."
         },
+        "stressAndDerangement": {
+          "Name": "Stress and Derangement",
+          "Hint": "Track mental hardship: Stress (temporary) and Derangement (lasting) from failed Fright Checks, ordinary or sanity-blasting (Basic Set Revised pp. 572-573)."
+        },
+        "stressRollPenalties": {
+          "Name": "Stress penalties to rolls",
+          "Hint": "Stress/2 to self-control rolls, steady-hand skills and HT rolls against disease, less Fearlessness (Basic Set Revised p. 573)."
+        },
+        "derangementRollPenalties": {
+          "Name": "Derangement penalties to rolls",
+          "Hint": "Derangement/2 to Influence rolls and rolls to show sanity (Basic Set Revised p. 573)."
+        },
         "realisticMarching": {
           "Name": "Realistic marching",
           "Hint": "A day’s march is 8 hours, or 12 with a skilled guide, at half the Move an hour: 4 or 6 x Move miles, in place of 10 x Move (Basic Set Revised p. 572)."
@@ -4795,6 +4807,34 @@
         "disabled": "its alternative set is disabled",
         "unpowered": "no points spent to use it"
       }
+    },
+    "Stress": {
+      "Stress": "Stress",
+      "Derangement": "Derangement",
+      "Hint": "Temporary jitters, held up to -Will ({limit}); beyond it becomes Derangement. Bleeds off 1 per 10 minutes of rest (Basic Set Revised p. 573).",
+      "DerangementHint": "Lasting mental harm, held up to -Will ({limit}); beyond it becomes points of permanent mental disadvantages (Basic Set Revised p. 573).",
+      "Kind": "Kind of Fright Check",
+      "KindOrdinary": "Ordinary (Stress; the Unfazeable are immune)",
+      "KindSanity": "Sanity-blasting (Derangement; Unfazeable +8)",
+      "Gained": "{name} takes {amount} {what}: Stress {stress}, Derangement {derangement}.",
+      "Permanent": "{points} points now become permanent mental disadvantages.",
+      "Recovered": "{name} sheds {shed} Stress; {stress} left.",
+      "Indulgence": "An indulgence (dance, drink, massage): 1 more Stress",
+      "DayEnd": "Day’s end (Derangement)",
+      "DayEndHint": "A Will roll to shed 1 Derangement, with a clinician’s help (Basic Set Revised p. 573)",
+      "DayEndTitle": "Derangement at day’s end",
+      "ClinicianSkill": "Clinician’s skill (Psychology (Clinical) or Physician (Psychiatric); 0 for none)",
+      "DayEndCard": "{name} rolls Will (target {target}): {roll}. Sheds {shed}; Derangement {derangement}.",
+      "TherapyHelped": "The clinician (skill {skill}) rolls {roll}: 1 more Derangement is shed.",
+      "TherapyFailed": "The clinician (skill {skill}) rolls {roll}: no help.",
+      "BuyOff": "Buy off Stress or Derangement",
+      "BuyOffHint": "A point of a new mental disadvantage removes 2 Derangement or all Stress (Basic Set Revised p. 573)",
+      "BuyOffTitle": "Buy off hardship",
+      "BuyOffTarget": "Remove",
+      "BuyOffPoints": "Points of new mental disadvantages",
+      "Cured": "{name} is eased: Stress {stress}, Derangement {derangement}.",
+      "Line": "Stress",
+      "DerangementLine": "Derangement"
     },
     "Tasks": {
       "Ham": "Ham Clause",

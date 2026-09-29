@@ -40,6 +40,7 @@ import {
 import { chooseFeintSkill } from "../alternative-feints.js";
 import { rollFeint, rollQuickContest, rollRegularContest } from "../contest.js";
 import { rollExtraEffort } from "../extra-effort.js";
+import { buyOffHardship, clinicianSkillOf, rollDerangementDayEnd, stressOn } from "../stress.js";
 import { rollPowerExtraEffort, tradeFatigueForBonus } from "../extra-effort-extras.js";
 import { rollFall } from "../falling.js";
 import { rollBleeding } from "../bleeding.js";
@@ -471,6 +472,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       frightCheck: GWorldCharacterSheet.#onFrightCheck,
       extraEffort: GWorldCharacterSheet.#onExtraEffort,
       powerExtraEffort: GWorldCharacterSheet.#onPowerExtraEffort,
+      derangementDayEnd: GWorldCharacterSheet.#onDerangementDayEnd,
+      buyOffHardship: GWorldCharacterSheet.#onBuyOffHardship,
       tradeFatigue: GWorldCharacterSheet.#onTradeFatigue,
       climb: GWorldCharacterSheet.#onClimb,
       swim: GWorldCharacterSheet.#onSwim,
@@ -2068,7 +2071,8 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
 
     // Asked before the dialog rather than after it: someone who makes no Fright
     // Check should not be asked how frightening the thing was.
-    if (traitsOf(this.actor).unfazeable) {
+    // (Sanity-blasting checks, under Stress and Derangement, are made even by the Unfazeable.)
+    if (traitsOf(this.actor).unfazeable && !stressOn()) {
       ui.notifications?.info(
         game.i18n.format("GWORLD.Fright.Unfazeable", { name: String(this.actor.name) }),
       );
@@ -2082,7 +2086,22 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     });
     if (modifier === null) return;
 
-    await rollFrightCheck({ actor: this.actor, modifier });
+    // Two kinds under Stress and Derangement (Basic Set Revised p. 572).
+    let kind: "ordinary" | "sanity" = "ordinary";
+    if (stressOn()) {
+      const chosen = await promptForChoice({
+        title: game.i18n.localize("GWORLD.Fright.Title"),
+        label: game.i18n.localize("GWORLD.Stress.Kind"),
+        options: [
+          { value: "ordinary", label: game.i18n.localize("GWORLD.Stress.KindOrdinary") },
+          { value: "sanity", label: game.i18n.localize("GWORLD.Stress.KindSanity") },
+        ],
+      });
+      if (chosen === null) return;
+      if (chosen === "sanity") kind = "sanity";
+    }
+
+    await rollFrightCheck({ actor: this.actor, modifier, kind });
   }
 
   /**
@@ -2139,6 +2158,39 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
       talent,
       fpSpent,
     });
+  }
+
+  /** The day's end for Derangement (Basic Set Revised p. 573): a Will roll, and a clinician's help where there is one. */
+  static async #onDerangementDayEnd(this: GWorldCharacterSheet) {
+    if (!stressOn()) return;
+    const clinician = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Stress.DayEndTitle"),
+      label: game.i18n.localize("GWORLD.Stress.ClinicianSkill"),
+      initial: clinicianSkillOf(this.actor) ?? 0,
+    });
+    if (clinician === null) return;
+    await rollDerangementDayEnd({ actor: this.actor, ...(clinician > 0 ? { clinicianSkill: clinician } : {}) });
+  }
+
+  /** Buys off Stress or Derangement with the points of a new mental disadvantage (Basic Set Revised p. 573). */
+  static async #onBuyOffHardship(this: GWorldCharacterSheet) {
+    if (!stressOn()) return;
+    const target = await promptForChoice({
+      title: game.i18n.localize("GWORLD.Stress.BuyOffTitle"),
+      label: game.i18n.localize("GWORLD.Stress.BuyOffTarget"),
+      options: [
+        { value: "stress", label: game.i18n.localize("GWORLD.Stress.Stress") },
+        { value: "derangement", label: game.i18n.localize("GWORLD.Stress.Derangement") },
+      ],
+    });
+    if (target !== "stress" && target !== "derangement") return;
+    const points = await promptForNumber({
+      title: game.i18n.localize("GWORLD.Stress.BuyOffTitle"),
+      label: game.i18n.localize("GWORLD.Stress.BuyOffPoints"),
+      initial: 1,
+    });
+    if (points === null) return;
+    await buyOffHardship(this.actor, { points, target });
   }
 
   /** Trading Fatigue for Skill or Resistance (Basic Set Revised p. 572): 1 FP per +1, up to +4, held for the next roll. */
@@ -2313,7 +2365,7 @@ export class GWorldCharacterSheet extends HandlebarsApplicationMixin(ActorSheetV
     const asked = await promptForRest();
     if (!asked) return;
 
-    await restForFatigue({ actor: this.actor, minutes: asked.minutes, meal: asked.meal });
+    await restForFatigue({ actor: this.actor, minutes: asked.minutes, meal: asked.meal, ...(asked.indulgence ? { indulgence: true } : {}) });
   }
 
   /**

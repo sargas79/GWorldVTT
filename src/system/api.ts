@@ -26,6 +26,7 @@
  *      and every part of the API may be used.
  */
 
+import { applyHardship, buyOffHardship, clinicianSkillOf, mentalOf, recoverStress, rollDerangementDayEnd } from "./stress.js";
 import { combiningSt, isSkilledMarcher, postCombiningSt, powerEffortFp, rollPowerExtraEffort, tradeFatigueForBonus } from "./extra-effort-extras.js";
 import { currentBad, endHamClause, hamClauseOf, invokeHamClause, setBad, unstattedNpcSkill } from "./task-rules.js";
 import { gmScreenApi } from "./gm-screen/api.js";
@@ -114,7 +115,7 @@ import { changeQuantity, type QuantityChanged } from "./item-quantity.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.178.0";
+export const API_VERSION = "1.179.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -905,6 +906,8 @@ export interface GWorldApi {
   readonly social: typeof socialApi;
   /** Extra effort with powers and FP traded for a bonus (since 1.178.0). */
   readonly effort: typeof effortApi;
+  /** Stress and Derangement (since 1.179.0). */
+  readonly mental: typeof mentalApi;
   /** The GM Screen (since 1.157.0): open it, roll on its tables, add a module's tables, lists and tabs. */
   readonly gmScreen: typeof gmScreenApi;
   /** Containers (since 1.159.0): which items are containers, what is in one, and putting gear in or taking it out. */
@@ -1056,6 +1059,17 @@ const partyApi = Object.freeze({
  * The pure rules are under `rules` (`powerEffortTarget`, `godlikeEffect`,
  * `fatigueForSkillBonus`, `extrasOverCap`, `marchingHours`...).
  */
+/**
+ * The mental-hardship namespace (since 1.179.0; Basic Set Revised pp. 572-573):
+ * Stress and Derangement, when the `stressAndDerangement` switch is on.
+ * `of(actor)` reads them; `add` adds one kind, `recover` takes Stress off for
+ * rest, `dayEnd` rolls the day's-end Will roll, and `buyOff` spends points of a
+ * new mental disadvantage. The pure rules are under `rules`.
+ */
+const mentalApi = Object.freeze({
+  of: mentalOf, add: applyHardship, recover: recoverStress, dayEnd: rollDerangementDayEnd, buyOff: buyOffHardship, clinicianSkill: clinicianSkillOf,
+});
+
 const effortApi = Object.freeze({ rollPower: rollPowerExtraEffort, powerFp: powerEffortFp, tradeFatigue: tradeFatigueForBonus, isSkilledMarcher });
 
 /**
@@ -1109,6 +1123,7 @@ export function createApi(): GWorldApi {
     world: worldApi,
     social: socialApi,
     effort: effortApi,
+    mental: mentalApi,
     gmScreen: gmScreenApi,
     containers: containersApi,
     hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK, partyChanged: PARTY_CHANGED_HOOK, campaignChanged: CAMPAIGN_CHANGED_HOOK }),

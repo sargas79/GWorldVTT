@@ -13,6 +13,7 @@
 
 import { SYSTEM_ID } from "./constants.js";
 import { isRuleOn } from "./optional-rules.js";
+import { stressRollLines } from "./stress.js";
 import { abstractNpcSkill, clampBad, hamClausePenalty } from "../rules/tasks-and-feats.js";
 
 /** The actor flag holding the invoked disadvantage. */
@@ -117,8 +118,9 @@ export function unstattedNpcSkill(scene?: any): number {
  * not take it, and neither does the player's side of a Contest against an
  * opponent with no sheet, whose 10 + |BAD| has it counted already.
  */
-export function taskRuleLines(context: { actor: any; kind: string; tags: readonly string[]; opponent?: any }): Array<{ label: string; value: number }> {
-  const lines: Array<{ label: string; value: number }> = [];
+export function taskRuleLines(context: { actor: any; kind: string; skill?: string; tags: readonly string[]; opponent?: any }): Array<{ label: string; value: number }> {
+  // Stress and Derangement's optional penalties (Revised p. 573).
+  const lines: Array<{ label: string; value: number }> = stressRollLines(context);
   const ham = hamClauseOf(context.actor);
   if (ham) lines.push({ label: L("HamLine", { trait: ham.trait }), value: ham.penalty });
   const fighting = context.kind === "attack" || context.kind === "defense";

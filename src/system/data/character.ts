@@ -650,6 +650,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
   declare studyHours: Record<"ST" | "DX" | "IQ" | "HT" | "hp" | "will" | "per" | "fp" | "basicSpeed" | "basicMove", number>;
   declare hp: { value: number; max: number };
   declare fp: { value: number; max: number };
+  declare stress: number;
+  declare derangement: number;
   declare mounted: boolean;
   declare racial: { ST: number; DX: number; IQ: number; HT: number };
   declare templates: Array<{
@@ -805,6 +807,9 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 
       hp: poolField(),
       fp: poolField(),
+      /** Stress and Derangement (Basic Set Revised pp. 572-573), as counts: a Stress of 3 is the book's -3. */
+      stress: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
+      derangement: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0, min: 0 }),
 
       points: new fields.SchemaField({
         starting: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 150 }),

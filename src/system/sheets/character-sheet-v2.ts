@@ -1279,6 +1279,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
           tired: fatigue !== "fresh",
           statusLabel: fatigue === "fresh" ? "" : L(fatigue === "veryTired" ? "GWORLD.Health.VeryTired" : `GWORLD.Health.${fatigue}`),
         },
+        // Stress and Derangement, beside FP (Basic Set Revised pp. 572-573); null with the rule off.
+        mental: isRuleOn("stressAndDerangement") ? { stress: system.stress ?? 0, derangement: system.derangement ?? 0, limit: derived.will ?? 0 } : null,
         move: derived.move,
         basicMove: derived.basicMove,
         basicSpeed: derived.basicSpeed,

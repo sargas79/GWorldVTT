@@ -56,6 +56,7 @@ import type { AtmosphereHazard, HazardStrength } from "../../rules/atmosphere.js
 import type { PressureSupport } from "../../rules/pressure.js";
 import { unconditionalReaction, type ReactionSource } from "../../rules/social.js";
 import { currentTargets } from "../targets.js";
+import { stressOn } from "../stress.js";
 
 /**
  * Which way the mover is coming at the foe, for the evade modifiers.
@@ -2643,8 +2644,10 @@ export async function promptForGrapple(weapons: Array<{ id: string; label: strin
  * to regain one extra FP if you eat a decent meal while resting" is their call,
  * and a long rest is not the same thing as a fed one.
  */
-export async function promptForRest(): Promise<{ minutes: number; meal: boolean } | null> {
+export async function promptForRest(): Promise<{ minutes: number; meal: boolean; indulgence?: boolean } | null> {
   const L = (key: string) => game.i18n.localize(`GWORLD.Recovery.${key}`);
+  // With Stress on, an indulgence (dance, drink, massage) erases 1 more (Basic Set Revised p. 573).
+  const stressed = stressOn();
 
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: L("Rest") },
@@ -2657,6 +2660,10 @@ export async function promptForRest(): Promise<{ minutes: number; meal: boolean 
         <input type="checkbox" name="meal">
         <span>${L("MealHint")}</span>
       </label>
+      ${stressed ? `<label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="indulgence">
+        <span>${game.i18n.localize("GWORLD.Stress.Indulgence")}</span>
+      </label>` : ""}
     </div>`,
     ok: {
       label: game.i18n.localize("GWORLD.Chat.Roll"),
@@ -2666,6 +2673,7 @@ export async function promptForRest(): Promise<{ minutes: number; meal: boolean 
           minutes:
             Number(form?.querySelector<HTMLInputElement>('input[name="minutes"]')?.value ?? 0) || 0,
           meal: form?.querySelector<HTMLInputElement>('input[name="meal"]')?.checked ?? false,
+          indulgence: form?.querySelector<HTMLInputElement>('input[name="indulgence"]')?.checked ?? false,
         };
       },
     },

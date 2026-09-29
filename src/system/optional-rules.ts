@@ -125,6 +125,10 @@ export const OPTIONAL_RULES: Record<RuleGroup, OptionalRule[]> = {
     { key: "powerExtraEffort", reference: "Basic Set Revised pp. 571-572", default: false },
     { key: "godlikeExtraEffort", reference: "Basic Set Revised p. 572", default: false },
     { key: "fatigueForSkill", reference: "Basic Set Revised p. 572", default: false },
+    // Stress and Derangement (Addendum 4): mental FP and HP, off; the penalties are the book's optional reads.
+    { key: "stressAndDerangement", reference: "Basic Set Revised pp. 572-573", default: false },
+    { key: "stressRollPenalties", reference: "Basic Set Revised p. 573", default: false },
+    { key: "derangementRollPenalties", reference: "Basic Set Revised p. 573", default: false },
   ],
   activities: [
     { key: "physicalActivities", reference: "Campaigns pp. 349-355", default: true },
