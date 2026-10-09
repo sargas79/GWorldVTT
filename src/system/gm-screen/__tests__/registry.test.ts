@@ -241,6 +241,15 @@ describe("the modules' additions to the Basic Set's tables", () => {
       fp: 2,
       apply: () => null,
     });
+    // The system's own options are rows of the table already, not a module's.
+    api.registerExtraEffort({
+      module: "gworld",
+      key: "giantStep",
+      label: "Giant Step",
+      kind: "offense",
+      fp: 1,
+      apply: () => null,
+    });
     const maneuvers = api.buildSection(api.sectionDef("maneuvers")!, englishContext())!.parts[0]!
       .content;
     const effort = api.buildSection(api.sectionDef("extraEffort")!, englishContext())!.parts[0]!
@@ -254,6 +263,9 @@ describe("the modules' additions to the Basic Set's tables", () => {
       source: "Module test-addon",
       cells: ["Surge", "2 FP", "An attack option."],
     });
+    const giantSteps = effort.rows.filter((r) => r.cells[0] === "Giant Step");
+    expect(giantSteps).toHaveLength(1);
+    expect(giantSteps[0]!.source).toBeUndefined();
   });
 });
 

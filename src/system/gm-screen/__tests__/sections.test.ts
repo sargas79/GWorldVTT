@@ -215,6 +215,27 @@ describe("the GM Screen's sections", () => {
     expect(row(table("reactions"), "19+")[1]).toBe("Excellent");
   });
 
+  it("lists the extra-effort combat options once each, with the cap on them", () => {
+    const effort = table("extraEffort");
+    expect(effort.rows.map((r) => r.cells[0])).toEqual([
+      "Feverish Defense",
+      "Flurry of Blows",
+      "Giant Step",
+      "Great Lunge",
+      "Heroic Charge",
+      "Mighty Blows",
+      "Rapid Recovery",
+    ]);
+    expect(effort.rows.every((r) => !r.source)).toBe(true);
+    expect(row(effort, "Giant Step")[2]).toContain("1 extra step on an Attack or Defensive Attack");
+    expect(row(effort, "Great Lunge")[2]).toContain("+1 yard of reach");
+    expect(row(effort, "Heroic Charge")[2]).toContain("-4 to hit");
+    expect(built("extraEffort").notes.at(-1)).toBe(
+      "In combat, one offensive and one defensive option a turn. Offensive: Flurry of Blows, " +
+        "Giant Step, Great Lunge, Heroic Charge, Mighty Blows. Defensive: Feverish Defense, Rapid Recovery.",
+    );
+  });
+
   it("draws the vision diagram from the arcs", () => {
     const diagram = built("visionHexDiagram").parts[0]!.content;
     expect(diagram.kind).toBe("diagram");

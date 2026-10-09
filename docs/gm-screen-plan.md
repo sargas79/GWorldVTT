@@ -86,7 +86,7 @@ Checked against the book-neutral rule in `CLAUDE.md`:
 | Awe and Confusion checks (Tab 8) | Not the Basic Set | Add-on module, through `gmScreen.registerTable` |
 | Posture and Hit Locations (Tab 7) | Not the Basic Set (the Basic Set's posture table has no hit-location column) | Add-on module; the system gives Tab 7 a slot for it |
 | Hit locations beyond the Basic Set's 11 (the "very expanded" part of Tab 2) | Add-on books | Appear on their own from `registerHitLocation` (principle 4) |
-| Extra-effort options beyond Feverish Defense, Flurry of Blows, Giant Step and Mighty Blows (Tab 5) | Add-on books | Appear on their own from `registerExtraEffort` |
+| Extra-effort options beyond the Basic Set's seven (Tab 5) | Add-on books | Appear on their own from `registerExtraEffort` |
 
 Everything else on the list is in the Basic Set: the Rule of 14 is the Fright
 Check ceiling (`FRIGHT_CHECK_CEILING`), the Rule of 16 is on p. 349 and the
@@ -209,9 +209,11 @@ belongs to, so the automation can use it later too.
   description. Sub-rows give the All-Out Attack options (`allOutAttackBonus`,
   `strongAttackDamageBonus`), the All-Out Defense options, and the Evaluate and
   Feint figures.
-- **Extra Effort options.** The Basic Set's (`extra-effort.ts`: Feverish
-  Defense, Flurry of Blows, Mighty Blows, Giant Step), then registered ones
-  from `registeredExtraEfforts`. Each shows its FP cost.
+- **Extra Effort options.** The Basic Set's seven (`extra-effort.ts` and
+  `extra-effort-extras.ts`: Feverish Defense, Flurry of Blows, Giant Step,
+  Great Lunge, Heroic Charge, Mighty Blows, Rapid Recovery), then an add-on's
+  from `registeredExtraEfforts`, skipping the system's own. Each shows its FP
+  cost; a note gives the cap of one offensive and one defensive a turn.
 - **Posture Table** (B551). `POSTURE_EFFECTS`: attack, defense, target
   modifier and movement (`postureMove`).
 

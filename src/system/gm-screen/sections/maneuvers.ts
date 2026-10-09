@@ -13,6 +13,14 @@ import {
   mightyBlowsBonus,
 } from "../../../rules/extra-effort.js";
 import {
+  COMBAT_EXTRAS,
+  COMBAT_EXTRA_FP,
+  GIANT_STEP_STEPS,
+  GREAT_LUNGE_REACH,
+  HEROIC_CHARGE_FALL_PENALTY,
+  type CombatExtra,
+} from "../../../rules/extra-effort-extras.js";
+import {
   MANEUVERS,
   MANEUVER_ORDER,
   MAX_EVALUATE_BONUS,
@@ -27,6 +35,7 @@ import {
 import { POSTURE_EFFECTS, postureMove } from "../../../rules/posture.js";
 import type { Posture } from "../../../rules/types.js";
 import { registeredExtraEfforts, registeredManeuvers } from "../../combat-extensions.js";
+import { SYSTEM_ID } from "../../constants.js";
 import { signed } from "../format.js";
 import type { BuildContext, GmRow, GmSectionDef } from "../types.js";
 import { K, section } from "./shared.js";
@@ -57,6 +66,14 @@ function allOutAttackRows(t: BuildContext["t"]): GmRow[] {
       }),
     ],
   }));
+}
+
+/** The combat options of one kind, by name, for the note on the cap. */
+function extrasOfKind(kind: "offensive" | "defensive", t: BuildContext["t"]): string {
+  return (Object.keys(COMBAT_EXTRAS) as CombatExtra[])
+    .filter((extra) => COMBAT_EXTRAS[extra] === kind)
+    .map((extra) => t(`GWORLD.ExtraEffort.Extra.${extra}`))
+    .join(", ");
 }
 
 const POSTURES: readonly Posture[] = [
@@ -138,7 +155,7 @@ export const MANEUVER_SECTIONS: readonly GmSectionDef[] = [
   section({
     id: "extraEffort",
     tab: "maneuvers",
-    cite: "pp. B356-357",
+    cite: "pp. B356-357; Basic Set Revised p. 571",
     build: ({ t, moduleTitle }) => {
       const fp = (value: number) => t(`${K}.Fp.Cost`, { value });
       const rows: GmRow[] = [
@@ -160,7 +177,28 @@ export const MANEUVER_SECTIONS: readonly GmSectionDef[] = [
           ],
         },
         {
-          cells: [t(`${K}.Effort.GiantStepName`), fp(EXTRA_EFFORT_FP), t(`${K}.Effort.GiantStep`)],
+          cells: [
+            t("GWORLD.ExtraEffort.Extra.giantStep"),
+            fp(COMBAT_EXTRA_FP),
+            t(`${K}.Effort.GiantStep`, { steps: GIANT_STEP_STEPS }),
+          ],
+        },
+        {
+          cells: [
+            t("GWORLD.ExtraEffort.Extra.greatLunge"),
+            fp(COMBAT_EXTRA_FP),
+            t(`${K}.Effort.GreatLunge`, { reach: GREAT_LUNGE_REACH }),
+          ],
+        },
+        {
+          cells: [
+            t("GWORLD.ExtraEffort.Extra.heroicCharge"),
+            fp(COMBAT_EXTRA_FP),
+            t(`${K}.Effort.HeroicCharge`, {
+              penalty: signed(MOVE_AND_ATTACK_PENALTY),
+              fall: signed(HEROIC_CHARGE_FALL_PENALTY),
+            }),
+          ],
         },
         {
           cells: [
@@ -169,10 +207,20 @@ export const MANEUVER_SECTIONS: readonly GmSectionDef[] = [
             t(`${K}.Effort.MightyBlows`, { value: signed(mightyBlowsBonus(1)) }),
           ],
         },
-        ...registeredExtraEfforts().map((effort) => ({
-          source: moduleTitle(effort.module),
-          cells: [effort.label, fp(effort.fp), t(`${K}.Effort.${effort.kind}`)],
-        })),
+        {
+          cells: [
+            t("GWORLD.ExtraEffort.Extra.rapidRecovery"),
+            fp(COMBAT_EXTRA_FP),
+            t(`${K}.Effort.RapidRecovery`),
+          ],
+        },
+        // The system's own options are the rows above; only an add-on's follow, with its badge.
+        ...registeredExtraEfforts()
+          .filter((effort) => effort.module !== SYSTEM_ID)
+          .map((effort) => ({
+            source: moduleTitle(effort.module),
+            cells: [effort.label, fp(effort.fp), t(`${K}.Effort.${effort.kind}`)],
+          })),
       ];
       return {
         parts: [
@@ -189,6 +237,10 @@ export const MANEUVER_SECTIONS: readonly GmSectionDef[] = [
             step: EXTRA_EFFORT_STEP,
             penalty: signed(extraEffortModifier(EXTRA_EFFORT_STEP)),
             fp: EXTRA_EFFORT_FP,
+          }),
+          t(`${K}.Section.extraEffort.Cap`, {
+            offensive: extrasOfKind("offensive", t),
+            defensive: extrasOfKind("defensive", t),
           }),
         ],
       };

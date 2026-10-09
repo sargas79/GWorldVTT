@@ -6227,8 +6227,10 @@
       "Effort": {
         "Feverish": "{value} to one active defense roll.",
         "Flurry": "A Rapid Strike at {to} instead of {from}; 1 FP per attack.",
-        "GiantStepName": "Giant Step",
-        "GiantStep": "One more step on any maneuver that allows a step.",
+        "GiantStep": "{steps} extra step on an Attack or Defensive Attack, before or after it; a critical failure injures the leg.",
+        "GreatLunge": "+{reach} yard of reach on a melee Attack, Committed Attack or Move and Attack.",
+        "HeroicCharge": "A Move and Attack without its {penalty} to hit or its skill cap; its drawbacks stay, and {fall} to avoid falling.",
+        "RapidRecovery": "Before the first parry: the weapon that attacked may parry this turn, at the usual penalties (a Move and Attack, or an unbalanced weapon's Attack).",
         "MightyBlows": "All-Out Attack (Strong)'s damage, {value} or +1 per die, without giving up defenses; 1 FP per attack.",
         "offense": "An attack option.",
         "defense": "A defense option."
@@ -6629,7 +6631,8 @@
         "extraEffort": {
           "Title": "Extra Effort",
           "Summary": "FP spent in combat for an edge, and extra effort outside it.",
-          "Note": "Outside combat: a Will roll at {penalty} per {step}% more you ask of yourself, costing {fp} FP whether it works or not."
+          "Note": "Outside combat: a Will roll at {penalty} per {step}% more you ask of yourself, costing {fp} FP whether it works or not.",
+          "Cap": "In combat, one offensive and one defensive option a turn. Offensive: {offensive}. Defensive: {defensive}."
         },
         "posture": {
           "Title": "Posture Table",
