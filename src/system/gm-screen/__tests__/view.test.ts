@@ -44,7 +44,7 @@ describe("the screen as the template draws it", () => {
       ]),
     }) as any;
     expect(view.activeLabel).toBe("Wounds");
-    expect(view.activePosition).toBe("3 of 9");
+    expect(view.activePosition).toBe("3 of 10");
     const wounds = view.tabs.find((t: any) => t.id === "wounds");
     expect(wounds.active).toBe(true);
     expect(wounds.sections.find((s: any) => s.id === "shock").collapsed).toBe(true);

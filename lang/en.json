@@ -6063,6 +6063,7 @@
         "ranged": "Ranged",
         "maneuvers": "Maneuvers",
         "combat": "Combat",
+        "handToHand": "Close Combat",
         "afflictions": "Afflictions",
         "checks": "Fright"
       },
@@ -6805,7 +6806,8 @@
         "melee": "Attack and defense modifiers, lost HP and FP",
         "ranged": "Modifiers, speed and range, recovery",
         "maneuvers": "Maneuvers, extra effort, posture",
-        "combat": "Skill modifiers, damage, grappling, vision",
+        "combat": "Skill modifiers, damage, blunt trauma, vision",
+        "handToHand": "Evading, slams, grabbing, grappling, pins and chokes",
         "afflictions": "Afflictions and add-on tables",
         "checks": "Fright Checks, falling, reactions"
       },

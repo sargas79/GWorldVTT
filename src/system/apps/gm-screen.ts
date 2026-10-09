@@ -1,5 +1,5 @@
 /**
- * The GM Screen: the Basic Set's tables in nine tabs, the book's text beside
+ * The GM Screen: the Basic Set's tables in ten tabs, the book's text beside
  * them where a content module gives it, and a roll button on the tables that
  * are rolled on.
  *

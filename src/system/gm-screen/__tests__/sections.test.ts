@@ -245,7 +245,7 @@ describe("what a player sees", () => {
     const horizon = table("horizonTable");
     expect(horizon.rows).toHaveLength(21);
     expect(row(horizon, "2 yd")).toEqual(["2 yd", "0", "3 mi"]);
-    expect(row(horizon, "1.5\"")).toEqual(["1.5\"", "-10", "0.4 mi"]);
+    expect(row(horizon, '1.5"')).toEqual(['1.5"', "-10", "0.4 mi"]);
     expect(row(horizon, "100 yd")).toEqual(["100 yd", "+10", "21 mi"]);
   });
 
@@ -270,5 +270,24 @@ describe("the ids a content module names", () => {
       ),
     );
     for (const id of ids) expect(docs, id).toContain(`\`${id}\``);
+  });
+});
+
+describe("the Close Combat tab", () => {
+  it("takes close and unarmed combat off Combat, right after it", () => {
+    const tabs = assembleScreen(englishContext(), { isGM: true });
+    const ids = tabs.map((t) => t.id);
+    expect(ids.indexOf("handToHand")).toBe(ids.indexOf("combat") + 1);
+    expect(tabs.find((t) => t.id === "handToHand")!.sections.map((s) => s.id)).toEqual([
+      "closeCombat",
+      "unarmedCombat",
+    ]);
+    expect(tabs.find((t) => t.id === "combat")!.sections.map((s) => s.id)).toEqual([
+      "skillModifiers",
+      "damageTable",
+      "combatRules",
+      "visionHexDiagram",
+    ]);
+    expect(tabs.find((t) => t.id === "handToHand")!.label).toBe("Close Combat");
   });
 });

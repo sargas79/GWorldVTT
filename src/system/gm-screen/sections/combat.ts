@@ -250,7 +250,7 @@ export const COMBAT_SECTIONS: readonly GmSectionDef[] = [
   }),
   section({
     id: "closeCombat",
-    tab: "combat",
+    tab: "handToHand",
     cite: "pp. B368, B371-372",
     build: ({ t }) => {
       const m = itemsOf("closeCombat", t);
@@ -304,7 +304,7 @@ export const COMBAT_SECTIONS: readonly GmSectionDef[] = [
   }),
   section({
     id: "unarmedCombat",
-    tab: "combat",
+    tab: "handToHand",
     cite: "pp. B370-371",
     build: ({ t }) => {
       const m = itemsOf("unarmedCombat", t);

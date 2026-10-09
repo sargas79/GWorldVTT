@@ -20,6 +20,10 @@ What changed from the plan during the work, most of it from the mockups:
   strip, so the screen has nine tabs; a module's section placed after a
   moved table follows it, and a world that hid Tables from players hides
   Criticals too. A plain 3d6 button beside the search rolls for the GM.
+- API 1.193.0: Close Combat and Unarmed Combat moved from Combat to a
+  Close Combat tab of their own (`handToHand`), right after it, so the
+  screen has ten tabs; a world that hid Combat from players hides Close
+  Combat too.
 
 Decisions taken with the user (2026-09-25):
 

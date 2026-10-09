@@ -3770,7 +3770,7 @@ rule: a container has only its own weight and cost.
 
 ## The GM Screen
 
-Since 1.157.0 the system has a GM Screen: the Basic Set's tables in nine tabs (eight before 1.158.0),
+Since 1.157.0 the system has a GM Screen: the Basic Set's tables in ten tabs (eight before 1.158.0, nine before 1.193.0),
 opened from a button in the token controls, an unbound keybinding, or
 `game.gworld.api.gmScreen.open()`. Every figure on it is read from the rules
 the automation uses. Players open the same window read-only, unless the GM
@@ -3799,7 +3799,8 @@ The ids, tab by tab (parts in brackets):
 | Melee | `meleeAttackModifiers`, `activeDefenseModifiers`, `lostHitPoints`, `lostFatiguePoints`, `criticals`, `rulesOf` (`ruleOf14`, `ruleOf16`, `ruleOf20`) |
 | Ranged | `rangedAttackModifiers`, `sizeSpeedRange`, `horizonTable`, `dodgeBlockParry`, `woundingModifiers`, `firstAid`, `naturalRecovery`, `unconsciousness` |
 | Maneuvers | `maneuvers`, `extraEffort`, `posture` |
-| Combat | `skillModifiers` (`taskDifficulty`, `equipmentModifiers`, `timeSpent`), `damageTable`, `combatRules` (`bluntTrauma`, `rapidFire`, `hurtingYourself`), `closeCombat` (`evade`, `slam`), `unarmedCombat` (`grabbing`, `grappling`, `takedown`, `pin`, `strangle`), `visionHexDiagram` |
+| Combat | `skillModifiers` (`taskDifficulty`, `equipmentModifiers`, `timeSpent`), `damageTable`, `combatRules` (`bluntTrauma`, `rapidFire`, `hurtingYourself`), `visionHexDiagram` |
+| Close Combat | `closeCombat` (`evade`, `slam`), `unarmedCombat` (`grabbing`, `grappling`, `takedown`, `pin`, `strangle`) |
 | Afflictions | `afflictions` (`afflictions.irritating`, `afflictions.incapacitating`, `afflictions.mortal`, `pain`) |
 | Fright | `frightChecks`, `fallingCollisions` (`fallingVelocity`, `falling`, `collisions`), `reactions` |
 
@@ -3823,12 +3824,13 @@ module's title. For anything else:
   the system's; its id is `<module>.<key>`, for `tab` above.
 
 Placing: `tab` is a tab's id (`criticalTables` since 1.158.0, `tables`, `wounds`, `melee`, `ranged`,
-`maneuvers`, `combat`, `afflictions`, `checks`, or a registered tab), and
+`maneuvers`, `combat`, `handToHand` since 1.193.0, `afflictions`, `checks`, or a registered tab), and
 `after` the id of the section it follows; left out, or naming nothing on the
 tab, it goes at the end. Since 1.158.0 a section placed `after` one of the
 Basic Set's goes on that section's tab, whichever tab it names, so it stays
 beside it when the system moves it (the critical tables moved from `tables`
-to `criticalTables` in 1.158.0). `slot` fills one of the places the Basic Set leaves
+to `criticalTables` in 1.158.0, and close and unarmed combat from `combat` to
+`handToHand` in 1.193.0). `slot` fills one of the places the Basic Set leaves
 for other books' tables, where the slot is on its tab: `aweConfusion` (Fright
 tab) and `postureHitLocations` (Afflictions tab). An empty slot shows only to
 the GM, as an outline. A module adds; it never replaces a Basic Set table.

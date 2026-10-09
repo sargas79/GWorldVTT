@@ -9,18 +9,31 @@ export const GM_SCREEN_HIDDEN_TABS = "gmScreenHiddenTabs";
 /** World: which layout of tabs the hidden list was written for, for moving it on when tabs split. */
 export const GM_SCREEN_LAYOUT = "gmScreenLayout";
 
-/** The layout this version's tabs are: 1 since the critical tables got a tab of their own (1.158.0). */
-export const CURRENT_LAYOUT = 1;
+/**
+ * Each time a tab was split, oldest first: the tab the GM may have hidden,
+ * and the tab split out of it. A layout is how many of these a world's
+ * hidden list has been moved on through.
+ */
+const TAB_SPLITS: ReadonlyArray<{ from: string; to: string }> = [
+  // 1.158.0: the critical tables left Tables for Criticals.
+  { from: "tables", to: "criticalTables" },
+  // 1.193.0: close and unarmed combat left Combat for Close Combat.
+  { from: "combat", to: "handToHand" },
+];
+
+/** The layout this version's tabs are. */
+export const CURRENT_LAYOUT = TAB_SPLITS.length;
 
 /**
  * The hidden tabs, moved on to the current layout: a tab split out of one
  * the GM hid starts hidden too, so nothing kept from players shows up on its
- * new tab. The critical tables left Tables for Criticals in layout 1.
+ * new tab.
  */
 export function migrateHiddenTabs(hidden: readonly string[], layout: number): string[] {
   const out = [...hidden];
-  if (layout < 1 && out.includes("tables") && !out.includes("criticalTables"))
-    out.push("criticalTables");
+  for (const { from, to } of TAB_SPLITS.slice(Math.max(0, layout))) {
+    if (out.includes(from) && !out.includes(to)) out.push(to);
+  }
   return out;
 }
 
@@ -42,9 +55,19 @@ export function playersMayOpen(): boolean {
   return read<unknown>(GM_SCREEN_PLAYERS, true) !== false;
 }
 
-export function hiddenTabs(): string[] {
+/** The hidden tabs as the world stores them, before any move to the current layout. */
+export function storedHiddenTabs(): string[] {
   const value = read<unknown>(GM_SCREEN_HIDDEN_TABS, []);
   return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : [];
+}
+
+/**
+ * The tabs players don't see, on this version's layout. Moved on as it is
+ * read, so a tab split out of a hidden one stays hidden even before a GM has
+ * loaded the world and saved the moved list.
+ */
+export function hiddenTabs(): string[] {
+  return migrateHiddenTabs(storedHiddenTabs(), Number(read<unknown>(GM_SCREEN_LAYOUT, 0)) || 0);
 }
 
 export function lastTab(): string {
