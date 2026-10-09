@@ -348,18 +348,52 @@ describe("the critical tables' own tab", () => {
   it("hides the new tab from players where the GM had hidden Tables, once", async () => {
     vi.resetModules();
     const { migrateHiddenTabs, CURRENT_LAYOUT } = await import("../settings.js");
-    expect(CURRENT_LAYOUT).toBe(1);
-    expect(migrateHiddenTabs(["tables", "combat"], 0)).toEqual([
+    expect(CURRENT_LAYOUT).toBe(2);
+    expect(migrateHiddenTabs(["tables", "melee"], 0)).toEqual([
       "tables",
-      "combat",
+      "melee",
       "criticalTables",
     ]);
-    expect(migrateHiddenTabs(["combat"], 0)).toEqual(["combat"]);
+    expect(migrateHiddenTabs(["melee"], 0)).toEqual(["melee"]);
     expect(migrateHiddenTabs(["tables", "criticalTables"], 0)).toEqual([
       "tables",
       "criticalTables",
     ]);
     // Already moved on: a GM who then shows Criticals again keeps that choice.
     expect(migrateHiddenTabs(["tables"], 1)).toEqual(["tables"]);
+  });
+
+  it("hides Close Combat from players where the GM had hidden Combat, once", async () => {
+    vi.resetModules();
+    const { migrateHiddenTabs } = await import("../settings.js");
+    // A world from before either split moves on through both.
+    expect(migrateHiddenTabs(["tables", "combat"], 0)).toEqual([
+      "tables",
+      "combat",
+      "criticalTables",
+      "handToHand",
+    ]);
+    // One already on layout 1 gets only the second.
+    expect(migrateHiddenTabs(["tables", "combat"], 1)).toEqual(["tables", "combat", "handToHand"]);
+    expect(migrateHiddenTabs(["combat", "handToHand"], 1)).toEqual(["combat", "handToHand"]);
+    expect(migrateHiddenTabs(["combat"], 2)).toEqual(["combat"]);
+  });
+
+  it("keeps a module's table beside the close-combat card it followed", async () => {
+    const api = await load();
+    api.registerGmScreenRuleBlock({
+      module: "test-addon",
+      key: "shoves",
+      tab: "combat",
+      after: "closeCombat",
+      title: "Shoves",
+      items: [],
+    });
+    const tabs = api.assembleScreen(englishContext(), { isGM: true });
+    expect(tabs.find((t) => t.id === "handToHand")!.sections.map((s) => s.id)).toEqual([
+      "closeCombat",
+      "test-addon.shoves",
+      "unarmedCombat",
+    ]);
   });
 });

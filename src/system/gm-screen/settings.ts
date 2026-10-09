@@ -9,18 +9,23 @@ export const GM_SCREEN_HIDDEN_TABS = "gmScreenHiddenTabs";
 /** World: which layout of tabs the hidden list was written for, for moving it on when tabs split. */
 export const GM_SCREEN_LAYOUT = "gmScreenLayout";
 
-/** The layout this version's tabs are: 1 since the critical tables got a tab of their own (1.158.0). */
-export const CURRENT_LAYOUT = 1;
+/**
+ * The layout this version's tabs are: 1 since the critical tables got a tab
+ * of their own (1.158.0), 2 since close and unarmed combat did (1.193.0).
+ */
+export const CURRENT_LAYOUT = 2;
 
 /**
  * The hidden tabs, moved on to the current layout: a tab split out of one
  * the GM hid starts hidden too, so nothing kept from players shows up on its
- * new tab. The critical tables left Tables for Criticals in layout 1.
+ * new tab. The critical tables left Tables for Criticals in layout 1; close
+ * and unarmed combat left Combat for Close Combat in layout 2.
  */
 export function migrateHiddenTabs(hidden: readonly string[], layout: number): string[] {
   const out = [...hidden];
   if (layout < 1 && out.includes("tables") && !out.includes("criticalTables"))
     out.push("criticalTables");
+  if (layout < 2 && out.includes("combat") && !out.includes("handToHand")) out.push("handToHand");
   return out;
 }
 

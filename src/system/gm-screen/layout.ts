@@ -1,5 +1,5 @@
 /**
- * The GM Screen's nine tabs and the Basic Set sections on each, in the order
+ * The GM Screen's ten tabs and the Basic Set sections on each, in the order
  * the screen shows them.
  */
 
@@ -30,6 +30,7 @@ export const GM_SCREEN_TABS: readonly GmTabDef[] = [
   tab("ranged", "fa-solid fa-bullseye"),
   tab("maneuvers", "fa-solid fa-person-running"),
   tab("combat", "fa-solid fa-hand-fist"),
+  tab("handToHand", "fa-solid fa-people-arrows"),
   tab("afflictions", "fa-solid fa-head-side-cough"),
   tab("checks", "fa-solid fa-dice"),
 ];

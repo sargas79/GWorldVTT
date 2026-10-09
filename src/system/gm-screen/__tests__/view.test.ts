@@ -44,7 +44,7 @@ describe("the screen as the template draws it", () => {
       ]),
     }) as any;
     expect(view.activeLabel).toBe("Wounds");
-    expect(view.activePosition).toBe("3 of 9");
+    expect(view.activePosition).toBe("3 of 10");
     const wounds = view.tabs.find((t: any) => t.id === "wounds");
     expect(wounds.active).toBe(true);
     expect(wounds.sections.find((s: any) => s.id === "shock").collapsed).toBe(true);
@@ -100,6 +100,25 @@ describe("the window's buttons", () => {
       "abstractDifficulty",
       "coverDr",
     ]);
+  });
+});
+
+describe("the Close Combat tab", () => {
+  it("takes close and unarmed combat off Combat, right after it", () => {
+    const tabs = assembleScreen(englishContext(), { isGM: true });
+    const ids = tabs.map((t) => t.id);
+    expect(ids.indexOf("handToHand")).toBe(ids.indexOf("combat") + 1);
+    expect(tabs.find((t) => t.id === "handToHand")!.sections.map((s) => s.id)).toEqual([
+      "closeCombat",
+      "unarmedCombat",
+    ]);
+    expect(tabs.find((t) => t.id === "combat")!.sections.map((s) => s.id)).toEqual([
+      "skillModifiers",
+      "damageTable",
+      "combatRules",
+      "visionHexDiagram",
+    ]);
+    expect(tabs.find((t) => t.id === "handToHand")!.label).toBe("Close Combat");
   });
 });
 
