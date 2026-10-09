@@ -15,9 +15,9 @@ import {
   GM_SCREEN_LAYOUT,
   GM_SCREEN_PLAYERS,
   GM_SCREEN_TAB,
-  hiddenTabs,
   mayOpen,
   migrateHiddenTabs,
+  storedHiddenTabs,
 } from "./settings.js";
 
 /** A player's open screen, redrawn or closed when the GM changes what players may see. */
@@ -94,7 +94,7 @@ export function registerGmScreen(): void {
       await g.settings.set(
         SYSTEM_ID,
         GM_SCREEN_HIDDEN_TABS,
-        migrateHiddenTabs(hiddenTabs(), layout),
+        migrateHiddenTabs(storedHiddenTabs(), layout),
       );
       await g.settings.set(SYSTEM_ID, GM_SCREEN_LAYOUT, CURRENT_LAYOUT);
     })().catch((error) =>

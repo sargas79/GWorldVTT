@@ -103,25 +103,6 @@ describe("the window's buttons", () => {
   });
 });
 
-describe("the Close Combat tab", () => {
-  it("takes close and unarmed combat off Combat, right after it", () => {
-    const tabs = assembleScreen(englishContext(), { isGM: true });
-    const ids = tabs.map((t) => t.id);
-    expect(ids.indexOf("handToHand")).toBe(ids.indexOf("combat") + 1);
-    expect(tabs.find((t) => t.id === "handToHand")!.sections.map((s) => s.id)).toEqual([
-      "closeCombat",
-      "unarmedCombat",
-    ]);
-    expect(tabs.find((t) => t.id === "combat")!.sections.map((s) => s.id)).toEqual([
-      "skillModifiers",
-      "damageTable",
-      "combatRules",
-      "visionHexDiagram",
-    ]);
-    expect(tabs.find((t) => t.id === "handToHand")!.label).toBe("Close Combat");
-  });
-});
-
 describe("the generic roll", () => {
   it("is a 3d6 button in the bar, for the GM only", () => {
     const template = readFileSync(

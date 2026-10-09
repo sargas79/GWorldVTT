@@ -145,8 +145,18 @@ export function buildSection(def: GmSectionDef, context: BuildContext): ScreenSe
  * rather than dropping to the end of the tab they left.
  */
 function followAnchor(def: AddonSectionDef): AddonSectionDef {
-  const anchor = def.after ? SYSTEM_SECTIONS.find((s) => s.id === def.after) : undefined;
-  return anchor && anchor.tab !== def.tab ? { ...def, tab: anchor.tab } : def;
+  // Through a chain of modules' sections, each after the last, to the
+  // system's section at its head: the whole chain follows it.
+  const added = registeredGmScreenSections();
+  const seen = new Set<string>();
+  let after = def.after;
+  while (after && !seen.has(after)) {
+    seen.add(after);
+    const own = SYSTEM_SECTIONS.find((s) => s.id === after);
+    if (own) return own.tab !== def.tab ? { ...def, tab: own.tab } : def;
+    after = added.find((s) => s.id === after)?.after;
+  }
+  return def;
 }
 
 /** The whole screen, as this user may see it. */

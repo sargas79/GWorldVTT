@@ -396,4 +396,50 @@ describe("the critical tables' own tab", () => {
       "unarmedCombat",
     ]);
   });
+
+  it("moves a chain of modules' sections along with the card at its head", async () => {
+    const api = await load();
+    api.registerGmScreenRuleBlock({
+      module: "test-addon",
+      key: "a",
+      tab: "combat",
+      after: "closeCombat",
+      title: "A",
+      items: [],
+    });
+    api.registerGmScreenRuleBlock({
+      module: "test-addon",
+      key: "b",
+      tab: "combat",
+      after: "test-addon.a",
+      title: "B",
+      items: [],
+    });
+    const tabs = api.assembleScreen(englishContext(), { isGM: true });
+    expect(tabs.find((t) => t.id === "handToHand")!.sections.map((s) => s.id)).toEqual([
+      "closeCombat",
+      "test-addon.a",
+      "test-addon.b",
+      "unarmedCombat",
+    ]);
+    expect(
+      tabs.find((t) => t.id === "combat")!.sections.some((s) => s.id.startsWith("test-addon.")),
+    ).toBe(false);
+  });
+
+  it("reads the hidden tabs on the current layout before any GM has saved them", async () => {
+    vi.resetModules();
+    const { hiddenTabs, storedHiddenTabs } = await import("../settings.js");
+    const globals = globalThis as Record<string, unknown>;
+    const settings: Record<string, unknown> = { gmScreenHiddenTabs: ["combat"], gmScreenLayout: 1 };
+    globals.game = { settings: { get: (_s: string, key: string) => settings[key] } };
+    try {
+      expect(storedHiddenTabs()).toEqual(["combat"]);
+      expect(hiddenTabs()).toEqual(["combat", "handToHand"]);
+      settings.gmScreenLayout = 2;
+      expect(hiddenTabs()).toEqual(["combat"]);
+    } finally {
+      delete globals.game;
+    }
+  });
 });
