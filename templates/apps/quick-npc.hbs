@@ -7,10 +7,10 @@
         {{#if from}}<span aria-hidden="true">&mdash;</span><span class="qn-from">{{localize "GWORLD.QuickNpc.From" templates=from}}</span>{{/if}}
       </div>
       <label class="qn-name">
-        <input type="text" data-field="name" value="{{sketch.name}}" placeholder="{{localize 'GWORLD.QuickNpc.NamePlaceholder'}}" autocomplete="off">
+        <input type="text" name="name" data-field="name" value="{{sketch.name}}" placeholder="{{localize 'GWORLD.QuickNpc.NamePlaceholder'}}" autocomplete="off">
       </label>
       <label class="qn-appearance">
-        <input type="text" data-field="appearance" value="{{sketch.appearance}}" placeholder="{{localize 'GWORLD.QuickNpc.AppearancePlaceholder'}}" autocomplete="off">
+        <input type="text" name="appearance" data-field="appearance" value="{{sketch.appearance}}" placeholder="{{localize 'GWORLD.QuickNpc.AppearancePlaceholder'}}" autocomplete="off">
       </label>
     </div>
     <div class="qn-ledger">
@@ -26,7 +26,7 @@
     <section class="v2-panel qn-panel qn-template">
       <h2 class="qn-heading">{{localize "GWORLD.QuickNpc.StartFrom"}}</h2>
       <div class="qn-template-row">
-        <select data-field="template" {{#if templatesLoading}}disabled{{/if}}>
+        <select name="template" data-field="template" {{#if templatesLoading}}disabled{{/if}}>
           <option value="">{{#if templatesLoading}}{{localize "GWORLD.QuickNpc.Loading"}}{{else}}{{localize "GWORLD.QuickNpc.NoTemplate"}}{{/if}}</option>
           {{#each templates as |t|}}
             <option value="{{t.uuid}}" {{#if t.selected}}selected{{/if}}>{{t.label}}</option>
@@ -43,15 +43,23 @@
     <section class="v2-panel qn-panel qn-attributes">
       <h2 class="qn-heading">
         {{localize "GWORLD.QuickNpc.Attributes"}}
-        <button type="button" class="qn-small" data-action="rollAttributes" data-tooltip="{{localize 'GWORLD.QuickNpc.RollAttributesHint'}}">
-          <i class="fa-solid fa-dice" inert></i> {{localize "GWORLD.QuickNpc.RollAttributes"}}
-        </button>
+        <span class="qn-heading-tools">
+          <label class="qn-one" data-tooltip="{{localize 'GWORLD.QuickNpc.OneNumberHint'}}">
+            <span>{{localize "GWORLD.QuickNpc.OneNumber"}}</span>
+            <input type="number" name="oneNumber" data-one-number value="{{oneNumber}}" min="1" step="1" aria-label="{{localize 'GWORLD.QuickNpc.OneNumber'}}">
+            <button type="button" class="qn-small" data-action="oneNumber">{{localize "GWORLD.QuickNpc.OneNumberSet"}}</button>
+            <button type="button" class="qn-small" data-action="rollOneNumber" data-tooltip="{{localize 'GWORLD.QuickNpc.OneNumberRollHint'}}"><i class="fa-solid fa-dice" inert></i> {{localize "GWORLD.QuickNpc.OneNumberRoll"}}</button>
+          </label>
+          <button type="button" class="qn-small" data-action="rollAttributes" data-tooltip="{{localize 'GWORLD.QuickNpc.RollAttributesHint'}}">
+            <i class="fa-solid fa-dice" inert></i> {{localize "GWORLD.QuickNpc.RollAttributes"}}
+          </button>
+        </span>
       </h2>
       <div class="qn-attribute-grid">
         {{#each attributes as |a|}}
           <label class="qn-attribute">
             <span class="qn-attribute-key">{{a.key}}</span>
-            <input type="number" data-field="attribute.{{a.key}}" value="{{a.value}}" min="1" step="1">
+            <input type="number" name="attribute.{{a.key}}" data-field="attribute.{{a.key}}" value="{{a.value}}" min="1" step="1">
             {{#if a.granted}}<span class="qn-granted" data-tooltip="{{localize 'GWORLD.QuickNpc.GrantedHint'}}">{{signed a.granted}} = {{a.total}}</span>{{/if}}
           </label>
         {{/each}}
@@ -61,7 +69,7 @@
           <label class="qn-secondary" data-tooltip="{{localize 'GWORLD.QuickNpc.SecondaryHint'}}">
             <span class="qn-secondary-key">{{localize s.label}}</span>
             <span class="qn-secondary-total">{{s.total}}</span>
-            <input type="number" data-field="secondary.{{s.key}}" value="{{s.bought}}" step="{{s.step}}" aria-label="{{localize s.label}}">
+            <input type="number" name="secondary.{{s.key}}" data-field="secondary.{{s.key}}" value="{{s.bought}}" step="{{s.step}}" aria-label="{{localize s.label}}">
             {{#if s.granted}}<span class="qn-granted" data-tooltip="{{localize 'GWORLD.QuickNpc.GrantedHint'}}">{{signed s.granted}}</span>{{/if}}
           </label>
         {{/each}}
@@ -72,7 +80,7 @@
         <label class="qn-secondary">
           <span class="qn-secondary-key">{{localize "GWORLD.QuickNpc.SizeModifier"}}</span>
           <span class="qn-secondary-total">{{signed sm}}</span>
-          <input type="number" data-field="sm" value="{{sm}}" step="1" aria-label="{{localize 'GWORLD.QuickNpc.SizeModifier'}}">
+          <input type="number" name="sm" data-field="sm" value="{{sm}}" step="1" aria-label="{{localize 'GWORLD.QuickNpc.SizeModifier'}}">
         </label>
       </div>
     </section>
@@ -86,7 +94,7 @@
             {{#each traits as |t|}}
               <li class="qn-row">
                 <span class="qn-row-name">{{t.name}}{{#if t.levels}} {{t.levels}}{{/if}}</span>
-                <input type="number" class="qn-row-num" data-field="trait.{{t.index}}" value="{{t.points}}" step="1" aria-label="{{localize 'GWORLD.QuickNpc.Points'}}">
+                <input type="number" class="qn-row-num" name="trait.{{t.index}}" data-field="trait.{{t.index}}" value="{{t.points}}" step="1" aria-label="{{localize 'GWORLD.QuickNpc.Points'}}">
                 <button type="button" class="qn-icon" data-action="remove" data-list="trait" data-index="{{t.index}}" data-tooltip="{{localize 'GWORLD.QuickNpc.Remove'}}" aria-label="{{localize 'GWORLD.QuickNpc.Remove'}}"><i class="fa-solid fa-xmark" inert></i></button>
               </li>
             {{/each}}
@@ -104,7 +112,7 @@
               <li class="qn-row">
                 <span class="qn-row-name">{{s.name}} <small class="qn-basis">{{s.basis}}</small></span>
                 <span class="qn-row-points" data-tooltip="{{localize 'GWORLD.QuickNpc.SkillPointsHint' points=s.points}}">[{{s.points}}]</span>
-                <input type="number" class="qn-row-num{{#if s.differs}} qn-differs{{/if}}" data-field="skill.{{s.index}}" value="{{s.level}}" min="1" step="1" aria-label="{{localize 'GWORLD.QuickNpc.Level'}}" {{#if s.differs}}data-tooltip="{{localize 'GWORLD.QuickNpc.LevelOnSheet' level=s.onSheet}}"{{/if}}>
+                <input type="number" class="qn-row-num{{#if s.differs}} qn-differs{{/if}}" name="skill.{{s.index}}" data-field="skill.{{s.index}}" value="{{s.level}}" min="1" step="1" aria-label="{{localize 'GWORLD.QuickNpc.Level'}}" {{#if s.differs}}data-tooltip="{{localize 'GWORLD.QuickNpc.LevelOnSheet' level=s.onSheet}}"{{/if}}>
                 <button type="button" class="qn-icon" data-action="rollSkill" data-index="{{s.index}}" data-tooltip="{{localize 'GWORLD.QuickNpc.RollSkillHint'}}" aria-label="{{localize 'GWORLD.QuickNpc.RollSkill'}}"><i class="fa-solid fa-dice" inert></i></button>
                 <button type="button" class="qn-icon" data-action="remove" data-list="skill" data-index="{{s.index}}" data-tooltip="{{localize 'GWORLD.QuickNpc.Remove'}}" aria-label="{{localize 'GWORLD.QuickNpc.Remove'}}"><i class="fa-solid fa-xmark" inert></i></button>
               </li>
@@ -139,7 +147,7 @@
           <button type="button" role="tab" class="qn-shelf{{#if s.active}} active{{/if}}" data-action="shelf" data-shelf="{{s.shelf}}" aria-selected="{{s.active}}">{{localize s.label}}</button>
         {{/each}}
       </div>
-      <input type="search" data-search value="{{search}}" placeholder="{{localize (concat 'GWORLD.QuickNpc.SearchPlaceholder.' shelf)}}" autocomplete="off" {{#if shelfLoading}}disabled{{/if}}>
+      <input type="search" name="search" data-search value="{{search}}" placeholder="{{localize (concat 'GWORLD.QuickNpc.SearchPlaceholder.' shelf)}}" autocomplete="off" {{#if shelfLoading}}disabled{{/if}}>
       {{#if shelfLoading}}
         <p class="hint">{{localize "GWORLD.QuickNpc.Loading"}}</p>
       {{else if matches.length}}
@@ -162,9 +170,9 @@
     <section class="v2-panel qn-panel qn-table">
       <h2 class="qn-heading">{{localize "GWORLD.Npc.Section"}}</h2>
       <div class="qn-table-grid">
-        <label><span>{{localize "GWORLD.Npc.GroupSize"}}</span><input type="number" data-field="groupSize" value="{{sketch.groupSize}}" min="1" step="1"></label>
-        <label class="qn-wide"><span>{{localize "GWORLD.Npc.Tactics"}}</span><input type="text" data-field="tactics" value="{{sketch.tactics}}" placeholder="{{localize 'GWORLD.QuickNpc.TacticsPlaceholder'}}" autocomplete="off"></label>
-        <label class="checkbox"><input type="checkbox" data-field="cannonFodder" {{#if sketch.cannonFodder}}checked{{/if}}> {{localize "GWORLD.QuickNpc.CannonFodder"}}</label>
+        <label><span>{{localize "GWORLD.Npc.GroupSize"}}</span><input type="number" name="groupSize" data-field="groupSize" value="{{sketch.groupSize}}" min="1" step="1"></label>
+        <label class="qn-wide"><span>{{localize "GWORLD.Npc.Tactics"}}</span><input type="text" name="tactics" data-field="tactics" value="{{sketch.tactics}}" placeholder="{{localize 'GWORLD.QuickNpc.TacticsPlaceholder'}}" autocomplete="off"></label>
+        <label class="checkbox"><input type="checkbox" name="cannonFodder" data-field="cannonFodder" {{#if sketch.cannonFodder}}checked{{/if}}> {{localize "GWORLD.QuickNpc.CannonFodder"}}</label>
       </div>
     </section>
   </div>
@@ -172,13 +180,13 @@
   <footer class="qn-footer">
     <label class="qn-folder">
       <span>{{localize "GWORLD.QuickNpc.Folder"}}</span>
-      <select data-field="folder">
+      <select name="folder" data-field="folder">
         <option value="">{{localize "GWORLD.QuickNpc.NoFolder"}}</option>
         {{#each folders as |f|}}<option value="{{f.id}}" {{#if f.selected}}selected{{/if}}>{{f.name}}</option>{{/each}}
       </select>
     </label>
     {{#if canPlace}}
-      <label class="checkbox"><input type="checkbox" data-field="placeToken" {{#if placeToken}}checked{{/if}}> {{localize "GWORLD.QuickNpc.PlaceToken"}}</label>
+      <label class="checkbox"><input type="checkbox" name="placeToken" data-field="placeToken" {{#if placeToken}}checked{{/if}}> {{localize "GWORLD.QuickNpc.PlaceToken"}}</label>
     {{/if}}
     <span class="qn-spacer"></span>
     <button type="button" data-action="clear" {{#if busy}}disabled{{/if}}><i class="fa-solid fa-eraser" inert></i> {{localize "GWORLD.QuickNpc.Clear"}}</button>
