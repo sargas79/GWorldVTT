@@ -85,6 +85,8 @@ export class QuickNpc extends HandlebarsApplicationMixin(ApplicationV2) {
     actions: {
       applyTemplate: QuickNpc.#onApplyTemplate,
       rollAttributes: QuickNpc.#onRollAttributes,
+      oneNumber: QuickNpc.#onOneNumber,
+      rollOneNumber: QuickNpc.#onRollOneNumber,
       shelf: QuickNpc.#onShelf,
       add: QuickNpc.#onAdd,
       remove: QuickNpc.#onRemove,
@@ -112,6 +114,8 @@ export class QuickNpc extends HandlebarsApplicationMixin(ApplicationV2) {
   #search = "";
   #folder = "";
   #placeToken = false;
+  /** The one score a trivial NPC is written with, shown in its box. */
+  #oneNumber = 10;
   #busy = false;
   #focusMemory: RememberedFocus | null = null;
 
@@ -221,6 +225,7 @@ export class QuickNpc extends HandlebarsApplicationMixin(ApplicationV2) {
         step: key === "basicSpeed" ? 0.25 : 1,
       })),
       sm: sketch.sm,
+      oneNumber: this.#oneNumber,
       dodge: Math.floor(derived.basicSpeed) + 3,
       points: sketchPoints(sketch),
       skills: sketch.skills.map((skill, index) => ({
@@ -461,6 +466,28 @@ export class QuickNpc extends HandlebarsApplicationMixin(ApplicationV2) {
       entries.find((e) => e.search === bare) ??
       entries.find((e) => e.search.replace(/\/tl/g, "") === bare);
     return hit ? { uuid: hit.uuid, name: hit.name, system: hit.system } : null;
+  }
+
+  /**
+   * "Some trivial characters require no planning at all" (p. 502): one score
+   * for all four attributes, so every roll the NPC ever makes is against it
+   * or defaults from it.
+   */
+  #writeOneNumber(score: number): void {
+    const value = Math.max(1, Math.floor(score) || 10);
+    this.#oneNumber = value;
+    this.#sketch.attributes = { ST: value, DX: value, IQ: value, HT: value };
+    this.#redraw();
+  }
+
+  static #onOneNumber(this: QuickNpc): void {
+    const input = this.element.querySelector<HTMLInputElement>("input[data-one-number]");
+    this.#writeOneNumber(Number(input?.value));
+  }
+
+  /** The one score rolled, 3d (Revised p. 502). */
+  static async #onRollOneNumber(this: QuickNpc): Promise<void> {
+    this.#writeOneNumber(trivialSkillLevel(await roll3d()));
   }
 
   static async #onRollAttributes(this: QuickNpc): Promise<void> {
