@@ -37,6 +37,7 @@ export * from "./trait-effects.js";
 export * from "./gear-effects.js";
 export * from "./trait-attacks.js";
 export * from "./templates.js";
+export * from "./quick-npc.js";
 export * from "./traits.js";
 export * from "./visibility.js";
 export * from "./disease.js";

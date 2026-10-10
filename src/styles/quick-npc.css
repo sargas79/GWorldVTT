@@ -1,0 +1,108 @@
+/*
+ * The Quick NPC window: an NPC Record Card to fill in (Campaigns pp. 502, 569).
+ * It borrows the character sheet's tokens and panels, so it looks like the
+ * sheet the NPC is about to have.
+ */
+
+.gworld.v2.gworld-quick-npc .window-content { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.gworld.v2.gworld-quick-npc .qn { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; height: 100%; }
+
+/* ── the head ─────────────────────────────────────────────────────────── */
+.gworld.v2.gworld-quick-npc .qn-header { flex: none; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 10px 14px; align-items: center; }
+.gworld.v2.gworld-quick-npc .qn-header .v2-identity { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.gworld.v2.gworld-quick-npc .qn-from { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gworld.v2.gworld-quick-npc .qn-name input,
+.gworld.v2.gworld-quick-npc .qn-appearance input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--v2-frame-line);
+  border-radius: 0;
+  color: var(--v2-frame-text);
+}
+.gworld.v2.gworld-quick-npc .qn-name input { font-family: var(--font-heading); font-size: 24px; height: 36px; }
+.gworld.v2.gworld-quick-npc .qn-appearance input { font-size: 13px; height: 26px; color: var(--v2-frame-muted); }
+.gworld.v2.gworld-quick-npc .qn-name input:focus,
+.gworld.v2.gworld-quick-npc .qn-appearance input:focus { border-bottom-color: var(--v2-steel); box-shadow: none; outline: none; }
+.gworld.v2.gworld-quick-npc .qn-ledger { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.gworld.v2.gworld-quick-npc .qn-ledger .v2-points { font-size: 17px; }
+.gworld.v2.gworld-quick-npc .qn-ledger-hint { font-size: 11px; color: var(--v2-frame-muted); white-space: nowrap; }
+
+/* ── the body ─────────────────────────────────────────────────────────── */
+.gworld.v2.gworld-quick-npc .qn-body { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.gworld.v2.gworld-quick-npc .qn-panel { padding: 8px 10px; }
+.gworld.v2.gworld-quick-npc .qn-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 0;
+}
+.gworld.v2.gworld-quick-npc .hint { margin: 4px 0 0; font-size: 12px; opacity: 0.8; }
+.gworld.v2.gworld-quick-npc .qn-small { width: auto; height: 24px; padding: 0 8px; font-size: 12px; line-height: 22px; }
+
+.gworld.v2.gworld-quick-npc .qn-template-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.gworld.v2.gworld-quick-npc .qn-template-row button { width: auto; }
+
+.gworld.v2.gworld-quick-npc .qn-attribute-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.gworld.v2.gworld-quick-npc .qn-attribute { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.gworld.v2.gworld-quick-npc .qn-attribute-key { font-family: var(--font-heading); font-size: 12px; letter-spacing: 0.08em; }
+.gworld.v2.gworld-quick-npc .qn-attribute input { width: 64px; height: 36px; text-align: center; font-size: 20px; font-weight: 600; }
+.gworld.v2.gworld-quick-npc .qn-secondary-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 8px; }
+.gworld.v2.gworld-quick-npc .qn-granted { font-size: 10px; color: var(--v2-gold, #c9a227); white-space: nowrap; }
+.gworld.v2.gworld-quick-npc .qn-secondary { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.gworld.v2.gworld-quick-npc .qn-secondary-key { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
+.gworld.v2.gworld-quick-npc .qn-secondary-total { font-size: 16px; font-weight: 600; }
+.gworld.v2.gworld-quick-npc .qn-secondary input { width: 48px; height: 22px; text-align: center; font-size: 11px; }
+
+.gworld.v2.gworld-quick-npc .qn-lists { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.gworld.v2.gworld-quick-npc .qn-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.gworld.v2.gworld-quick-npc .qn-row { display: flex; align-items: center; gap: 4px; min-height: 24px; }
+.gworld.v2.gworld-quick-npc .qn-row-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.gworld.v2.gworld-quick-npc .qn-basis { opacity: 0.6; font-size: 10px; }
+.gworld.v2.gworld-quick-npc .qn-row-points { flex: none; font-size: 10px; opacity: 0.6; }
+.gworld.v2.gworld-quick-npc .qn-row-num { flex: none; width: 44px; height: 22px; text-align: center; font-size: 12px; }
+.gworld.v2.gworld-quick-npc .qn-row-num.qn-differs { border-color: var(--v2-gold, #c9a227); }
+.gworld.v2.gworld-quick-npc .qn-icon { flex: none; width: 22px; height: 22px; padding: 0; line-height: 20px; font-size: 11px; }
+.gworld.v2.gworld-quick-npc .qn-empty { margin: 0; }
+
+.gworld.v2.gworld-quick-npc .qn-shelves { display: flex; gap: 4px; margin-bottom: 6px; }
+.gworld.v2.gworld-quick-npc .qn-shelf { width: auto; height: 24px; padding: 0 10px; font-size: 12px; line-height: 22px; opacity: 0.75; }
+.gworld.v2.gworld-quick-npc .qn-shelf.active { opacity: 1; border-color: var(--v2-steel); color: var(--v2-steel-deep); }
+.gworld.v2.gworld-quick-npc .qn-add input[type="search"] { width: 100%; }
+.gworld.v2.gworld-quick-npc .qn-matches { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; max-height: 220px; overflow: auto; }
+.gworld.v2.gworld-quick-npc .qn-match { display: flex; justify-content: space-between; gap: 8px; width: 100%; height: auto; min-height: 24px; padding: 2px 8px; text-align: left; font-size: 12px; line-height: 1.3; }
+.gworld.v2.gworld-quick-npc .qn-match-name { flex: 1 1 auto; min-width: 0; }
+.gworld.v2.gworld-quick-npc .qn-match-summary { flex: none; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.65; font-size: 11px; }
+
+.gworld.v2.gworld-quick-npc .qn-table-grid { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: center; }
+.gworld.v2.gworld-quick-npc .qn-table-grid label { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.gworld.v2.gworld-quick-npc .qn-table-grid label > span { white-space: nowrap; }
+.gworld.v2.gworld-quick-npc .qn-table-grid input[type="number"] { width: 56px; }
+.gworld.v2.gworld-quick-npc .qn-table-grid .qn-wide input { flex: 1 1 auto; }
+.gworld.v2.gworld-quick-npc .qn-table-grid .checkbox { grid-column: 1 / -1; }
+
+/* ── the foot ─────────────────────────────────────────────────────────── */
+.gworld.v2.gworld-quick-npc .qn-footer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--v2-frame-line);
+  background: var(--v2-frame);
+  color: var(--v2-frame-text);
+}
+.gworld.v2.gworld-quick-npc .qn-folder { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.gworld.v2.gworld-quick-npc .qn-folder select { width: 160px; }
+.gworld.v2.gworld-quick-npc .qn-footer .checkbox { font-size: 12px; }
+.gworld.v2.gworld-quick-npc .qn-spacer { flex: 1 1 auto; }
+.gworld.v2.gworld-quick-npc .qn-footer button { width: auto; }
+
+/* The button beside Create Actor in the sidebar. */
+#actors .directory-header .header-actions .gworld-quick-npc-open { flex: 0 1 auto; }

@@ -1,0 +1,2159 @@
+[
+  {
+    "_id": "0cb6b833bd128ca3",
+    "name": "City Guard",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 51,
+      "attributes": {
+        "ST": 11,
+        "DX": 11,
+        "IQ": 10,
+        "HT": 11
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Spear",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.cf0c0702bcbcf754",
+          "group": "",
+          "note": "(A) DX+1"
+        },
+        {
+          "name": "Shield (Shield)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.5ffdd79dc4aa659b",
+          "group": "",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Brawling",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.edd7f10bf0ba186f",
+          "group": "",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Observation",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.569f20daf69ffd4a",
+          "group": "",
+          "note": "(A) Per+1"
+        },
+        {
+          "name": "Area Knowledge",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.f70bd677ccd18378",
+          "group": "",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "Intimidation",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2291e06b5c417684",
+          "group": "",
+          "note": "(A) Will+0"
+        },
+        {
+          "name": "Legal Enforcement Powers",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 1,
+          "uuid": "Compendium.gworld.advantages.Item.f23e93aec6733164",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Duty",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 3,
+          "uuid": "Compendium.gworld.disadvantages.Item.a34062d717d21a61",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Spear",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.9a6b7230ff819f07",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Medium Shield",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.c219d25485bbfa3c",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Leather Armor (suit)",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.b23fb871419ddf58",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Pot-Helm",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.d1b3105e51aae567",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Calls for help before closing; fights in pairs."
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 502"
+    }
+  },
+  {
+    "_id": "c7f592ab21058678",
+    "name": "Storekeeper",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 35,
+      "attributes": {
+        "ST": 10,
+        "DX": 10,
+        "IQ": 11,
+        "HT": 10
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Merchant",
+          "itemType": "skill",
+          "points": 8,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.ae0fe1447d64725a",
+          "group": "",
+          "note": "(A) IQ+2"
+        },
+        {
+          "name": "Accounting",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.c777d9315248af9f",
+          "group": "",
+          "note": "(H) IQ+0"
+        },
+        {
+          "name": "Savoir-Faire",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.315ec0caaad55787",
+          "group": "",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "Area Knowledge",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.f70bd677ccd18378",
+          "group": "",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "Detect Lies",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.8d6bf9fc013da4fc",
+          "group": "",
+          "note": "(H) Per-1"
+        },
+        {
+          "name": "Fast-Talk",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.ec22bedaf6a0acd5",
+          "group": "",
+          "note": "(A) IQ+0"
+        },
+        {
+          "name": "Wealth",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 1,
+          "uuid": "Compendium.gworld.advantages.Item.d66e716cb4d5a34f",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Greed",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.22b17e5d22c33999",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Small Knife",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.e7f5e882715d9145",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Knows everyone on the street, and what they owe."
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 502"
+    }
+  },
+  {
+    "_id": "be262242210b413d",
+    "name": "Thief",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 62,
+      "attributes": {
+        "ST": 10,
+        "DX": 12,
+        "IQ": 11,
+        "HT": 10
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Stealth",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.a4795ae613e011f7",
+          "group": "",
+          "note": "(A) DX+1"
+        },
+        {
+          "name": "Pickpocket",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.1684b5210ed39eee",
+          "group": "",
+          "note": "(H) DX+0"
+        },
+        {
+          "name": "Lockpicking/TL",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.8744ea9e4e264ddf",
+          "group": "",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Climbing",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.27814a5a242c007c",
+          "group": "",
+          "note": "(A) DX+0"
+        },
+        {
+          "name": "Knife",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.9736c2a7a2ec8ab7",
+          "group": "",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Streetwise",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.62204d82ad934eb7",
+          "group": "",
+          "note": "(A) IQ+0"
+        },
+        {
+          "name": "Holdout",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2f479e782510a650",
+          "group": "",
+          "note": "(A) IQ+0"
+        },
+        {
+          "name": "Filch",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2e7f76b6d7347b42",
+          "group": "",
+          "note": "(A) DX+0"
+        },
+        {
+          "name": "Social Stigma (Criminal Record)",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.58da5d3fa64a5db4",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Greed",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.22b17e5d22c33999",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Large Knife",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.f0093fef2ac34e67",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Runs rather than fights; fights only when cornered."
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 502"
+    }
+  },
+  {
+    "_id": "bc84723b29d773a0",
+    "name": "Minstrel",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 65,
+      "attributes": {
+        "ST": 9,
+        "DX": 11,
+        "IQ": 11,
+        "HT": 10
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Musical Instrument",
+          "itemType": "skill",
+          "points": 12,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2f3681840b7d5397",
+          "group": "",
+          "note": "(H) IQ+2"
+        },
+        {
+          "name": "Singing",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.d905e040d4a55b3a",
+          "group": "",
+          "note": "(E) HT+2"
+        },
+        {
+          "name": "Performance",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.a5f73319a76cfd3d",
+          "group": "",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Carousing",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.99c8d2ecd0a7475d",
+          "group": "",
+          "note": "(E) HT+1"
+        },
+        {
+          "name": "Public Speaking (Storytelling)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.1622c32ab043f827",
+          "group": "",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "Savoir-Faire (High Society)",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.619778bd91eff674",
+          "group": "",
+          "note": "(E) IQ+0"
+        },
+        {
+          "name": "Voice",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 0,
+          "uuid": "Compendium.gworld.advantages.Item.a5f7b94472b6d617",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Charisma",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 1,
+          "uuid": "Compendium.gworld.advantages.Item.adcb3389731c7237",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Compulsive Carousing",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.04ba15eaf68aed41",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Small Knife",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.e7f5e882715d9145",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Hears every rumour and sells the good ones twice."
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 502"
+    }
+  },
+  {
+    "_id": "11194378d8f91d8e",
+    "name": "Drunk",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": -63,
+      "attributes": {
+        "ST": 10,
+        "DX": 9,
+        "IQ": 9,
+        "HT": 10
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Carousing",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.99c8d2ecd0a7475d",
+          "group": "",
+          "note": "(E) HT+2"
+        },
+        {
+          "name": "Brawling",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.edd7f10bf0ba186f",
+          "group": "",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Streetwise",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.62204d82ad934eb7",
+          "group": "",
+          "note": "(A) IQ+0"
+        },
+        {
+          "name": "Panhandling",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.14eec92b2b1652f9",
+          "group": "",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "Area Knowledge",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.f70bd677ccd18378",
+          "group": "",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "Alcoholism",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.a8f990e3f35697fd",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Wealth (Disadvantage)",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 2,
+          "uuid": "Compendium.gworld.disadvantages.Item.603d2fa16a7aa0b5",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Unfit",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.ef833c20558f93ec",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Saw something last night, if anyone buys him a drink."
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 502"
+    }
+  },
+  {
+    "_id": "7a040514e57ba0d9",
+    "name": "Bodyguard",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 116,
+      "attributes": {
+        "ST": 12,
+        "DX": 12,
+        "IQ": 10,
+        "HT": 12
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Guns/TL (Pistol)",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.78a13fc3ebb03407",
+          "group": "",
+          "note": "(E) DX+2"
+        },
+        {
+          "name": "Brawling",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.edd7f10bf0ba186f",
+          "group": "",
+          "note": "(E) DX+2"
+        },
+        {
+          "name": "Wrestling",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.4c4ea9f7f9e1e8b5",
+          "group": "",
+          "note": "(A) DX+1"
+        },
+        {
+          "name": "Observation",
+          "itemType": "skill",
+          "points": 8,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.569f20daf69ffd4a",
+          "group": "",
+          "note": "(A) Per+2"
+        },
+        {
+          "name": "Body Language",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.40bf2b3cf6f2273c",
+          "group": "",
+          "note": "(A) Per+1"
+        },
+        {
+          "name": "Intimidation",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2291e06b5c417684",
+          "group": "",
+          "note": "(A) Will+1"
+        },
+        {
+          "name": "Driving/TL (Automobile)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.a636b074e1e6f0cb",
+          "group": "",
+          "note": "(A) DX+0"
+        },
+        {
+          "name": "First Aid/TL",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2d5da4f00a45aef0",
+          "group": "",
+          "note": "(E) IQ+0"
+        },
+        {
+          "name": "Combat Reflexes",
+          "itemType": "trait",
+          "points": 15,
+          "levels": 0,
+          "uuid": "Compendium.gworld.advantages.Item.7e0b5b4a89b6987c",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Duty",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 2,
+          "uuid": "Compendium.gworld.disadvantages.Item.a34062d717d21a61",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Code of Honor (Professional)",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.a816033b7ce2615c",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Auto Pistol, 9mm (TL 7)",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.b07bf305d8af1aef",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Ballistic Vest (TL 8)",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.a1e5c5dd96264d1d",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Gets the principal out first; shoots second."
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 502"
+    }
+  },
+  {
+    "_id": "1f17539f77b93977",
+    "name": "Police Officer",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 84,
+      "attributes": {
+        "ST": 11,
+        "DX": 11,
+        "IQ": 11,
+        "HT": 11
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Guns/TL (Pistol)",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.78a13fc3ebb03407",
+          "group": "",
+          "note": "(E) DX+2"
+        },
+        {
+          "name": "Brawling",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.edd7f10bf0ba186f",
+          "group": "",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Wrestling",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.4c4ea9f7f9e1e8b5",
+          "group": "",
+          "note": "(A) DX+0"
+        },
+        {
+          "name": "Criminology/TL",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.1f4eddbacdc08cc0",
+          "group": "",
+          "note": "(A) IQ+0"
+        },
+        {
+          "name": "Law",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2f8b10cad184050b",
+          "group": "",
+          "note": "(H) IQ-1"
+        },
+        {
+          "name": "Observation",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.569f20daf69ffd4a",
+          "group": "",
+          "note": "(A) Per+1"
+        },
+        {
+          "name": "Driving/TL (Automobile)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.a636b074e1e6f0cb",
+          "group": "",
+          "note": "(A) DX+0"
+        },
+        {
+          "name": "First Aid/TL",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2d5da4f00a45aef0",
+          "group": "",
+          "note": "(E) IQ+0"
+        },
+        {
+          "name": "Intimidation",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2291e06b5c417684",
+          "group": "",
+          "note": "(A) Will+0"
+        },
+        {
+          "name": "Area Knowledge",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.f70bd677ccd18378",
+          "group": "",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "Savoir-Faire (Police)",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.f87e98b12c4b97be",
+          "group": "",
+          "note": "(E) IQ+0"
+        },
+        {
+          "name": "Legal Enforcement Powers",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 2,
+          "uuid": "Compendium.gworld.advantages.Item.f23e93aec6733164",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Police Rank",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 1,
+          "uuid": "Compendium.gworld.advantages.Item.70c352170067b965",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Duty",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 3,
+          "uuid": "Compendium.gworld.disadvantages.Item.a34062d717d21a61",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Sense of Duty",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 2,
+          "uuid": "Compendium.gworld.disadvantages.Item.73ead9ed1f8eed8e",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Auto Pistol, 9mm (TL 7)",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.b07bf305d8af1aef",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Baton",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.e3048ec18c247c50",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Ballistic Vest (TL 8)",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.a1e5c5dd96264d1d",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Calls it in, then waits for backup unless someone is in danger."
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 502"
+    }
+  },
+  {
+    "_id": "d442b225c33c004d",
+    "name": "Detective",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 117,
+      "attributes": {
+        "ST": 10,
+        "DX": 11,
+        "IQ": 13,
+        "HT": 10
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Criminology/TL",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.1f4eddbacdc08cc0",
+          "group": "",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Detect Lies",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.8d6bf9fc013da4fc",
+          "group": "",
+          "note": "(H) Per+0"
+        },
+        {
+          "name": "Interrogation",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.065593e175d2bd85",
+          "group": "",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Search",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.c785a69e1246ce20",
+          "group": "",
+          "note": "(A) Per+1"
+        },
+        {
+          "name": "Observation",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.569f20daf69ffd4a",
+          "group": "",
+          "note": "(A) Per+1"
+        },
+        {
+          "name": "Streetwise",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.62204d82ad934eb7",
+          "group": "",
+          "note": "(A) IQ+0"
+        },
+        {
+          "name": "Shadowing",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.a7c87feb8b231112",
+          "group": "",
+          "note": "(A) IQ+0"
+        },
+        {
+          "name": "Guns/TL (Pistol)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.78a13fc3ebb03407",
+          "group": "",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Law",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2f8b10cad184050b",
+          "group": "",
+          "note": "(H) IQ-1"
+        },
+        {
+          "name": "Research/TL",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2a1fc1e387ffe16e",
+          "group": "",
+          "note": "(A) IQ+0"
+        },
+        {
+          "name": "Area Knowledge",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.f70bd677ccd18378",
+          "group": "",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "Legal Enforcement Powers",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 2,
+          "uuid": "Compendium.gworld.advantages.Item.f23e93aec6733164",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Police Rank",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 2,
+          "uuid": "Compendium.gworld.advantages.Item.70c352170067b965",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Duty",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 3,
+          "uuid": "Compendium.gworld.disadvantages.Item.a34062d717d21a61",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Workaholic",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.9613b3fbe339a3d9",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Revolver, .38",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.065fea7a8cb11a2b",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Asks the question he already knows the answer to."
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 502"
+    }
+  },
+  {
+    "_id": "abdc8ec8f74fec18",
+    "name": "Thug",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 45,
+      "attributes": {
+        "ST": 12,
+        "DX": 11,
+        "IQ": 9,
+        "HT": 11
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Brawling",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.edd7f10bf0ba186f",
+          "group": "",
+          "note": "(E) DX+2"
+        },
+        {
+          "name": "Knife",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.9736c2a7a2ec8ab7",
+          "group": "",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Intimidation",
+          "itemType": "skill",
+          "points": 8,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2291e06b5c417684",
+          "group": "",
+          "note": "(A) Will+2"
+        },
+        {
+          "name": "Streetwise",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.62204d82ad934eb7",
+          "group": "",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Wrestling",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.4c4ea9f7f9e1e8b5",
+          "group": "",
+          "note": "(A) DX+0"
+        },
+        {
+          "name": "High Pain Threshold",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 0,
+          "uuid": "Compendium.gworld.advantages.Item.d2fb98faa5ee5c79",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Bully",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.180701fe29799d7b",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Social Stigma (Criminal Record)",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.58da5d3fa64a5db4",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Large Knife",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.f0093fef2ac34e67",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Blackjack",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.7b5daee950aad783",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Picks on the smallest; breaks when the first one goes down."
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 502"
+    }
+  },
+  {
+    "_id": "fd14d65d6b90928b",
+    "name": "Soldier",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 86,
+      "attributes": {
+        "ST": 11,
+        "DX": 12,
+        "IQ": 10,
+        "HT": 12
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Guns/TL (Rifle)",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.989b0d54190c386e",
+          "group": "",
+          "note": "(E) DX+2"
+        },
+        {
+          "name": "Soldier/TL",
+          "itemType": "skill",
+          "points": 8,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.cb5ff2f0dd2f6037",
+          "group": "",
+          "note": "(A) IQ+2"
+        },
+        {
+          "name": "Brawling",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.edd7f10bf0ba186f",
+          "group": "",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Knife",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.9736c2a7a2ec8ab7",
+          "group": "",
+          "note": "(E) DX+0"
+        },
+        {
+          "name": "Hiking",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.6b5686f50951b6d2",
+          "group": "",
+          "note": "(A) HT+0"
+        },
+        {
+          "name": "Camouflage",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2f4b253696368185",
+          "group": "",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "First Aid/TL",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2d5da4f00a45aef0",
+          "group": "",
+          "note": "(E) IQ+0"
+        },
+        {
+          "name": "Savoir-Faire (Military)",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.5f142d9ca7d7c02e",
+          "group": "",
+          "note": "(E) IQ+0"
+        },
+        {
+          "name": "Fit",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "Compendium.gworld.advantages.Item.1f23004b1b5aee8c",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Duty",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 3,
+          "uuid": "Compendium.gworld.disadvantages.Item.a34062d717d21a61",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Assault Rifle, 5.56mm",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.3cecc7258031fdcc",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Large Knife",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.f0093fef2ac34e67",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Tactical Vest (TL 8)",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.4e0ace3c5753235c",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Takes cover, keeps formation, follows the last order given."
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 502"
+    }
+  },
+  {
+    "_id": "2e758ffb71e2ade6",
+    "name": "Priest",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 41,
+      "attributes": {
+        "ST": 9,
+        "DX": 10,
+        "IQ": 12,
+        "HT": 10
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Theology",
+          "itemType": "skill",
+          "points": 8,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.829e824dee7f5eb5",
+          "group": "",
+          "note": "(H) IQ+1"
+        },
+        {
+          "name": "Religious Ritual",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.e4e4294de7919642",
+          "group": "",
+          "note": "(H) IQ+0"
+        },
+        {
+          "name": "Public Speaking (Oratory)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2d3ea7a32140f9dc",
+          "group": "",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "Diplomacy",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.9dbb1383d98fbbe6",
+          "group": "",
+          "note": "(H) IQ-1"
+        },
+        {
+          "name": "Teaching",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.571f9fbde5d31249",
+          "group": "",
+          "note": "(A) IQ+0"
+        },
+        {
+          "name": "First Aid/TL",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2d5da4f00a45aef0",
+          "group": "",
+          "note": "(E) IQ+0"
+        },
+        {
+          "name": "Savoir-Faire",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.315ec0caaad55787",
+          "group": "",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "Clerical Investment",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 0,
+          "uuid": "Compendium.gworld.advantages.Item.366b9d097b2d7def",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Religious Rank",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 1,
+          "uuid": "Compendium.gworld.advantages.Item.fbaa3d64492cad84",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Sense of Duty",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 3,
+          "uuid": "Compendium.gworld.disadvantages.Item.73ead9ed1f8eed8e",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Honesty",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.c6fa31d710721b88",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Will not fight; will not leave the wounded."
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 502"
+    }
+  },
+  {
+    "_id": "c4a675e8c7eb74b3",
+    "name": "Scholar",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 61,
+      "attributes": {
+        "ST": 9,
+        "DX": 10,
+        "IQ": 13,
+        "HT": 10
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Research/TL",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2a1fc1e387ffe16e",
+          "group": "",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "History",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.cd834ff8572552dd",
+          "group": "",
+          "note": "(H) IQ+0"
+        },
+        {
+          "name": "Literature",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.63733a8f4ba32695",
+          "group": "",
+          "note": "(H) IQ-1"
+        },
+        {
+          "name": "Writing",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.fe8551d2398d3098",
+          "group": "",
+          "note": "(A) IQ+0"
+        },
+        {
+          "name": "Teaching",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.571f9fbde5d31249",
+          "group": "",
+          "note": "(A) IQ+0"
+        },
+        {
+          "name": "Public Speaking",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.b32908e05f67ee9a",
+          "group": "",
+          "note": "(A) IQ-1"
+        },
+        {
+          "name": "Savoir-Faire (High Society)",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.619778bd91eff674",
+          "group": "",
+          "note": "(E) IQ+0"
+        },
+        {
+          "name": "Status",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 1,
+          "uuid": "Compendium.gworld.advantages.Item.b706447fd160c890",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Curious",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.c9d39ae7eda293a3",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Skinny",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.9c6310b404d4feec",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Answers a question with three more, and a book to borrow."
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 502"
+    }
+  },
+  {
+    "_id": "1f9ae84686797460",
+    "name": "Doctor",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 118,
+      "attributes": {
+        "ST": 10,
+        "DX": 11,
+        "IQ": 13,
+        "HT": 11
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Physician/TL",
+          "itemType": "skill",
+          "points": 8,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.4d4ee4fed2474dfa",
+          "group": "",
+          "note": "(H) IQ+1"
+        },
+        {
+          "name": "Diagnosis/TL",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.e7f230735efb9db9",
+          "group": "",
+          "note": "(H) IQ+0"
+        },
+        {
+          "name": "First Aid/TL",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2d5da4f00a45aef0",
+          "group": "",
+          "note": "(E) IQ+2"
+        },
+        {
+          "name": "Surgery/TL",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.6c34541a0006ea48",
+          "group": "",
+          "note": "(VH) IQ-1"
+        },
+        {
+          "name": "Pharmacy/TL (Synthetic)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.364fafcca939e14a",
+          "group": "",
+          "note": "(H) IQ-1"
+        },
+        {
+          "name": "Savoir-Faire",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.315ec0caaad55787",
+          "group": "",
+          "note": "(E) IQ+0"
+        },
+        {
+          "name": "Status",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 1,
+          "uuid": "Compendium.gworld.advantages.Item.b706447fd160c890",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Wealth",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 1,
+          "uuid": "Compendium.gworld.advantages.Item.d66e716cb4d5a34f",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Sense of Duty",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 2,
+          "uuid": "Compendium.gworld.disadvantages.Item.73ead9ed1f8eed8e",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Workaholic",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.9613b3fbe339a3d9",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Treats whoever is bleeding, whichever side they are on."
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 502"
+    }
+  },
+  {
+    "_id": "8148985591b5a9a6",
+    "name": "Street Kid",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 27,
+      "attributes": {
+        "ST": 8,
+        "DX": 12,
+        "IQ": 10,
+        "HT": 10
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Stealth",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.a4795ae613e011f7",
+          "group": "",
+          "note": "(A) DX+1"
+        },
+        {
+          "name": "Filch",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2e7f76b6d7347b42",
+          "group": "",
+          "note": "(A) DX+0"
+        },
+        {
+          "name": "Pickpocket",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.1684b5210ed39eee",
+          "group": "",
+          "note": "(H) DX-1"
+        },
+        {
+          "name": "Running",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.9b5198058637c5fd",
+          "group": "",
+          "note": "(A) HT+1"
+        },
+        {
+          "name": "Climbing",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.27814a5a242c007c",
+          "group": "",
+          "note": "(A) DX+0"
+        },
+        {
+          "name": "Scrounging",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.ab395e0a0d66568b",
+          "group": "",
+          "note": "(E) Per+2"
+        },
+        {
+          "name": "Streetwise",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.62204d82ad934eb7",
+          "group": "",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Urban Survival",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.3d10cb8f87c4bb75",
+          "group": "",
+          "note": "(A) Per+1"
+        },
+        {
+          "name": "Area Knowledge",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.f70bd677ccd18378",
+          "group": "",
+          "note": "(E) IQ+2"
+        },
+        {
+          "name": "Fast-Talk",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.ec22bedaf6a0acd5",
+          "group": "",
+          "note": "(A) IQ+0"
+        },
+        {
+          "name": "Social Stigma (Minor)",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.80ae9462fcbaad80",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Wealth (Disadvantage)",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 2,
+          "uuid": "Compendium.gworld.disadvantages.Item.603d2fa16a7aa0b5",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Skinny",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.9c6310b404d4feec",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Small Knife",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.e7f5e882715d9145",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Knows a way over every wall and under every fence."
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 502"
+    }
+  },
+  {
+    "_id": "542e4e45b7f8dc3b",
+    "name": "Gang Boss",
+    "type": "template",
+    "system": {
+      "kind": "character",
+      "statedCost": 92,
+      "attributes": {
+        "ST": 11,
+        "DX": 11,
+        "IQ": 12,
+        "HT": 11
+      },
+      "secondary": {
+        "hp": 0,
+        "will": 0,
+        "per": 0,
+        "fp": 0,
+        "basicSpeed": 0,
+        "basicMove": 0
+      },
+      "sizeModifier": 0,
+      "attributeCost": 0,
+      "entries": [
+        {
+          "name": "Leadership",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.9f48b3d8c56a4d1c",
+          "group": "",
+          "note": "(A) IQ+1"
+        },
+        {
+          "name": "Intimidation",
+          "itemType": "skill",
+          "points": 4,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.2291e06b5c417684",
+          "group": "",
+          "note": "(A) Will+1"
+        },
+        {
+          "name": "Streetwise",
+          "itemType": "skill",
+          "points": 8,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.62204d82ad934eb7",
+          "group": "",
+          "note": "(A) IQ+2"
+        },
+        {
+          "name": "Guns/TL (Pistol)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.78a13fc3ebb03407",
+          "group": "",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Brawling",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.edd7f10bf0ba186f",
+          "group": "",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Knife",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.9736c2a7a2ec8ab7",
+          "group": "",
+          "note": "(E) DX+1"
+        },
+        {
+          "name": "Fast-Talk",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.ec22bedaf6a0acd5",
+          "group": "",
+          "note": "(A) IQ+0"
+        },
+        {
+          "name": "Savoir-Faire (Mafia)",
+          "itemType": "skill",
+          "points": 2,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.88c4bf4d39747063",
+          "group": "",
+          "note": "(E) IQ+1"
+        },
+        {
+          "name": "Merchant",
+          "itemType": "skill",
+          "points": 1,
+          "levels": 0,
+          "uuid": "Compendium.gworld.skills.Item.ae0fe1447d64725a",
+          "group": "",
+          "note": "(A) IQ-1"
+        },
+        {
+          "name": "Charisma",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 1,
+          "uuid": "Compendium.gworld.advantages.Item.adcb3389731c7237",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Status",
+          "itemType": "trait",
+          "points": 5,
+          "levels": 1,
+          "uuid": "Compendium.gworld.advantages.Item.b706447fd160c890",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Wealth",
+          "itemType": "trait",
+          "points": 10,
+          "levels": 1,
+          "uuid": "Compendium.gworld.advantages.Item.d66e716cb4d5a34f",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Callous",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.67d0ef6eecde8cda",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Greed",
+          "itemType": "trait",
+          "points": -15,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.22b17e5d22c33999",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Social Stigma (Criminal Record)",
+          "itemType": "trait",
+          "points": -5,
+          "levels": 0,
+          "uuid": "Compendium.gworld.disadvantages.Item.58da5d3fa64a5db4",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Enemy (Less powerful group)",
+          "itemType": "trait",
+          "points": -10,
+          "levels": 1,
+          "uuid": "Compendium.gworld.disadvantages.Item.c2e3354aa44d3377",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Auto Pistol, .45",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.37cd85bb522e82a2",
+          "group": "",
+          "note": ""
+        },
+        {
+          "name": "Large Knife",
+          "itemType": "equipment",
+          "points": 0,
+          "levels": 0,
+          "uuid": "Compendium.gworld.equipment.Item.f0093fef2ac34e67",
+          "group": "",
+          "note": ""
+        }
+      ],
+      "choices": [],
+      "features": [
+        "Lets the thugs fight; talks when the fight turns."
+      ],
+      "tabooTraits": [],
+      "description": "",
+      "reference": "Basic Set: Campaigns p. 502"
+    }
+  }
+]

@@ -15,6 +15,7 @@ import "./styles/sheet-v2.css";
 import "./styles/party.css";
 import "./styles/vehicle.css";
 import "./styles/gm-screen.css";
+import "./styles/quick-npc.css";
 
 import * as rules from "./rules/index.js";
 import { registerChatHooks } from "./system/chat.js";
@@ -58,6 +59,7 @@ import { GWorldGenericItemSheet } from "./system/sheets/generic-item-sheet.js";
 import { setGenericSheetRegistrar } from "./system/data-extensions.js";
 import { registerSheetExtensionHooks, settleGmTools } from "./system/sheet-extensions.js";
 import { registerGmScreen } from "./system/gm-screen/register.js";
+import { registerQuickNpc } from "./system/apps/quick-npc.js";
 import { registerDemolitionTool } from "./system/demolition.js";
 import { GWorldNpcSheet } from "./system/sheets/npc-sheet.js";
 import { GWorldVehicleSheet } from "./system/sheets/vehicle-sheet.js";
@@ -122,6 +124,8 @@ Hooks.once("init", () => {
   registerSettings();
   // The Basic Set's tables in one window, for the GM and, read-only, players.
   registerGmScreen();
+  // An NPC from notes on its important statistics, for the GM (Campaigns p. 502).
+  registerQuickNpc();
   registerMigrationSettings();
   configureDeprecatedData();
   registerTemplateHelpers();

@@ -24,7 +24,9 @@ https://github.com/sargas79/GWorldVTT/releases/latest/download/system.json
   text.
   Point totals and a log of awarded points by session. Steppers for skill and
   trait levels. A guided character build. Templates, racial templates and
-  meta-traits that can be removed cleanly, and GM-made templates.
+  meta-traits that can be removed cleanly, and GM-made templates. A Quick NPC
+  window for the GM: notes on the important statistics, skills written as
+  levels, fifteen generic NPCs to start from, and the NPC made in one press.
 - **The party:** a Party actor whose members nest under it in the Actors
   sidebar. Its sheet shows every member's hit points, fatigue, Will,
   Perception, speed, defenses, DR, load, points and conditions, the best of

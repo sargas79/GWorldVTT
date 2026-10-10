@@ -32,6 +32,8 @@ import { declareRapidRecovery, extrasCapRefusal, extrasThisRound } from "./comba
 import { combiningSt, isSkilledMarcher, postCombiningSt, powerEffortFp, rollPowerExtraEffort, tradeFatigueForBonus } from "./extra-effort-extras.js";
 import { currentBad, endHamClause, hamClauseOf, invokeHamClause, setBad, unstattedNpcSkill } from "./task-rules.js";
 import { gmScreenApi } from "./gm-screen/api.js";
+import { createQuickNpc, openQuickNpc } from "./quick-npc.js";
+import { emptySketch, type NpcSketch } from "../rules/quick-npc.js";
 import { containersApi } from "./container-moves.js";
 import * as rules from "../rules/index.js";
 import { skillLevelOf } from "./skill-level.js";
@@ -120,7 +122,7 @@ import { simplifiedResourcesApi } from "./simplified-resources.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.193.0";
+export const API_VERSION = "1.194.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -128,6 +130,19 @@ export const READY_HOOK = "gworld.ready";
 type AttributeKey = "ST" | "DX" | "IQ" | "HT" | "Will" | "Per";
 
 /** Reads a character's worked-out values without reaching into the data model. */
+/**
+ * The Quick NPC tool (since 1.194.0): "notes on their important statistics"
+ * rather than a full sheet (Campaigns p. 502). `open()` shows the window to
+ * the GM; `create(sketch)` makes the NPC actor from a sketch without it, the
+ * skills priced from the levels written; `emptySketch()` is a blank card to
+ * fill in. Both refuse anyone but the GM.
+ */
+const quickNpcApi = Object.freeze({
+  open: () => openQuickNpc(),
+  create: (sketch: NpcSketch, options?: { folder?: string | null; from?: string[]; placeToken?: boolean }) => createQuickNpc(sketch, options),
+  emptySketch,
+});
+
 const actors = {
   /** Everything the system worked out for an actor this preparation, or null. Read-only. */
   derived(actor: any): Record<string, any> | null {
@@ -949,6 +964,8 @@ export interface GWorldApi {
   readonly gmScreen: typeof gmScreenApi;
   /** Containers (since 1.159.0): which items are containers, what is in one, and putting gear in or taking it out. */
   readonly containers: typeof containersApi;
+  /** The Quick NPC tool (since 1.194.0): an NPC from notes on its important statistics (Campaigns p. 502), for the GM. */
+  readonly quickNpc: typeof quickNpcApi;
   /** The hooks the API fires, by name; `partyChanged` since 1.68.0, `campaignChanged` since 1.82.0. */
   readonly hooks: { readonly registerRules: string; readonly ready: string; readonly partyChanged: string; readonly campaignChanged: string };
   /** Whether this API satisfies a semver range, as a module's manifest would declare it. */
@@ -1171,6 +1188,7 @@ export function createApi(): GWorldApi {
     simplifiedResources: simplifiedResourcesApi,
     gmScreen: gmScreenApi,
     containers: containersApi,
+    quickNpc: quickNpcApi,
     hooks: Object.freeze({ registerRules: REGISTER_RULES_HOOK, ready: READY_HOOK, partyChanged: PARTY_CHANGED_HOOK, campaignChanged: CAMPAIGN_CHANGED_HOOK }),
     satisfies: (range: string) => satisfiesApiRange(API_VERSION, range),
   });
