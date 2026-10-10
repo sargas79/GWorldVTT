@@ -30,7 +30,9 @@ import {
   levelOnSheet,
   rolledAttributes,
   sketchAttributeScore,
+  sketchAttributes,
   sketchPoints,
+  sketchSecondary,
   skillItemData,
   trivialSkillLevel,
   type NpcSketch,
@@ -38,7 +40,6 @@ import {
   type SketchGear,
   type SketchTrait,
 } from "../../rules/quick-npc.js";
-import { secondaryCharacteristics } from "../../rules/attributes.js";
 import { relativeLevelForPoints } from "../../rules/skills.js";
 import { entriesInGroup, requiredEntries, type Template, type TemplateEntry } from "../../rules/templates.js";
 import type { Difficulty } from "../../rules/types.js";
@@ -187,11 +188,14 @@ export class QuickNpc extends HandlebarsApplicationMixin(ApplicationV2) {
     this.#loadTemplates();
     this.#loadShelf(this.#shelf);
     const sketch = this.#sketch;
-    const derived = secondaryCharacteristics(sketch.attributes, sketch.secondary);
+    const derived = sketchSecondary(sketch);
+    const totals = sketchAttributes(sketch);
     const sources = new Set((this.#templates ?? []).map((t) => t.source));
     const templates = (this.#templates ?? []).map((t) => ({
       ...t,
-      label: sources.size > 1 ? `${t.name} (${t.source})` : t.name,
+      label:
+        (sources.size > 1 ? `${t.name} (${t.source})` : t.name) +
+        (t.kind === "character" ? "" : ` \u2014 ${game.i18n.localize(`${K}.Kind.${t.kind}`)}`),
       selected: t.uuid === this.#templateUuid,
     }));
     const folders = ((game as any).folders ?? [])
@@ -202,14 +206,21 @@ export class QuickNpc extends HandlebarsApplicationMixin(ApplicationV2) {
     return {
       sketch,
       from: this.#from.join(", "),
-      attributes: ATTRIBUTES.map((key) => ({ key, value: sketch.attributes[key] })),
+      attributes: ATTRIBUTES.map((key) => ({
+        key,
+        value: sketch.attributes[key],
+        granted: sketch.racial[key],
+        total: totals[key],
+      })),
       secondary: SECONDARY.map((key) => ({
         key,
         label: `${K}.Secondary.${key}`,
         bought: sketch.secondary[key],
+        granted: sketch.bonuses[key],
         total: key === "basicSpeed" ? derived.basicSpeed.toFixed(2) : String(derived[key]),
         step: key === "basicSpeed" ? 0.25 : 1,
       })),
+      sm: sketch.sm,
       dodge: Math.floor(derived.basicSpeed) + 3,
       points: sketchPoints(sketch),
       skills: sketch.skills.map((skill, index) => ({
@@ -285,6 +296,7 @@ export class QuickNpc extends HandlebarsApplicationMixin(ApplicationV2) {
     else if (field === "folder") this.#folder = input.value;
     else if (field === "placeToken") this.#placeToken = (input as HTMLInputElement).checked;
     else if (field === "template") this.#templateUuid = input.value;
+    else if (field === "sm") sketch.sm = Math.floor(number());
     else if (field.startsWith("attribute.")) {
       const key = field.slice("attribute.".length) as (typeof ATTRIBUTES)[number];
       if (ATTRIBUTES.includes(key)) sketch.attributes[key] = Math.max(1, Math.floor(number()) || 10);
@@ -317,7 +329,7 @@ export class QuickNpc extends HandlebarsApplicationMixin(ApplicationV2) {
       ui.notifications?.warn(L("TemplateGone"));
       return;
     }
-    const added = await this.#applyTemplate(template);
+    const added = await this.#applyTemplate(template, uuid);
     this.#from.push(template.name);
     ui.notifications?.info(L("TemplateApplied", { name: template.name, count: added.count, skipped: added.skipped }));
     this.#redraw();
@@ -325,17 +337,38 @@ export class QuickNpc extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /**
    * Writes a template onto the sketch. A character template's attributes are
-   * scores, so they replace what is there; a lens's or a racial template's are
-   * modifiers, so they add. Its entries are added either way, the choices
-   * made for it: the first of each count, and the cheapest that meet a point
-   * requirement. The GM is about to look at the list and can change any of
-   * it, which is quicker than being asked.
+   * scores, so they replace what is there; a lens's are modifiers to what was
+   * bought, so they add; a racial template's are granted rather than bought
+   * (Characters p. 261), so they go on the card as granted levels and a Size
+   * Modifier, with the racial cost recorded against them. Its entries are
+   * added either way, the choices made for it: the first of each count, and
+   * the cheapest that meet a point requirement. The GM is about to look at
+   * the list and can change any of it, which is quicker than being asked.
    */
-  async #applyTemplate(template: Template): Promise<{ count: number; skipped: number }> {
+  async #applyTemplate(template: Template, uuid: string): Promise<{ count: number; skipped: number }> {
     const sketch = this.#sketch;
     if (template.kind === "character") {
       for (const key of ATTRIBUTES) sketch.attributes[key] = Number(template.attributes[key] ?? sketch.attributes[key]) || 10;
       for (const key of SECONDARY) sketch.secondary[key] = Number(template.secondary[key] ?? 0) || 0;
+    } else if (template.kind === "racial" || template.kind === "metaTrait") {
+      const granted = { ST: 0, DX: 0, IQ: 0, HT: 0, hp: 0, will: 0, per: 0, fp: 0, basicSpeed: 0, basicMove: 0, sm: 0 };
+      for (const key of ATTRIBUTES) {
+        granted[key] = Number(template.attributes[key] ?? 0) || 0;
+        sketch.racial[key] += granted[key];
+      }
+      for (const key of SECONDARY) {
+        granted[key] = Number(template.secondary[key] ?? 0) || 0;
+        sketch.bonuses[key] += granted[key];
+      }
+      granted.sm = Number(template.sizeModifier ?? 0) || 0;
+      sketch.sm += granted.sm;
+      sketch.racialTemplates.push({
+        name: template.name,
+        uuid,
+        ...(template.reference ? { reference: template.reference } : {}),
+        attributeCost: Number(template.attributeCost) || 0,
+        granted,
+      });
     } else {
       for (const key of ATTRIBUTES) sketch.attributes[key] += Number(template.attributes[key] ?? 0) || 0;
       for (const key of SECONDARY) sketch.secondary[key] += Number(template.secondary[key] ?? 0) || 0;
@@ -535,7 +568,7 @@ function levelForPoints(points: number, score: number, difficulty: Difficulty): 
   return score + (relative ?? 0);
 }
 
-/** Every character template and lens on the chosen shelves, by name. */
+/** Every character template, lens and racial template on the chosen shelves, by name. */
 async function readTemplates(): Promise<TemplateChoice[]> {
   const sources = sourceCollections();
   const found: TemplateChoice[] = [];
@@ -546,7 +579,7 @@ async function readTemplates(): Promise<TemplateChoice[]> {
     for (const entry of index) {
       if (entry.type !== "template") continue;
       const kind = String(entry.system?.kind ?? "");
-      if (kind !== "character" && kind !== "lens") continue;
+      if (kind !== "character" && kind !== "lens" && kind !== "racial") continue;
       found.push({
         uuid: `Compendium.${pack.collection}.Item.${entry._id}`,
         name: String(entry.name),

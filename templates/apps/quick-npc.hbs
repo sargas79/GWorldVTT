@@ -52,6 +52,7 @@
           <label class="qn-attribute">
             <span class="qn-attribute-key">{{a.key}}</span>
             <input type="number" data-field="attribute.{{a.key}}" value="{{a.value}}" min="1" step="1">
+            {{#if a.granted}}<span class="qn-granted" data-tooltip="{{localize 'GWORLD.QuickNpc.GrantedHint'}}">{{signed a.granted}} = {{a.total}}</span>{{/if}}
           </label>
         {{/each}}
       </div>
@@ -61,12 +62,18 @@
             <span class="qn-secondary-key">{{localize s.label}}</span>
             <span class="qn-secondary-total">{{s.total}}</span>
             <input type="number" data-field="secondary.{{s.key}}" value="{{s.bought}}" step="{{s.step}}" aria-label="{{localize s.label}}">
+            {{#if s.granted}}<span class="qn-granted" data-tooltip="{{localize 'GWORLD.QuickNpc.GrantedHint'}}">{{signed s.granted}}</span>{{/if}}
           </label>
         {{/each}}
         <div class="qn-secondary qn-secondary-fixed">
           <span class="qn-secondary-key">{{localize "GWORLD.QuickNpc.Dodge"}}</span>
           <span class="qn-secondary-total">{{dodge}}</span>
         </div>
+        <label class="qn-secondary">
+          <span class="qn-secondary-key">{{localize "GWORLD.QuickNpc.SizeModifier"}}</span>
+          <span class="qn-secondary-total">{{signed sm}}</span>
+          <input type="number" data-field="sm" value="{{sm}}" step="1" aria-label="{{localize 'GWORLD.QuickNpc.SizeModifier'}}">
+        </label>
       </div>
     </section>
 

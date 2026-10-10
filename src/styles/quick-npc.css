@@ -53,7 +53,8 @@
 .gworld.v2.gworld-quick-npc .qn-attribute { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .gworld.v2.gworld-quick-npc .qn-attribute-key { font-family: var(--font-heading); font-size: 12px; letter-spacing: 0.08em; }
 .gworld.v2.gworld-quick-npc .qn-attribute input { width: 64px; height: 36px; text-align: center; font-size: 20px; font-weight: 600; }
-.gworld.v2.gworld-quick-npc .qn-secondary-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 8px; }
+.gworld.v2.gworld-quick-npc .qn-secondary-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 8px; }
+.gworld.v2.gworld-quick-npc .qn-granted { font-size: 10px; color: var(--v2-gold, #c9a227); white-space: nowrap; }
 .gworld.v2.gworld-quick-npc .qn-secondary { display: flex; flex-direction: column; align-items: center; gap: 1px; }
 .gworld.v2.gworld-quick-npc .qn-secondary-key { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
 .gworld.v2.gworld-quick-npc .qn-secondary-total { font-size: 16px; font-weight: 600; }

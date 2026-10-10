@@ -1850,6 +1850,12 @@
         "basicMove": "Move"
       },
       "Dodge": "Dodge",
+      "SizeModifier": "SM",
+      "GrantedHint": "Granted by a racial template, free once its racial cost is paid (Characters p. 261)",
+      "Kind": {
+        "lens": "lens",
+        "racial": "racial template"
+      },
       "Traits": "Traits",
       "Skills": "Skills",
       "Gear": "Gear",

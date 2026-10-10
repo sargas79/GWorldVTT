@@ -3864,13 +3864,17 @@ the attribute the skill uses, so the sheet's point total is honest. The
 book's shortcuts are on the card: a skill nobody wrote down is "roll 3d and
 use the result", and the attributes can be rolled 3d apiece (Revised p. 502).
 
-*Start from a template* lists every character template and lens on the chosen
-compendium sources: the system's fifteen generic NPCs (City Guard,
+*Start from a template* lists every character template, lens and racial
+template on the chosen compendium sources: the system's fifteen generic NPCs (City Guard,
 Storekeeper, Thief, Minstrel, Drunk, Bodyguard, Police Officer, Detective,
 Thug, Soldier, Priest, Scholar, Doctor, Street Kid, Gang Boss, in the
 templates pack), the book's own, and a module's. A module's templates need no
-registration: a `template` item of kind `character` or `lens` in a pack the GM
-has chosen as a source is offered. A template's choices are made for the GM,
+registration: a `template` item of kind `character`, `lens` or `racial` in a
+pack the GM has chosen as a source is offered. A character template's
+attributes replace the card's, a lens's add to what was bought, and a racial
+template's are granted (Characters p. 261): they go on the card as granted
+levels and a Size Modifier, and the actor records the template with its
+racial cost, as the sheet does when it applies one. A template's choices are made for the GM,
 the first of each count and the cheapest that meet a points requirement, and
 every entry is resolved to the compendium item its `uuid` names, or the first
 of its name on the shelves when it has none. Techniques and languages, which
@@ -3881,6 +3885,8 @@ the card has no line for, are left out and counted in the notice.
 - **`quickNpc.create(sketch, { folder?, from?, placeToken? })`** makes the NPC
   without the window. `sketch` is an `NpcSketch` from `src/rules/quick-npc.ts`:
   `name`, `appearance`, `attributes`, `secondary` (levels bought on top),
+  `racial` and `bonuses` (levels granted), `sm`, `racialTemplates` (each with
+  `name`, `uuid`, `attributeCost` and what it `granted`),
   `skills` (`name`, `attribute`, `difficulty`, `level`, optional `uuid`),
   `traits` (`name`, `points`, optional `levels` and `uuid`), `gear` (`name`,
   `uuid`), `groupSize`, `tactics`, `cannonFodder`, `notes`. `from` names the

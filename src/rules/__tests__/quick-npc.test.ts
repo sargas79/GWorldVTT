@@ -78,11 +78,36 @@ describe("the sketch as an actor", () => {
     expect(system).toEqual({
       attributes: { ST: 8, DX: 15, IQ: 12, HT: 12 },
       purchased: { hp: 2, will: 0, per: 3, fp: -2, basicSpeed: 0.25, basicMove: 0 },
+      racial: { ST: 0, DX: 0, IQ: 0, HT: 0 },
+      bonuses: { hp: 0, will: 0, per: 0, fp: 0, basicSpeed: 0, basicMove: 0 },
+      sm: 0,
+      templates: [],
       groupSize: 3,
       tactics: "Runs when hurt",
       cannonFodder: true,
       details: { appearance: "Short; Honest face", notes: "p. 569" },
     });
+  });
+
+  it("carries a racial template as granted levels, a Size Modifier and a record with its cost (Characters p. 261)", () => {
+    const dragon = {
+      name: "Dragon", uuid: "Compendium.gworld.templates.Item.x", reference: "Characters p. 260", attributeCost: 150,
+      granted: { ST: 15, DX: 0, IQ: 0, HT: 0, hp: 0, will: 3, per: 3, fp: 0, basicSpeed: 0, basicMove: 0, sm: 2 },
+    };
+    const sketch: NpcSketch = {
+      ...emptySketch(), name: "Wyrm", racial: { ST: 15, DX: 0, IQ: 0, HT: 0 }, bonuses: { hp: 0, will: 3, per: 3, fp: 0, basicSpeed: 0, basicMove: 0 }, sm: 2, racialTemplates: [dragon],
+      skills: [{ name: "Intimidation", attribute: "Will", difficulty: "A", level: 14 }],
+    };
+    expect(sketchAttributeScore(sketch, "ST")).toBe(25);
+    expect(sketchAttributeScore(sketch, "Will")).toBe(13);
+    // Will 13, so Intimidation-14 is Will+1 (A): 4 points.
+    expect(skillItemData(sketch.skills[0]!, sketch).system.points).toBe(4);
+    const system = sketchActorSystem(sketch);
+    expect(system.racial).toEqual({ ST: 15, DX: 0, IQ: 0, HT: 0 });
+    expect(system.sm).toBe(2);
+    expect(system.templates).toEqual([{ name: "Dragon", kind: "racial", uuid: dragon.uuid, reference: "Characters p. 260", attributeCost: 150, granted: dragon.granted, previous: {}, written: {}, at: null, itemIds: [] }]);
+    // Nothing bought, the racial cost, and the one skill.
+    expect(sketchPoints(sketch)).toBe(150 + 4);
   });
 
   it("adds up the points the sheet will show", () => {
