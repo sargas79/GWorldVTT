@@ -12,6 +12,7 @@ spells, gear) and rules registered through `game.gworld.api`.
 - [Point pools, energy sources, spell attacks and resistance](#point-pools-energy-sources-spell-attacks-and-resistance)
 - [Inside the system's own procedures](#inside-the-systems-own-procedures)
 - [The party](#the-party)
+- [The Quick NPC tool](#the-quick-npc-tool)
 - [Taking over data the system is dropping](#taking-over-data-the-system-is-dropping)
 
 ## Packs for another book
@@ -3850,6 +3851,44 @@ off the screen with a warning, and the rest of the screen is drawn.
   own chat mode otherwise.
 - The hook **`gworld.gmScreenRolled`** fires with the same object on the
   roller's client.
+
+## The Quick NPC tool
+
+Since 1.194.0 the GM has a Quick NPC window, from a button beside *Create
+Actor* in the Actors sidebar or `game.gworld.api.quickNpc.open()`. It is the
+Basic Set's "notes on their important statistics" (Campaigns p. 502), laid
+out like the NPC Record Card (p. 569): a name and appearance, the four
+attributes, traits, skills written as levels, and gear. *Create NPC* makes the
+NPC actor from it, each skill's level turned into the points that buy it off
+the attribute the skill uses, so the sheet's point total is honest. The
+book's shortcuts are on the card: a skill nobody wrote down is "roll 3d and
+use the result", and the attributes can be rolled 3d apiece (Revised p. 502).
+
+*Start from a template* lists every character template and lens on the chosen
+compendium sources: the system's fifteen generic NPCs (City Guard,
+Storekeeper, Thief, Minstrel, Drunk, Bodyguard, Police Officer, Detective,
+Thug, Soldier, Priest, Scholar, Doctor, Street Kid, Gang Boss, in the
+templates pack), the book's own, and a module's. A module's templates need no
+registration: a `template` item of kind `character` or `lens` in a pack the GM
+has chosen as a source is offered. A template's choices are made for the GM,
+the first of each count and the cheapest that meet a points requirement, and
+every entry is resolved to the compendium item its `uuid` names, or the first
+of its name on the shelves when it has none. Techniques and languages, which
+the card has no line for, are left out and counted in the notice.
+
+- **`quickNpc.open()`** opens the window for the GM; a player is told it is
+  the GM's. Resolves to the window, or null.
+- **`quickNpc.create(sketch, { folder?, from?, placeToken? })`** makes the NPC
+  without the window. `sketch` is an `NpcSketch` from `src/rules/quick-npc.ts`:
+  `name`, `appearance`, `attributes`, `secondary` (levels bought on top),
+  `skills` (`name`, `attribute`, `difficulty`, `level`, optional `uuid`),
+  `traits` (`name`, `points`, optional `levels` and `uuid`), `gear` (`name`,
+  `uuid`), `groupSize`, `tactics`, `cannonFodder`, `notes`. `from` names the
+  templates it was built from, for the actor's notes; `placeToken` drops its
+  token at the centre of the open scene. Resolves to the actor, or null for
+  anyone but the GM.
+- **`quickNpc.emptySketch()`** is a blank card: an average person, nothing
+  written yet.
 
 ## Modifying dice + adds
 
