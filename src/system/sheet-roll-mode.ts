@@ -86,6 +86,11 @@ export interface CardBeingCreated {
   speakerActor?: string | null;
   /** The mode its creator asked for, if any. */
   requestedMode?: unknown;
+  /**
+   * The mode of the sheet the roll was made from, when that sheet's actor is
+   * not the one speaking: a vehicle's control roll is the driver's.
+   */
+  sheetMode?: SheetRollMode | null;
 }
 
 /**
@@ -94,11 +99,30 @@ export interface CardBeingCreated {
  * not already whispered or given a mode by whoever posted it.
  */
 export function sheetModeForCard(card: CardBeingCreated, chosen: (actorId: string) => SheetRollMode = sheetRollMode): SheetRollMode | null {
-  if (!card.isRoll || !card.speakerActor) return null;
+  if (!card.isRoll) return null;
   if (typeof card.requestedMode === "string" && card.requestedMode) return null;
   if ((card.whisper?.length ?? 0) > 0 || card.blind === true) return null;
-  const mode = chosen(card.speakerActor);
+  // The sheet rolled from, where it keeps its rolls from the table; else the speaker's own choice.
+  const mode = card.sheetMode && card.sheetMode !== "public"
+    ? card.sheetMode
+    : card.speakerActor ? chosen(card.speakerActor) : "public";
   return mode === "public" ? null : mode;
+}
+
+/** The modes of the sheets whose rolls are being made right now, innermost last. */
+const rollingFrom: SheetRollMode[] = [];
+
+/**
+ * Runs a roll made from an actor's sheet whose cards another actor speaks --
+ * a vehicle's, made by its driver -- so those cards follow the sheet's choice.
+ */
+export async function withSheetRollMode<T>(actorId: string | null | undefined, roll: () => Promise<T>): Promise<T> {
+  rollingFrom.push(sheetRollMode(actorId));
+  try {
+    return await roll();
+  } finally {
+    rollingFrom.pop();
+  }
 }
 
 /** Applies each actor's chosen mode to the cards with dice this user's client posts for it. */
@@ -113,6 +137,7 @@ export function registerSheetRollModeHooks(): void {
       blind: message?.blind,
       speakerActor: message?.speaker?.actor ?? null,
       requestedMode: options?.messageMode,
+      sheetMode: rollingFrom.at(-1) ?? null,
     });
     if (!mode) return;
     message.applyMode(mode);

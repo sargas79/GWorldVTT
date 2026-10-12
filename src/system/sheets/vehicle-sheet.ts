@@ -26,6 +26,7 @@ import {
   aimableLocations, DR_LOCATIONS, MOVE_CRIPPLING_LOCATIONS, VEHICLE_ARCS, vehicleDrLabel,
 } from "../../rules/vehicle-combat.js";
 import { reportRefusedDrop } from "./drop-errors.js";
+import { SHEET_ROLL_MODE_IDS, setSheetRollMode, sheetRollModeButtons, withSheetRollMode, type SheetRollMode } from "../sheet-roll-mode.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -70,6 +71,7 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
       scaleDamage: GWorldVehicleSheet.#onScaleDamage,
       removeOccupant: GWorldVehicleSheet.#onRemoveOccupant,
       openOccupant: GWorldVehicleSheet.#onOpenOccupant,
+      rollVisibility: GWorldVehicleSheet.#onRollVisibility,
     },
   };
 
@@ -136,6 +138,8 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
     const hpValue = Number(system.hp?.value) || 0;
 
     return {
+      // Who sees this sheet's rolls, as this user chose for this vehicle.
+      rollVisibility: sheetRollModeButtons(actor.id),
       ...context,
       actor,
       system,
@@ -548,6 +552,14 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
     await this.actor.update({ "system.crew": leaveSeat(this.actor.system.crew ?? [], uuid) });
   }
 
+  /** Sets who sees the rolls made from this sheet, whoever in the vehicle makes them. */
+  static async #onRollVisibility(this: GWorldVehicleSheet, _event: Event, target: HTMLElement) {
+    const mode = target.dataset.mode;
+    if (!SHEET_ROLL_MODE_IDS.includes(mode as SheetRollMode)) return;
+    await setSheetRollMode(this.actor.id, mode as SheetRollMode);
+    await this.render({ parts: ["header"] });
+  }
+
   static async #onOpenOccupant(this: GWorldVehicleSheet, _event: Event, target: HTMLElement) {
     const person: any = await fromUuid(String(target.dataset.uuid ?? "")).catch(() => null);
     await person?.sheet?.render(true);
@@ -567,7 +579,7 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
       initial: 0,
     });
     if (modifier === null) return;
-    await controlVehicle({ actor: operator, vehicle: this.actor, modifier });
+    await withSheetRollMode(this.actor.id, () => controlVehicle({ actor: operator, vehicle: this.actor, modifier }));
   }
 
   /** Where a shot landed, and who inside caught something (pp. 554-555). */
@@ -579,7 +591,7 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
       locations: aimableLocations(system.derived?.locations ?? [], system.derived?.powered === true),
     });
     if (!asked) return;
-    await shootAtVehicle({ actor: this.actor, vehicle: this.actor, ...asked });
+    await withSheetRollMode(this.actor.id, () => shootAtVehicle({ actor: this.actor, vehicle: this.actor, ...asked }));
   }
 
   /** Somebody leaving it at speed (p. 467). */
@@ -596,7 +608,7 @@ export class GWorldVehicleSheet extends HandlebarsApplicationMixin(ActorSheetV2)
       initial: Math.round(Number(this.actor.system.speed) || 0),
     });
     if (speed === null) return;
-    await jumpOutOfVehicle({ actor: person, vehicle: this.actor, speed });
+    await withSheetRollMode(this.actor.id, () => jumpOutOfVehicle({ actor: person, vehicle: this.actor, speed }));
     // Out is out: they are no longer aboard, whatever the landing did to them.
     if (this.actor.isOwner) {
       await this.actor.update({ "system.crew": leaveSeat(this.actor.system.crew ?? [], uuid) });

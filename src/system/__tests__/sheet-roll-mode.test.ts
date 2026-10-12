@@ -6,6 +6,7 @@ import {
   sheetModeForCard,
   sheetRollMode,
   sheetRollModeButtons,
+  withSheetRollMode,
   type SheetRollMode,
 } from "../sheet-roll-mode.js";
 
@@ -88,5 +89,16 @@ describe("the chat hook", () => {
     hooks.preCreateChatMessage!(message, {}, {}, "someone-else");
     hooks.preCreateChatMessage!(message, {}, { messageMode: "public" }, "me");
     expect(applied).toEqual(["blind"]);
+  });
+
+  it("follows the sheet rolled from when another actor speaks, as a vehicle's driver does", async () => {
+    const { hooks } = withSettings({ car: "gm" });
+    registerSheetRollModeHooks();
+    const applied: string[] = [];
+    const driverCard = { isRoll: true, whisper: [], blind: false, speaker: { actor: "driver" }, applyMode: (m: string) => applied.push(m) };
+    hooks.preCreateChatMessage!(driverCard, {}, {}, "me");
+    await withSheetRollMode("car", async () => { hooks.preCreateChatMessage!(driverCard, {}, {}, "me"); });
+    hooks.preCreateChatMessage!(driverCard, {}, {}, "me");
+    expect(applied).toEqual(["gm"]);
   });
 });
