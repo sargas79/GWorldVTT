@@ -23,12 +23,13 @@
     <div class="v2-meta"><span>TL {{system.tl}}</span></div>
   </div>
 
-  {{#if editable}}
-    <div class="v2-header-side">
+  <div class="v2-header-side">
+    {{> "gworld.part.roll-visibility" rollVisibility=rollVisibility action="rollVisibility"}}
+    {{#if editable}}
       <button type="button" class="v2-button v2-build-button" data-action="openFullSheet"
               data-tooltip="{{localize "GWORLD.Npc.EditHint"}}">{{> "gworld.v2icon.build"}} {{localize "GWORLD.Npc.Edit"}}</button>
-    </div>
-  {{/if}}
+    {{/if}}
+  </div>
 </header>
 
 <div class="v2-npc-body">
