@@ -1104,11 +1104,18 @@
       "Damage": "Undo damage",
       "Done": "Undone",
       "Undone": "Damage to {name} was undone.",
+      "Retarget": "Retarget",
+      "RetargetHint": "Undo this damage, if it has not been, and apply the same blow, with the same critical hit result, to the tokens you have targeted.",
+      "NoRetarget": "Target the token the blow should have hit, then press Retarget.",
+      "Retargeted": "Retargeted to {names}",
       "Refused": {
         "poolChanged": "{name} has changed since the damage was applied, so undoing it would discard that. Set the total by hand instead.",
         "armorChanged": "{name}'s armour has changed since the damage was applied, so undoing it would discard that.",
         "armorGone": "The armour that took this blow is no longer on {name}, so the damage cannot be undone.",
-        "actorGone": "{name} can no longer be reached, so the damage cannot be undone."
+        "actorGone": "{name} can no longer be reached, so the damage cannot be undone.",
+        "radiationChanged": "{name}'s radiation dose has changed since the damage was applied, so undoing it would discard that.",
+        "shieldChanged": "The shield that took this blow has changed since, so undoing it would discard that.",
+        "shieldGone": "The shield that took this blow is no longer on {name}, so the damage cannot be undone."
       }
     },
     "Breakdown": {

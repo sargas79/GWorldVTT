@@ -24,7 +24,9 @@ import type { DamageType } from "../rules/types.js";
 import { objectStats } from "./object-stats.js";
 import type { HitLocation } from "../rules/hit-locations.js";
 
-const FLAG = "shieldTookIt";
+/** The note a defense the shield made the difference to leaves on its defender. */
+export const SHIELD_NOTE_FLAG = "shieldTookIt";
+const FLAG = SHIELD_NOTE_FLAG;
 const CARD_TEMPLATE = `systems/${SYSTEM_ID}/templates/chat/shield-damage.hbs`;
 
 const L = (key: string, data?: Record<string, unknown>) =>
