@@ -470,6 +470,11 @@ async function applyFromCard(options: {
   targets?: any[];
   /** A critical hit table result already rolled, used rather than rolling again: a retarget's. */
   presetCritical?: IncomingDamage["critical"] | null;
+  /**
+   * True for a retarget: what the blow did to its striker, and where a pick
+   * stuck, happened the first time and are not done again.
+   */
+  retarget?: boolean;
 }): Promise<string[]> {
   const { flag, hitLocation } = options;
   // A blast against or inside the victim is a direct hit, wherever the
@@ -712,9 +717,9 @@ async function applyFromCard(options: {
         }
       }
       // A bare-handed blow into hard DR hurts the hand that struck it (p. 379).
-      if (flag.strikingPart && flag.strikerUuid) await hurtStriker(flag, actor, result, incoming.basicDamage);
+      if (flag.strikingPart && flag.strikerUuid && !options.retarget) await hurtStriker(flag, actor, result, incoming.basicDamage);
       // A pick's blow that got through may leave it in the victim (p. 405).
-      if (flag.itemUuid && !flag.mode?.ranged) {
+      if (flag.itemUuid && !flag.mode?.ranged && !options.retarget) {
         await afterPickBlow({
           item: fromUuidSync(flag.itemUuid) ?? null,
           mode: flag.mode ?? null,
@@ -840,11 +845,12 @@ async function applyFromCard(options: {
           critical: critical?.hit ?? null,
         } satisfies RetargetFlag,
         // What this application changed on each target, so it can be taken
-        // back from the card that describes it. Only what actually moved is
-        // kept: a blow that changed nothing has nothing to undo.
+        // back from the card that describes it. A blow that changed nothing
+        // is kept too: it has nothing to undo, but the GM may still need to
+        // put it on the token it was meant for.
         damageUndo: applied
           .map((result) => result.transaction)
-          .filter((transaction): transaction is DamageTransaction => isUndoable(transaction)),
+          .filter((transaction): transaction is DamageTransaction => Boolean(transaction)),
         // Whoever this blow knocked about still owes a HT roll, and the card
         // is where they are standing when they remember it.
         knockdown: knockdowns
@@ -2602,24 +2608,30 @@ async function addDamageUndoControls(message: any, html: HTMLElement): Promise<v
       continue;
     }
 
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "gc-apply-button";
-    button.textContent = game.i18n.localize(undone.has(entry.actorUuid) ? "GWORLD.Undo.Done" : "GWORLD.Undo.Damage");
-    button.disabled = undone.has(entry.actorUuid);
-    button.addEventListener("click", () => {
-      button.disabled = true;
-      void (async () => {
-        if (await undoFromCard(message, root, entry)) {
-          button.textContent = game.i18n.localize("GWORLD.Undo.Done");
-          return;
-        }
-        // Refused: let them try again once they have looked, rather than
-        // leaving a dead button.
-        button.disabled = false;
-      })();
-    });
-    row.append(button);
+    const undoable = isUndoable(entry);
+    // A blow that changed nothing has no undo, only a retarget, and that is the GM's.
+    if (!undoable && !(stored && game.user?.isGM === true)) continue;
+
+    if (undoable) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "gc-apply-button";
+      button.textContent = game.i18n.localize(undone.has(entry.actorUuid) ? "GWORLD.Undo.Done" : "GWORLD.Undo.Damage");
+      button.disabled = undone.has(entry.actorUuid);
+      button.addEventListener("click", () => {
+        button.disabled = true;
+        void (async () => {
+          if (await undoFromCard(message, root, entry)) {
+            button.textContent = game.i18n.localize("GWORLD.Undo.Done");
+            return;
+          }
+          // Refused: let them try again once they have looked, rather than
+          // leaving a dead button.
+          button.disabled = false;
+        })();
+      });
+      row.append(button);
+    }
 
     if (stored && game.user?.isGM === true) {
       const retarget = document.createElement("button");
@@ -2666,18 +2678,49 @@ async function undoFromCard(message: any, root: HTMLElement, entry: DamageTransa
     return false;
   }
   ui.notifications?.info(game.i18n.format("GWORLD.Undo.Undone", { name: outcome.actorName }));
-  for (const attribute of FOLLOW_UP_CONTROLS) {
-    for (const row of root.querySelectorAll(`[${attribute}="${CSS.escape(entry.actorUuid)}"]`)) row.remove();
-  }
-  // Only the GM and the card's author may write to it. Anybody else's undo
-  // stands all the same; the card just offers the rolls again when redrawn.
-  if (message?.canUserModify?.(game.user, "update")) {
-    const undone = [...undoneOn(message)];
-    if (!undone.includes(entry.actorUuid)) {
-      await message.setFlag(SYSTEM_ID, DAMAGE_UNDONE_FLAG, [...undone, entry.actorUuid]);
-    }
-  }
+  await withdrawFollowUps(message, root, entry.actorUuid);
   return true;
+}
+
+/**
+ * Takes an undone victim's follow-up rolls off the card, and records them as
+ * undone. Only the GM and the card's author may write to it; anybody else's
+ * undo stands all the same, and the card just offers the rolls again when
+ * redrawn.
+ */
+async function withdrawFollowUps(message: any, root: HTMLElement, uuid: string): Promise<void> {
+  for (const attribute of FOLLOW_UP_CONTROLS) {
+    for (const row of root.querySelectorAll(`[${attribute}="${CSS.escape(uuid)}"]`)) row.remove();
+  }
+  await addToCardList(message, DAMAGE_UNDONE_FLAG, uuid);
+}
+
+/** The writes to each card's lists still landing, by message id. */
+const pendingCardWrites = new Map<string, Promise<void>>();
+
+/**
+ * Adds one entry to a list flag on a card, where this user may write to it.
+ *
+ * One at a time for each card, each reading the list again once the last has
+ * landed: two victims of one blast undone in quick succession would otherwise
+ * each write the list they read, and the second would drop the first.
+ */
+async function addToCardList(message: any, key: string, value: unknown): Promise<void> {
+  if (!message?.canUserModify?.(game.user, "update")) return;
+  const id = String(message.id ?? "");
+  const run = (pendingCardWrites.get(id) ?? Promise.resolve()).then(async () => {
+    const list = message.getFlag?.(SYSTEM_ID, key);
+    const current = Array.isArray(list) ? list : [];
+    if (current.some((item: unknown) => JSON.stringify(item) === JSON.stringify(value))) return;
+    await message.setFlag(SYSTEM_ID, key, [...current, value]);
+  });
+  const settled = run.catch(() => undefined);
+  pendingCardWrites.set(id, settled);
+  try {
+    await run;
+  } finally {
+    if (pendingCardWrites.get(id) === settled) pendingCardWrites.delete(id);
+  }
 }
 
 /**
@@ -2701,7 +2744,10 @@ async function retargetFromCard(
     ui.notifications?.warn(game.i18n.localize("GWORLD.Undo.NoRetarget"));
     return false;
   }
-  if (!undoneOn(message).has(entry.actorUuid) && !(await undoFromCard(message, root, entry))) return false;
+  if (!undoneOn(message).has(entry.actorUuid)) {
+    if (await alreadyUndone(entry)) await withdrawFollowUps(message, root, entry.actorUuid);
+    else if (!(await undoFromCard(message, root, entry))) return false;
+  }
 
   const names = await applyFromCard({
     flag: stored.flag,
@@ -2715,13 +2761,24 @@ async function retargetFromCard(
     placement: stored.placement,
     largeArea: stored.largeArea,
     targets,
+    retarget: true,
   });
-  if (names.length === 0) return false;
-  const retargeted = (message?.getFlag?.(SYSTEM_ID, "retargeted") ?? []) as Array<{ uuid: string; names: string[] }>;
-  if (message?.canUserModify?.(game.user, "update")) {
-    await message.setFlag(SYSTEM_ID, "retargeted", [...retargeted, { uuid: entry.actorUuid, names }]);
-  }
+  // Once applied it has landed, even where a shield took all of it and no
+  // card followed: offering it again would land it twice.
+  const landed = names.length > 0 ? names : targets.map((token: any) => String(token?.name ?? token?.actor?.name ?? ""));
+  await addToCardList(message, "retargeted", { uuid: entry.actorUuid, names: landed });
   return true;
+}
+
+/**
+ * Whether a victim already stands as the blow found them, undone by an owner
+ * who could not write that on the card. Retarget goes on from there rather
+ * than refusing an undo that has nothing left to do.
+ */
+async function alreadyUndone(entry: DamageTransaction): Promise<boolean> {
+  if (!isUndoable(entry) || entry.from === entry.to) return !isUndoable(entry);
+  const actor: any = await fromUuid(entry.actorUuid).catch(() => null);
+  return Number(actor?.system?.[entry.pool]?.value) === Number(entry.from);
 }
 
 /**
