@@ -3573,6 +3573,21 @@ Two fields a module may read (since 1.62.0):
   `armorChanged`, `armorGone` or `actorGone`. A module applying damage through its own
   path can keep the transaction and offer the same undo from its own card. The health
   conditions follow the pool, so call `syncHealthConditions` after a successful undo.
+  Since 1.196.0 the transaction may also carry `effects` (`{ added, removed }`: ids of
+  the effects the blow created, and the data of those it deleted), `radiation` (the dose
+  `{ from, to }`) and `shield` (the shield whose note the blow spent, its `hpLost` and
+  `equipped` `{ from, to }`). The undo deletes the added effects still there, creates
+  the removed ones again where nothing carries their condition, and restores the dose and
+  the shield and its note; it refuses with `radiationChanged`, `shieldChanged` or
+  `shieldGone` where those have moved. It now brings the health conditions into step
+  itself. `actors.snapshotDamageEffects(actor)` before a blow and
+  `actors.damageSideEffects(before, after)` after it give a module's own path the same
+  fields to assign onto its transaction. The applied-damage card withdraws an undone
+  victim's knockdown, consciousness, death check, Fragile, flesh wound and wound trait
+  controls (`flags.gworld.damageUndone`, their uuids), and gives the GM *Retarget*:
+  the card's blow, kept in `flags.gworld.retarget` with its critical hit result, undone
+  here and applied to the GM's targeted tokens with nothing rolled again, on a new card.
+  `flags.gworld.retargeted` lists `{ uuid, names }` for each victim it moved from.
 - **Knockdown** (since 1.39.0): `gworld.afterKnockdown` follows a knockdown roll once
   its result is applied, with `{ actor, outcome, result, previousPosture }` (`result` is
   `{ outcome, stunned, prone, unconscious }`; since 1.73.0 also `blow`, where

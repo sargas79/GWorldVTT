@@ -18,7 +18,15 @@ import { SYSTEM_ID } from "./constants.js";
 import { combatVisionMemo, combatVisionNeed, settleCombatVision } from "./vision-corrections.js";
 import { applyDamageToActor, takeInjury, traitsOf, woundingDifference, type AppliedDamage, type IncomingDamage } from "./damage.js";
 import { WOUNDING_MODIFIERS } from "../rules/damage.js";
-import { isUndoable, undoDamage, type DamageTransaction } from "./damage-undo.js";
+import {
+  isUndoable,
+  sideEffectSnapshot,
+  sideEffectsBetween,
+  undoDamage,
+  undoneOn,
+  DAMAGE_UNDONE_FLAG,
+  type DamageTransaction,
+} from "./damage-undo.js";
 import { HURTING_YOURSELF_DR, hurtingYourself } from "../rules/hurting-yourself.js";
 import { applyDamageToWeapon, heavyParryCheck, parryTooHeavy, postParryTooHeavy } from "./weapon-damage.js";
 import { applyDamageToShield, consumeShieldNote, noteShieldTookIt } from "./shields.js";
@@ -458,7 +466,11 @@ async function applyFromCard(options: {
   largeArea?: boolean;
   /** True to apply to the presser's targets rather than the attack's. */
   myTargets?: boolean;
-}): Promise<void> {
+  /** The tokens to apply it to, in place of the card's or the presser's: a retarget's. */
+  targets?: any[];
+  /** A critical hit table result already rolled, used rather than rolling again: a retarget's. */
+  presetCritical?: IncomingDamage["critical"] | null;
+}): Promise<string[]> {
   const { flag, hitLocation } = options;
   // A blast against or inside the victim is a direct hit, wherever the
   // distance field was left.
@@ -466,10 +478,11 @@ async function applyFromCard(options: {
   const distanceYards = placement ? 0 : options.distanceYards;
   // The tokens the attack was aimed at, unless the presser asked for their
   // own; the presser's targets for a blast, and for a card with none recorded.
-  const targets = await damageRecipients(flag.explosive ? [] : recordedTargetsOf(flag.targets), options.myTargets === true);
+  const targets = options.targets
+    ?? await damageRecipients(flag.explosive ? [] : recordedTargetsOf(flag.targets), options.myTargets === true);
   if (targets.length === 0) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.Chat.NoTarget"));
-    return;
+    return [];
   }
 
   // Outside a blast, distance means nothing and the blow lands as rolled. A
@@ -493,7 +506,7 @@ async function applyFromCard(options: {
 
   if (blast?.outOfRange) {
     ui.notifications?.info(game.i18n.localize("GWORLD.Chat.OutOfBlast"));
-    return;
+    return [];
   }
 
   // "Work out DR against explosion damage as explained in Large-Area Injury
@@ -505,7 +518,10 @@ async function applyFromCard(options: {
 
   // One roll on the table, applied to everyone the blow lands on: a critical is
   // something the attacker did, not something each victim rolls separately.
-  const critical = options.critical ? await rollCriticalHit(struck) : null;
+  // A retarget brings the result it already rolled: the same blow, not a new one.
+  const critical: { roll: any; hit: NonNullable<IncomingDamage["critical"]> } | null = options.presetCritical
+    ? { roll: null, hit: options.presetCritical }
+    : options.critical ? await rollCriticalHit(struck) : null;
 
   // "In cinematic combat, explosions do no direct damage... All a blast does
   // is disarray clothing, blacken faces, and (most importantly) cause
@@ -590,6 +606,10 @@ async function applyFromCard(options: {
     if (key && seen.has(key)) continue;
     if (key) seen.add(key);
 
+    // What the blow may change besides the pool and armour -- conditions, a
+    // dose, a shield -- read now, so the undo can take back what it did (#984).
+    const before = sideEffectSnapshot(actor);
+
     // A shield that turned this blow by the width of its own Defense Bonus
     // took it squarely, and takes it now (Campaigns p. 484). What punches
     // through the shield is what reaches its owner.
@@ -643,7 +663,7 @@ async function applyFromCard(options: {
       const surge = surgeEffect({
         surge: flag.surge === true,
         electrical: traitsOf(actor).electrical === true,
-        criticalHit: options.critical,
+        criticalHit: critical !== null,
         injury: result.costsFatigue ? 0 : result.injury,
         maxHp: Number(actor.system?.hp?.max) || 0,
       });
@@ -703,6 +723,9 @@ async function applyFromCard(options: {
           result: { injury: result.injury, penetrating: result.penetrating, hitLocation: result.hitLocation },
         });
       }
+      if (result.transaction) {
+        Object.assign(result.transaction, sideEffectsBetween(before, sideEffectSnapshot(actor, before.shieldNote)));
+      }
     } else refused.push(String(actor.name ?? ""));
   }
 
@@ -711,7 +734,7 @@ async function applyFromCard(options: {
       game.i18n.format("GWORLD.Chat.CannotApply", { names: refused.join(", ") }),
     );
   }
-  if (applied.length === 0) return;
+  if (applied.length === 0) return [];
 
   const content = await foundry.applications.handlebars.renderTemplate(APPLIED_TEMPLATE, {
     critical: critical
@@ -800,9 +823,22 @@ async function applyFromCard(options: {
   await ChatMessage.implementation.create({
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
     content,
-    ...(critical ? { rolls: [critical.roll] } : {}),
+    ...(critical?.roll ? { rolls: [critical.roll] } : {}),
     flags: {
       [SYSTEM_ID]: {
+        // The blow as it was struck, so the GM can put it on the token it
+        // should have hit: the same damage and the same critical (#984).
+        retarget: {
+          flag: { ...flag, targets: [] },
+          hitLocation,
+          addonLocation: options.addonLocation ?? null,
+          distanceYards: options.distanceYards,
+          arc: options.arc ?? null,
+          fromBelow: options.fromBelow === true,
+          placement: options.placement ?? null,
+          largeArea: options.largeArea === true,
+          critical: critical?.hit ?? null,
+        } satisfies RetargetFlag,
         // What this application changed on each target, so it can be taken
         // back from the card that describes it. Only what actually moved is
         // kept: a blow that changed nothing has nothing to undo.
@@ -871,6 +907,20 @@ async function applyFromCard(options: {
       },
     },
   });
+  return knockdowns.map((entry) => String(entry.actor.name ?? ""));
+}
+
+/** The blow an applied card was made from, kept so it can be put on another token (#984). */
+interface RetargetFlag {
+  flag: DamageFlag;
+  hitLocation: HitLocation;
+  addonLocation: string | null;
+  distanceYards: number;
+  arc: Arc | null;
+  fromBelow: boolean;
+  placement: BlastPlacement | null;
+  largeArea: boolean;
+  critical: IncomingDamage["critical"] | null;
 }
 
 /**
@@ -2231,7 +2281,9 @@ async function addKnockdownControls(message: any, html: HTMLElement): Promise<vo
   const root = html.querySelector<HTMLElement>(".gworld-chat");
   if (!root || root.querySelector("[data-gworld-knockdown]")) return;
 
+  const undone = undoneOn(message);
   for (const entry of entries) {
+    if (undone.has(entry.uuid)) continue;
     const actor: any = await fromUuid(entry.uuid).catch(() => null);
     if (!actor?.isOwner) continue;
 
@@ -2286,7 +2338,9 @@ async function addFragileControls(message: any, html: HTMLElement): Promise<void
   const root = html.querySelector<HTMLElement>(".gworld-chat");
   if (!root || root.querySelector("[data-gworld-fragile]")) return;
 
+  const undone = undoneOn(message);
   for (const entry of entries) {
+    if (undone.has(entry.uuid)) continue;
     const actor: any = await fromUuid(entry.uuid).catch(() => null);
     if (!actor?.isOwner) continue;
 
@@ -2332,7 +2386,9 @@ async function addDeathCheckControls(message: any, html: HTMLElement): Promise<v
   const root = html.querySelector<HTMLElement>(".gworld-chat");
   if (!root || root.querySelector("[data-gworld-death]")) return;
 
+  const undone = undoneOn(message);
   for (const entry of entries) {
+    if (undone.has(entry.uuid)) continue;
     const actor: any = await fromUuid(entry.uuid).catch(() => null);
     if (!actor?.isOwner) continue;
 
@@ -2368,7 +2424,9 @@ async function addFleshWoundControls(message: any, html: HTMLElement): Promise<v
   const root = html.querySelector<HTMLElement>(".gworld-chat");
   if (!root || root.querySelector("[data-gworld-flesh]")) return;
 
+  const undone = undoneOn(message);
   for (const entry of entries) {
+    if (undone.has(entry.uuid)) continue;
     const actor: any = await fromUuid(entry.uuid).catch(() => null);
     if (!actor?.isOwner) continue;
 
@@ -2505,6 +2563,9 @@ async function addAfflictionControls(message: any, html: HTMLElement): Promise<v
  * One card, one undo: the button reverses this application and nothing else,
  * and refuses where anything it touched has moved since. The refusal names
  * what moved, so it reads as a decision rather than a failure.
+ *
+ * Beside it the GM has Retarget (#984): the same blow, with the same critical
+ * hit result, taken off this victim and put on the tokens the GM has targeted.
  */
 async function addDamageUndoControls(message: any, html: HTMLElement): Promise<void> {
   const entries = message?.getFlag?.(SYSTEM_ID, "damageUndo") as DamageTransaction[] | undefined;
@@ -2512,6 +2573,10 @@ async function addDamageUndoControls(message: any, html: HTMLElement): Promise<v
 
   const root = html.querySelector<HTMLElement>(".gworld-chat");
   if (!root || root.querySelector("[data-gworld-undo]")) return;
+
+  const stored = message?.getFlag?.(SYSTEM_ID, "retarget") as RetargetFlag | undefined;
+  const retargeted = (message?.getFlag?.(SYSTEM_ID, "retargeted") ?? []) as Array<{ uuid: string; names: string[] }>;
+  const undone = undoneOn(message);
 
   for (const entry of entries) {
     const actor: any = await fromUuid(entry.actorUuid).catch(() => null);
@@ -2524,39 +2589,139 @@ async function addDamageUndoControls(message: any, html: HTMLElement): Promise<v
     const who = document.createElement("div");
     who.className = "gc-who";
     who.textContent = entry.actorName;
+    row.append(who);
+
+    const moved = retargeted.find((record) => record.uuid === entry.actorUuid);
+    if (moved) {
+      // Already put on somebody else: the card says who, and offers nothing more.
+      const note = document.createElement("div");
+      note.className = "gc-who";
+      note.textContent = game.i18n.format("GWORLD.Undo.Retargeted", { names: moved.names.join(", ") });
+      row.append(note);
+      root.append(row);
+      continue;
+    }
 
     const button = document.createElement("button");
     button.type = "button";
     button.className = "gc-apply-button";
-    button.textContent = game.i18n.localize("GWORLD.Undo.Damage");
+    button.textContent = game.i18n.localize(undone.has(entry.actorUuid) ? "GWORLD.Undo.Done" : "GWORLD.Undo.Damage");
+    button.disabled = undone.has(entry.actorUuid);
     button.addEventListener("click", () => {
       button.disabled = true;
       void (async () => {
-        const outcome = await undoDamage(entry);
-        if (outcome.ok) {
-          // The pools decide the conditions, so they are brought back into
-          // step with what has just been restored.
-          await syncHealthConditions(actor);
+        if (await undoFromCard(message, root, entry)) {
           button.textContent = game.i18n.localize("GWORLD.Undo.Done");
-          ui.notifications?.info(
-            game.i18n.format("GWORLD.Undo.Undone", { name: outcome.actorName }),
-          );
           return;
         }
-        // Refused: say which way, and let them try again once they have
-        // looked, rather than leaving a dead button.
-        ui.notifications?.warn(
-          game.i18n.format(`GWORLD.Undo.Refused.${outcome.reason ?? "poolChanged"}`, {
-            name: outcome.actorName,
-          }),
-        );
+        // Refused: let them try again once they have looked, rather than
+        // leaving a dead button.
         button.disabled = false;
       })();
     });
+    row.append(button);
 
-    row.append(who, button);
+    if (stored && game.user?.isGM === true) {
+      const retarget = document.createElement("button");
+      retarget.type = "button";
+      retarget.className = "gc-apply-button";
+      retarget.dataset.gworldRetarget = entry.actorUuid;
+      retarget.textContent = game.i18n.localize("GWORLD.Undo.Retarget");
+      retarget.title = game.i18n.localize("GWORLD.Undo.RetargetHint");
+      retarget.addEventListener("click", () => {
+        retarget.disabled = true;
+        void (async () => {
+          if (!(await retargetFromCard(message, root, entry, stored))) retarget.disabled = false;
+        })();
+      });
+      row.append(retarget);
+    }
+
     root.append(row);
   }
+}
+
+/** The per-victim controls an undone blow withdraws: the rolls that followed from the wound. */
+const FOLLOW_UP_CONTROLS = [
+  "data-gworld-knockdown",
+  "data-gworld-death",
+  "data-gworld-conscious",
+  "data-gworld-fragile",
+  "data-gworld-flesh",
+  "data-gworld-wound-traits",
+];
+
+/**
+ * Takes one victim's damage back from the card, and says how it went.
+ *
+ * Once it is undone the rolls the card still offered them are withdrawn, and
+ * the card remembers it, so they stay withdrawn when it is drawn again.
+ */
+async function undoFromCard(message: any, root: HTMLElement, entry: DamageTransaction): Promise<boolean> {
+  const outcome = await undoDamage(entry);
+  if (!outcome.ok) {
+    ui.notifications?.warn(
+      game.i18n.format(`GWORLD.Undo.Refused.${outcome.reason ?? "poolChanged"}`, { name: outcome.actorName }),
+    );
+    return false;
+  }
+  ui.notifications?.info(game.i18n.format("GWORLD.Undo.Undone", { name: outcome.actorName }));
+  for (const attribute of FOLLOW_UP_CONTROLS) {
+    for (const row of root.querySelectorAll(`[${attribute}="${CSS.escape(entry.actorUuid)}"]`)) row.remove();
+  }
+  // Only the GM and the card's author may write to it. Anybody else's undo
+  // stands all the same; the card just offers the rolls again when redrawn.
+  if (message?.canUserModify?.(game.user, "update")) {
+    const undone = [...undoneOn(message)];
+    if (!undone.includes(entry.actorUuid)) {
+      await message.setFlag(SYSTEM_ID, DAMAGE_UNDONE_FLAG, [...undone, entry.actorUuid]);
+    }
+  }
+  return true;
+}
+
+/**
+ * Puts the blow on the tokens the GM has targeted instead of this victim
+ * (#984): undone here first, if it has not been, then applied there as it was
+ * struck -- the same damage, location and critical hit result, with nothing
+ * rolled again -- against the new victim's own DR and traits, on a card of its
+ * own that can itself be undone.
+ */
+async function retargetFromCard(
+  message: any,
+  root: HTMLElement,
+  entry: DamageTransaction,
+  stored: RetargetFlag,
+): Promise<boolean> {
+  // Whoever it was wrongly put on is not a target for it again.
+  const targets = (await damageRecipients([], true)).filter(
+    (token: any) => String(token?.actor?.uuid ?? "") !== entry.actorUuid,
+  );
+  if (targets.length === 0) {
+    ui.notifications?.warn(game.i18n.localize("GWORLD.Undo.NoRetarget"));
+    return false;
+  }
+  if (!undoneOn(message).has(entry.actorUuid) && !(await undoFromCard(message, root, entry))) return false;
+
+  const names = await applyFromCard({
+    flag: stored.flag,
+    hitLocation: stored.hitLocation,
+    addonLocation: stored.addonLocation,
+    distanceYards: stored.distanceYards,
+    critical: stored.critical !== null,
+    presetCritical: stored.critical,
+    arc: stored.arc,
+    fromBelow: stored.fromBelow,
+    placement: stored.placement,
+    largeArea: stored.largeArea,
+    targets,
+  });
+  if (names.length === 0) return false;
+  const retargeted = (message?.getFlag?.(SYSTEM_ID, "retargeted") ?? []) as Array<{ uuid: string; names: string[] }>;
+  if (message?.canUserModify?.(game.user, "update")) {
+    await message.setFlag(SYSTEM_ID, "retargeted", [...retargeted, { uuid: entry.actorUuid, names }]);
+  }
+  return true;
 }
 
 /**
@@ -2736,7 +2901,9 @@ async function addWoundTraitControls(message: any, html: HTMLElement): Promise<v
   const root = html.querySelector<HTMLElement>(".gworld-chat");
   if (!root || root.querySelector("[data-gworld-wound-traits]")) return;
 
+  const undone = undoneOn(message);
   for (const entry of entries) {
+    if (undone.has(entry.uuid)) continue;
     const actor: any = await fromUuid(entry.uuid).catch(() => null);
     if (!actor) continue;
 

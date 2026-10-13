@@ -73,7 +73,15 @@ import type { CripplingDuration } from "../rules/mortal-wounds.js";
 import type { Conveyance } from "../rules/towing.js";
 import { bind, bindingOf, breakFreeFromBinding, unbind, type BindingBroken } from "./entangling.js";
 import type { LandingSurface } from "../rules/falling.js";
-import { isUndoable, undoDamage, type DamageTransaction, type UndoOutcome } from "./damage-undo.js";
+import {
+  isUndoable,
+  sideEffectSnapshot,
+  sideEffectsBetween,
+  undoDamage,
+  type DamageTransaction,
+  type SideEffectSnapshot,
+  type UndoOutcome,
+} from "./damage-undo.js";
 import { carriedAmmunitionFor, loadAmmunition } from "./ammunition.js";
 import { randomLocationWithHooks } from "./combat-extensions.js";
 import {
@@ -122,7 +130,7 @@ import { simplifiedResourcesApi } from "./simplified-resources.js";
  * The API's version. Raise the minor part when something is added, the major
  * part when something changes or goes. Independent of the system's version.
  */
-export const API_VERSION = "1.195.0";
+export const API_VERSION = "1.196.0";
 
 /** The hook fired once the system is ready, with the API. */
 export const READY_HOOK = "gworld.ready";
@@ -590,9 +598,31 @@ const actors = {
    * Refuses, rather than overwriting, where anything the application changed
    * has moved since; the outcome says which way. A module that applies damage
    * through its own path can keep the record and offer the same undo.
+   *
+   * Since 1.196.0 it also takes back the effects, radiation dose and shield
+   * damage the record names, and brings the health conditions into step.
    */
   undoDamage(transaction: DamageTransaction): Promise<UndoOutcome> {
     return undoDamage(transaction);
+  },
+
+  /**
+   * Reads what a blow may change on an actor besides the pool and armour --
+   * its effects, radiation dose and a noted shield -- before the blow lands
+   * (since 1.196.0). Pass it to `damageSideEffects` with a second reading
+   * taken afterwards.
+   */
+  snapshotDamageEffects(actor: any, shieldId: string | null = null): SideEffectSnapshot {
+    return sideEffectSnapshot(actor, shieldId);
+  },
+
+  /**
+   * What a blow changed besides the pool and armour, from readings either
+   * side of it (since 1.196.0): assign it onto the transaction `applyDamage`
+   * returned, and `undoDamage` takes those back too.
+   */
+  damageSideEffects(before: SideEffectSnapshot, after: SideEffectSnapshot): Pick<DamageTransaction, "effects" | "radiation" | "shield"> {
+    return sideEffectsBetween(before, after);
   },
 
   /**

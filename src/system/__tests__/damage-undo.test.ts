@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { isUndoable, undoPlan, type DamageTransaction } from "../damage-undo.js";
+import {
+  isUndoable,
+  sideEffectsBetween,
+  undoneOn,
+  undoPlan,
+  type DamageTransaction,
+  type SideEffectSnapshot,
+} from "../damage-undo.js";
 
 /** A blow that took 5 HP off and wore a point off one ablative piece. */
 function transaction(overrides: Partial<DamageTransaction> = {}): DamageTransaction {
@@ -128,5 +135,115 @@ describe("whether a card should offer an undo at all", () => {
   it("offers none where the blow changed nothing", () => {
     expect(isUndoable(transaction({ from: 12, to: 12, armor: [] }))).toBe(false);
     expect(isUndoable(null)).toBe(false);
+  });
+});
+
+/** What the victim carried besides the pool, before a blow or after it. */
+function snapshot(overrides: Partial<SideEffectSnapshot> = {}): SideEffectSnapshot {
+  return {
+    effects: {},
+    radiation: { dose: 0, at: 0 },
+    shieldNote: null,
+    shield: null,
+    ...overrides,
+  };
+}
+
+describe("taking back what followed from the blow (#984)", () => {
+  const reeling = { _id: "fx-reel", name: "Reeling", statuses: ["reeling"] };
+  const bleeding = { _id: "fx-bleed", name: "Bleeding", statuses: ["bleeding"] };
+  const stunned = { _id: "fx-stun", name: "Stunned", statuses: ["stunned"] };
+
+  it("finds the effects the blow added and the ones it took off", () => {
+    const changes = sideEffectsBetween(
+      snapshot({ effects: { "fx-stun": stunned } }),
+      snapshot({ effects: { "fx-reel": reeling, "fx-bleed": bleeding } }),
+    );
+    expect(changes.effects).toEqual({ added: ["fx-reel", "fx-bleed"], removed: [stunned] });
+    expect(changes.radiation).toBeNull();
+    expect(changes.shield).toBeNull();
+  });
+
+  it("deletes the conditions the blow put on the token", () => {
+    const plan = undoPlan(
+      transaction({ effects: { added: ["fx-reel", "fx-bleed"], removed: [] } }),
+      { pool: 7, armor: { armor1: 1 }, effects: [{ id: "fx-reel", statuses: ["reeling"] }, { id: "fx-bleed", statuses: ["bleeding"] }] },
+    );
+    expect(plan.ok && plan.effectsToDelete).toEqual(["fx-reel", "fx-bleed"]);
+  });
+
+  it("does not refuse over a condition somebody has already taken off", () => {
+    // Leaving it gone overwrites nothing.
+    const plan = undoPlan(
+      transaction({ effects: { added: ["fx-reel", "fx-bleed"], removed: [] } }),
+      { pool: 7, armor: { armor1: 1 }, effects: [{ id: "fx-reel", statuses: ["reeling"] }] },
+    );
+    expect(plan.ok && plan.effectsToDelete).toEqual(["fx-reel"]);
+  });
+
+  it("puts back an effect the blow took off, unless something now carries its condition", () => {
+    const changes = { added: [], removed: [stunned, bleeding] };
+    const plan = undoPlan(transaction({ effects: changes }), {
+      pool: 7, armor: { armor1: 1 }, effects: [{ id: "fx-other", statuses: ["stunned"] }],
+    });
+    expect(plan.ok && plan.effectsToCreate).toEqual([bleeding]);
+  });
+
+  it("puts the radiation dose back where the blow found it", () => {
+    const radiation = { from: { dose: 10, at: 100 }, to: { dose: 25, at: 200 } };
+    const plan = undoPlan(transaction({ radiation }), { pool: 7, armor: { armor1: 1 }, radiationDose: 25 });
+    expect(plan.ok && plan.actorChanges).toMatchObject({ "system.radiation.dose": 10, "system.radiation.at": 100 });
+  });
+
+  it("refuses when the dose has moved since", () => {
+    const radiation = { from: { dose: 10, at: 100 }, to: { dose: 25, at: 200 } };
+    expect(undoPlan(transaction({ radiation }), { pool: 7, armor: { armor1: 1 }, radiationDose: 40 }))
+      .toEqual({ ok: false, reason: "radiationChanged" });
+  });
+
+  it("mends the shield that took the blow and leaves its note again", () => {
+    const shield = { itemId: "shield1", from: { hpLost: 0, equipped: true }, to: { hpLost: 4, equipped: false } };
+    const plan = undoPlan(transaction({ shield }), {
+      pool: 7, armor: { armor1: 1 }, shield: { hpLost: 4, equipped: false }, shieldNote: null,
+    });
+    expect(plan.ok && plan.shieldChanges).toEqual([{ _id: "shield1", "system.hpLost": 0, "system.equipped": true }]);
+    expect(plan.ok && plan.shieldNote).toBe("shield1");
+  });
+
+  it("leaves a newer shield note alone", () => {
+    const shield = { itemId: "shield1", from: { hpLost: 0, equipped: true }, to: { hpLost: 4, equipped: true } };
+    const plan = undoPlan(transaction({ shield }), {
+      pool: 7, armor: { armor1: 1 }, shield: { hpLost: 4, equipped: true }, shieldNote: "shield2",
+    });
+    expect(plan.ok && plan.shieldNote).toBeNull();
+  });
+
+  it("refuses when the shield has changed or gone", () => {
+    const shield = { itemId: "shield1", from: { hpLost: 0, equipped: true }, to: { hpLost: 4, equipped: true } };
+    expect(undoPlan(transaction({ shield }), { pool: 7, armor: { armor1: 1 }, shield: { hpLost: 6, equipped: true } }))
+      .toEqual({ ok: false, reason: "shieldChanged" });
+    expect(undoPlan(transaction({ shield }), { pool: 7, armor: { armor1: 1 }, shield: null }))
+      .toEqual({ ok: false, reason: "shieldGone" });
+  });
+
+  it("finds the shield the blow went into from the note it spent", () => {
+    const changes = sideEffectsBetween(
+      snapshot({ shieldNote: "shield1", shield: { hpLost: 0, equipped: true } }),
+      snapshot({ shieldNote: null, shield: { hpLost: 3, equipped: true } }),
+    );
+    expect(changes.shield).toEqual({
+      itemId: "shield1", from: { hpLost: 0, equipped: true }, to: { hpLost: 3, equipped: true },
+    });
+  });
+
+  it("offers an undo for a blow whose only effect was a condition", () => {
+    expect(isUndoable(transaction({ from: 12, to: 12, armor: [], effects: { added: ["fx-reel"], removed: [] } }))).toBe(true);
+    expect(isUndoable(transaction({ from: 12, to: 12, armor: [], effects: { added: [], removed: [] } }))).toBe(false);
+  });
+
+  it("reads which victims a card has undone", () => {
+    const message = { getFlag: (_scope: string, key: string) => (key === "damageUndone" ? ["Actor.abc"] : undefined) };
+    expect(undoneOn(message).has("Actor.abc")).toBe(true);
+    expect(undoneOn(null).size).toBe(0);
   });
 });

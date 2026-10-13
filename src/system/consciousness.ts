@@ -19,6 +19,7 @@ import { rollSuccess } from "./roll.js";
 import { PROCEDURE_HOOKS } from "./procedure-extensions.js";
 import { callCombatHook } from "./combat-extensions.js";
 import { rollOnce } from "./card-buttons.js";
+import { undoneOn } from "./damage-undo.js";
 
 /** Who owes a roll to stay conscious, and at what, as a card records it. */
 export interface ConsciousnessEntry {
@@ -81,7 +82,10 @@ export async function addConsciousnessControls(message: any, html: HTMLElement):
   if (!Array.isArray(entries) || entries.length === 0) return;
   const root = html.querySelector<HTMLElement>(".gworld-chat");
   if (!root || root.querySelector("[data-gworld-conscious]")) return;
+  // A blow taken back takes its roll with it (#984).
+  const undone = undoneOn(message);
   for (const entry of entries) {
+    if (undone.has(entry.uuid)) continue;
     const actor: any = await fromUuid(entry.uuid).catch(() => null);
     if (!actor?.isOwner || hasCondition(actor, "unconscious") || hasCondition(actor, "dead")) continue;
     const row = document.createElement("div");
