@@ -3982,6 +3982,20 @@ from it, is unchanged. `hitModifier` is now one of the row fields a
 whole number -- which is how a module's accessory adds its bonus without
 editing the weapon.
 
+## Which parry of the turn
+
+Since 1.195.0 a defense card with a parry on offer has a *Which parry this
+turn* choice beside Retreat. Left alone, the parry is counted as before, per
+weapon, except that a second press against the same attack card is the same
+parry, not the next. The defender may name the parry instead (#1, #2 and on),
+for a parry made off the cards or one that should not have counted. The
+penalty on the buttons follows the choice, and the count goes on from it.
+
+- The turn's defense counts keep `parriedBy`, the attack cards parried with
+  each weapon, beside `parries`.
+- `defenseCounts.parries`, in the defense hooks' context, is the parries that
+  come before this one, as counted or as the defender chose.
+
 ## Liquids in the face
 
 Since 1.155.0 a module's weapon that squirts something in a face starts the

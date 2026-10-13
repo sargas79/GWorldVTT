@@ -23,6 +23,7 @@ import { applyDamageToWeapon, heavyParryCheck, parryTooHeavy, postParryTooHeavy 
 import { applyDamageToShield, consumeShieldNote, noteShieldTookIt } from "./shields.js";
 import { attackOptionsFromEntries, rollDamage, rollSuccess, type AttackWeaponFlag } from "./roll.js";
 import { damageRecipients, ownsATokenOnScene, recordedTargetsOf, shownTargetName } from "./targets.js";
+import { afterParry, parriesBefore } from "./parry-count.js";
 import {
   BLAST_PLACEMENTS, blastAt, blastPlacementOf, collateralInjury, contactCoverDr, fragmentationLabel, fragmentationStrikes,
   type BlastPlacement, type FragmentationSpec,
@@ -1084,6 +1085,10 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
     }
 
     const deception = flag.defensePenalty ?? 0;
+    // Which parry of the turn a parry against this attack is: counted, until
+    // the defender says otherwise on the card.
+    const attackCard = String(message?.id ?? "");
+    const counted: ParryPlace = { attack: attackCard, chosen: null };
     const choices = defenseChoices({
       defenses: defender.system?.derived?.defenses ?? {},
       arc,
@@ -1147,7 +1152,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       arc: arc?.arc ?? null,
       attackWeapon: (flag.weapon ?? null) as Record<string, unknown> | null,
       parryWeapon: parryWith,
-      defenseCounts: countsFor(defender, parryWith),
+      defenseCounts: countsFor(defender, parryWith, counted),
     });
     for (const choice of choices) {
       if (!choice.available) continue;
@@ -1167,7 +1172,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       }
       const lines = [
         ...weaponDefenseLines(flag.weapon, flag.delivery, choice.key, choice.skillName, parryNatural),
-        ...(choice.key === "parry" ? multipleParryLines(defender, parryWith) : []),
+        ...(choice.key === "parry" ? multipleParryLines(defender, parryWith, counted) : []),
       ];
       if (choice.shown !== null) choice.shown += lines.reduce((sum, line) => sum + line.value, 0);
     }
@@ -1189,7 +1194,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
           const skill = String(bareRow.skillName ?? "");
           const lines = [
             ...weaponDefenseLines(flag.weapon, flag.delivery, "parry", skill, true),
-            ...multipleParryLines(defender, { itemId: "", twoHanded: false, natural: true, skill, isFencing: false }),
+            ...multipleParryLines(defender, { itemId: "", twoHanded: false, natural: true, skill, isFencing: false }, counted),
           ];
           return {
             key: "parry" as DefenseKey, available: true, total: bareRow.parry, arcPenalty, reason: null, skillName: skill, isFencing: false,
@@ -1281,6 +1286,38 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       row.append(acrobatic);
     }
 
+    // Which parry of the turn this is (Campaigns p. 376). Counted on its own,
+    // and a second press against this attack is the same parry; the defender
+    // may say otherwise -- a parry made off the cards, or one that should not
+    // have counted -- and the buttons show the figure that makes.
+    const parryOffered = choices.some((c) => c.available && c.key === "parry") || bareChoice !== null;
+    const parrySelect = parryOffered ? document.createElement("select") : null;
+    const relabels: Array<() => void> = [];
+    const parryPlace = (): ParryPlace => {
+      const chosen = parrySelect?.value ? Number(parrySelect.value) : null;
+      return { attack: attackCard, chosen: chosen !== null && Number.isInteger(chosen) ? chosen : null };
+    };
+    if (parrySelect) {
+      parrySelect.className = "gc-parry-number";
+      parrySelect.setAttribute("aria-label", game.i18n.localize("GWORLD.Defense.ParryNumber"));
+      parrySelect.title = game.i18n.localize("GWORLD.Defense.ParryNumberHint");
+      const countedNow = countsFor(defender, parryWith, counted).parries;
+      parrySelect.append(new Option(game.i18n.format("GWORLD.Defense.ParryCounted", { n: countedNow + 1 }), ""));
+      for (let n = 1; n <= Math.max(4, countedNow + 2); n++) {
+        parrySelect.append(new Option(game.i18n.format("GWORLD.Defense.ParryNth", { n }), String(n - 1)));
+      }
+      parrySelect.addEventListener("change", () => { for (const relabel of relabels) relabel(); });
+      row.append(parrySelect);
+    }
+    /** What the multiple-parry line comes to for a parry with this weapon, as the card stands. */
+    const parryPenalty = (weapon: DefenseParryWeapon | null, place: ParryPlace) =>
+      multipleParryLines(defender, weapon, place).reduce((sum, line) => sum + line.value, 0);
+    /** Keeps a parry button's figure in step with the parry chosen. */
+    const followParry = (button: HTMLButtonElement, text: string, shown: number, weapon: DefenseParryWeapon | null) => {
+      const without = shown - parryPenalty(weapon, counted);
+      relabels.push(() => { button.textContent = `${text} ${without + parryPenalty(weapon, parryPlace())}`; });
+    };
+
     // A module's defense options, beside Retreat. Which defense each applies
     // to is settled when a defense button is pressed.
     const addonBase = {
@@ -1295,7 +1332,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       arc: arc?.arc ?? null,
       parryWeapon: parryWith,
       calledShot: flag.calledShot ?? null,
-      defenseCounts: countsFor(defender, parryWith),
+      defenseCounts: countsFor(defender, parryWith, counted),
     };
     // Each option's control: a checkbox, or a number or a choice (API 1.25.0).
     const addonControls = anyDefenseOptions(addonBase).map((option) => {
@@ -1380,6 +1417,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
         arc: arc?.arc ?? null,
         parryWeapon: choice.key === "parry" ? (parryOverride ?? parryWith) : null,
         calledShot: flag.calledShot ?? null,
+        ...(choice.key === "parry" ? { parryPlace: parryPlace() } : {}),
       });
     };
 
@@ -1427,6 +1465,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       button.className = "gc-apply-button";
       button.dataset.defense = choice.key;
       button.textContent = `${game.i18n.localize(DEFENSE_LABELS[choice.key])} ${choice.shown}`;
+      if (choice.key === "parry" && choice.shown !== null) followParry(button, game.i18n.localize(DEFENSE_LABELS[choice.key]), choice.shown, parryWith);
       button.addEventListener("click", () => defendWith(choice));
       row.append(button);
     }
@@ -1436,6 +1475,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       button.type = "button";
       button.className = "gc-apply-button";
       button.textContent = `${game.i18n.localize("GWORLD.Defense.BareHandedParry")} ${bareChoice.shown}`;
+      if (bareChoice.shown !== null) followParry(button, game.i18n.localize("GWORLD.Defense.BareHandedParry"), bareChoice.shown, bareWeapon);
       button.addEventListener("click", () => defendWith(bareChoice, undefined, bareWeapon));
       row.append(button);
       for (const technique of defensiveTechniquesOf(defender)) {
@@ -1444,6 +1484,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
         techniqueButton.type = "button";
         techniqueButton.className = "gc-apply-button";
         techniqueButton.textContent = `${technique.name} ${(bareChoice.shown ?? 0) + technique.delta}`;
+        followParry(techniqueButton, technique.name, (bareChoice.shown ?? 0) + technique.delta, bareWeapon);
         techniqueButton.title = game.i18n.localize("GWORLD.Technique.DefenseHint");
         techniqueButton.addEventListener("click", () => defendWith(bareChoice, { name: technique.name, delta: technique.delta }, bareWeapon));
         row.append(techniqueButton);
@@ -1463,6 +1504,7 @@ async function addDefenseControls(message: any, html: HTMLElement): Promise<void
       button.type = "button";
       button.className = "gc-apply-button";
       button.textContent = `${technique.name} ${choice.shown + technique.delta}`;
+      if (choice.key === "parry") followParry(button, technique.name, choice.shown + technique.delta, parryWith);
       button.title = game.i18n.localize("GWORLD.Technique.DefenseHint");
       button.addEventListener("click", () => defendWith(choice, { name: technique.name, delta: technique.delta }));
       row.append(button);
@@ -1525,6 +1567,8 @@ function defensiveTechniquesOf(defender: any): Array<{ name: string; key: Defens
 interface DefenseCounts {
   /** Parries by the weapon's item id, or "bare" for bare hands. */
   parries: Record<string, number>;
+  /** The attack cards parried with each weapon, so a second press on one is not a second parry. */
+  parriedBy: Record<string, string[]>;
   blocks: number;
   dodges: number;
   /** Acrobatic defenses (Campaigns p. 375). */
@@ -1535,15 +1579,28 @@ const DEFENSE_COUNTS = "defenses";
 
 function defenseCountsOf(defender: any): DefenseCounts {
   const stored = getCombatState(defender, SYSTEM_ID, DEFENSE_COUNTS) as Partial<DefenseCounts> | undefined;
-  return { parries: { ...(stored?.parries ?? {}) }, blocks: Number(stored?.blocks) || 0, dodges: Number(stored?.dodges) || 0, acrobatic: Number(stored?.acrobatic) || 0 };
+  const parriedBy = Object.fromEntries(Object.entries(stored?.parriedBy ?? {})
+    .filter(([, ids]) => Array.isArray(ids))
+    .map(([weapon, ids]) => [weapon, (ids as unknown[]).map(String)]));
+  return { parries: { ...(stored?.parries ?? {}) }, parriedBy, blocks: Number(stored?.blocks) || 0, dodges: Number(stored?.dodges) || 0, acrobatic: Number(stored?.acrobatic) || 0 };
 }
 
 const parryKey = (weapon: { itemId?: string; natural?: boolean } | null | undefined) => (weapon && !weapon.natural && weapon.itemId ? weapon.itemId : "bare");
 
-/** The counts the defense hooks see: the parries already made with this weapon, and the blocks and dodges. */
-function countsFor(defender: any, parryWeapon: { itemId?: string; natural?: boolean } | null | undefined): { parries: number; blocks: number; dodges: number; acrobatic: number } {
+/** Which parry against which attack: the attack's card, and the parries the defender said come before it, or null to count them. */
+interface ParryPlace {
+  attack: string;
+  chosen: number | null;
+}
+
+/**
+ * The counts the defense hooks see: the parries made with this weapon before
+ * this one, and the blocks and dodges.
+ */
+function countsFor(defender: any, parryWeapon: { itemId?: string; natural?: boolean } | null | undefined, place?: ParryPlace): { parries: number; blocks: number; dodges: number; acrobatic: number } {
   const counts = defenseCountsOf(defender);
-  return { parries: counts.parries[parryKey(parryWeapon)] ?? 0, blocks: counts.blocks, dodges: counts.dodges, acrobatic: counts.acrobatic };
+  const parries = parriesBefore(counts, parryKey(parryWeapon), place?.attack ?? "", place?.chosen ?? null);
+  return { parries, blocks: counts.blocks, dodges: counts.dodges, acrobatic: counts.acrobatic };
 }
 
 /** Counts an acrobatic defense for the rest of the defender's turn, whether or not it worked. */
@@ -1563,10 +1620,10 @@ function acrobaticsOf(defender: any): { points: number; level: number | null } |
 }
 
 /** Counts one more defense of this kind for the rest of the defender's turn. */
-async function countDefense(defender: any, key: DefenseKey, parryWeapon: { itemId?: string; natural?: boolean } | null | undefined): Promise<void> {
+async function countDefense(defender: any, key: DefenseKey, parryWeapon: { itemId?: string; natural?: boolean } | null | undefined, place?: ParryPlace): Promise<void> {
   if (!defender?.isOwner) return;
   const counts = defenseCountsOf(defender);
-  if (key === "parry") counts.parries[parryKey(parryWeapon)] = (counts.parries[parryKey(parryWeapon)] ?? 0) + 1;
+  if (key === "parry") Object.assign(counts, afterParry(counts, parryKey(parryWeapon), place?.attack ?? "", place?.chosen ?? null));
   if (key === "block") counts.blocks += 1;
   if (key === "dodge") counts.dodges += 1;
   await setCombatState(defender, SYSTEM_ID, DEFENSE_COUNTS, counts, "turn");
@@ -1587,8 +1644,8 @@ function masterTrained(defender: any, parryWeapon: DefenseParryWeapon | null): b
 }
 
 /** The multiple-parry line for a parry with this weapon (Campaigns p. 376). */
-function multipleParryLines(defender: any, parryWeapon: DefenseParryWeapon | null): Array<{ label: string; value: number }> {
-  const value = multipleParryPenalty(countsFor(defender, parryWeapon).parries, { fencing: parryWeapon?.isFencing === true, trained: masterTrained(defender, parryWeapon) });
+function multipleParryLines(defender: any, parryWeapon: DefenseParryWeapon | null, place?: ParryPlace): Array<{ label: string; value: number }> {
+  const value = multipleParryPenalty(countsFor(defender, parryWeapon, place).parries, { fencing: parryWeapon?.isFencing === true, trained: masterTrained(defender, parryWeapon) });
   return value ? [{ label: game.i18n.localize("GWORLD.Defense.MultipleParries"), value }] : [];
 }
 
@@ -1865,6 +1922,8 @@ async function rollDefense(options: {
   parryWeapon?: DefenseParryWeapon | null;
   /** Where the blow was aimed, for the modules' options. */
   calledShot?: { hitLocation: string; addonLocation: string | null } | null;
+  /** The attack's card, and which parry of the turn the defender said this is. */
+  parryPlace?: ParryPlace;
 }): Promise<void> {
   const {
     defender, key, total, attack, arcPenalty, deception, retreating, feverish, skill, isFencing,
@@ -1886,7 +1945,7 @@ async function rollDefense(options: {
     arc: options.arc ?? null,
     parryWeapon: options.parryWeapon ?? null,
     calledShot: options.calledShot ?? null,
-    defenseCounts: countsFor(defender, key === "parry" ? options.parryWeapon : null),
+    defenseCounts: countsFor(defender, key === "parry" ? options.parryWeapon : null, options.parryPlace),
   };
   for (const option of defenseOptionsFor(addonContext)) {
     if (!(option.key in (options.addonOptions ?? {}))) continue;
@@ -1978,7 +2037,7 @@ async function rollDefense(options: {
   }
   const bareHanded = key === "parry" && (parryWeapon?.natural === true || isUnarmedSkill(skill));
   modifiers.push(...weaponDefenseLines(options.attackWeapon, options.delivery, key, skill, bareHanded));
-  if (key === "parry") modifiers.push(...multipleParryLines(defender, options.parryWeapon ?? null));
+  if (key === "parry") modifiers.push(...multipleParryLines(defender, options.parryWeapon ?? null, options.parryPlace));
   if (feverish) {
     modifiers.push({
       label: game.i18n.localize("GWORLD.ExtraEffort.Feverish"),
@@ -2009,7 +2068,7 @@ async function rollDefense(options: {
     attackWeapon: options.attackWeapon ? { ...options.attackWeapon } : null,
     parryWeapon: key === "parry" ? (options.parryWeapon ?? null) : null,
     // Since 1.24.0: this turn's defenses so far.
-    defenseCounts: countsFor(defender, key === "parry" ? options.parryWeapon : null),
+    defenseCounts: countsFor(defender, key === "parry" ? options.parryWeapon : null, options.parryPlace),
     // Since 1.27.0: whether Feverish Defense was bought for this defense.
     feverish,
     // Since 1.33.0: where the blow was aimed, and whether the defender is retreating.
@@ -2093,7 +2152,7 @@ async function rollDefense(options: {
   }
 
   // Counted for the rest of the turn, whether or not it worked (pp. 375-376).
-  if (outcome) await countDefense(defender, key, key === "parry" ? (options.parryWeapon ?? parryWeapon ?? null) : null);
+  if (outcome) await countDefense(defender, key, key === "parry" ? (options.parryWeapon ?? parryWeapon ?? null) : null, options.parryPlace);
 
   // "... or forced to make an active defense, you lose your aim."
   await loseAim(defender, "defended");
