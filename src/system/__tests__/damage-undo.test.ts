@@ -189,6 +189,15 @@ describe("taking back what followed from the blow (#984)", () => {
     expect(plan.ok && plan.effectsToCreate).toEqual([bleeding]);
   });
 
+  it("puts back an effect the blow replaced with another carrying the same condition", () => {
+    // The replacement is deleted, so it is no reason to keep the original out.
+    const plan = undoPlan(transaction({ effects: { added: ["fx-new"], removed: [stunned] } }), {
+      pool: 7, armor: { armor1: 1 }, effects: [{ id: "fx-new", statuses: ["stunned"] }],
+    });
+    expect(plan.ok && plan.effectsToDelete).toEqual(["fx-new"]);
+    expect(plan.ok && plan.effectsToCreate).toEqual([stunned]);
+  });
+
   it("puts the radiation dose back where the blow found it", () => {
     const radiation = { from: { dose: 10, at: 100 }, to: { dose: 25, at: 200 } };
     const plan = undoPlan(transaction({ radiation }), { pool: 7, armor: { armor1: 1 }, radiationDose: 25 });

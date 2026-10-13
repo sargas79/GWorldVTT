@@ -223,9 +223,13 @@ function effectsPlan(
   now: Array<{ id: string; statuses: string[] }>,
 ): { effectsToDelete: string[]; effectsToCreate: Array<Record<string, unknown>> } {
   const ids = new Set(now.map((effect) => effect.id));
-  const statuses = new Set(now.flatMap((effect) => effect.statuses));
+  const effectsToDelete = (changes?.added ?? []).filter((id) => ids.has(id));
+  // What is about to be deleted carries nothing that would keep a removed
+  // effect from coming back.
+  const leaving = new Set(effectsToDelete);
+  const statuses = new Set(now.filter((effect) => !leaving.has(effect.id)).flatMap((effect) => effect.statuses));
   return {
-    effectsToDelete: (changes?.added ?? []).filter((id) => ids.has(id)),
+    effectsToDelete,
     effectsToCreate: (changes?.removed ?? []).filter((data) => {
       if (ids.has(String(data._id ?? ""))) return false;
       const carried = Array.isArray(data.statuses) ? (data.statuses as unknown[]).map(String) : [];
