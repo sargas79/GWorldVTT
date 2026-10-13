@@ -3996,6 +3996,19 @@ penalty on the buttons follows the choice, and the count goes on from it.
 - `defenseCounts.parries`, in the defense hooks' context, is the parries that
   come before this one, as counted or as the defender chose.
 
+## Turn order and ties
+
+Since 1.195.0 DX breaks a tie in Basic Speed inside the initiative rolled,
+not in the turn-order comparator: the initiative formula is
+`@derived.basicSpeed + @tieBreak`, `tieBreak` a combatant's DX over 100,000
+(DX 12 adds 0.00012, below the two decimals the tracker shows), supplied by
+the system's Combatant class. The comparator orders by initiative, then by
+combatant id, which is the order Foundry's server keeps. Before, a tie broken
+on DX on the clients was broken by id on the server, and a player whose turn
+it was by the table's order could be refused when they ended it. A
+combat whose initiative was rolled before 1.195.0 keeps its ties until
+initiative is rolled again.
+
 ## Liquids in the face
 
 Since 1.155.0 a module's weapon that squirts something in a face starts the

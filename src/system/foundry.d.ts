@@ -385,6 +385,12 @@ declare global {
     [key: string]: any;
   }
 
+  /** The Combatant document: only what the system's subclass overrides is declared. */
+  class Combatant {
+    getInitiativeRoll(formula?: string): any;
+    [key: string]: any;
+  }
+
   const Actor: any;
   /**
    * Declared as a class rather than `any` so the system's own Item can
