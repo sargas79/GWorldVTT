@@ -302,7 +302,7 @@ const WEAPON_ROW_FIELDS = [
   "feint", "skillName", "readiesAfterAttack", "affliction", "afflictionAttribute", "afflictionModifier",
   "recoil", "noSprayingFire", "noSuppressionFire", "noOverpenetration", "firstHit",
   "fragmentation", "fragmentationType", "fragmentationDivisor", "fragmentationLingerEvery", "fragmentationLingerFor",
-  "blastPlacement", "largeArea", "scatterSquared", "bulk", "scopeBonus", "scopeFixed",
+  "blastPlacement", "largeArea", "scatterSquared", "bulk", "scopeBonus", "scopeFixed", "hitModifier",
 ] as const;
 
 /**
@@ -383,6 +383,8 @@ export function adjustWeaponAttacks(options: {
       row.scopeBonus = Math.max(0, Math.floor(Number(row.scopeBonus) || 0));
       row.scopeFixed = row.scopeBonus > 0 && row.scopeFixed === true;
     }
+    // The weapon's own modifier to hit, a whole number (since 1.195.0).
+    row.hitModifier = Math.round(Number(row.hitModifier) || 0);
     // Reach is text, Parry a whole number or none, and two-handed a flag (since 1.21.0).
     row.reach = typeof row.reach === "string" ? row.reach : String(row.reach ?? "");
     row.parry = row.parry === null || row.parry === undefined || !Number.isFinite(Number(row.parry)) ? null : Math.round(Number(row.parry));

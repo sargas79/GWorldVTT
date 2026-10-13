@@ -2873,6 +2873,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
           modeSkill: String(mode.skill ?? ""),
           skillChoice: String(mode.skillChoice ?? ""),
           skillLevel,
+          // A bonus or penalty to hit every shot, aimed or not (since API 1.195.0).
+          hitModifier: Number(mode.skillModifier ?? 0) || 0,
           atDefault,
           natural: false,
           unready: false,

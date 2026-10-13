@@ -35,6 +35,11 @@ describe("the lines a roll takes before its dialog", () => {
     expect(standingRollLines(fighter(), { rollType: "skill", ranged: false, hitModifier: "-2", dialogAsked: false })).toEqual([]);
   });
 
+  it("puts a ranged weapon's own to-hit on every shot, aimed or not (sargas79/GWorldVTT#977)", () => {
+    expect(standingRollLines(fighter(), { rollType: "attack", ranged: true, hitModifier: "1", dialogAsked: false }))
+      .toEqual([{ label: "GWORLD.Attack.WeaponToHit", value: 1 }]);
+  });
+
   it("gives All-Out Attack (Determined) +4 in melee and +1 at range, but not to a Wild Swing", () => {
     const allOut = fighter({ maneuver: "allOutAttack", allOutAttackOption: "determined" });
     expect(standingRollLines(allOut, { rollType: "attack", ranged: false, dialogAsked: true })[0]?.value).toBe(4);

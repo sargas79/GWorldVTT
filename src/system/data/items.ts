@@ -978,6 +978,13 @@ function rangedModeField() {
      * a second short, unless noted (Campaigns p. 411; since API 1.86.0).
      */
     scopeFixed: new fields.BooleanField({ initial: false }),
+    /**
+     * A modifier to the roll to hit apart from Acc and a scope, every shot
+     * whether or not the shooter aimed: a sight or a mount that gives a bonus
+     * to skill, or a weapon a data file lists at a penalty with its skill
+     * (since API 1.195.0). It is not a change to the skill.
+     */
+    skillModifier: new fields.NumberField({ required: true, nullable: false, integer: true, initial: 0 }),
     halfDamageRange: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
     maxRange: new fields.NumberField({ required: true, nullable: false, initial: 0, min: 0 }),
     /**

@@ -3970,6 +3970,18 @@ at, and the damage lands on them whoever presses Apply.
   victims are chosen when it is applied, and a card with none recorded, or
   whose tokens are gone, uses the presser's targets or selection.
 
+## A ranged weapon's own modifier to hit
+
+Since 1.195.0 a ranged mode has `skillModifier`, as a melee mode already did:
+a modifier to every shot, aimed or not, apart from Acc and a scope. A sight
+or a mount a book gives a bonus to skill, or a weapon used at a penalty with
+its skill, goes here. The ranged row carries it as `hitModifier`, and the
+attack roll lists it as *Weapon, to hit*; the skill, and anything worked out
+from it, is unchanged. `hitModifier` is now one of the row fields a
+`gworld.weaponAttacks` listener may change, on a melee or a ranged row, kept a
+whole number -- which is how a module's accessory adds its bonus without
+editing the weapon.
+
 ## Liquids in the face
 
 Since 1.155.0 a module's weapon that squirts something in a face starts the
