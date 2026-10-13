@@ -863,6 +863,13 @@
   padding-bottom: 5px;
   border-bottom: 1px solid var(--color-divider);
 }
+/* Who the attack or its damage was aimed at, named to everyone. */
+.gworld-chat .gc-aimed-at {
+  padding: 3px 0;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  color: var(--color-neutral-700);
+}
 .gworld-chat .gc-label {
   min-width: 0;
   overflow-wrap: anywhere;

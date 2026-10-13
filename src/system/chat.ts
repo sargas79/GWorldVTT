@@ -22,7 +22,7 @@ import { HURTING_YOURSELF_DR, hurtingYourself } from "../rules/hurting-yourself.
 import { applyDamageToWeapon, heavyParryCheck, parryTooHeavy, postParryTooHeavy } from "./weapon-damage.js";
 import { applyDamageToShield, consumeShieldNote, noteShieldTookIt } from "./shields.js";
 import { attackOptionsFromEntries, rollDamage, rollSuccess, type AttackWeaponFlag } from "./roll.js";
-import { currentTargets, ownsATokenOnScene } from "./targets.js";
+import { damageRecipients, ownsATokenOnScene, recordedTargetsOf, shownTargetName } from "./targets.js";
 import {
   BLAST_PLACEMENTS, blastAt, blastPlacementOf, collateralInjury, contactCoverDr, fragmentationLabel, fragmentationStrikes,
   type BlastPlacement, type FragmentationSpec,
@@ -156,6 +156,8 @@ interface DamageFlag {
   hit?: { index: number; hits: number | null };
   /** Which second line of its row the roll was: a follow-up or a linked attack (since API 1.154.0). */
   line?: "followUp" | "linked";
+  /** The tokens the attack was aimed at, which the blow is applied to (since API 1.195.0). */
+  targets?: Array<{ tokenUuid: string; name: string }>;
 }
 
 function damageFlag(message: any): DamageFlag | null {
@@ -340,10 +342,26 @@ function addApplyControls(message: any, html: HTMLElement): void {
     );
   }
 
+  // Who the blow is for: the tokens its attack was aimed at, whoever presses
+  // the button. A blast's victims are chosen afterwards, so it has none. The
+  // box puts the blow on the presser's own targets instead.
+  const forWhom = flag.explosive ? [] : recordedTargetsOf(flag.targets);
+  let redirect: HTMLInputElement | null = null;
+  let redirectLabel: HTMLLabelElement | null = null;
+  if (forWhom.length > 0) {
+    redirect = document.createElement("input");
+    redirect.type = "checkbox";
+    redirectLabel = document.createElement("label");
+    redirectLabel.className = "gc-retreat";
+    redirectLabel.title = game.i18n.format("GWORLD.Chat.AppliesTo", { names: forWhom.map((t) => shownTargetName(t) ?? game.i18n.localize("GWORLD.Chat.UnknownTarget")).join(", ") });
+    redirectLabel.append(redirect, document.createTextNode(game.i18n.localize("GWORLD.Chat.ApplyToMyTargets")));
+  }
+
   const button = document.createElement("button");
   button.type = "button";
   button.className = "gc-apply-button";
   button.textContent = game.i18n.localize("GWORLD.Chat.ApplyDamage");
+  if (redirectLabel) button.title = redirectLabel.title;
 
   button.addEventListener("click", () => {
     const where = readLocationValue(select.value) ?? { hitLocation: "torso" as HitLocation, addonLocation: null };
@@ -357,6 +375,7 @@ function addApplyControls(message: any, html: HTMLElement): void {
       critical: critical?.checked ?? false,
       placement: blastPlacementOf(placement?.value),
       largeArea: largeArea.checked,
+      myTargets: redirect?.checked ?? false,
     });
   });
 
@@ -366,6 +385,7 @@ function addApplyControls(message: any, html: HTMLElement): void {
   row.append(largeAreaLabel);
   row.append(belowLabel);
   if (criticalLabel) row.append(criticalLabel);
+  if (redirectLabel) row.append(redirectLabel);
   row.append(button);
   root.append(row);
 }
@@ -434,13 +454,17 @@ async function applyFromCard(options: {
   placement?: BlastPlacement | null;
   /** A large-area injury (since API 1.72.0). */
   largeArea?: boolean;
+  /** True to apply to the presser's targets rather than the attack's. */
+  myTargets?: boolean;
 }): Promise<void> {
   const { flag, hitLocation } = options;
   // A blast against or inside the victim is a direct hit, wherever the
   // distance field was left.
   const placement = flag.explosive && !isRuleOn("cinematicExplosions") ? blastPlacementOf(options.placement) : null;
   const distanceYards = placement ? 0 : options.distanceYards;
-  const targets = currentTargets();
+  // The tokens the attack was aimed at, unless the presser asked for their
+  // own; the presser's targets for a blast, and for a card with none recorded.
+  const targets = await damageRecipients(flag.explosive ? [] : recordedTargetsOf(flag.targets), options.myTargets === true);
   if (targets.length === 0) {
     ui.notifications?.warn(game.i18n.localize("GWORLD.Chat.NoTarget"));
     return;
@@ -2547,6 +2571,7 @@ function addFragmentControls(message: any, html: HTMLElement): void {
 /** Registers the chat hooks. Called once, at init. */
 export function registerChatHooks(): void {
   Hooks.on("renderChatMessageHTML", (message: any, html: HTMLElement) => {
+    addTargetLine(message, html);
     addApplyControls(message, html);
     addFragmentControls(message, html);
     void addDefenseControls(message, html);
@@ -2565,6 +2590,27 @@ export function registerChatHooks(): void {
     void addGuidanceControls(message, html);
     addRulesLinks(html);
   });
+}
+
+/**
+ * Names who an attack, or its damage, was aimed at, under the card's heading
+ * and for everyone at the table: the defense controls name the defender to
+ * its owner alone, which left the rest of the table guessing who was shot at.
+ * A name the canvas hides from this user is shown as unknown.
+ */
+function addTargetLine(message: any, html: HTMLElement): void {
+  const stored = message?.getFlag?.(SYSTEM_ID, "attackTargets") ?? message?.getFlag?.(SYSTEM_ID, "damage")?.targets;
+  const targets = recordedTargetsOf(stored);
+  if (targets.length === 0) return;
+  const root = html.querySelector<HTMLElement>(".gworld-chat");
+  const head = root?.querySelector<HTMLElement>(".gc-head");
+  if (!root || !head || root.querySelector("[data-gworld-targets]")) return;
+  const names = targets.map((entry) => shownTargetName(entry) ?? game.i18n.localize("GWORLD.Chat.UnknownTarget"));
+  const line = document.createElement("div");
+  line.className = "gc-aimed-at";
+  line.dataset.gworldTargets = "";
+  line.textContent = game.i18n.format("GWORLD.Chat.AttackTargets", { names: names.join(", ") });
+  head.after(line);
 }
 
 /**

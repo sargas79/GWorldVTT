@@ -3950,6 +3950,26 @@ or 1/2D changed the figure, the card shows what the dice came to as well.
   rolled figure times that (Campaigns p. 556). An explosion's card leaves
   them off, since the distance sets its figure too.
 
+## Who the cards are for
+
+Since 1.195.0 an attack and its damage carry the tokens the attack was aimed
+at, and the damage lands on them whoever presses Apply.
+
+- **`flags.gworld.attackTargets`** on an attack card, hit or miss: an array
+  of `{ tokenUuid, name }`, the attacker's targets when the attack was
+  rolled, `name` the token's own. The card names them under its heading to
+  everyone at the table; a name the token does not show to a user who does
+  not own it (a display mode other than hover or always, or a hidden token)
+  reads as unknown to that user.
+- **`flags.gworld.damage.targets`** on a damage card, the same shape: the
+  targets the row's last attack recorded, or the roller's targets when the
+  damage was rolled with no attack before it. `rollDamage` takes them as
+  `targets`. Apply puts the blow on these tokens rather than on the
+  presser's targets; a box on the card, *My targets instead*, puts it on the
+  presser's, as it was before. An explosion's card ignores them, since its
+  victims are chosen when it is applied, and a card with none recorded, or
+  whose tokens are gone, uses the presser's targets or selection.
+
 ## Liquids in the face
 
 Since 1.155.0 a module's weapon that squirts something in a face starts the
