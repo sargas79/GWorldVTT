@@ -1,378 +1,274 @@
 # Open issues: verification and implementation plan
 
-**Status: implemented.** All seven batches below have been built on
-`claude/open-issues-review-plan-ctvifd`, one commit each, in the order given.
-Two things changed from the plan during the work and are recorded here rather
-than left to the commits: #533's field is stepped by buttons rather than the
-browser's spinner (which can only move by one, and so cannot express a cost
-table), and #526's helper identifies a field by `name` *or* `id`, because the
-builder's fields carry no name -- one there would submit onto the actor on
-every keystroke. #534 ships with one open question, flagged at the end of its
-section.
+**Status: implemented** on `claude/open-issues-plan-977-982`, one commit per
+batch (#980 and #981 together), API 1.195.0. #967 stays open: it needs a
+person in a live Foundry v14 world. Three things changed from the plan during
+the work:
 
-Written against `main` at v1.26.0 (`256d42f`). Baseline at the time of writing:
-`npm run typecheck`, `npm run lint` and `npm test` (172 files, 2560 tests) all
-pass, so every failure a change below produces is that change's own.
+- **#979's cause was the server, not the clients.** Foundry's server decides
+  whether a player may end their turn by its own order (initiative, then id).
+  It never runs the system's comparator, which broke Basic Speed ties on DX.
+  The tie-break moved into the initiative rolled, and the comparator now
+  matches the server's.
+- **#982 did not reproduce.** The resolver gives pi+ x1.5 after DR (pinned by
+  a test). The change is the card saying why a multiplier differs from the
+  type's own: a limb, the vitals, or the target.
+- **#980 records targets per weapon row at attack time**, not consumed by the
+  damage roll, so every hit of a burst lands on the same tokens. The redirect
+  is a *My targets instead* box rather than a separate button.
 
-Ten issues are open in this repository (#526-#535). None are open in
-`compendium-manager`. Each was re-read against the code rather than taken from
-its triage note; where the note and the code disagree, the code is recorded
-here.
+Written against `main` at v1.71.0 (`5837286`). The previous plan in this file
+(#526-#535) was fully implemented and is in git history.
+
+Seven issues are open (#967, #977-#982). Six are bug reports from a play
+session. #967 is a manual check that must be done in a live world. Each report
+was read against the code. Where the code shows the cause, the section names
+it. Where it doesn't, the section says so and starts with a reproduction.
 
 - [What the verification found](#what-the-verification-found)
-- [Batch 1 - the trait editor (#530, #531, #529)](#batch-1---the-trait-editor-530-531-529)
-- [Batch 2 - the builder window (#527, #528)](#batch-2---the-builder-window-527-528)
-- [Batch 3 - skill points in the picker (#533)](#batch-3---skill-points-in-the-picker-533)
-- [Batch 4 - focus across a re-render (#526)](#batch-4---focus-across-a-re-render-526)
-- [Batch 5 - compendium styling (#532)](#batch-5---compendium-styling-532)
-- [Batch 6 - the roll dialog (#535)](#batch-6---the-roll-dialog-535)
-- [Batch 7 - undoing damage (#534)](#batch-7---undoing-damage-534)
+- [Batch 1 - damage applies to the attack's target (#980)](#batch-1---damage-applies-to-the-attacks-target-980)
+- [Batch 2 - the attack card names its target (#981)](#batch-2---the-attack-card-names-its-target-981)
+- [Batch 3 - choosing which parry this is (#978)](#batch-3---choosing-which-parry-this-is-978)
+- [Batch 4 - a to-hit modifier on ranged modes (#977)](#batch-4---a-to-hit-modifier-on-ranged-modes-977)
+- [Batch 5 - pi+ wounding after DR (#982)](#batch-5---pi-wounding-after-dr-982)
+- [Batch 6 - players passing their turn (#979)](#batch-6---players-passing-their-turn-979)
+- [#967 - the GM Screen in a live world](#967---the-gm-screen-in-a-live-world)
 - [Order of work](#order-of-work)
+- [Questions for the reporter](#questions-for-the-reporter)
 
 ## What the verification found
 
 | # | Title | Verdict | Where it lives |
 | --- | --- | --- | --- |
-| 526 | Focus lost when tabbing attributes | Confirmed | `sheets/character-sheet.ts:421` |
-| 527 | Builder header overlaps template options | Confirmed, cause differs from triage | `styles/sheet-v2.css:1571-1631` |
-| 528 | Builder content does not scroll | Partly stale | `styles/sheet-v2.css:1631` |
-| 529 | Quirks added at 0 CP | Confirmed, classic sheet only | `sheets/character-sheet.ts:3170` |
-| 530 | `None` self-control option unclear | Confirmed, and it is a data-corrupting bug | `sheets/item-sheet.ts:448` |
-| 531 | Self-control defaults to 6 | Confirmed; the stored default is already correct | `data/items.ts:232` |
-| 532 | Compendium styling off-theme | Confirmed | `styles/gworld.css:1308+` |
-| 533 | Skill levels priced +1 at a time | Confirmed | `picker-merge.ts:65` |
-| 534 | No undo for damage | Confirmed | `damage.ts:596` |
-| 535 | No pre-roll effective level | Confirmed, smaller than triage suggests | `roll.ts:1992`, `roll.ts:3196` |
+| 980 | Damage card applies to the GM's target | Confirmed | `system/chat.ts:443` (`applyFromCard` → `currentTargets()`) |
+| 981 | Attack card should show the target | Confirmed | `system/chat.ts:959` (defenders shown to owners only) |
+| 978 | Multiple-parry penalty always applied | Confirmed (by design today) | `system/chat.ts:1146`, `countDefense` at `chat.ts:1540` |
+| 977 | Reflex sight bonus not counted | Probable cause found | ranged rows carry no `hitModifier`: `data/character.ts:2865` vs melee at `:2689` |
+| 982 | pi+ multiplier not applied after DR | Not reproduced from the code; the rules functions are correct | `rules/damage.ts:293`, `rules/hit-locations.ts:182` |
+| 979 | Some players can't pass their turn | Not reproduced; one candidate cause | `system/combat.ts:39` (`_sortCombatants`) |
+| 967 | GM Screen live check | Manual QA, needs a person in Foundry v14 | n/a |
 
-Three findings change the shape of the work and are worth stating up front.
+Two findings matter for the order of work:
 
-**#528 is mostly already fixed.** The triage note asks for a builder body that
-is its own scroll container. `styles/sheet-v2.css:1631` already declares
-`.gb-body { flex: 1 1 auto; min-height: 0; overflow-y: auto }` between a header
-and a `.gb-foot`, the window is a fixed 760x720, and
-`character-builder.ts:112` registers `scrollable: [".gb-body"]`. What is
-missing is not the scroll container but the `flex: none` on its siblings - the
-same defect that causes #527. The two issues are one fix, as triage suspected,
-but for a different reason than triage gave.
+**#980 and #981 need the same new data.** An attack card today records its
+defenders only in the defense flag (`roll.ts:1295`), and only when there are
+targets. The damage roll has no link back to the attack. Both fixes need the
+attack's targets saved once at attack time and read later, so they share
+Batch 1's plumbing.
 
-**#527's mechanism was diagnosed wrongly, and the correction is below.** The
-claim made here first -- that `.gb-header`, `.gb-steps` and `.gb-foot` keep the
-default `flex-shrink: 1` and are squeezed below their own content height -- does
-not hold. Flex items default to `min-height: auto`, which floors them at their
-content size, so the header could not be squeezed that way. Rendering the real
-template against the real stylesheet in Chromium confirms it: at 760x720,
-700x620 and 560x560, the header keeps its full height, its content overflows by
-0px, `.gb-body` scrolls, and Back and Next stay visible -- with the `flex: none`
-and without it, to identical measurements. See "Where #527 actually is" below.
+**#977 touches book-neutrality.** Reflex sights are not in the Basic Set, so
+the system must not name them (`CLAUDE.md`; `npm run lint` enforces it). The
+system-side fix is generic: a ranged mode needs the same per-mode to-hit
+modifier a melee mode already has. Whatever module supplies the sight then
+fills that field in, or adds a line through the existing
+`gworld.attackModifiers` hook.
 
-**#531's requested change would be wrong as literally stated.** A new trait is
-already stored with `selfControl: null`, which prices at x1 - the field is
-`initial: null` at `data/items.ts:232`. Making 12 the stored default for every
-trait would give every advantage and every ordinary disadvantage a self-control
-roll it does not have. The 6 the reporter sees is #530's rendering bug, not a
-default. The plan therefore fixes the display and preselects 12 only where a
-self-control number is actually being turned on, and says so on the issue.
+---
 
-## Batch 1 - the trait editor (#530, #531, #529)
+## Batch 1 - damage applies to the attack's target (#980)
 
-One batch: #530 and #531 are the same defect, and #529 is a one-line default in
-the same area.
+**Cause.** `applyFromCard` (`chat.ts:424`) calls `currentTargets()`, which
+reads `game.user.targets`. Those are the targets of the person who clicks
+Apply, usually the GM, not the targets the attacker chose.
 
-### #530 / #531 - the self-control dropdown
+**Change.**
+1. When an attack is rolled, save its target tokens (token UUID plus the
+   displayed name) on the attacker as a pending "last attack targets" record.
+   Use the same consume-once state pattern the damage roll already uses for
+   `consumeCalledShot`, `consumeHalfDamage` and the rest (`roll.ts:5200-5230`),
+   keyed by the attack row (`shotRow(itemRow)`) so two weapons don't mix.
+2. `handleDamageAction` consumes the record and writes `targets: [{ tokenUuid,
+   name }]` onto the damage card's `DamageFlag` (`chat.ts:94`). A damage roll
+   with no prior attack (rolled directly from the sheet) falls back to the
+   roller's current targets at roll time, which is still better than the
+   clicker's targets at apply time.
+3. `applyFromCard` resolves `flag.targets` with `fromUuid`. It uses
+   `currentTargets()` only when the flag has none: old cards, area/blast
+   damage, or damage the GM wants to redirect.
+4. Redirecting: if the clicker has targets that differ from the recorded
+   ones, apply to the recorded ones and add a small "apply to my targets
+   instead" control on the card. This keeps the old behaviour one click away
+   for a GM who uses it on purpose.
+5. Blasts and area attacks keep using the clicker's targets, since the victims
+   are chosen after the roll. Keep that branch explicit and tested.
 
-`sheets/item-sheet.ts:448` builds the choices as an object:
+**Tests.** A damage card applies to the recorded token, not to
+`game.user.targets`. It falls back when nothing is recorded. Two tokens of one
+linked actor still take the damage once (`seen` set, `chat.ts:556`). A blast
+still uses current targets.
 
-```ts
-selfControl: { "": "...NoSelfControl", "6": "...", "9": "...", "12": "...", "15": "..." }
-```
+**API.** The new `DamageFlag.targets` field is readable by modules, so bump
+the API minor version and document it in `docs/api.md`.
 
-JavaScript orders integer-like keys first and in ascending numeric order, so
-iteration yields `6, 9, 12, 15, ""` and the select renders **None last**. The
-template (`templates/item/item-sheet.hbs:407`) passes
-`selected=system.selfControl`, which is `null` for a trait with no roll, so
-nothing matches and the browser falls back to displaying the first option - 6.
-The sheet submits on change, `item-sheet.ts:604` only coerces `""` back to
-`null`, and a plain save therefore writes `selfControl: 6`. A trait with no
-self-control roll silently becomes one priced at x2. This is a data-corrupting
-bug, not just a labelling question.
+## Batch 2 - the attack card names its target (#981)
 
-Fix:
+**Cause.** `addDefenseControls` (`chat.ts:942`) adds a row per defender only
+for users who own that defender (`if (!defender?.isOwner) continue`), so
+everyone else sees no target at all. The success-roll template
+(`templates/chat/success-roll.hbs`) has no target line.
 
-1. Build `choices.selfControl` as an ordered array of `{ value, label }` with
-   None first, so the rendered order is None, 6, 9, 12, 15.
-2. Make the None option genuinely selected when the value is `null`, rather
-   than relying on the browser's fallback.
-3. Add the tooltip #530 asks for on None - "no self-control roll" - as a new
-   `GWORLD.Trait.NoSelfControlHint` key in `lang/en.json`. `NoSelfControl`
-   ("None") and the numbered labels already exist at `lang/en.json:1269+`.
-4. For #531: when the trait is a disadvantage and a self-control number is
-   being turned on, preselect 12 - the book's x1 standard - rather than 6.
-   `category` is already one of `advantage | disadvantage | quirk | perk`
-   (`data/items.ts:191`), so the condition is available in the sheet context.
+**Change.**
+1. Using the targets saved in Batch 1, render a "Target: <name>" line
+   (`GWORLD.Chat.AttackTarget`, "Target: {names}") on every attack card, for
+   every viewer, above the defense rows.
+2. Use the **token's** display name rather than the actor's. Respect the
+   token's name-visibility setting: if a player couldn't see the name by
+   hovering the token, show "Unknown"/"a target" (`GWORLD.Chat.UnknownTarget`)
+   instead of leaking an NPC's name. Show the GM the real name either way.
+3. Show the line on misses too. A miss against Bob is still worth knowing.
+4. The owner's defense row keeps its own name line. Skip the duplicate when
+   there is exactly one target and the viewer owns it.
 
-Not migrating existing data: a trait saved at 6 by this bug is indistinguishable
-from a 6 the user meant. Silently rewriting real choices is worse than leaving
-the stale ones, so this goes in the release notes instead of a migration.
+**Tests.** A render test for an owner, a non-owner and the GM. Test a hidden
+name. Test several targets.
 
-Tests: a unit test over the choice builder asserting None is first and is
-selected for `null`, and that a disadvantage turning the roll on offers 12.
-`rules/traits.ts:99` already prices `null` at x1 and has coverage.
+## Batch 3 - choosing which parry this is (#978)
 
-### #529 - quirks at 0 CP
+**Cause.** Each parry adds to a per-weapon count stored for the turn
+(`countDefense`, `chat.ts:1540`). The next parry takes
+`multipleParryPenalty(count)` automatically (`multipleParryLines`,
+`chat.ts:1566`). Nothing lets the player say "that click was a mistake" or "this
+is really my first parry". Pressing Parry again on the same attack, for a
+re-roll or a misclick, also counts twice.
 
-Confirmed, and only on the classic sheet. `picker-merge.ts:168` already gives a
-custom quirk `points: -1` and a perk `points: 1`, so the V2 sheet's **Add
-Quirk** is correct. The classic sheet's `#onCreateItem`
-(`character-sheet.ts:3170`) builds `{ name, type }` plus `category` and nothing
-else, so the quirk takes the field's `initial: 0`.
+**Change.**
+1. Add a small "Parry #" selector to the defense row, next to the Retreat
+   checkbox (`chat.ts:1190` is the pattern). Show it only when a parry is on
+   offer. It defaults to the counted number + 1, and choices run from 1st to
+   one past the default. The chosen number drives both the penalty line and
+   the number stored afterwards (count = chosen), so the next parry follows
+   on from what the player picked.
+2. Count once per attack: save the attack message id with the count. A second
+   parry against the same message replaces the count instead of adding to it.
+3. Add the same selector to the bare-handed parry (`chat.ts:1165`), which
+   shares the logic.
+4. The `defenseCounts` passed to the defense hooks (`chat.ts:1126`) reflects
+   the chosen number, so modules see what the player chose.
 
-Fix: have `#onCreateItem` reuse `customItemData` from `picker-merge.ts` so both
-paths read one source for the defaults. That satisfies the issue's "confirm the
-default follows the configured GURPS quirk value" without introducing a second
-table.
+**Tests.** The default matches today's behaviour (no change for anyone who
+ignores the selector). Choosing 1st removes the penalty and resets the count.
+Re-parrying one attack doesn't stack. Fencing and Trained By A Master halving
+still apply to the chosen number.
 
-Test: extend the existing picker-merge coverage to the sheet path - creating
-through `#onCreateItem` with `category: "quirk"` yields -1, and `perk` yields 1.
+## Batch 4 - a to-hit modifier on ranged modes (#977)
 
-## Batch 2 - the builder window (#527, #528)
+**Finding.** A melee mode has `skillModifier` (`data/items.ts:743`), which
+reaches the roll as `hitModifier` (`character.ts:2689` → `roll.ts:926`). A
+ranged mode has no such field, and the ranged row (`character.ts:2865`)
+carries no `hitModifier`. The only aim-related ranged figures are `accuracy`
+and `scopeBonus`, and both count only after an Aim maneuver. A sight that
+gives a bonus to skill, rather than to Acc, has nowhere to go, which fits the
+report "bonus is not being accounted in automatic calculations".
 
-> **Correction, after rendering it.** What shipped under this heading is sound
-> but is not a fix for #527, and the reasoning first given here was wrong. The
-> builder body already scrolled, before and after; the `flex: none` added to its
-> fixed rows is defensive tidying, and the visible scrollbar is a real but small
-> improvement. #527 remains open in substance. See "Where #527 actually is".
+**Change (system, book-neutral).**
+1. Add `skillModifier` to the ranged mode schema, with the same doc comment
+   as the melee one, minus the parry note. Default 0, no migration needed.
+2. Put it on the ranged row as `hitModifier` and pass it through
+   `attack-ranged-roll.hbs` as `data-hit-modifier`, as the melee template
+   already does, so `standingRollLines` lists it as "Weapon to-hit".
+3. Show it on the item sheet's ranged mode editor, next to Acc and scope.
+4. Add it to the shapes `combat-extensions.ts:305` sanitises for module
+   records, and to `docs/api.md`, with an API minor bump.
 
-One CSS change in `styles/sheet-v2.css` covers both:
+**Change (add-on side, not in this repo).** The module that defines reflex
+sights sets the weapon mode's `skillModifier` (or `accuracy`/`scopeBonus`,
+whichever its book's rule says), or adds a line through
+`gworld.attackModifiers`. The issue can close once the system side lands and
+the reporter confirms how their sight was entered (see the questions below).
+If it was typed into a field that already exists and still didn't count, that
+is a separate bug, and this batch is revisited.
 
-1. Give `.gb-header`, `.gb-steps` and `.gb-foot` `flex: none` so they hold their
-   natural height and cannot be squeezed into their own content. This stops the
-   header painting over the step options (#527) and leaves all the surplus
-   height to `.gb-body`, which already scrolls (#528).
-2. Keep `.gb-body`'s existing `flex: 1 1 auto; min-height: 0; overflow-y: auto`.
-3. Verify the scrollbar is visible rather than only functional, which is what
-   #528's acceptance criteria ask for.
+**Tests.** A ranged row carries the mode's modifier. The attack roll's
+breakdown lists it. A zero modifier adds no line.
 
-Check at the default 760x720 and at the two container breakpoints the file
-already defines (700px and 560px, `sheet-v2.css:1735+`), with a long template
-whose options fold. The Capoeira template named in #527 ships with an add-on, so
-reproduce with any template long enough to overflow; per `CLAUDE.md` neither the
-module nor the template may be named in `src`, `templates`, `lang` or
-`packs-src`, and this plan is the only place the name appears.
+## Batch 5 - pi+ wounding after DR (#982)
 
-No unit test - this is layout. The verification is manual at the three widths.
+**What the code says.** `computeInjury` (`rules/damage.ts:293`) subtracts DR,
+then multiplies the penetrating damage by the wounding modifier. pi+ is 1.5 in
+`WOUNDING_MODIFIERS` and in `woundingModifierAt` for the torso. That function
+caps pi+ at x1 on an arm, leg, hand or foot, which is the Basic Set rule
+(Campaigns p. 399). The rules layer looks right, so the bug, if there is one,
+is in what reaches it. Possible causes, to check in this order:
 
-### Where #527 actually is
+1. **A limb hit.** x1 there is correct, and the applied-damage card should
+   say why ("x1 on a limb"), so the next report doesn't come in.
+2. **A loaded round's type replacing the weapon's.** With the
+   `ammunitionTypes` rule on, `character.ts:2894` uses
+   `round?.damageType ?? mode.damageType`. A round whose type was left at a
+   default (e.g. `pi`) turns a pi+ gun into pi. Check how the round's
+   `damageType` defaults, and whether a blank round type should fall back to
+   the mode.
+3. **Injury Tolerance or a module's override.** Unliving/Homogeneous
+   (`toleratedWoundingModifier`) and the `woundingOverride` passed for internal
+   blasts replace the modifier. Correct for those targets, but invisible on
+   the card.
+4. **The display.** The applied card may show the right injury but no "x1.5"
+   step, so it looks like none was applied.
 
-The builder's "templates" step lists the templates already *applied*
-(`templates/apps/character-builder.hbs`, the `stepId "templates"` block). It has
-no template *options* in it at all. Those live in a separate dialog,
-`chooseTemplateOptions` (`src/system/sheets/character-prompts.ts:2031`), opened
-by the step's Apply button -- and that is what the report is about.
+**Change.** First, a failing test through `applyDamageToActor` with a pi+ blow
+to the torso through DR, plus the reporter's actual case. Then fix whichever
+cause it turns out to be. Whatever the cause, show the wounding modifier, and
+the reason when it isn't the type's base value, on the applied-damage card.
+That removes this class of confusion.
 
-That dialog is a `DialogV2` at a fixed height, `Math.min(760, 85% of the
-window)`, whose content is a plain `<div style="display:flex;flex-direction:
-column">` with no scroll container of its own. Its own comment says a template
-"can offer well over a hundred options", which is why every list folds. Built
-with four groups of twenty-two options expanded, it comes to **1851px of content
-inside a 694px window** -- measured, not estimated.
+## Batch 6 - players passing their turn (#979)
 
-Whether that actually strands the options depends on how Foundry's own
-`.window-content` handles the overflow in a DialogV2, which cannot be determined
-outside Foundry: `overflow: hidden` there leaves them unreachable, `overflow:
-auto` leaves them merely awkward. That is the one thing to check in a running
-Foundry, and it decides the fix:
+**What the code says.** The system doesn't override `nextTurn`, and none of
+its `updateCombat` listeners veto anything. Ending a turn is Foundry core:
+a player may advance the turn only while they own the current combatant.
 
-- If they are unreachable, give the dialog's content its own bounded scroller --
-  `max-height: calc(min(760px, 85vh) - <chrome>); overflow-y: auto` -- which is
-  correct under either behaviour and does not depend on any ancestor resolving
-  a height.
-- If they are reachable but the header covers them while scrolling, the fix is
-  a sticky header inside that dialog instead.
+**A candidate cause.** `GWorldCombat._sortCombatants` (`combat.ts:39`) breaks
+Basic Speed ties on DX read from `combatant.actor`. A player who can't read
+another combatant's actor (no permission, or an unlinked token) gets `null`
+for that DX, so on their client the tie sorts differently from the GM's. The
+player's "next turn" index is computed against their own order, so it can
+point at a different combatant. Foundry may then reject the update or advance
+to the wrong turn. "Some players" fits this: only parties with tied Basic
+Speed would see it.
 
-The same dialog is the better candidate for #528's "content cannot be accessed
-when it exceeds the visible window area", since the builder body demonstrably
-scrolls.
+**Plan.**
+1. Reproduce in a world with two combatants on the same Basic Speed: one
+   player-owned, one NPC the player can't observe. If the candidate holds,
+   the order shown to the player differs from the GM's.
+2. Fix: make the tie-break readable on every client. Store each combatant's
+   DX on the combatant (a flag the GM writes when initiative is rolled or the
+   actor's DX changes) and sort on that, not on `combatant.actor`.
+3. If it doesn't reproduce, collect from the reporter: which players, whether
+   it's their own turn, ownership level on their token, and any console
+   error. Ownership of the combatant (player's token is unlinked with the
+   player owning only the base actor, or vice versa) is the next suspect.
 
-## Batch 3 - skill points in the picker (#533)
+**Tests.** A sort test where one combatant's actor is unreadable gives the
+same order as when it is readable, once the stored DX is used.
 
-Confirmed. `templates/apps/compendium-picker.hbs:44` renders
-`<input type="number" min="1" step="1">`, and `previewCost`
-(`picker-merge.ts:65`) returns `Math.max(0, Math.floor(amount))` for a points
-entry - the typed number is spent verbatim. The spinner therefore walks
-1, 2, 3, 4, and 3 or 5-7 points buy nothing the step below does not.
+## #967 - the GM Screen in a live world
 
-The rules layer already holds the table: `nextSkillPoints` and
-`previousSkillPoints` (`rules/skills.ts:308`, `:329`) give 1, 2, 4, 8, then +4,
-and the V2 sheet's Progression tab uses them. Techniques have their own table -
-`nextTechniquePoints` / `previousTechniquePoints` (`:353`, `:359`) - and share
-the same field, so they need the same treatment.
-
-Fix:
-
-1. Step the field through the real totals instead of by one. Drive the spinner
-   from `nextSkillPoints` / `previousSkillPoints` for skills and spells, and
-   from the technique pair for techniques, dispatching on `amountKind`
-   (`picker-merge.ts:51`).
-2. Snap a typed off-table value down to the step that actually buys it, so a
-   typed 5 becomes 4.
-3. Show the resulting relative level beside the cost, which is #533's "display
-   the next cost before the user confirms".
-
-`compendium-picker.ts:296` already re-prices a row in place on `input` without
-re-rendering, so the live display has a home; the snap belongs on `change` so it
-does not fight the user mid-keystroke.
-
-Tests, as the issue asks: the price at Easy, Average, Hard and Very Hard, plus
-off-table input snapping down, plus the technique table.
-
-## Batch 4 - focus across a re-render (#526)
-
-Confirmed. `character-sheet.ts:421` sets `form: { submitOnChange: true }`, so
-editing an attribute submits, the actor updates, and the sheet re-renders -
-replacing the element `Tab` just reached. Nothing in `src/system` restores
-focus: the only `.focus()` in the tree is the picker's search box
-(`compendium-picker.ts:326`), and there is no `activeElement` handling anywhere.
-
-Fix: one helper, used by every sheet rather than copied. Before a render,
-record the active element's `name`, its `selectionStart`/`selectionEnd` and
-whether it is inside the sheet; after the render, find the field with that
-`name` and restore focus and selection. Apply it in `character-sheet.ts` so
-`character-sheet-v2.ts` (which extends it, `character-sheet-v2.ts:77`) and
-`npc-sheet.ts` inherit it, and in `character-builder.ts` for the Guided Build.
-
-Two points to get right:
-
-- The `Tab` case needs care: at the moment the sheet re-renders, focus may have
-  already moved to the *next* field, so the name to restore is whatever is
-  active when the render begins, not the field that was edited.
-- Restore only when focus was inside this sheet, so a background re-render
-  cannot steal focus from another window.
-
-The issue's alternative - debouncing recalculation until the edit completes -
-is the larger change and would delay the point totals the sheet is built
-around. Restoring focus is the smaller fix and is what the picker already does.
-
-Tests: a unit test over the save/restore helper. The `Tab` behaviour itself is
-manual, on both sheets and the builder.
-
-## Batch 5 - compendium styling (#532)
-
-Confirmed. The picker's styles live in `styles/gworld.css:1308+` and read
-Foundry's core tokens - `--color-accent`, `--color-text`,
-`--color-neutral-800`, `--color-warning`. The V2 sheet's tokens are a separate
-set (`--v2-frame`, `--v2-panel`, `--v2-gold`, ...) declared at
-`styles/sheet-v2.css:16` under the `.gworld.v2` selector.
-
-The blocker worth knowing before starting: those tokens are **scoped to
-`.gworld.v2`**, and the picker registers `classes: ["gworld", "gworld-picker"]`
-(`compendium-picker.ts:120`) while the sources app registers
-`["gworld", "gworld-rules"]` (`compendium-sources.ts:34`). Neither carries
-`v2`, so the variables do not resolve there today. Resolve this first - either
-add `v2` to both apps' classes, or hoist the token block to a selector both
-reach - then restyle. Do not copy the hex values into `gworld.css`; #532 asks
-for shared tokens, and a second copy would drift.
-
-Scope, per the issue and the triage note: the picker
-(`templates/apps/compendium-picker.hbs`), the sources app
-(`templates/apps/compendium-sources.hbs`), and the pack-directory styling the
-system adds. Foundry's own compendium windows stay untouched. Cover list views,
-search, filters, entry details, and the loading and empty states - the picker
-already has `.gp-loading` and `.gp-spinner` rules to carry over. Keep contrast
-and focus states accessible; `.gp-amount input:focus` currently relies on
-`--color-accent` and needs an equivalent under the new tokens.
-
-## Batch 6 - the roll dialog (#535)
-
-Confirmed, and smaller than the issue implies, because the breakdown already
-exists after the roll: `templates/chat/success-roll.hbs:7-13` prints base, each
-signed modifier with its label, and the effective target, and `roll.ts:416`
-computes `effective = base + totalModifier`.
-
-The gap is strictly pre-roll, and it is narrower than "there is no dialog".
-There are already rich prompts - `promptForRangedAttack` (`roll.ts:1992`) and
-`promptForMeleeAttack` (`roll.ts:2643`) - but they collect *inputs* (range,
-aim, shots, posture) and compute the modifiers afterwards, in `rangedModifiers`
-(`roll.ts:2294`), called at `roll.ts:1906` and `:2215` once the dialog has
-closed. The dialog contains no listeners at all, so nothing updates as the
-player types. Outside those prompts, a shift-click gets
-`maybePromptModifiers` / `promptForModifier` (`roll.ts:3196`, `:1181`), which
-asks for a single number.
-
-Fix, in the order that keeps each step shippable:
-
-1. Extract the modifier assembly so the same `RollModifier[]` the chat card is
-   built from can be computed from the dialog's current field values, before
-   the roll. This is the load-bearing step: it is what stops the dialog and the
-   card disagreeing.
-2. Add listeners to the existing attack prompts that recompute on every change
-   and render a live "base -> modifiers -> effective" block, each line naming
-   its source and signed value.
-3. Mark each line automatic or manual, as the issue asks, and let situational
-   modifiers be added and removed in the dialog rather than through the
-   single-number prompt.
-4. Keep the final breakdown on the chat card, which it already does.
-
-Tests: the extracted assembly is pure and testable at the unit level - the same
-inputs must yield the same lines the card prints. The dialog itself is manual.
-
-## Batch 7 - undoing damage (#534)
-
-Confirmed as a real gap. `applyDamageToActor` (`damage.ts:596`) writes
-`system.hp.value` or `system.fp.value`, spends ablative DR by updating each
-armour item's `system.drLost` (`spendAblativeDr`, `damage.ts:639`), clears aim
-via `loseAim`, and fires the `afterDamage` combat hook. `takeInjury`
-(`damage.ts:684`) additionally calls `syncHealthConditions`. Nothing records
-what changed, and the only undo in the system is `undoKnockdown`
-(`knockdown.ts:114`, exposed at `api.ts:222`).
-
-This is the largest of the ten and needs a design before code. Proposed shape:
-
-1. **Record a transaction.** Have `applyDamageToActor` return, and store on the
-   damage chat card, the actor's changed fields before and after: the HP or FP
-   value, each armour item's `drLost`, the conditions `syncHealthConditions`
-   added or removed, and the aim state. This is the "sufficient transaction
-   data" the issue asks for, and it is the step everything else rests on.
-2. **Offer Undo on the card**, GM-only, so it is tied to one specific damage
-   application rather than a global stack.
-3. **Refuse rather than clobber.** If any recorded field has changed since,
-   Undo declines and says why. This is what keeps the issue's "do not undo
-   unrelated user changes" honest - a blind restore of the before-state would
-   silently discard whatever happened in between.
-4. **Expose it through `game.gworld.api`** alongside `undoKnockdown`, so a
-   module's damage path can record and reverse the same way.
-
-Scope note: the issue also lists death checks and combat-log entries. Death
-checks are rolls that were made, not state that was set, so undo should restore
-the state the check changed and leave the roll's card standing; the combat log
-should gain an entry saying the damage was reversed rather than losing the
-original. Worth confirming with the issue author before building, since it
-changes what "the exact prior state" means.
-
-Tests: round-trip coverage - apply, undo, assert the actor and its armour match
-the prior state exactly; and the refusal path, where a field changed in between
-and undo declines.
+This is a checklist for a person clicking through Foundry v14, and no code
+change is planned. What can be done from here: run the GM Screen's template
+render in the headless browser again on the current build to confirm nothing
+regressed since v1.69.0. Any failure the live check finds gets its own issue
+under #840, as the issue says.
 
 ## Order of work
 
-Sequenced so the cheap, self-contained fixes land first and the two designs come
-last. Sizes are relative effort, not hours.
+1. **Batch 1 (#980)**: adds the saved attack targets that Batch 2 reuses.
+2. **Batch 2 (#981)**: small once Batch 1 is in.
+3. **Batch 4 (#977)**: self-contained schema/plumbing change.
+4. **Batch 3 (#978)**: UI on the defense card, independent.
+5. **Batch 5 (#982)** and **Batch 6 (#979)**: start each with its
+   reproduction. Fix only once a failing test or a reproduction confirms the
+   cause.
 
-| Order | Batch | Issues | Size | Why here |
-| --- | --- | --- | --- | --- |
-| 1 | Trait editor | #530, #531, #529 | XS | Data-corrupting; one area, one PR |
-| 2 | Builder window | #527, #528 | XS | One CSS rule fixes both |
-| 3 | Picker points | #533 | S | Rules layer already has the tables |
-| 4 | Focus | #526 | S | One helper, several call sites |
-| 5 | Compendium styling | #532 | M | Needs the token-scope decision first |
-| 6 | Roll dialog | #535 | L | Extraction first, then UI |
-| 7 | Damage undo | #534 | L | Needs a design agreed before code |
+One commit per batch. Run `npm run typecheck`, `npm run lint` (including the
+book-neutral check) and `npm test` before each. Batches 1, 2 and 4 change
+module-visible data, so each bumps the API minor version and updates
+`docs/api.md`.
 
-Batches 1-4 are independent and can go in any order or in parallel. Batch 5
-should not start until the `.gworld.v2` token-scope question is settled, since
-that decision shapes every rule in it. Batches 6 and 7 are the two that warrant
-agreement on scope before implementation - #535 on how much of the automatic
-modifier set the first dialog covers, #534 on what "exact prior state" includes.
+## Questions for the reporter
 
-Each batch runs `npm run lint` (which includes the book-neutral check),
-`npm run typecheck` and `npm test` before its push, and `graphify update .`
-after code changes, per `CLAUDE.md`.
+- **#977:** Where does the reflex sight come from (which module, or typed in
+  by hand), and which field holds its bonus?
+- **#982:** Which weapon and ammunition, which hit location, and what did the
+  applied-damage card say?
+- **#979:** Which players, and does it happen only on their own turn? Do they
+  own the token or only the actor? Any console error?

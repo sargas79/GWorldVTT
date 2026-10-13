@@ -59,3 +59,75 @@ export function currentTargets(): any[] {
 export function ownsATokenOnScene(): boolean {
   return [...(canvas?.tokens?.placeables ?? [])].some((token: any) => token?.actor?.isOwner === true);
 }
+
+/** A token an attack was aimed at, as a chat card keeps it. */
+export interface RecordedTarget {
+  tokenUuid: string;
+  /** The token's own name, which is what the table sees on the canvas. */
+  name: string;
+}
+
+/** This user's targets as a card keeps them: the tokens with an actor and a document to find again. */
+export function recordableTargets(): RecordedTarget[] {
+  return targetedTokens()
+    .filter((token: any) => token?.actor && (token.document?.uuid ?? token.uuid))
+    .map((token: any) => ({
+      tokenUuid: String(token.document?.uuid ?? token.uuid),
+      name: String(token.document?.name ?? token.name ?? token.actor?.name ?? ""),
+    }));
+}
+
+/** Recorded targets from a stored flag, dropping anything that is not one. */
+export function recordedTargetsOf(stored: unknown): RecordedTarget[] {
+  if (!Array.isArray(stored)) return [];
+  return stored
+    .filter((entry: any) => typeof entry?.tokenUuid === "string" && entry.tokenUuid !== "")
+    .map((entry: any) => ({ tokenUuid: String(entry.tokenUuid), name: String(entry.name ?? "") }));
+}
+
+/**
+ * The tokens a card recorded, found again: each as its token document, which
+ * carries the actor as a placeable does. A token deleted since is left out.
+ */
+export async function resolveRecordedTargets(recorded: readonly RecordedTarget[]): Promise<any[]> {
+  const found: any[] = [];
+  for (const entry of recorded) {
+    const token: any = await fromUuid(entry.tokenUuid).catch(() => null);
+    if (token?.actor) found.push(token);
+  }
+  return found;
+}
+
+/**
+ * Who a damage card's blow lands on: the tokens its attack was aimed at, found
+ * again, unless the presser asked for their own targets. The presser's
+ * targets, or their selection, where the card recorded none or none is left.
+ */
+export async function damageRecipients(recorded: readonly RecordedTarget[], mine: boolean): Promise<any[]> {
+  const found = !mine && recorded.length > 0 ? await resolveRecordedTargets(recorded) : [];
+  return found.length > 0 ? found : currentTargets();
+}
+
+/** Token name display modes that show a token's name to a user who does not own it: on hover, and always. */
+const NAME_SHOWN_TO_ALL = new Set([30, 50]);
+
+/**
+ * A recorded target's name as this user may see it. The GM and the token's
+ * owners see it; anybody else sees it only where the token shows its name to
+ * everyone, and otherwise null, so that a card does not name the NPC the
+ * canvas keeps anonymous. A token gone from the scene keeps the name it was
+ * recorded under, which was seen when it was targeted.
+ */
+export function shownTargetName(entry: RecordedTarget): string | null {
+  if (game.user?.isGM === true) return entry.name;
+  let token: any = null;
+  try {
+    token = fromUuidSync(entry.tokenUuid, { strict: false });
+  } catch {
+    token = null;
+  }
+  if (!token) return entry.name;
+  if (token.isOwner === true) return String(token.name ?? entry.name);
+  if (token.hidden === true) return null;
+  return NAME_SHOWN_TO_ALL.has(Number(token.displayName)) ? String(token.name ?? entry.name) : null;
+}

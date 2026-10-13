@@ -3950,6 +3950,65 @@ or 1/2D changed the figure, the card shows what the dice came to as well.
   rolled figure times that (Campaigns p. 556). An explosion's card leaves
   them off, since the distance sets its figure too.
 
+## Who the cards are for
+
+Since 1.195.0 an attack and its damage carry the tokens the attack was aimed
+at, and the damage lands on them whoever presses Apply.
+
+- **`flags.gworld.attackTargets`** on an attack card, hit or miss: an array
+  of `{ tokenUuid, name }`, the attacker's targets when the attack was
+  rolled, `name` the token's own. The card names them under its heading to
+  everyone at the table; a name the token does not show to a user who does
+  not own it (a display mode other than hover or always, or a hidden token)
+  reads as unknown to that user.
+- **`flags.gworld.damage.targets`** on a damage card, the same shape: the
+  targets the row's last attack recorded, or the roller's targets when the
+  damage was rolled with no attack before it. `rollDamage` takes them as
+  `targets`. Apply puts the blow on these tokens rather than on the
+  presser's targets; a box on the card, *My targets instead*, puts it on the
+  presser's, as it was before. An explosion's card ignores them, since its
+  victims are chosen when it is applied, and a card with none recorded, or
+  whose tokens are gone, uses the presser's targets or selection.
+
+## A ranged weapon's own modifier to hit
+
+Since 1.195.0 a ranged mode has `skillModifier`, as a melee mode already did:
+a modifier to every shot, aimed or not, apart from Acc and a scope. A sight
+or a mount a book gives a bonus to skill, or a weapon used at a penalty with
+its skill, goes here. The ranged row carries it as `hitModifier`, and the
+attack roll lists it as *Weapon, to hit*; the skill, and anything worked out
+from it, is unchanged. `hitModifier` is now one of the row fields a
+`gworld.weaponAttacks` listener may change, on a melee or a ranged row, kept a
+whole number -- which is how a module's accessory adds its bonus without
+editing the weapon.
+
+## Which parry of the turn
+
+Since 1.195.0 a defense card with a parry on offer has a *Which parry this
+turn* choice beside Retreat. Left alone, the parry is counted as before, per
+weapon, except that a second press against the same attack card is the same
+parry, not the next. The defender may name the parry instead (#1, #2 and on),
+for a parry made off the cards or one that should not have counted. The
+penalty on the buttons follows the choice, and the count goes on from it.
+
+- The turn's defense counts keep `parriedBy`, the attack cards parried with
+  each weapon, beside `parries`.
+- `defenseCounts.parries`, in the defense hooks' context, is the parries that
+  come before this one, as counted or as the defender chose.
+
+## Turn order and ties
+
+Since 1.195.0 DX breaks a tie in Basic Speed inside the initiative rolled,
+not in the turn-order comparator: the initiative formula is
+`@derived.basicSpeed + @tieBreak`, `tieBreak` a combatant's DX over 100,000
+(DX 12 adds 0.00012, below the two decimals the tracker shows), supplied by
+the system's Combatant class. The comparator orders by initiative, then by
+combatant id, which is the order Foundry's server keeps. Before, a tie broken
+on DX on the clients was broken by id on the server, and a player whose turn
+it was by the table's order could be refused when they ended it. A
+combat whose initiative was rolled before 1.195.0 keeps its ties until
+initiative is rolled again.
+
 ## Liquids in the face
 
 Since 1.155.0 a module's weapon that squirts something in a face starts the

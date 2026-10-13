@@ -57,7 +57,7 @@ import { rollBreakdown, signed, type RollBreakdown } from "./roll-breakdown.js";
 import { damageDice, damageDiceRow } from "./damage-dice.js";
 import { maySpray, promptForSpray, type SprayShot } from "./spraying-fire.js";
 import { fireSuppression, suppressing } from "./suppression-fire.js";
-import { targetedTokens, withTargets } from "./targets.js";
+import { recordableTargets, recordedTargetsOf, targetedTokens, withTargets, type RecordedTarget } from "./targets.js";
 import { landedAfterAttack } from "./landed.js";
 import {
   afterSuccessRoll,
@@ -819,7 +819,7 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
   // remembers what it was, and an attack that missed remembers the defense
   // card it would have posted on a hit.
   // An Assistance Roll reads its own outcome, offering the purchase itself.
-  const successRoll = spendingInPlay(actor) && actor?.uuid && !tags.includes("assistance")
+  const spendable = spendingInPlay(actor) && actor?.uuid && !tags.includes("assistance")
     ? {
         [SYSTEM_ID]: {
           successRoll: {
@@ -840,6 +840,12 @@ export async function rollSuccess(options: SuccessRollOptions): Promise<SuccessR
         },
       }
     : null;
+  // Who an attack was aimed at, hit or miss, for the card to name to everyone
+  // at the table: the defense controls name the defender to its owner alone.
+  const aimedAt = kind === "attack" ? recordableTargets() : [];
+  const successRoll = aimedAt.length > 0
+    ? foundry.utils.mergeObject(foundry.utils.deepClone(spendable ?? {}), { [SYSTEM_ID]: { attackTargets: aimedAt } })
+    : spendable;
 
   // A secret roll, or one a module asked to be whispered (since 1.95.0).
   const messageMode = successRollMessageMode(options);
@@ -1356,6 +1362,12 @@ function attackFlags(
 export interface DamageRollOptions {
   actor: any;
   label: string;
+  /**
+   * Who the blow is for: the tokens its attack was aimed at, which the card
+   * applies it to whoever presses the button. The roller's targets at the
+   * time of the roll where not given.
+   */
+  targets?: RecordedTarget[];
   /** A dice+adds formula such as "1d+3". */
   formula: string;
   damageType: DamageType;
@@ -1642,6 +1654,7 @@ export async function rollDamage(options: DamageRollOptions): Promise<number | n
     cinematicBlast,
   });
 
+  const damageTargets = options.targets ?? recordableTargets();
   await ChatMessage.implementation.create({
     speaker: ChatMessage.implementation.getSpeaker({ actor }),
     style: CONST.CHAT_MESSAGE_STYLES.OTHER,
@@ -1654,6 +1667,9 @@ export async function rollDamage(options: DamageRollOptions): Promise<number | n
       [SYSTEM_ID]: {
         damage: {
           basicDamage, damageType, armorDivisor, label,
+          // Who the blow lands on, whoever applies it: the GM's own targets
+          // when they press the button are nobody's business but theirs.
+          ...(damageTargets.length > 0 ? { targets: damageTargets } : {}),
           // Carried so the apply control opens on the location that was aimed
           // at, and knows to halve the DR of a chink it found.
           ...(options.calledShot
@@ -2308,6 +2324,8 @@ async function rollAction(
     );
     // And how far it went, for a module's damage hook.
     await recordShotRange(actor, shot ? shot.rangeYards : null, shotRow(target.closest<HTMLElement>("[data-item-id]")));
+    // And who it was aimed at, which is who its damage lands on.
+    await recordAttackTargets(actor, shotRow(target.closest<HTMLElement>("[data-item-id]")), recordableTargets());
     // So does being past 1/2D, which halves whatever the damage roll comes to.
     await recordHalfDamage(
       actor,
@@ -2946,6 +2964,27 @@ async function recordShotRange(actor: any, yards: number | null, row: string): P
   if (!actor?.isOwner) return;
   if (yards !== null && Number.isFinite(yards)) await actor.setFlag(SYSTEM_ID, SHOT_RANGE_FLAG, { yards: Math.max(0, yards), row });
   else if (actor.getFlag?.(SYSTEM_ID, SHOT_RANGE_FLAG) !== undefined) await actor.unsetFlag(SYSTEM_ID, SHOT_RANGE_FLAG);
+}
+
+/**
+ * Who a row's last attack was aimed at, for its damage rolls. Not spent by
+ * reading: every hit of a burst lands on the same people, and the next
+ * attack from any row replaces it.
+ */
+const ATTACK_TARGETS_FLAG = "attackTargets";
+
+async function recordAttackTargets(actor: any, row: string, targets: RecordedTarget[]): Promise<void> {
+  if (!actor?.isOwner) return;
+  // Both keys every time, and an array is replaced rather than merged, so
+  // nothing of the last attack's survives this one.
+  await actor.setFlag(SYSTEM_ID, ATTACK_TARGETS_FLAG, { row, targets });
+}
+
+/** The targets this row's last attack recorded, or null where the last attack was another row's or none. */
+export function attackTargetsFor(actor: any, row: string): RecordedTarget[] | null {
+  const stored = actor?.getFlag?.(SYSTEM_ID, ATTACK_TARGETS_FLAG);
+  if (!stored || stored.row !== row) return null;
+  return recordedTargetsOf(stored.targets);
 }
 
 /** The range recorded for this row's last shot, spent by reading it; null for none or another row's. */
@@ -5327,8 +5366,12 @@ export async function handleDamageAction(
       })
     : null;
 
+  // The tokens this row's attack was aimed at, where it recorded any; the
+  // roller's targets now otherwise.
+  const aimedAtTokens = attackTargetsFor(actor, shotRow(itemRow));
   const rolled = await rollDamage({
     actor,
+    ...(aimedAtTokens && aimedAtTokens.length > 0 ? { targets: aimedAtTokens } : {}),
     label: [
       damageLabel ?? "Damage",
       ...(line.firstHit ? [target.dataset.firstHitLabel || game.i18n.localize("GWORLD.Ranged.FirstHit")] : []),

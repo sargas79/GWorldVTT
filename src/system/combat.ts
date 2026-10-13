@@ -10,6 +10,15 @@
  * ordinary case rather than the exception: Basic Speed comes in quarter-point
  * steps, so a party of four will routinely have two people on 5.00. The book
  * breaks that tie on DX, and only then arbitrarily.
+ *
+ * The DX goes into the initiative itself, as a fraction too small to show,
+ * rather than into the comparator. The comparator runs on every client, but
+ * whether a player may end their turn is decided by the server, which orders
+ * the combatants its own way -- initiative, then id -- and never runs the
+ * system's code. A comparator that broke ties on DX gave the server and the
+ * table two different orders whenever two Basic Speeds tied, and the server
+ * then refused a player's "end turn" because, by its order, the turn was
+ * somebody else's (sargas79/GWorldVTT#979).
  */
 
 import { attributeOf } from "./attributes.js";
@@ -23,9 +32,32 @@ function dexterityOf(combatant: any): number | null {
   return typeof dx === "number" && Number.isFinite(dx) ? dx : null;
 }
 
+/**
+ * What DX adds to Basic Speed in the initiative: a hundred-thousandth a point,
+ * well under the quarter-point steps Basic Speed comes in and under the two
+ * decimals the tracker shows. Nothing for a combatant whose DX can't be read,
+ * which so sorts after one whose DX can.
+ */
+export function initiativeTieBreak(dx: number | null): number {
+  if (dx === null || !Number.isFinite(dx)) return 0;
+  return Math.min(999, Math.max(0, Math.round(dx))) / 100000;
+}
+
+/** The initiative formula: Basic Speed, then DX in the digits the tracker leaves off. */
+export const INITIATIVE_FORMULA = "@derived.basicSpeed + @tieBreak";
+
+export class GWorldCombatant extends Combatant {
+  /** The initiative roll, with this combatant's DX to break a tie in Basic Speed. */
+  override getInitiativeRoll(formula?: string): any {
+    const data = { ...(this.actor?.getRollData?.() ?? {}), tieBreak: initiativeTieBreak(dexterityOf(this)) };
+    return new Roll(formula || this._getInitiativeFormula?.() || INITIATIVE_FORMULA, data);
+  }
+}
+
 export class GWorldCombat extends Combat {
   /**
-   * Orders combatants by Basic Speed, then by DX, then arbitrarily.
+   * Orders combatants by initiative, highest first, then by id -- the order
+   * Foundry's server keeps, which is what decides whose turn it is.
    *
    * Foundry calls this unbound, so it cannot reach `this` -- everything it
    * needs comes off the two combatants.
@@ -40,16 +72,9 @@ export class GWorldCombat extends Combat {
     const initiativeOf = (c: any) =>
       typeof c?.initiative === "number" && Number.isFinite(c.initiative) ? c.initiative : -Infinity;
 
+    // Two unrolled combatants are both at -Infinity, whose difference is NaN.
     const bySpeed = initiativeOf(b) - initiativeOf(a);
-    if (bySpeed !== 0) return bySpeed;
-
-    // A combatant whose DX cannot be read sorts after one whose DX can, rather
-    // than being treated as DX 0 and jumping ahead of nobody in particular.
-    const dxA = dexterityOf(a);
-    const dxB = dexterityOf(b);
-    if (dxA !== null && dxB !== null && dxA !== dxB) return dxB - dxA;
-    if (dxA === null && dxB !== null) return 1;
-    if (dxB === null && dxA !== null) return -1;
+    if (bySpeed !== 0 && !Number.isNaN(bySpeed)) return bySpeed;
 
     return String(a?.id) > String(b?.id) ? 1 : -1;
   }

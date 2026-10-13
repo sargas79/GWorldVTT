@@ -32,7 +32,7 @@ import { registerBattleFatigue } from "./system/battle-fatigue.js";
 import { registerTaskRules } from "./system/task-rules.js";
 import { loadSkillCatalog } from "./system/skill-catalog.js";
 import { setCondition, registerConditions, registerPostureSync, registerStunSync } from "./system/conditions.js";
-import { GWorldCombat } from "./system/combat.js";
+import { GWorldCombat, GWorldCombatant, INITIATIVE_FORMULA } from "./system/combat.js";
 import { SYSTEM_ID } from "./system/constants.js";
 import { CharacterData } from "./system/data/character.js";
 import { NpcData } from "./system/data/npc.js";
@@ -109,9 +109,11 @@ Hooks.once("init", () => {
 
   // Initiative is Basic Speed, fixed for the whole fight (GURPS Lite p. 25):
   // nothing random goes into the formula, so it does not change between rounds.
-  // The subclass breaks the ties, which quarter-point Basic Speed makes common.
-  CONFIG.Combat.initiative = { formula: "@derived.basicSpeed", decimals: 2 };
+  // DX breaks the ties, which quarter-point Basic Speed makes common, from
+  // digits the two decimals shown leave off.
+  CONFIG.Combat.initiative = { formula: INITIATIVE_FORMULA, decimals: 2 };
   CONFIG.Combat.documentClass = GWorldCombat;
+  CONFIG.Combatant.documentClass = GWorldCombatant;
 
   // A GURPS turn is one second (Campaigns p. 363), so a round of combat
   // advances world time by one. A spell that lasts a minute runs out sixty

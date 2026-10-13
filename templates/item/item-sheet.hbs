@@ -1329,6 +1329,8 @@
                      data-tooltip="{{localize 'GWORLD.Column.Acc'}}" {{#unless @root.editable}}disabled{{/unless}} />
               <input type="number" name="system.rangedModes.{{i}}.scopeBonus" value="{{m.scopeBonus}}" aria-label="{{localize 'GWORLD.Item.ScopeBonus'}}" step="1" min="0"
                      data-tooltip="{{localize 'GWORLD.Item.ScopeBonus'}}" {{#unless @root.editable}}disabled{{/unless}} />
+              <input type="number" name="system.rangedModes.{{i}}.skillModifier" value="{{m.skillModifier}}" aria-label="{{localize 'GWORLD.Item.SkillModifier'}}" step="1"
+                     data-tooltip="{{localize 'GWORLD.Item.RangedSkillModifierHint'}}" {{#unless @root.editable}}disabled{{/unless}} />
               <input type="number" name="system.rangedModes.{{i}}.halfDamageRange" value="{{m.halfDamageRange}}" aria-label="{{localize 'GWORLD.Item.HalfDamageRange'}}" step="1" min="0"
                      data-tooltip="{{localize 'GWORLD.Item.HalfDamageRange'}}" {{#unless @root.editable}}disabled{{/unless}} />
               <input type="number" name="system.rangedModes.{{i}}.maxRange" value="{{m.maxRange}}" aria-label="{{localize 'GWORLD.Item.MaxRange'}}" step="1" min="0"

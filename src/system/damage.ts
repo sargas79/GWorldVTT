@@ -30,7 +30,7 @@ import {
   type CriticalTable,
 } from "../rules/criticals.js";
 import { WOUNDING_MODIFIERS, capInjury, computeInjury, injuryAtLocation } from "../rules/damage.js";
-import { HIT_LOCATIONS, locationDrAgainst, type HitLocation } from "../rules/hit-locations.js";
+import { HIT_LOCATIONS, locationDrAgainst, woundingModifierAt, type HitLocation } from "../rules/hit-locations.js";
 import { blastPlacementOf, INTERNAL_BLAST_WOUNDING, type BlastPlacement } from "../rules/explosions.js";
 import { LARGE_AREA_LOCATIONS, largeAreaDr, largeAreaSingleLocation, type LargeAreaDr } from "../rules/large-area.js";
 import { applyInjury, type InjuryConsequences } from "../rules/injury.js";
@@ -1393,4 +1393,18 @@ export async function takeInjury(actor: any, options: TakeInjuryOptions): Promis
       part,
     },
   };
+}
+
+/**
+ * Why a blow's wounding modifier is not its damage type's own, for the card
+ * to say so: "location" where the hit location sets it -- a limb takes pi+
+ * at x1, the vitals at x3 (Campaigns p. 399) -- and "target" where the victim
+ * or a rule does, as Injury Tolerance does. Null where it is the type's own.
+ * The card prints the figure either way; without the reason a pi+ hit to an
+ * arm reads as a pi+ multiplier left out (sargas79/GWorldVTT#982).
+ */
+export function woundingDifference(type: DamageType, hitLocation: HitLocation | null | undefined, modifier: number): "location" | "target" | null {
+  const base = WOUNDING_MODIFIERS[type];
+  if (base === undefined || modifier === base) return null;
+  return hitLocation && woundingModifierAt(type, hitLocation) === modifier ? "location" : "target";
 }

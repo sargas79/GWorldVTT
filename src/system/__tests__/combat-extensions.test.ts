@@ -447,6 +447,16 @@ describe("an item's attack rows (#270)", () => {
     expect(odd[1]!.row).toMatchObject({ bulk: 0, scopeBonus: 0, scopeFixed: false });
   });
 
+  it("lets a listener set a row's own modifier to hit, a whole number (sargas79/GWorldVTT#977; since 1.195.0)", async () => {
+    const api = await load();
+    const rows = entries();
+    // A sight a module's gear adds to a gun: +1 to every shot.
+    globals.Hooks = { callAll: (_event: string, context: any) => { context.rows[1].row.hitModifier = "1.4"; } };
+    api.adjustWeaponAttacks({ actor: {}, item: {}, rows: rows as never, ...helpers } as never);
+    expect((rows[1]!.row as any).hitModifier).toBe(1);
+    expect((rows[0]!.row as any).hitModifier).toBe(0);
+  });
+
   it("puts the rows back as they were when a listener throws", async () => {
     const api = await load();
     const rows = entries();
