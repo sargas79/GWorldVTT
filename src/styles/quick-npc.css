@@ -45,6 +45,9 @@
 }
 .gworld.v2.gworld-quick-npc .hint { margin: 4px 0 0; font-size: 12px; opacity: 0.8; }
 .gworld.v2.gworld-quick-npc .qn-small { width: auto; height: 24px; padding: 0 8px; font-size: 12px; line-height: 22px; }
+.gworld.v2.gworld-quick-npc .qn-heading-tools { display: flex; align-items: center; gap: 6px; font-family: var(--font-body); font-size: 12px; letter-spacing: 0; text-transform: none; }
+.gworld.v2.gworld-quick-npc .qn-one { display: flex; align-items: center; gap: 4px; padding-right: 8px; border-right: 1px solid var(--v2-frame-line, #8884); }
+.gworld.v2.gworld-quick-npc .qn-one input { width: 48px; height: 24px; text-align: center; }
 
 .gworld.v2.gworld-quick-npc .qn-template-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
 .gworld.v2.gworld-quick-npc .qn-template-row button { width: auto; }
