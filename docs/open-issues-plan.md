@@ -1,8 +1,24 @@
 # Open issues: verification and implementation plan
 
-**Status: planned, not started.** Written against `main` at v1.71.0
-(`5837286`). The previous plan in this file (#526-#535) was fully implemented
-and is in git history.
+**Status: implemented** on `claude/open-issues-plan-977-982`, one commit per
+batch (#980 and #981 together), API 1.195.0. #967 stays open: it needs a
+person in a live Foundry v14 world. Three things changed from the plan during
+the work:
+
+- **#979's cause was the server, not the clients.** Foundry's server decides
+  whether a player may end their turn by its own order (initiative, then id).
+  It never runs the system's comparator, which broke Basic Speed ties on DX.
+  The tie-break moved into the initiative rolled, and the comparator now
+  matches the server's.
+- **#982 did not reproduce.** The resolver gives pi+ x1.5 after DR (pinned by
+  a test). The change is the card saying why a multiplier differs from the
+  type's own: a limb, the vitals, or the target.
+- **#980 records targets per weapon row at attack time**, not consumed by the
+  damage roll, so every hit of a burst lands on the same tokens. The redirect
+  is a *My targets instead* box rather than a separate button.
+
+Written against `main` at v1.71.0 (`5837286`). The previous plan in this file
+(#526-#535) was fully implemented and is in git history.
 
 Seven issues are open (#967, #977-#982). Six are bug reports from a play
 session. #967 is a manual check that must be done in a live world. Each report
