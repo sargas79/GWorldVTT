@@ -2331,6 +2331,8 @@
       "InjuryCapped": "Capped at {cap}: {lost} not taken",
       "InjuryCappedWhy": "Capped at {cap} ({reason}): {lost} not taken",
       "Vulnerable": "Vulnerability ×{multiplier} ({label})",
+      "WoundingAtLocation": "×{modifier} at the {location}; {type} is ×{base} elsewhere",
+      "WoundingForTarget": "×{modifier} against this target; {type} is ×{base} as a rule",
       "Surge": {
         "Roll": "Surge: HT to keep working (Characters p. 105)",
         "shortCircuit": "Surge: short-circuited, unconscious (Electrical, Characters p. 134)",

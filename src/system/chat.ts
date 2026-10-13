@@ -16,7 +16,8 @@ import { applyWoundTraits } from "./wound-traits.js";
 import { headButtSelfInjury } from "../rules/addendum-techniques.js";
 import { SYSTEM_ID } from "./constants.js";
 import { combatVisionMemo, combatVisionNeed, settleCombatVision } from "./vision-corrections.js";
-import { applyDamageToActor, takeInjury, traitsOf, type AppliedDamage, type IncomingDamage } from "./damage.js";
+import { applyDamageToActor, takeInjury, traitsOf, woundingDifference, type AppliedDamage, type IncomingDamage } from "./damage.js";
+import { WOUNDING_MODIFIERS } from "../rules/damage.js";
 import { isUndoable, undoDamage, type DamageTransaction } from "./damage-undo.js";
 import { HURTING_YOURSELF_DR, hurtingYourself } from "../rules/hurting-yourself.js";
 import { applyDamageToWeapon, heavyParryCheck, parryTooHeavy, postParryTooHeavy } from "./weapon-damage.js";
@@ -786,6 +787,8 @@ async function applyFromCard(options: {
       vulnerabilityNote: result.vulnerability
         ? game.i18n.format("GWORLD.Chat.Vulnerable", { multiplier: result.vulnerability.multiplier, label: result.vulnerability.label })
         : "",
+      // A wounding modifier other than the type's own, and why (#982).
+      woundingNote: woundingNote(result, flag.damageType),
       // A Surge blow on somebody with Electrical (since API 1.155.0).
       surgeNote: surgeNote(surged.get(result)),
       // What a finer hit location did beyond its injury (Basic Set Revised p. 566).
@@ -2684,6 +2687,19 @@ function addRulesLinks(html: HTMLElement): void {
       void RulesSettings.open();
     });
   }
+}
+
+/** Why the blow wounded at other than its type's own multiplier, worded for the card; blank where it did not. */
+function woundingNote(result: AppliedDamage, damageType: DamageType): string {
+  if (result.costsFatigue || result.penetrating <= 0) return "";
+  const why = woundingDifference(damageType, result.hitLocation, result.woundingModifier);
+  if (!why) return "";
+  return game.i18n.format(why === "location" ? "GWORLD.Chat.WoundingAtLocation" : "GWORLD.Chat.WoundingForTarget", {
+    modifier: result.woundingModifier,
+    base: WOUNDING_MODIFIERS[damageType],
+    type: game.i18n.localize(`GWORLD.DamageType.${damageType}`),
+    location: game.i18n.localize(`GWORLD.HitLocation.${result.hitLocation}`).toLowerCase(),
+  });
 }
 
 /** The lasting outcomes of a blow at one of the finer hit locations, by their keys. */
