@@ -94,6 +94,7 @@ import {
 import { characterFolderId } from "../character-journals.js";
 import { GWorldCharacterSheet } from "./character-sheet.js";
 import { VIEW_CONTROLS } from "../sheet-v2/view-controls.js";
+import { SHEET_ROLL_MODE_IDS, setSheetRollMode, sheetRollModeButtons, type SheetRollMode } from "../sheet-roll-mode.js";
 import { postItemCard } from "../item-card.js";
 import { canPutInside, capacityOf, containerIdOf, isContainer, nestRows } from "../containers.js";
 import { putInside } from "../container-moves.js";
@@ -151,6 +152,7 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       v2Retreat: GWorldCharacterSheetV2.#onRetreat,
       v2Defend: GWorldCharacterSheetV2.#onDefend,
       v2RollDefense: GWorldCharacterSheetV2.#onRollDefense,
+      v2RollVisibility: GWorldCharacterSheetV2.#onRollVisibility,
     },
   };
 
@@ -202,6 +204,8 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       defenses: system.derived?.defenses ?? null,
     }, this.retreating);
     context.retreatAllowed = isRuleOn("retreat");
+    // Who sees this sheet's rolls, as this user chose for this actor.
+    context.rollVisibility = sheetRollModeButtons(this.actor.id);
     context.v2 = {
       tabLabel: tabs[active]?.label ?? "",
       points,
@@ -1826,6 +1830,14 @@ export class GWorldCharacterSheetV2 extends GWorldCharacterSheet {
       flavor: game.i18n.localize("GWORLD.SheetV2.PlainRollFlavor"),
       rolls: [roll],
     });
+  }
+
+  /** Sets who sees the rolls this user makes from the sheet: the table, the GM too, or the GM alone. */
+  static async #onRollVisibility(this: GWorldCharacterSheetV2, _event: Event, target: HTMLElement) {
+    const mode = target.dataset.mode;
+    if (!SHEET_ROLL_MODE_IDS.includes(mode as SheetRollMode)) return;
+    await setSheetRollMode(this.actor.id, mode as SheetRollMode);
+    await this.render({ parts: ["header"] });
   }
 
   /** Shows the selected trait, skill or piece of gear to the table, as a card in the chat. */

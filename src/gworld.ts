@@ -72,6 +72,7 @@ import { registerCombatExtras } from "./system/combat-extras.js";
 import { configureDeprecatedData, migrateContainers, migrateLearnableTraits, migrateRenamedTraits, registerMigrationSettings, warnUncoveredData } from "./system/migration.js";
 import { closeRuleRegistration, openRuleRegistration, registerRule, registerRuleGroup } from "./system/rule-registry.js";
 import { registerSettings } from "./system/settings.js";
+import { registerSheetRollModeHooks, registerSheetRollModeSetting } from "./system/sheet-roll-mode.js";
 import { migratePartyCampaignTerms } from "./system/campaign.js";
 import { loadFilePartials, registerTemplateHelpers } from "./system/templates.js";
 
@@ -145,6 +146,9 @@ Hooks.once("init", () => {
   // A damage card is posted before anyone has decided who it hits, so the card
   // grows an apply control when it renders.
   registerChatHooks();
+  // Who sees the rolls made from a sheet: the table, the GM too, or the GM alone.
+  registerSheetRollModeSetting();
+  registerSheetRollModeHooks();
   registerSuppressionFire();
   // The missing hit locations, offered while their switches are on (Basic Set Revised p. 566).
   registerRevisedHitLocations();

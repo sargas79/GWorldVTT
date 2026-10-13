@@ -32,6 +32,7 @@
   <button type="button" class="v2-button v2-build-button v2-dice-button" data-action="v2RollPlain"
           data-tooltip="{{localize "GWORLD.SheetV2.PlainRollHint"}}"
           aria-label="{{localize "GWORLD.SheetV2.PlainRollHint"}}">{{> "gworld.die"}} {{localize "GWORLD.SheetV2.PlainRoll"}}</button>
+  {{> "gworld.part.roll-visibility" rollVisibility=rollVisibility action="v2RollVisibility"}}
   {{#if editable}}
     <button type="button" class="v2-button v2-build-button" data-action="openBuilder"
             data-tooltip="{{localize "GWORLD.Builder.OpenHint"}}">{{> "gworld.v2icon.build"}} {{localize "GWORLD.Builder.Open"}}</button>

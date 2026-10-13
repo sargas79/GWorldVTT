@@ -261,6 +261,30 @@
 .gworld.v2 .v2-header .v2-dice-button { display: inline-flex; align-items: center; gap: 6px; }
 .gworld.v2 .v2-header .v2-dice-button svg { width: 16px; height: 16px; }
 
+/* Who sees the sheet's rolls: three icons, the chosen one lit. */
+.gworld.v2 .v2-roll-visibility {
+  display: inline-flex;
+  align-self: center;
+  border: 1px solid var(--v2-frame-line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.gworld.v2 .v2-roll-visibility-mode {
+  width: 30px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--v2-frame-2);
+  color: var(--v2-frame-text);
+  opacity: 0.7;
+  cursor: pointer;
+}
+.gworld.v2 .v2-roll-visibility-mode + .v2-roll-visibility-mode { border-left: 1px solid var(--v2-frame-line); }
+.gworld.v2 .v2-roll-visibility-mode:hover { opacity: 1; }
+.gworld.v2 .v2-roll-visibility-mode.active { background: var(--v2-gold); color: var(--v2-frame); opacity: 1; }
+
 /* ── sidebar ───────────────────────────────────────────────────────────── */
 
 .gworld.v2 .v2-rail {

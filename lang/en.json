@@ -5620,6 +5620,15 @@
       "SetByHint": "This is the campaign's figure, which the GM sets for the whole world.",
       "Migrated": "The campaign's starting points, disadvantage limit and Tech Level are now world settings. Your parties had different figures, so {party}'s were kept. Check them on the settings page."
     },
+    "RollVisibility": {
+      "Label": "Who sees this sheet's rolls",
+      "public": "Public roll",
+      "publicHint": "Rolls from this sheet are shown to everyone.",
+      "gm": "Private to GM",
+      "gmHint": "Rolls from this sheet are shown only to you and the GM.",
+      "blind": "Blind to GM",
+      "blindHint": "Rolls from this sheet are shown only to the GM. You do not see the result."
+    },
     "SheetV2": {
       "PlainRoll": "3d6",
       "PlainRollHint": "Roll 3d6 with nothing behind it and post the result to chat.",

@@ -156,6 +156,7 @@ const FILE_PARTIALS: Record<string, string> = {
   "gworld.part.general-actions": `systems/${SYSTEM_ID}/templates/actor/parts/general-actions.hbs`,
   "gworld.v2.money": `systems/${SYSTEM_ID}/templates/actor/v2/money.hbs`,
   "gworld.part.magic-body": `systems/${SYSTEM_ID}/templates/actor/parts/magic-body.hbs`,
+  "gworld.part.roll-visibility": `systems/${SYSTEM_ID}/templates/actor/parts/roll-visibility.hbs`,
   "gworld.part.skills-point-spending": `systems/${SYSTEM_ID}/templates/actor/parts/skills-point-spending.hbs`,
   "gworld.part.traits-granted": `systems/${SYSTEM_ID}/templates/actor/parts/traits-granted.hbs`,
   "gworld.part.traits-psionics": `systems/${SYSTEM_ID}/templates/actor/parts/traits-psionics.hbs`,

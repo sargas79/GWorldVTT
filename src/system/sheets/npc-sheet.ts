@@ -16,6 +16,7 @@ import type { SwarmProtection } from "../../rules/swarms.js";
 import type { Attribute } from "../../rules/types.js";
 import { summariseDescription } from "../description-summary.js";
 import { reportRefusedDrop } from "./drop-errors.js";
+import { SHEET_ROLL_MODE_IDS, setSheetRollMode, sheetRollModeButtons, type SheetRollMode } from "../sheet-roll-mode.js";
 
 const { ActorSheetV2 } = foundry.applications.sheets;
 const { HandlebarsApplicationMixin } = foundry.applications.api;
@@ -78,6 +79,7 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       castSpell: GWorldNpcSheet.#onCastSpell,
       swarmAttack: GWorldNpcSheet.#onSwarmAttack,
       openFullSheet: GWorldNpcSheet.#onOpenFullSheet,
+      rollVisibility: GWorldNpcSheet.#onRollVisibility,
     },
   };
 
@@ -151,6 +153,9 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
       // The mook switch is only worth a line on the sheet where the table is
       // playing the rule (Campaigns p. 417).
       cannonFodderInPlay: isRuleOn("cannonFodder"),
+
+      // Who sees this pane's rolls, as this user chose for this actor.
+      rollVisibility: sheetRollModeButtons(actor.id),
 
       groupSizeLabel:
         system.groupSize > 1
@@ -226,6 +231,13 @@ export class GWorldNpcSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
    * attributes, traits, skills and gear are changed on the character sheet,
    * which takes this pane's place until its Summary button brings it back.
    */
+  static async #onRollVisibility(this: GWorldNpcSheet, _event: Event, target: HTMLElement) {
+    const mode = target.dataset.mode;
+    if (!SHEET_ROLL_MODE_IDS.includes(mode as SheetRollMode)) return;
+    await setSheetRollMode(this.actor.id, mode as SheetRollMode);
+    await this.render();
+  }
+
   static async #onOpenFullSheet(this: GWorldNpcSheet) {
     this.#fullSheet ??= new GWorldCharacterSheetV2({ document: this.actor });
     await this.#fullSheet.render({ force: true });

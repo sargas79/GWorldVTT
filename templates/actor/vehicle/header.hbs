@@ -20,6 +20,7 @@
   </div>
 
   <div class="v2-header-side">
+    {{> "gworld.part.roll-visibility" rollVisibility=rollVisibility action="rollVisibility"}}
     {{#if wrecked}}
       <span class="v2-badge v2-badge-red vehicle-state">{{localize "GWORLD.Vehicle.Wrecked"}}</span>
     {{else if battered}}

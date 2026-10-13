@@ -1,0 +1,10 @@
+{{!-- Who sees the rolls made from this sheet: the table, the GM alongside
+     whoever rolled, or the GM alone. Each user chooses for themselves, per
+     actor. `action` is the sheet's own name for the click. --}}
+<div class="v2-roll-visibility" role="group" aria-label="{{localize "GWORLD.RollVisibility.Label"}}">
+  {{#each rollVisibility}}
+    <button type="button" class="v2-roll-visibility-mode{{#if active}} active{{/if}}" data-action="{{../action}}"
+            data-mode="{{mode}}" aria-pressed="{{#if active}}true{{else}}false{{/if}}"
+            data-tooltip="{{hint}}" aria-label="{{label}}"><i class="{{icon}}" aria-hidden="true"></i></button>
+  {{/each}}
+</div>
